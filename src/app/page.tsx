@@ -43,7 +43,7 @@ export default function LandingPage() {
               From calendar sync to public profiles, we&apos;ve got you covered.
             </p>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <Card>
               <CardHeader>
@@ -101,9 +101,9 @@ export default function LandingPage() {
             <Button asChild size="lg">
               <Link href="/app/register">Create Your Account</Link>
             </Button>
-          </div>
+        </div>
         </Container>
       </PageSection>
-    </main>
+      </main>
   )
 }

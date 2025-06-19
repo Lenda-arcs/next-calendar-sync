@@ -1,15 +1,46 @@
-import { cn } from '@/lib/utils'
-import React from 'react'
+import React from "react";
+import { cn } from "@/lib/utils";
 
 interface PageSectionProps {
-  children: React.ReactNode
-  className?: string
+  children: React.ReactNode;
+  title?: string;
+  subtitle?: string;
+  className?: string;
+  spacing?: "small" | "medium" | "large";
 }
 
-export function PageSection({ children, className }: PageSectionProps) {
+const PageSection: React.FC<PageSectionProps> = ({
+  children,
+  title,
+  subtitle,
+  className = "",
+  spacing = "medium",
+}) => {
+  const spacingClasses = {
+    small: "mb-4",
+    medium: "mb-8",
+    large: "mb-12",
+  };
+
   return (
-    <section className={cn('py-8 sm:py-12', className)}>
+    <section className={cn(
+      "py-8 sm:py-12",
+      spacingClasses[spacing],
+      className
+    )}>
+      {title && (
+        <h2 className="text-2xl font-semibold text-foreground mb-4 tracking-tight">
+          {title}
+        </h2>
+      )}
+      {subtitle && (
+        <p className="text-muted-foreground mb-4 leading-relaxed">
+          {subtitle}
+        </p>
+      )}
       {children}
     </section>
-  )
-} 
+  );
+};
+
+export { PageSection }; 

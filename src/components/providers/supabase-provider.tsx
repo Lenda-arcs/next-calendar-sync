@@ -25,7 +25,7 @@ export default function SupabaseProvider({
 
   return (
     <Context.Provider value={{ supabase }}>
-      <>{children}</>
+      {children}
     </Context.Provider>
   )
 }
