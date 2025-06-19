@@ -27,7 +27,7 @@ export default function RootLayout({
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
       <body className="min-h-screen bg-background font-sans antialiased">
         <SupabaseProvider>
-          {children}
+        {children}
         </SupabaseProvider>
       </body>
     </html>
