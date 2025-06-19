@@ -8,7 +8,7 @@ import { LogOut, Loader2 } from 'lucide-react'
 
 interface LogoutButtonProps {
   variant?: 'default' | 'outline' | 'ghost'
-  size?: 'sm' | 'md' | 'lg'
+  size?: 'sm' | 'lg'
   className?: string
   showIcon?: boolean
   showText?: boolean
