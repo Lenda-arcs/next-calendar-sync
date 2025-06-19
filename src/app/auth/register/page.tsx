@@ -1,7 +1,8 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import Link from 'next/link'
 import { Container } from '@/components/layout/container'
-import { UserPlus, ArrowLeft } from 'lucide-react'
+import { RegisterForm } from '@/components/auth'
+import { ArrowLeft } from 'lucide-react'
 
 export default function RegisterPage() {
   return (
@@ -22,23 +23,7 @@ export default function RegisterPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-center p-8 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
-              <UserPlus className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                Registration Form
-              </h3>
-              <p className="text-gray-600 dark:text-gray-300 mb-4">
-                Implement Supabase Auth registration form here.
-              </p>
-              <div className="text-center">
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Already have an account?{' '}
-                  <Link href="/app/sign-in" className="font-medium text-blue-600 hover:text-blue-500">
-                    Sign in here
-                  </Link>
-                </p>
-              </div>
-            </div>
+            <RegisterForm />
           </CardContent>
         </Card>
       </Container>

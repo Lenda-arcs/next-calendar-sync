@@ -34,21 +34,20 @@ export async function middleware(req: NextRequest) {
     data: { session },
   } = await supabase.auth.getSession()
 
+  // Handle auth routes (no authentication required)
+  if (req.nextUrl.pathname.startsWith('/auth/')) {
+    // If user is already logged in, redirect to dashboard
+    if (session) {
+      return NextResponse.redirect(new URL('/app', req.url))
+    }
+    return supabaseResponse
+  }
+
   // Check if user is accessing protected /app routes
   if (req.nextUrl.pathname.startsWith('/app')) {
-    // Allow access to auth pages even without session
-    const authPages = ['/app/sign-in', '/app/login', '/app/register']
-    if (authPages.includes(req.nextUrl.pathname)) {
-      // If user is already logged in, redirect to dashboard
-      if (session) {
-        return NextResponse.redirect(new URL('/app', req.url))
-      }
-      return supabaseResponse
-    }
-
-    // For all other /app routes, require authentication
+    // For all /app routes, require authentication
     if (!session) {
-      return NextResponse.redirect(new URL('/app/sign-in', req.url))
+      return NextResponse.redirect(new URL('/auth/sign-in', req.url))
     }
   }
 
