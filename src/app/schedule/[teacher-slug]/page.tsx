@@ -91,7 +91,7 @@ export default async function PublicSchedulePage({ params }: PageProps) {
   })
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen">
       {/* Teacher Hero Section */}
       <PageSection className="py-8 sm:py-12">
         <Container maxWidth="4xl">
@@ -100,7 +100,7 @@ export default async function PublicSchedulePage({ params }: PageProps) {
       </PageSection>
 
       {/* Events List Section */}
-      <PageSection className="py-8 sm:py-12 bg-gray-50/50 dark:bg-slate-900/50">
+      <PageSection className="py-8 sm:py-12">
         <Container maxWidth="4xl">
           <div className="mb-8">
             <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">

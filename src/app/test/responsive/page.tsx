@@ -41,7 +41,7 @@ export default function ResponsiveTestPage() {
   ]
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen">
       <Container 
         maxWidth="4xl" 
         title="Responsive Design Testing" 

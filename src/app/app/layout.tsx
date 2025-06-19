@@ -34,28 +34,28 @@ export default async function AppLayout({ children }: AppLayoutProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Navigation Header */}
-      <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
+    <div className="min-h-screen">
+      {/* Navigation Header with Glassmorphism */}
+      <header className="backdrop-blur-md bg-white/60 border-b border-white/40 shadow-xl sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
             <div className="flex items-center">
-              <Link href="/app" className="flex items-center">
-                <Calendar className="h-8 w-8 text-primary" />
-                <span className="ml-2 text-xl font-bold text-gray-900 dark:text-white">
+              <Link href="/app" className="flex items-center group">
+                <Calendar className="h-8 w-8 text-primary transition-transform group-hover:scale-110" />
+                <span className="ml-2 text-xl font-bold font-serif text-foreground tracking-tight">
                   Calendar Sync
                 </span>
               </Link>
             </div>
 
             {/* Navigation */}
-            <nav className="hidden md:flex space-x-8">
+            <nav className="hidden md:flex space-x-2">
               {navigation.map((item) => (
                 <Link
                   key={item.name}
                   href={item.href}
-                  className="flex items-center px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors"
+                  className="flex items-center px-4 py-2 text-sm font-medium font-sans text-foreground/80 hover:text-foreground hover:bg-white/30 rounded-xl backdrop-blur-sm transition-all duration-300 hover:shadow-lg"
                 >
                   <item.icon className="h-4 w-4 mr-2" />
                   {item.name}
@@ -65,7 +65,7 @@ export default async function AppLayout({ children }: AppLayoutProps) {
 
             {/* User Menu */}
             <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-600 dark:text-gray-300">
+              <span className="text-sm font-sans text-foreground/70 hidden sm:block">
                 {user.email}
               </span>
               <LogoutButton />
@@ -75,8 +75,10 @@ export default async function AppLayout({ children }: AppLayoutProps) {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1">
-        {children}
+      <main className="flex-1 p-4 sm:p-6 lg:p-8">
+        <div className="max-w-7xl mx-auto">
+          {children}
+        </div>
       </main>
     </div>
   )

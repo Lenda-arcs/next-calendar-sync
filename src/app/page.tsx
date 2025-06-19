@@ -10,12 +10,12 @@ export default function LandingPage() {
   return (
     <main className="flex flex-col">
       {/* Hero Section */}
-      <PageSection className="pt-16 pb-20 bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-slate-900 dark:to-slate-800">
+      <PageSection className="pt-16 pb-20">
         <Container maxWidth="2xl" className="text-center py-20">
-          <h1 className="text-4xl md:text-5xl text-[#3F3F3F] dark:text-white mb-4">
+          <h1 className="text-4xl md:text-5xl text-[#3F3F3F] mb-4 font-serif">
             Share Your Yoga Classes Effortlessly
           </h1>
-          <h2 className="text-xl md:text-2xl text-[#666] dark:text-gray-300 mb-8">
+          <h2 className="text-xl md:text-2xl text-foreground/70 mb-8 font-sans">
             Connect your calendar, customize your page, and share your schedule.
           </h2>
           <Button asChild size="lg">
@@ -47,19 +47,21 @@ export default function LandingPage() {
       </PageSection>
 
       {/* CTA Section */}
-      <PageSection className="bg-gray-50 dark:bg-slate-800">
+      <PageSection>
         <Container>
-          <div className="text-center">
-            <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
-              Ready to get started?
-            </h2>
-            <p className="text-lg text-gray-600 dark:text-gray-300 mb-8">
-              Join thousands of yoga instructors who trust Calendar Sync to share their schedules.
-            </p>
-            <Button asChild size="lg">
-              <Link href="/auth/register">Create Your Account</Link>
-            </Button>
-          </div>
+          <Card variant="glass" className="text-center">
+            <CardContent className="p-8 md:p-12">
+              <h2 className="text-3xl font-bold font-serif text-foreground mb-4">
+                Ready to get started?
+              </h2>
+              <p className="text-lg text-foreground/70 mb-8 font-sans">
+                Join thousands of yoga instructors who trust Calendar Sync to share their schedules.
+              </p>
+              <Button asChild size="lg">
+                <Link href="/auth/register">Create Your Account</Link>
+              </Button>
+            </CardContent>
+          </Card>
         </Container>
       </PageSection>
     </main>

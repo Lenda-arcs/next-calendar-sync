@@ -29,12 +29,12 @@ const PageSection: React.FC<PageSectionProps> = ({
       className
     )}>
       {title && (
-        <h2 className="text-2xl font-semibold text-foreground mb-4 tracking-tight">
+        <h2 className="text-2xl font-semibold font-serif text-foreground mb-4 tracking-tight">
           {title}
         </h2>
       )}
       {subtitle && (
-        <p className="text-muted-foreground mb-4 leading-relaxed">
+        <p className="text-muted-foreground mb-4 leading-relaxed font-sans">
           {subtitle}
         </p>
       )}

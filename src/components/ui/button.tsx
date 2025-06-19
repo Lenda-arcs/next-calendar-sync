@@ -6,8 +6,9 @@ import { styleUtils } from "@/lib/design-system"
 
 const buttonVariants = cva(
   [
-    "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium",
-    "ring-offset-background transition-colors",
+    "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-2xl text-sm font-medium font-sans",
+    "ring-offset-background",
+    styleUtils.transition,
     styleUtils.focusRing,
     "disabled:pointer-events-none disabled:opacity-50",
     "[&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
@@ -15,20 +16,21 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90",
-        destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
-        outline: "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
-        secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
-        ghost: "hover:bg-accent hover:text-accent-foreground",
+        default: "bg-primary text-primary-foreground hover:bg-primary/90 backdrop-blur-sm shadow-lg",
+        destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90 backdrop-blur-sm shadow-lg",
+        outline: "border border-input bg-background hover:bg-accent hover:text-accent-foreground backdrop-blur-sm",
+        secondary: "backdrop-blur-md bg-white/30 border border-white/40 hover:bg-white/50 shadow-lg text-foreground",
+        ghost: "hover:bg-white/20 hover:backdrop-blur-sm hover:shadow-md",
         link: "text-primary underline-offset-4 hover:underline",
-        success: "bg-green-600 text-white hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800",
-        warning: "bg-yellow-600 text-white hover:bg-yellow-700 dark:bg-yellow-700 dark:hover:bg-yellow-800",
+        success: "bg-green-600 text-white hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800 backdrop-blur-sm shadow-lg",
+        warning: "bg-yellow-600 text-white hover:bg-yellow-700 dark:bg-yellow-700 dark:hover:bg-yellow-800 backdrop-blur-sm shadow-lg",
+        glass: "backdrop-blur-md bg-white/20 border border-white/30 hover:bg-white/30 shadow-xl text-foreground",
       },
       size: {
         default: "h-10 px-4 py-2",
-        sm: "h-9 rounded-md px-3",
-        lg: "h-11 rounded-md px-8",
-        xl: "h-12 rounded-lg px-10 text-base",
+        sm: "h-9 rounded-xl px-3",
+        lg: "h-11 rounded-xl px-8",
+        xl: "h-12 rounded-2xl px-10 text-base",
         icon: "h-10 w-10",
       },
       loading: {
@@ -52,23 +54,11 @@ export interface ButtonProps
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ 
-    className, 
-    variant, 
-    size, 
-    asChild = false, 
-    loading = false,
-    leftIcon,
-    rightIcon,
-    children,
-    disabled,
-    ...props 
-  }, ref) => {
+  ({ className, variant, size, loading, leftIcon, rightIcon, asChild = false, children, ...props }, ref) => {
     if (asChild) {
-      // When using asChild, we pass through to Slot without additional content
       return (
         <Slot
-          className={cn(buttonVariants({ variant, size, className }))}
+          className={cn(buttonVariants({ variant, size, loading, className }))}
           ref={ref}
           {...props}
         >
@@ -76,43 +66,24 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         </Slot>
       )
     }
-    
+
     return (
       <button
         className={cn(buttonVariants({ variant, size, loading, className }))}
         ref={ref}
-        disabled={disabled || loading}
+        disabled={loading}
         {...props}
       >
-        {loading && (
-          <svg
-            className="animate-spin -ml-1 mr-2 h-4 w-4"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-          >
-            <circle
-              className="opacity-25"
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="currentColor"
-              strokeWidth="4"
-            />
-            <path
-              className="opacity-75"
-              fill="currentColor"
-              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-            />
-          </svg>
+        {leftIcon && <span className="mr-1">{leftIcon}</span>}
+        {loading ? (
+          <div className="flex items-center gap-2">
+            <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+            Loading...
+          </div>
+        ) : (
+          children
         )}
-        {!loading && leftIcon && (
-          <span className="mr-1">{leftIcon}</span>
-        )}
-        {children}
-        {!loading && rightIcon && (
-          <span className="ml-1">{rightIcon}</span>
-        )}
+        {rightIcon && <span className="ml-1">{rightIcon}</span>}
       </button>
     )
   }

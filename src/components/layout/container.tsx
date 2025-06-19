@@ -34,12 +34,12 @@ const Container: React.FC<ContainerProps> = ({
       className
     )}>
       {title && (
-        <h1 className="text-4xl font-semibold text-foreground mb-4 mt-8 tracking-tight">
+        <h1 className="text-4xl font-semibold font-serif text-foreground mb-4 mt-8 tracking-tight">
           {title}
         </h1>
       )}
       {subtitle && (
-        <p className="text-muted-foreground mb-8 text-lg leading-relaxed">
+        <p className="text-muted-foreground mb-8 text-lg leading-relaxed font-sans">
           {subtitle}
         </p>
       )}

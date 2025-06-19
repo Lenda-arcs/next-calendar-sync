@@ -5,7 +5,7 @@ import { styleUtils } from "@/lib/design-system"
 
 const inputVariants = cva(
   [
-    "flex w-full rounded-md bg-background text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium",
+    "flex w-full rounded-xl bg-background text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium font-sans",
     "placeholder:text-muted-foreground",
     styleUtils.focusRing,
     "disabled:cursor-not-allowed disabled:opacity-50",
@@ -14,9 +14,10 @@ const inputVariants = cva(
   {
     variants: {
       variant: {
-        default: "border border-input",
-        filled: "border-0 bg-muted",
-        ghost: "border-0 bg-transparent",
+        default: "backdrop-blur-sm bg-white/50 border border-white/40 shadow-md",
+        filled: "backdrop-blur-md bg-white/30 border border-white/30 shadow-lg",
+        ghost: "border-0 bg-transparent backdrop-blur-none",
+        glass: "backdrop-blur-md bg-white/20 border border-white/30 shadow-xl",
       },
       size: {
         sm: "h-8 px-3 text-sm",
@@ -25,9 +26,9 @@ const inputVariants = cva(
       },
       state: {
         default: "",
-        error: "border-red-500 focus:ring-red-500",
-        success: "border-green-500 focus:ring-green-500",
-        warning: "border-yellow-500 focus:ring-yellow-500",
+        error: "border-red-500 focus:ring-red-500 bg-red-50/30",
+        success: "border-green-500 focus:ring-green-500 bg-green-50/30",
+        warning: "border-yellow-500 focus:ring-yellow-500 bg-yellow-50/30",
       },
     },
     defaultVariants: {
@@ -48,20 +49,9 @@ export interface InputProps
 }
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ 
-    className, 
-    type, 
-    variant, 
-    size, 
-    state, 
-    leftIcon, 
-    rightIcon, 
-    error,
-    helperText,
-    ...props 
-  }, ref) => {
-    const finalState = error ? "error" : state
-
+  ({ className, variant, size, state, leftIcon, rightIcon, error, helperText, ...props }, ref) => {
+    const hasError = error || state === "error"
+    
     return (
       <div className="w-full">
         <div className="relative">
@@ -71,9 +61,8 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             </div>
           )}
           <input
-            type={type}
             className={cn(
-              inputVariants({ variant, size, state: finalState }),
+              inputVariants({ variant, size, state: hasError ? "error" : state }),
               leftIcon && "pl-10",
               rightIcon && "pr-10",
               className
@@ -88,12 +77,10 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           )}
         </div>
         {(error || helperText) && (
-          <p
-            className={cn(
-              "mt-1 text-sm",
-              error ? "text-red-600 dark:text-red-400" : "text-muted-foreground"
-            )}
-          >
+          <p className={cn(
+            "mt-1 text-xs",
+            hasError ? "text-red-600" : "text-muted-foreground"
+          )}>
             {error || helperText}
           </p>
         )}

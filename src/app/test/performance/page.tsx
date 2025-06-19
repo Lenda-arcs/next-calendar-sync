@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 
 export default function PerformanceTestPage() {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen">
       <Container 
         maxWidth="4xl" 
         title="Performance Testing" 
