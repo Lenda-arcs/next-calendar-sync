@@ -1,5 +1,5 @@
 import { createServerClient } from '@/lib/supabase-server'
-import { redirect } from 'next/navigation'
+// import { redirect } from 'next/navigation' // Temporarily disabled for development
 import Link from 'next/link'
 import { LogoutButton } from '@/components/auth'
 import { 
@@ -29,9 +29,13 @@ export default async function AppLayout({ children }: AppLayoutProps) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  if (!user) {
-    redirect('/auth/sign-in')
-  }
+  // Temporarily disable auth check for development
+  // if (!user) {
+  //   redirect('/auth/sign-in')
+  // }
+
+  // Mock user for development
+  const mockUser = user || { email: 'dev@example.com' }
 
   return (
     <div className="min-h-screen">
@@ -66,7 +70,7 @@ export default async function AppLayout({ children }: AppLayoutProps) {
             {/* User Menu */}
             <div className="flex items-center space-x-4">
               <span className="text-sm font-sans text-foreground/70 hidden sm:block">
-                {user.email}
+                {mockUser.email}
               </span>
               <LogoutButton />
             </div>
