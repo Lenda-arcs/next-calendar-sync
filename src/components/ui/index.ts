@@ -7,7 +7,6 @@ export {
   CardDescription, 
   CardContent,
   StatsCard,
-  cardVariants,
 } from './card'
 export { Input, inputVariants } from './input'
 export { Label, labelVariants } from './label'

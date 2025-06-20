@@ -5,9 +5,9 @@ import { PageSection } from '@/components/layout/page-section'
 import { TeacherHero, PublicEventList } from '@/components/events'
 
 interface PageProps {
-  params: {
+  params: Promise<{
     'teacher-slug': string
-  }
+  }>
 }
 
 export default async function PublicSchedulePage({ params }: PageProps) {

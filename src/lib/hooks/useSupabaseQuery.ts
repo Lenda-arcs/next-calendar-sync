@@ -19,8 +19,8 @@ export interface UseSupabaseQueryResult<T> {
   refetch: () => Promise<void>
 }
 
-export function useSupabaseQuery<T = any>({
-  queryKey,
+export function useSupabaseQuery<T = unknown>({
+  queryKey, // eslint-disable-line @typescript-eslint/no-unused-vars
   fetcher,
   enabled = true,
   refetchOnWindowFocus = false,
@@ -91,9 +91,9 @@ export function useSupabaseQuery<T = any>({
 }
 
 // Helper hook for common table queries
-export function useSupabaseTable<T = any>(
+export function useSupabaseTable<T = unknown>(
   tableName: string,
-  query?: (supabase: ReturnType<typeof createBrowserClient>) => any,
+  query?: (supabase: ReturnType<typeof createBrowserClient>) => unknown,
   options?: Omit<UseSupabaseQueryOptions<T>, 'queryKey' | 'fetcher'>
 ) {
   return useSupabaseQuery<T>({

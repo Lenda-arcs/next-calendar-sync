@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Form, FormField, Button, useForm } from '@/components/ui'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -11,12 +11,12 @@ import {
   Instagram, 
   Clock, 
   AlertCircle,
-  Camera,
   Check
 } from 'lucide-react'
 
 import { User } from '@/lib/types'
 import { useSupabaseUpdate } from '@/lib/hooks/useSupabaseMutation'
+import ImageUpload from '@/components/ui/image-upload'
 
 interface ProfileFormProps {
   user: User
@@ -25,74 +25,7 @@ interface ProfileFormProps {
 
 
 
-// Profile Picture Upload Component
-const ProfilePictureUpload: React.FC<{
-  currentImageUrl?: string
-  onImageChange: (file: File | null) => void
-  uploading: boolean
-}> = ({ currentImageUrl, onImageChange, uploading }) => {
-  const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const handleClick = () => {
-    fileInputRef.current?.click()
-  }
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      if (!file.type.startsWith('image/')) {
-        alert('Please select a valid image file')
-        return
-      }
-      if (file.size > 5 * 1024 * 1024) {
-        alert('Image must be smaller than 5MB')
-        return
-      }
-      onImageChange(file)
-    }
-  }
-
-  return (
-    <div className="flex flex-col items-center space-y-4">
-      <div
-        className="relative w-32 h-32 rounded-full overflow-hidden cursor-pointer group backdrop-blur-md bg-white/30 border border-white/40 shadow-xl transition-all duration-300 hover:shadow-2xl hover:scale-105"
-        onClick={handleClick}
-      >
-        {currentImageUrl ? (
-          <img
-            src={currentImageUrl}
-            alt="Profile"
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <UserIcon className="h-12 w-12 text-foreground/60" />
-          </div>
-        )}
-        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-          {uploading ? (
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white" />
-          ) : (
-            <Camera className="h-6 w-6 text-white" />
-          )}
-        </div>
-      </div>
-      
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        onChange={handleFileChange}
-        className="hidden"
-      />
-      
-      <p className="text-xs text-foreground/60 text-center">
-        Click to upload photo<br />
-        Max 5MB • JPG, PNG, WEBP
-      </p>
-    </div>
-  )
-}
 
 // Multi-Select Component for Yoga Styles
 const YogaStylesSelect: React.FC<{
@@ -258,6 +191,7 @@ export function ProfileForm({ user, onUpdate }: ProfileFormProps) {
     initialValues: {
       name: user.name ?? '',
       bio: user.bio ?? '',
+      profile_image_url: user.profile_image_url ?? '',
       public_url: user.public_url ?? '',
       timezone: user.timezone ?? 'UTC',
       instagram_url: user.instagram_url ?? '',
@@ -318,6 +252,7 @@ export function ProfileForm({ user, onUpdate }: ProfileFormProps) {
       const updateData: Partial<User> = {
         name: formData.name as string,
         bio: formData.bio as string,
+        profile_image_url: formData.profile_image_url as string,
         public_url: formData.public_url as string,
         timezone: formData.timezone as string,
         instagram_url: formData.instagram_url as string,
@@ -380,10 +315,20 @@ export function ProfileForm({ user, onUpdate }: ProfileFormProps) {
             </CardTitle>
           </CardHeader>
           <CardContent className="flex justify-center">
-            <ProfilePictureUpload
-              currentImageUrl={user.profile_image_url ?? undefined}
-              onImageChange={() => {}} // Placeholder - image upload not implemented yet
-              uploading={false}
+            <ImageUpload
+              currentImageUrl={user.profile_image_url}
+              onImageUrlChange={(url) => {
+                // Update the form data when a new image is uploaded
+                setValue('profile_image_url', url || '')
+              }}
+              userId={user.id}
+              aspectRatio={1} // Square aspect ratio for profile pictures
+              bucketName="profile-assets" // You'll need to create this bucket in Supabase
+              folderPath="avatars"
+              maxFileSize={5 * 1024 * 1024} // 5MB
+              allowedTypes={['image/jpeg', 'image/png', 'image/webp']}
+              className="w-32 h-32 rounded-full"
+              placeholderText="Change Profile Picture"
             />
           </CardContent>
         </Card>
