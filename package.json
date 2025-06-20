@@ -27,7 +27,8 @@
     "react-dom": "^19.0.0",
     "react-image-crop": "^11.0.10",
     "supabase": "^2.26.9",
-    "tailwind-merge": "^3.3.1"
+    "tailwind-merge": "^3.3.1",
+    "zustand": "^5.0.5"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

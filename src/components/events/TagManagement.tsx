@@ -22,13 +22,19 @@ export const TagManagement: React.FC<TagManagementProps> = ({
   const MAX_TAGS = 3
 
   // Convert EventTag[] to Option[] format for FormMultiSelect
-  const tagOptions = availableTags.map(tag => ({
-    value: tag.id,
-    label: tag.name || 'Unnamed Tag'
-  }))
+  const tagOptions = React.useMemo(() => 
+    availableTags
+      .filter(tag => tag && tag.id && typeof tag.id === 'string')
+      .map(tag => ({
+        value: tag.id,
+        label: tag.name || 'Unnamed Tag'
+      })), [availableTags]
+  )
 
   // Get currently selected tag IDs
-  const selectedTagIds = currentTags.map(tag => tag.id)
+  const selectedTagIds = currentTags
+    .filter(tag => tag && tag.id && typeof tag.id === 'string')
+    .map(tag => tag.id)
 
   const handleTagSelectionChange = (selectedIds: string[]) => {
     // Restrict to max 3 tags

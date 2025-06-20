@@ -7,6 +7,8 @@ import EventGrid from '@/components/events/EventGrid'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+
+import { useEventsStore, useTagsStore, useUserStore } from '@/lib/stores'
 import { 
   Settings, 
   Calendar, 
@@ -19,130 +21,124 @@ import {
 
 // Metadata is handled by the layout since this is a client component
 
-// Mock data for development - replace with actual data fetching
-const mockEvents = [
-  {
-    id: '1',
-    title: 'Morning Vinyasa Flow',
-    dateTime: 'Today, 8:00 AM',
-    location: 'Studio A',
-    imageQuery: 'yoga vinyasa flow morning',
-    tags: [
-      {
-        id: 'tag1',
-        name: 'Vinyasa',
-        color: '#8B5CF6',
-        chip: { color: '#8B5CF6' },
-        classType: ['Vinyasa'],
-        audience: ['Intermediate']
-      }
-    ],
-    start_time: new Date().toISOString()
-  },
-  {
-    id: '2',
-    title: 'Gentle Restorative Yoga',
-    dateTime: 'Tomorrow, 6:30 PM',
-    location: 'Studio B',
-    imageQuery: 'restorative yoga gentle evening',
-    tags: [
-      {
-        id: 'tag2',
-        name: 'Restorative',
-        color: '#10B981',
-        chip: { color: '#10B981' },
-        classType: ['Restorative'],
-        audience: ['Beginner', 'All Levels']
-      }
-    ],
-    start_time: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
-  }
-]
-
-const mockAvailableTags = [
-  {
-    id: 'tag1',
-    name: 'Vinyasa',
-    color: '#8B5CF6',
-    chip: { color: '#8B5CF6' },
-    classType: ['Vinyasa'],
-    audience: ['Intermediate']
-  },
-  {
-    id: 'tag2',
-    name: 'Restorative',
-    color: '#10B981',
-    chip: { color: '#10B981' },
-    classType: ['Restorative'],
-    audience: ['Beginner', 'All Levels']
-  },
-  {
-    id: 'tag3',
-    name: 'Hatha',
-    color: '#F59E0B',
-    chip: { color: '#F59E0B' },
-    classType: ['Hatha'],
-    audience: ['All Levels']
-  },
-  {
-    id: 'tag4',
-    name: 'Power Yoga',
-    color: '#EF4444',
-    chip: { color: '#EF4444' },
-    classType: ['Power'],
-    audience: ['Advanced']
-  },
-  {
-    id: 'tag5',
-    name: 'Yin Yoga',
-    color: '#6366F1',
-    chip: { color: '#6366F1' },
-    classType: ['Yin'],
-    audience: ['All Levels']
-  }
-]
-
 export default function ManageEventsPage() {
-  const [events, setEvents] = React.useState(mockEvents)
-  const [isLoading, setIsLoading] = React.useState(false)
-  const [error] = React.useState<Error | null>(null)
+  const { 
+    enhancedEvents: events, 
+    loading: eventsLoading, 
+    error: eventsError,
+    updateEventTags,
+    updateEventVisibility,
+    fetchEvents
+  } = useEventsStore()
+  
+  const { 
+    eventTags: availableTags, 
+    loading: tagsLoading, 
+    error: tagsError,
+    fetchTags,
+    fetchTagRules
+  } = useTagsStore()
 
-  const handleEventUpdate = React.useCallback((updates: {
+  const { user } = useUserStore()
+
+  const [isRefreshing, setIsRefreshing] = React.useState(false)
+
+  // Debug logging
+  React.useEffect(() => {
+    console.log('Manage Events Page - Events:', events.length, events)
+    console.log('Manage Events Page - Available Tags:', availableTags.length, availableTags)
+    console.log('Manage Events Page - User:', user)
+    console.log('Manage Events Page - Loading states:', { eventsLoading, tagsLoading })
+    console.log('Manage Events Page - Errors:', { eventsError, tagsError })
+  }, [events, availableTags, user, eventsLoading, tagsLoading, eventsError, tagsError])
+
+  const handleEventUpdate = React.useCallback(async (updates: {
     id: string
     tags: string[]
     visibility: string
   }) => {
-    console.log('Event update:', updates)
-    // Here you would typically make an API call to update the event
-    // For now, we'll just log it
+    try {
+      // Handle tag updates
+      if (updates.tags) {
+        await updateEventTags(updates.id, updates.tags)
+      }
+      
+      // Handle visibility updates
+      const isPublic = updates.visibility === 'public'
+      await updateEventVisibility(updates.id, isPublic)
+    } catch (error) {
+      console.error('Error updating event:', error)
+    }
+  }, [updateEventTags, updateEventVisibility])
+
+  const handleRefresh = React.useCallback(async () => {
+    if (!user) return
     
-    // Optionally update local state
-    setEvents(prevEvents => 
-      prevEvents.map(event => 
-        event.id === updates.id 
-          ? { 
-              ...event, 
-              // Update with new tag IDs if needed
-              tags: updates.tags.map(tagId => 
-                mockAvailableTags.find(tag => tag.id === tagId)
-              ).filter(Boolean) as typeof event.tags
-            }
-          : event
-      )
+    setIsRefreshing(true)
+    try {
+      await Promise.all([
+        fetchEvents(user.id),
+        fetchTags(user.id),
+        fetchTagRules(user.id)
+      ])
+    } catch (error) {
+      console.error('Error refreshing data:', error)
+    } finally {
+      setIsRefreshing(false)
+    }
+  }, [user, fetchEvents, fetchTags, fetchTagRules])
+
+  const isLoading = eventsLoading || tagsLoading
+  const error = eventsError || tagsError
+
+  // Convert enhanced events to BaseEventForGrid format
+  const gridEvents = React.useMemo(() => {
+    return events.map(event => ({
+      id: event.id,
+      title: event.title || 'Untitled Event',
+      dateTime: event.dateTime,
+      location: event.location,
+      imageQuery: event.imageQuery,
+      tags: event.processedTags, // Use the processed tags instead of raw database tags
+      start_time: event.start_time
+    }))
+  }, [events])
+
+  // Calculate stats
+  const publicEventsCount = events.filter(event => event.isPublic).length
+  const privateEventsCount = events.filter(event => !event.isPublic).length
+
+  if (isLoading && events.length === 0) {
+    return (
+      <Container maxWidth="4xl" className="px-4 sm:px-6 lg:px-8">
+        <PageSection>
+          <div className="flex items-center justify-center py-8">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+              <p className="text-muted-foreground">Loading events...</p>
+            </div>
+          </div>
+        </PageSection>
+      </Container>
     )
-  }, [])
+  }
 
-  const handleRefresh = React.useCallback(() => {
-    setIsLoading(true)
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false)
-      // Optionally refetch data here
-    }, 1000)
-  }, [])
-
-  const publicEventsCount = events.length // Mock - in real app, count based on visibility
-  const privateEventsCount = 0 // Mock
+  if (error && events.length === 0) {
+    return (
+      <Container maxWidth="4xl" className="px-4 sm:px-6 lg:px-8">
+        <PageSection>
+          <div className="text-center space-y-4">
+            <h1 className="text-2xl font-bold text-foreground">Error Loading Events</h1>
+            <p className="text-foreground/70">{error}</p>
+            <Button onClick={handleRefresh} variant="outline">
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Try Again
+            </Button>
+          </div>
+        </PageSection>
+      </Container>
+    )
+  }
 
   return (
     <Container maxWidth="4xl" className="px-4 sm:px-6 lg:px-8">
@@ -158,11 +154,11 @@ export default function ManageEventsPage() {
             </div>
             <Button 
               onClick={handleRefresh}
-              disabled={isLoading}
+              disabled={isRefreshing}
               variant="outline"
               size="sm"
             >
-              <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
               Refresh
             </Button>
           </div>
@@ -211,7 +207,7 @@ export default function ManageEventsPage() {
                   <Tag className="h-5 w-5 text-purple-500" />
                   <div>
                     <p className="text-sm font-medium">Available Tags</p>
-                    <p className="text-2xl font-bold">{mockAvailableTags.length}</p>
+                    <p className="text-2xl font-bold">{availableTags.length}</p>
                   </div>
                 </div>
               </CardContent>
@@ -242,20 +238,22 @@ export default function ManageEventsPage() {
                 </Button>
               </div>
               
-              <div className="mt-4">
-                <p className="text-sm text-muted-foreground mb-2">Available Tags:</p>
-                <div className="flex flex-wrap gap-2">
-                  {mockAvailableTags.map(tag => (
-                    <Badge 
-                      key={tag.id} 
-                      variant="secondary"
-                      style={{ backgroundColor: `${tag.color}20`, color: tag.color }}
-                    >
-                      {tag.name}
-                    </Badge>
-                  ))}
+              {availableTags.length > 0 && (
+                <div className="mt-4">
+                  <p className="text-sm text-muted-foreground mb-2">Available Tags:</p>
+                  <div className="flex flex-wrap gap-2">
+                    {availableTags.map(tag => (
+                      <Badge 
+                        key={tag.id} 
+                        variant="secondary"
+                        style={{ backgroundColor: `${tag.color || '#3b82f6'}20`, color: tag.color || '#3b82f6' }}
+                      >
+                        {tag.name}
+                      </Badge>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -269,17 +267,30 @@ export default function ManageEventsPage() {
             </p>
           </div>
 
-          <EventGrid
-            events={events}
-            loading={isLoading}
-            error={error}
-            variant="compact"
-            isInteractive={true}
-            availableTags={mockAvailableTags}
-            onEventUpdate={handleEventUpdate}
-            maxColumns={2}
-            className="pb-8"
-          />
+          {gridEvents.length > 0 ? (
+            <EventGrid
+              events={gridEvents}
+              loading={isLoading}
+              error={error ? new Error(error) : null}
+              variant="compact"
+              isInteractive={true}
+              availableTags={availableTags}
+              onEventUpdate={handleEventUpdate}
+              maxColumns={2}
+              className="pb-8"
+            />
+          ) : (
+            <div className="text-center py-12">
+              <h3 className="text-xl font-semibold text-foreground mb-2">No Events Found</h3>
+              <p className="text-foreground/70 mb-4">
+                You don&apos;t have any events yet. Connect your calendar feeds to start managing events.
+              </p>
+              <Button onClick={handleRefresh} variant="outline">
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Refresh Events
+              </Button>
+            </div>
+          )}
         </div>
       </PageSection>
     </Container>
