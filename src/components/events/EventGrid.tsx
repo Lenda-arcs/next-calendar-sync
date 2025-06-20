@@ -35,6 +35,8 @@ interface EventGridProps {
     tags: string[]
     visibility: string
   }) => void
+  // Grid layout constraints
+  maxColumns?: number // Maximum number of columns on desktop (1-4)
 }
 
 // Utility function to group events by date
@@ -160,6 +162,7 @@ const EventGrid: React.FC<EventGridProps> = ({
   isInteractive = false,
   availableTags = [],
   onEventUpdate,
+  maxColumns,
 }) => {
   // Group events by date
   const groupedEvents = useMemo(() => {
@@ -168,14 +171,38 @@ const EventGrid: React.FC<EventGridProps> = ({
   }, [events])
 
   const getGridClasses = () => {
+    // Apply maxColumns constraint if provided
+    const getDesktopCols = (defaultCols: number) => {
+      if (maxColumns && maxColumns < defaultCols) {
+        return maxColumns
+      }
+      return defaultCols
+    }
+
+    const actualCols = {
+      full: getDesktopCols(2),
+      minimal: getDesktopCols(4),
+      compact: getDesktopCols(3)
+    }
+
+    const currentCols = actualCols[variant] || actualCols.compact
+
+    // Map to explicit Tailwind classes
+    const colClasses = {
+      1: 'md:grid-cols-1',
+      2: 'md:grid-cols-2', 
+      3: 'md:grid-cols-3',
+      4: 'md:grid-cols-4'
+    }
+
     switch (variant) {
       case 'full':
-        return 'grid grid-cols-1 md:grid-cols-2 gap-8'
+        return `grid grid-cols-1 ${colClasses[currentCols as keyof typeof colClasses]} gap-8`
       case 'minimal':
-        return 'grid grid-cols-1 md:grid-cols-4 gap-4'
+        return `grid grid-cols-1 ${colClasses[currentCols as keyof typeof colClasses]} gap-4`
       case 'compact':
       default:
-        return 'grid grid-cols-1 md:grid-cols-3 gap-6'
+        return `grid grid-cols-1 ${colClasses[currentCols as keyof typeof colClasses]} gap-6`
     }
   }
 

@@ -145,7 +145,7 @@ export default function ManageEventsPage() {
   const privateEventsCount = 0 // Mock
 
   return (
-    <Container maxWidth="full" className="px-4 sm:px-6 lg:px-8">
+    <Container maxWidth="4xl" className="px-4 sm:px-6 lg:px-8">
       <PageSection>
         {/* Header */}
         <div className="flex flex-col gap-6 mb-8">
@@ -277,6 +277,7 @@ export default function ManageEventsPage() {
             isInteractive={true}
             availableTags={mockAvailableTags}
             onEventUpdate={handleEventUpdate}
+            maxColumns={2}
             className="pb-8"
           />
         </div>
