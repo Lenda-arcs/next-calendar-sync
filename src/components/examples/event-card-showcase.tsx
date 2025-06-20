@@ -10,6 +10,7 @@ import { EventTag, EventDisplayVariant } from '@/lib/event-types'
 const mockTags: EventTag[] = [
   {
     id: '1',
+    slug: 'vinyasa',
     name: 'Vinyasa',
     color: '#8B5CF6',
     classType: ['Vinyasa', 'Flow'],
@@ -19,6 +20,7 @@ const mockTags: EventTag[] = [
   },
   {
     id: '2',
+    slug: 'hot-yoga',
     name: 'Hot Yoga',
     color: '#EF4444',
     classType: ['Hot Yoga'],
@@ -28,6 +30,7 @@ const mockTags: EventTag[] = [
   },
   {
     id: '3',
+    slug: 'book-now',
     name: 'Book Now',
     color: '#10B981',
     cta: {

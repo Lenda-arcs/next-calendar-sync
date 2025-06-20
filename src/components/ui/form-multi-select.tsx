@@ -57,12 +57,10 @@ const FormMultiSelect: React.FC<FormMultiSelectProps> = ({
   }
 
   const getSelectedLabels = () => {
-    return value
-      .filter((val) => val && typeof val === 'string') // Filter out null/undefined values
-      .map((val) => {
-        const option = options.find((opt) => opt.value === val)
-        return { value: val, label: option?.label || val }
-      })
+    return value.map((val) => {
+      const option = options.find((opt) => opt.value === val)
+      return { value: val, label: option?.label || val }
+    })
   }
 
   const isMaxReached = maxSelections ? value.length >= maxSelections : false
@@ -115,9 +113,7 @@ const FormMultiSelect: React.FC<FormMultiSelectProps> = ({
           style={{ width: 'var(--radix-popover-trigger-width)' }}
         >
           <div className="max-h-48 overflow-y-auto">
-            {options
-              .filter((option) => option && option.value && typeof option.value === 'string')
-              .map((option) => {
+            {options.map((option) => {
               const isSelected = value.includes(option.value)
               const isDisabled = !isSelected && isMaxReached
               

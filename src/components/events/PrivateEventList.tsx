@@ -3,11 +3,12 @@
 import React from 'react'
 import { PublicEvent, Tag } from '@/lib/types'
 import { EventCard } from './EventCard'
-import { formatEventDateTime } from '@/lib/date-utils'
+
 import { Calendar, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { type EventDisplayVariant, type EventTag, convertToEventTag } from '@/lib/event-types'
+import { type EventDisplayVariant } from '@/lib/event-types'
 import { useSupabaseQuery } from '@/lib/hooks/useSupabaseQuery'
+import { convertEventToCardProps } from '@/lib/event-utils'
 
 interface PrivateEventListProps {
   userId: string
@@ -92,68 +93,8 @@ const PrivateEventList: React.FC<PrivateEventListProps> = ({
     }
   }
 
-  // Convert PublicEvent to EventCard props with tag matching
-  const convertToEventCardProps = (event: PublicEvent): {
-    id: string
-    title: string
-    dateTime: string
-    location: string | null
-    imageQuery: string
-    tags: EventTag[]
-  } => {
-    // Format datetime using timezone-aware utility
-    const dateTime = formatEventDateTime(event.start_time, event.end_time)
-
-    // Process tags
-    const matchedTags: EventTag[] = []
-    if (event.tags && (userTags || globalTags)) {
-      const allTags = [...(userTags || []), ...(globalTags || [])]
-      const tagMap = new Map<string, Tag>()
-      
-      allTags.forEach(tag => {
-        if (tag.name) {
-          tagMap.set(tag.name.toLowerCase(), tag)
-        }
-      })
-
-      event.tags.forEach(tagName => {
-        const tag = tagMap.get(tagName.toLowerCase())
-        if (tag) {
-          matchedTags.push(convertToEventTag(tag))
-        }
-      })
-    }
-
-    // Use actual image URL from database if available, otherwise try tag images, then fallback to search query
-    let imageQuery: string
-    if (event.image_url) {
-      imageQuery = event.image_url
-    } else {
-      // Try to find an image from the matched tags
-      const tagWithImage = matchedTags.find(tag => tag.imageUrl)
-      if (tagWithImage?.imageUrl) {
-        imageQuery = tagWithImage.imageUrl
-      } else {
-        // Generate image query from available data as fallback
-        const parts = []
-        if (event.title) parts.push(event.title)
-        if (event.location) parts.push(event.location)
-        if (event.tags && event.tags.length > 0) {
-          parts.push(...event.tags.slice(0, 2))
-        }
-        imageQuery = parts.join(' ').toLowerCase() || 'yoga class'
-      }
-    }
-
-    return {
-      id: event.id || 'unknown',
-      title: event.title || 'Untitled Event',
-      dateTime,
-      location: event.location,
-      imageQuery,
-      tags: matchedTags,
-    }
-  }
+  // Get all available tags for processing
+  const allAvailableTags = [...(userTags || []), ...(globalTags || [])]
 
   // Loading state
   const isLoading = eventsLoading || userTagsLoading || globalTagsLoading
@@ -200,7 +141,7 @@ const PrivateEventList: React.FC<PrivateEventListProps> = ({
       {events.map((event) => (
         <div key={event.id} className="flex flex-col">
           <EventCard
-            {...convertToEventCardProps(event)}
+            {...convertEventToCardProps(event, allAvailableTags)}
             variant={variant}
           />
         </div>

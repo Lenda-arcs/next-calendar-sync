@@ -3,6 +3,7 @@ import { Event, Tag } from './types'
 // Enhanced event tag interface that combines database tag with additional display properties
 export interface EventTag {
   id: string
+  slug: string | null
   name: string | null
   color: string | null
   imageUrl?: string | null
@@ -35,6 +36,7 @@ export type EventDisplayVariant = 'minimal' | 'compact' | 'full'
 export function convertToEventTag(dbTag: Tag): EventTag {
   return {
     id: dbTag.id,
+    slug: dbTag.slug,
     name: dbTag.name,
     color: dbTag.color,
     imageUrl: dbTag.image_url,

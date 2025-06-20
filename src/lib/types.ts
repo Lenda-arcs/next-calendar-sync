@@ -70,6 +70,7 @@ export const exampleEvents: Array<{
     tags: [
       { 
         id: 'tag-1', 
+        slug: 'vinyasa',
         name: 'Vinyasa', 
         color: '#8B5CF6',
         classType: ['Vinyasa'],
@@ -79,6 +80,7 @@ export const exampleEvents: Array<{
       },
       { 
         id: 'tag-2', 
+        slug: 'all-levels',
         name: 'All Levels', 
         color: '#10B981',
         audience: ['All Levels'],
@@ -86,6 +88,7 @@ export const exampleEvents: Array<{
       },
       { 
         id: 'tag-3', 
+        slug: 'morning',
         name: 'Morning', 
         color: '#F59E0B',
         chip: { color: '#F59E0B' },
@@ -106,6 +109,7 @@ export const exampleEvents: Array<{
     tags: [
       { 
         id: 'tag-4', 
+        slug: 'restorative',
         name: 'Restorative', 
         color: '#EC4899',
         classType: ['Restorative'],
@@ -115,6 +119,7 @@ export const exampleEvents: Array<{
       },
       { 
         id: 'tag-5', 
+        slug: 'beginner-friendly',
         name: 'Beginner Friendly', 
         color: '#06B6D4',
         audience: ['Beginner Friendly'],
@@ -122,6 +127,7 @@ export const exampleEvents: Array<{
       },
       { 
         id: 'tag-6', 
+        slug: 'evening',
         name: 'Evening', 
         color: '#8B5CF6',
         chip: { color: '#8B5CF6' },
@@ -142,6 +148,7 @@ export const exampleEvents: Array<{
     tags: [
       { 
         id: 'tag-7', 
+        slug: 'power-yoga',
         name: 'Power Yoga', 
         color: '#EF4444',
         classType: ['Power Yoga'],
@@ -151,6 +158,7 @@ export const exampleEvents: Array<{
       },
       { 
         id: 'tag-8', 
+        slug: 'advanced',
         name: 'Advanced', 
         color: '#F97316',
         audience: ['Advanced'],
@@ -158,6 +166,7 @@ export const exampleEvents: Array<{
       },
       { 
         id: 'tag-9', 
+        slug: 'full',
         name: 'Full', 
         color: '#6B7280',
         chip: { color: '#6B7280' }

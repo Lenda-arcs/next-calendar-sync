@@ -61,14 +61,15 @@ export const InteractiveEventCard = React.memo<InteractiveEventCardProps>(
         const statusToUse = newPublicStatus !== undefined ? newPublicStatus : publicStatus
         
         // Only send custom tags (filter out auto-generated ones)
-        const autoTagIds = autoTags.map((tag) => tag.id)
-        const customTagIds = tagsToUse
-          .map((tag) => tag.id)
-          .filter((id) => !autoTagIds.includes(id))
+        const autoTagSlugs = autoTags.map((tag) => tag.slug).filter((slug): slug is string => slug !== null)
+        const customTagSlugs = tagsToUse
+          .map((tag) => tag.slug)
+          .filter((slug): slug is string => slug !== null)
+          .filter((slug) => !autoTagSlugs.includes(slug))
 
         onUpdate({
           id,
-          tags: customTagIds,
+          tags: customTagSlugs,
           visibility: statusToUse ? 'public' : 'private',
         })
       }

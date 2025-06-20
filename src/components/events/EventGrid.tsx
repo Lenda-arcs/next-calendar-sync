@@ -308,8 +308,8 @@ const EventGrid: React.FC<EventGridProps> = ({
 
               {/* Events Grid for this day */}
               <div className="grid grid-cols-1 gap-6">
-                {dayEvents.map((event) => (
-                  <div key={`${dateKey}-${event.id}`} className="flex flex-col">
+                {dayEvents.map((event, index) => (
+                  <div key={`${dateKey}-${index}`} className="flex flex-col">
                     {isInteractive ? (
                       <InteractiveEventCard
                         id={event.id}
@@ -344,8 +344,8 @@ const EventGrid: React.FC<EventGridProps> = ({
       {/* Desktop Layout: Clean grid with date badges */}
       <div className="hidden md:block">
         <div className={getGridClasses()}>
-          {flattenedEvents.map(({ event, dayLabel, isFirstOfDay }) => (
-            <div key={`desktop-${event.id}`} className="flex flex-col relative">
+          {flattenedEvents.map(({ event, dayLabel, isFirstOfDay }, index) => (
+            <div key={`desktop-${index}`} className="flex flex-col relative">
               {isFirstOfDay && <DateBadge label={dayLabel} />}
               {isInteractive ? (
                 <InteractiveEventCard

@@ -4,12 +4,13 @@ import React, { useMemo } from 'react'
 import { PublicEvent, Tag } from '@/lib/types'
 import { EventCard } from './EventCard'
 import { parseISO, isToday, isTomorrow, isThisWeek, format } from 'date-fns'
-import { formatEventDateTime } from '@/lib/date-utils'
+
 import { Card, CardContent } from '@/components/ui/card'
 import { Calendar, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { type EventDisplayVariant, type EventTag, convertToEventTag } from '@/lib/event-types'
+import { type EventDisplayVariant, type EventTag } from '@/lib/event-types'
 import { useSupabaseQuery } from '@/lib/hooks/useSupabaseQuery'
+import { convertEventToCardProps, processEventTags } from '@/lib/event-utils'
 
 // Enhanced PublicEvent with matched tags
 interface EnhancedPublicEvent extends PublicEvent {
@@ -136,81 +137,20 @@ const PublicEventList: React.FC<PublicEventListProps> = ({
     return { label, compact }
   }
 
-  // Convert EnhancedPublicEvent to EventCard props
-  const convertToEventCardProps = (event: EnhancedPublicEvent): {
-    id: string
-    title: string
-    dateTime: string
-    location: string | null
-    imageQuery: string
-    tags: EventTag[]
-    variant?: EventDisplayVariant
-  } => {
-    // Format datetime using timezone-aware utility
-    const dateTime = formatEventDateTime(event.start_time, event.end_time)
 
-    // Use actual image URL from database if available, otherwise try tag images, then fallback to search query
-    let imageQuery: string
-    if (event.image_url) {
-      imageQuery = event.image_url
-    } else {
-      // Try to find an image from the matched tags
-      const tagWithImage = event.matchedTags.find(tag => tag.imageUrl)
-      if (tagWithImage?.imageUrl) {
-        imageQuery = tagWithImage.imageUrl
-      } else {
-        // Generate image query from available data as fallback
-        const parts = []
-        if (event.title) parts.push(event.title)
-        if (event.location) parts.push(event.location)
-        if (event.tags && event.tags.length > 0) {
-          parts.push(...event.tags.slice(0, 2))
-        }
-        imageQuery = parts.join(' ').toLowerCase() || 'yoga class'
-      }
-    }
 
-    return {
-      id: event.id || 'unknown',
-      title: event.title || 'Untitled Event',
-      dateTime,
-      location: event.location,
-      imageQuery,
-      tags: event.matchedTags,
-    }
-  }
+  // Get all available tags for processing
+  const allAvailableTags = [...(userTags || []), ...(globalTags || [])]
 
   // Enhanced events with matched tags
   const enhancedEvents: EnhancedPublicEvent[] = useMemo(() => {
-    if (!events || !userTags || !globalTags) return []
+    if (!events || !allAvailableTags.length) return []
 
-    const allTags = [...userTags, ...globalTags]
-    const tagMap = new Map<string, Tag>()
-    
-    allTags.forEach(tag => {
-      if (tag.name) {
-        tagMap.set(tag.name.toLowerCase(), tag)
-      }
-    })
-
-    return events.map(event => {
-      const matchedTags: EventTag[] = []
-      
-      if (event.tags) {
-        event.tags.forEach(tagName => {
-          const tag = tagMap.get(tagName.toLowerCase())
-          if (tag) {
-            matchedTags.push(convertToEventTag(tag))
-          }
-        })
-      }
-
-      return {
-        ...event,
-        matchedTags
-      }
-    })
-  }, [events, userTags, globalTags])
+    return events.map(event => ({
+      ...event,
+      matchedTags: processEventTags(event.tags, allAvailableTags)
+    }))
+  }, [events, allAvailableTags])
 
   // Process data for layouts
   const groupedEvents = useMemo(() => groupEventsByDate(enhancedEvents), [enhancedEvents])
@@ -232,12 +172,12 @@ const PublicEventList: React.FC<PublicEventListProps> = ({
     return groupedEvents.flatMap(({ date, events: dayEvents }) => {
       const { compact } = getDateHeader(date)
       return dayEvents.map((event, index) => ({
-        event: convertToEventCardProps(event),
+        event: convertEventToCardProps(event, allAvailableTags),
         dayLabel: compact,
         isFirstOfDay: index === 0,
       }))
     })
-  }, [groupedEvents])
+  }, [groupedEvents, allAvailableTags])
 
   // Loading state
   const isLoading = eventsLoading || userTagsLoading || globalTagsLoading
@@ -319,7 +259,7 @@ const PublicEventList: React.FC<PublicEventListProps> = ({
                 {dayEvents.map((event, index) => (
                   <div key={`${dateKey}-${index}`} className="flex flex-col">
                     <EventCard
-                      {...convertToEventCardProps(event)}
+                      {...convertEventToCardProps(event, allAvailableTags)}
                       variant={variant}
                     />
                   </div>

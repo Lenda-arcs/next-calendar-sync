@@ -2,7 +2,8 @@
 
 import React, { useState } from 'react'
 import { cn } from '@/lib/utils'
-import { ChevronLeft, ChevronRight, Image as ImageIcon } from 'lucide-react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
+import placeholderImage from '@/assets/placeholder_blur.png'
 
 interface ImageGalleryProps {
   images: string[]
@@ -14,7 +15,9 @@ export function ImageGallery({ images, title, className }: ImageGalleryProps) {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [imageErrors, setImageErrors] = useState<Set<number>>(new Set())
 
-  const validImages = images.filter((_, index) => !imageErrors.has(index))
+  // Filter out empty strings and images with errors
+  const validImages = images
+    .filter((image, index) => image && image.trim() !== '' && !imageErrors.has(index))
   const hasMultipleImages = validImages.length > 1
 
   const handleImageError = (index: number) => {
@@ -33,30 +36,27 @@ export function ImageGallery({ images, title, className }: ImageGalleryProps) {
     }
   }
 
-  if (validImages.length === 0) {
-    return (
-      <div className={cn(
-        "w-full h-full bg-muted rounded-lg flex items-center justify-center",
-        className
-      )}>
-        <div className="text-center text-muted-foreground">
-          <ImageIcon className="h-8 w-8 mx-auto mb-2 opacity-50" />
-          <p className="text-sm">No image available</p>
-        </div>
-      </div>
-    )
-  }
+  // Use placeholder image when no valid images are available
+  const displayImage = validImages.length > 0 ? validImages[currentIndex] : (typeof placeholderImage === 'string' ? placeholderImage : placeholderImage.src)
+  const isPlaceholder = validImages.length === 0
 
   return (
     <div className={cn("relative w-full h-full group", className)}>
       <img
-        src={validImages[currentIndex]}
-        alt={title}
-        className="w-full h-full object-cover rounded-lg"
-        onError={() => handleImageError(currentIndex)}
+        src={displayImage}
+        alt={isPlaceholder ? 'Event placeholder image' : title}
+        className={cn(
+          "w-full h-full object-cover rounded-lg",
+          isPlaceholder && "opacity-80"
+        )}
+        onError={() => {
+          if (!isPlaceholder) {
+            handleImageError(currentIndex)
+          }
+        }}
       />
 
-      {/* Navigation arrows - only show if multiple images */}
+      {/* Navigation arrows - only show if multiple valid images */}
       {hasMultipleImages && (
         <>
           <button
@@ -76,7 +76,7 @@ export function ImageGallery({ images, title, className }: ImageGalleryProps) {
         </>
       )}
 
-      {/* Image indicators - only show if multiple images */}
+      {/* Image indicators - only show if multiple valid images */}
       {hasMultipleImages && (
         <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex space-x-1">
           {validImages.map((_, index) => (
