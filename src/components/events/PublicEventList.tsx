@@ -3,7 +3,8 @@
 import React, { useMemo } from 'react'
 import { PublicEvent, Tag } from '@/lib/types'
 import { EventCard } from './EventCard'
-import { format, parseISO, isToday, isTomorrow, isThisWeek } from 'date-fns'
+import { parseISO, isToday, isTomorrow, isThisWeek, format } from 'date-fns'
+import { formatEventDateTime } from '@/lib/date-utils'
 import { Card, CardContent } from '@/components/ui/card'
 import { Calendar, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -135,6 +136,50 @@ const PublicEventList: React.FC<PublicEventListProps> = ({
     return { label, compact }
   }
 
+  // Convert EnhancedPublicEvent to EventCard props
+  const convertToEventCardProps = (event: EnhancedPublicEvent): {
+    id: string
+    title: string
+    dateTime: string
+    location: string | null
+    imageQuery: string
+    tags: EventTag[]
+    variant?: EventDisplayVariant
+  } => {
+    // Format datetime using timezone-aware utility
+    const dateTime = formatEventDateTime(event.start_time, event.end_time)
+
+    // Use actual image URL from database if available, otherwise try tag images, then fallback to search query
+    let imageQuery: string
+    if (event.image_url) {
+      imageQuery = event.image_url
+    } else {
+      // Try to find an image from the matched tags
+      const tagWithImage = event.matchedTags.find(tag => tag.imageUrl)
+      if (tagWithImage?.imageUrl) {
+        imageQuery = tagWithImage.imageUrl
+      } else {
+        // Generate image query from available data as fallback
+        const parts = []
+        if (event.title) parts.push(event.title)
+        if (event.location) parts.push(event.location)
+        if (event.tags && event.tags.length > 0) {
+          parts.push(...event.tags.slice(0, 2))
+        }
+        imageQuery = parts.join(' ').toLowerCase() || 'yoga class'
+      }
+    }
+
+    return {
+      id: event.id || 'unknown',
+      title: event.title || 'Untitled Event',
+      dateTime,
+      location: event.location,
+      imageQuery,
+      tags: event.matchedTags,
+    }
+  }
+
   // Enhanced events with matched tags
   const enhancedEvents: EnhancedPublicEvent[] = useMemo(() => {
     if (!events || !userTags || !globalTags) return []
@@ -193,56 +238,6 @@ const PublicEventList: React.FC<PublicEventListProps> = ({
       }))
     })
   }, [groupedEvents])
-
-  // Convert EnhancedPublicEvent to EventCard props
-  const convertToEventCardProps = (event: EnhancedPublicEvent): {
-    id: string
-    title: string
-    dateTime: string
-    location: string | null
-    imageQuery: string
-    tags: EventTag[]
-    variant?: EventDisplayVariant
-  } => {
-    const startTime = event.start_time ? parseISO(event.start_time) : new Date()
-    const endTime = event.end_time ? parseISO(event.end_time) : null
-    
-    // Format datetime string
-    const dateTime = format(startTime, 'EEE MMM d') + 
-      ' • ' + 
-      format(startTime, 'h:mm a') + 
-      (endTime ? ' - ' + format(endTime, 'h:mm a') : '')
-
-    // Use actual image URL from database if available, otherwise try tag images, then fallback to search query
-    let imageQuery: string
-    if (event.image_url) {
-      imageQuery = event.image_url
-    } else {
-      // Try to find an image from the matched tags
-      const tagWithImage = event.matchedTags.find(tag => tag.imageUrl)
-      if (tagWithImage?.imageUrl) {
-        imageQuery = tagWithImage.imageUrl
-      } else {
-        // Generate image query from available data as fallback
-        const parts = []
-        if (event.title) parts.push(event.title)
-        if (event.location) parts.push(event.location)
-        if (event.tags && event.tags.length > 0) {
-          parts.push(...event.tags.slice(0, 2))
-        }
-        imageQuery = parts.join(' ').toLowerCase() || 'yoga class'
-      }
-    }
-
-    return {
-      id: event.id || 'unknown',
-      title: event.title || 'Untitled Event',
-      dateTime,
-      location: event.location,
-      imageQuery,
-      tags: event.matchedTags,
-    }
-  }
 
   // Loading state
   const isLoading = eventsLoading || userTagsLoading || globalTagsLoading

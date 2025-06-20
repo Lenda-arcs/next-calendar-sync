@@ -1,9 +1,12 @@
 import { createServerClient } from '@/lib/supabase-server'
 import { Container } from '@/components/layout/container'
+import { PageSection } from '@/components/layout/page-section'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { CopyLinkButton } from '@/components/ui/copy-link-button'
+import { PrivateEventList } from '@/components/events'
 import Link from 'next/link'
-import { Calendar, Users, Clock, BarChart3, Plus } from 'lucide-react'
+import { Calendar, Settings, Eye, Tags, Receipt, Link as LinkIcon } from 'lucide-react'
 
 export default async function DashboardPage() {
   const supabase = await createServerClient()
@@ -12,150 +15,229 @@ export default async function DashboardPage() {
     data: { session },
   } = await supabase.auth.getSession()
 
-  // Get user statistics
+  // Get user data
   const userId = session?.user.id
   if (!userId) {
     return <div>Authentication required</div>
   }
 
+  // Fetch user profile and statistics
   const [
-    { count: eventsCount },
-    { count: feedsCount },
-    { count: tagsCount }
+    { data: userData },
+    { count: feedsCount }
   ] = await Promise.all([
-    supabase.from('events').select('*', { count: 'exact', head: true }).eq('user_id', userId),
-    supabase.from('calendar_feeds').select('*', { count: 'exact', head: true }).eq('user_id', userId),
-    supabase.from('tags').select('*', { count: 'exact', head: true }).eq('user_id', userId)
+    supabase.from('users').select('*').eq('id', userId).single(),
+    supabase.from('calendar_feeds').select('*', { count: 'exact', head: true }).eq('user_id', userId)
   ])
 
+  const user = userData || null
+  const userFeedCount = feedsCount || 0
+  const hasFeeds = userFeedCount > 0
+
+  // Calendar feed CTA
+  const calendarFeedCtaText = hasFeeds 
+    ? `Connected Calendar Feeds (${userFeedCount})` 
+    : "+ Add Calendar Feed"
+  const calendarFeedCtaLink = hasFeeds ? "/app/calendar-feeds" : "/app/add-calendar"
+
+  // Generate public schedule URL
+  const publicUrl = user?.public_url 
+    ? `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/schedule/${user.public_url}`
+    : null
+  const hasCustomUrl = !!user?.public_url
+  const shareLabel = hasCustomUrl
+    ? "Your public schedule:"
+    : "Your public schedule (customize in profile):"
+
   return (
-    <div className="p-6">
-      <Container>
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            Dashboard
-          </h1>
-          <p className="text-gray-600 dark:text-gray-300 mt-2">
-            Welcome back! Here&apos;s an overview of your calendar sync.
-          </p>
-        </div>
-
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <Calendar className="h-8 w-8 text-blue-600" />
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
-                    Total Events
-                  </p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                    {eventsCount || 0}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <Users className="h-8 w-8 text-green-600" />
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
-                    Calendar Feeds
-                  </p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                    {feedsCount || 0}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <Clock className="h-8 w-8 text-orange-600" />
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
-                    Tags
-                  </p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                    {tagsCount || 0}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <BarChart3 className="h-8 w-8 text-purple-600" />
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
-                    This Month
-                  </p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                    --
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Quick Actions */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card>
+    <div className="min-h-screen">
+      <Container 
+        title={`Welcome, ${user?.name || 'Friend'}`}
+        subtitle="Manage your yoga class schedule and profile"
+        maxWidth="4xl"
+      >
+        {/* Your Upcoming Classes Section */}
+        <PageSection>
+          <Card variant="glass">
             <CardHeader>
-              <CardTitle>Quick Actions</CardTitle>
-              <CardDescription>
-                Get started with managing your calendar and events.
-              </CardDescription>
+              <CardTitle className="flex items-center gap-2 font-serif">
+                <Calendar className="h-5 w-5" />
+                Your Upcoming Classes
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
-                <Button asChild className="w-full justify-start">
-                  <Link href="/app/manage-events">
-                    <Calendar className="mr-2 h-4 w-4" />
-                    Manage Events
-                  </Link>
-                </Button>
-                <Button asChild variant="outline" className="w-full justify-start">
-                  <Link href="/app/manage-tags">
-                    <Plus className="mr-2 h-4 w-4" />
-                    Create Tags
-                  </Link>
-                </Button>
-                <Button asChild variant="outline" className="w-full justify-start">
-                  <Link href="/app/profile">
-                    <Users className="mr-2 h-4 w-4" />
-                    Update Profile
-                  </Link>
-                </Button>
-              </div>
+              {hasFeeds ? (
+                <div>
+                  <PrivateEventList
+                    userId={userId}
+                    eventCount={3}
+                  />
+                  <div className="mt-6 text-right">
+                    <Link 
+                      href="/app/manage-events"
+                      className="text-sm text-primary hover:text-primary/80 hover:underline font-medium"
+                    >
+                      View all events →
+                    </Link>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-muted-foreground text-sm py-4">
+                  Connect your calendar to see your upcoming classes here.
+                </p>
+              )}
             </CardContent>
           </Card>
+        </PageSection>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Recent Activity</CardTitle>
-              <CardDescription>
-                Your latest calendar sync activities.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                <Clock className="mx-auto h-12 w-12 mb-4 opacity-50" />
-                <p>No recent activity to show</p>
-                <p className="text-sm">Activities will appear here once you start syncing.</p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        {/* Calendar Actions Section */}
+        <PageSection title="Calendar Actions">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Calendar Feeds */}
+                         <Card variant="outlined">
+               <CardHeader>
+                 <CardTitle className="text-lg">Calendar Feeds</CardTitle>
+                 <CardDescription>
+                   Connect and manage your calendar feeds.
+                 </CardDescription>
+               </CardHeader>
+               <CardContent>
+                 <Button 
+                   variant="secondary" 
+                   asChild 
+                   className="w-full"
+                 >
+                   <Link href={calendarFeedCtaLink}>
+                     <Settings className="mr-2 h-4 w-4" />
+                     {calendarFeedCtaText}
+                   </Link>
+                 </Button>
+               </CardContent>
+             </Card>
+ 
+             {/* Public Schedule */}
+             {publicUrl && (
+               <Card variant="outlined">
+                 <CardHeader>
+                   <CardTitle className="text-lg">Public Schedule</CardTitle>
+                   <CardDescription>
+                     See how your schedule appears to your students.
+                   </CardDescription>
+                 </CardHeader>
+                 <CardContent>
+                   <div className="flex items-center gap-2">
+                     <CopyLinkButton
+                       url={publicUrl}
+                       showLabel={false}
+                       label={shareLabel}
+                       buttonText="Share"
+                     />
+                     <Button 
+                       variant="secondary" 
+                       asChild 
+                       className="flex-1"
+                     >
+                       <Link href={publicUrl}>
+                         <Eye className="mr-2 h-4 w-4" />
+                         View Public Page
+                       </Link>
+                     </Button>
+                   </div>
+                 </CardContent>
+               </Card>
+             )}
+ 
+             {/* Manage Events */}
+             <Card variant="outlined">
+               <CardHeader>
+                 <CardTitle className="text-lg">View Your Events</CardTitle>
+                 <CardDescription>
+                   Review and manage all your imported calendar events.
+                 </CardDescription>
+               </CardHeader>
+               <CardContent>
+                 <Button 
+                   variant="default" 
+                   asChild 
+                   className="w-full"
+                 >
+                   <Link href="/app/manage-events">
+                     <Calendar className="mr-2 h-4 w-4" />
+                     Manage Events
+                   </Link>
+                 </Button>
+               </CardContent>
+             </Card>
+ 
+             {/* Tag Rules */}
+             <Card variant="outlined">
+               <CardHeader>
+                 <CardTitle className="text-lg">Tag Rules</CardTitle>
+                 <CardDescription>
+                   Automatically tag your events using keywords.
+                 </CardDescription>
+               </CardHeader>
+               <CardContent>
+                 <Button 
+                   variant="default" 
+                   asChild 
+                   className="w-full"
+                 >
+                   <Link href="/app/manage-tags">
+                     <Tags className="mr-2 h-4 w-4" />
+                     Manage Tag Rules
+                   </Link>
+                 </Button>
+               </CardContent>
+             </Card>
+ 
+             {/* Invoice Management */}
+             <Card variant="outlined">
+               <CardHeader>
+                 <CardTitle className="text-lg">Invoice Management</CardTitle>
+                 <CardDescription>
+                   Create studio profiles and generate invoices.
+                 </CardDescription>
+               </CardHeader>
+               <CardContent>
+                 <Button 
+                   variant="default" 
+                   asChild 
+                   className="w-full"
+                 >
+                   <Link href="/app/manage-invoices">
+                     <Receipt className="mr-2 h-4 w-4" />
+                     Manage Invoices
+                   </Link>
+                 </Button>
+               </CardContent>
+             </Card>
+ 
+             {/* Profile Setup (if no public URL) */}
+             {!hasCustomUrl && (
+               <Card variant="outlined">
+                <CardHeader>
+                  <CardTitle className="text-lg">Setup Profile</CardTitle>
+                  <CardDescription>
+                    Complete your profile to enable your public schedule.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button 
+                    variant="outline" 
+                    asChild 
+                    className="w-full"
+                  >
+                    <Link href="/app/profile">
+                      <LinkIcon className="mr-2 h-4 w-4" />
+                      Complete Profile
+                    </Link>
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        </PageSection>
       </Container>
     </div>
   )

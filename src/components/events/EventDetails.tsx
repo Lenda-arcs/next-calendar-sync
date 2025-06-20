@@ -18,40 +18,8 @@ export function EventDetails({
   variant = 'compact',
   className
 }: EventDetailsProps) {
-  // Format the date time
-  const formatDateTime = (dateTimeStr: string) => {
-    try {
-      const date = new Date(dateTimeStr)
-      const now = new Date()
-      const isToday = date.toDateString() === now.toDateString()
-      const isTomorrow = date.toDateString() === new Date(now.getTime() + 24 * 60 * 60 * 1000).toDateString()
-      
-      let dateStr = ''
-      if (isToday) {
-        dateStr = 'Today'
-      } else if (isTomorrow) {
-        dateStr = 'Tomorrow'
-      } else {
-        dateStr = date.toLocaleDateString(undefined, { 
-          weekday: 'short', 
-          month: 'short', 
-          day: 'numeric' 
-        })
-      }
-      
-      const timeStr = date.toLocaleTimeString(undefined, {
-        hour: 'numeric',
-        minute: '2-digit',
-        hour12: true
-      })
-      
-      return { dateStr, timeStr, fullDate: date }
-    } catch {
-      return { dateStr: 'Invalid date', timeStr: '', fullDate: null }
-    }
-  }
-
-  const { dateStr, timeStr } = formatDateTime(dateTime)
+  // The dateTime is already formatted by the parent component
+  // No need to reformat it here
 
   // Variant-specific styling
   const getTitleClasses = () => {
@@ -91,13 +59,7 @@ export function EventDetails({
         <div className={cn('flex items-center', getMetaClasses())}>
           {shouldShowIcons && <Calendar className="h-3 w-3 mr-1 flex-shrink-0" />}
           <span className="truncate">
-            {dateStr}
-            {timeStr && (
-              <>
-                {variant === 'minimal' ? ' • ' : ' at '}
-                {timeStr}
-              </>
-            )}
+            {dateTime}
           </span>
         </div>
 
