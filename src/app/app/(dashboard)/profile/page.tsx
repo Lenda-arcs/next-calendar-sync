@@ -1,41 +1,61 @@
-'use client'
-
 import { Container } from '@/components/layout/container'
 import { ProfileForm } from '@/components/auth'
+import { createServerClient } from '@/lib/supabase-server'
+import { redirect } from 'next/navigation'
+import { User } from '@/lib/types'
 
-interface User {
-  id: string
-  email: string
-  name?: string
-  bio?: string
-  profile_image_url?: string
-  public_url?: string
-  timezone?: string
-  instagram_url?: string
-  website_url?: string
-  yoga_styles?: string[]
-  event_display_variant?: 'minimal' | 'compact' | 'full'
-}
+export default async function ProfilePage() {
+  const supabase = await createServerClient()
 
-// Mock user data for development
-const mockUser = {
-  id: '123e4567-e89b-12d3-a456-426614174000',
-  email: 'user@example.com',
-  name: 'John Doe',
-  bio: 'Passionate yoga instructor with 10+ years of experience teaching various styles including Vinyasa, Hatha, and Restorative yoga.',
-  profile_image_url: undefined as string | undefined,
-  public_url: 'john-doe',
-  timezone: 'UTC',
-  instagram_url: 'https://instagram.com/johndoe',
-  website_url: 'https://johndoe.com',
-  yoga_styles: ['Hatha Yoga', 'Vinyasa Flow', 'Restorative'],
-  event_display_variant: 'compact' as const,
-}
+  // Get the current user
+  const { data: { user: authUser }, error: authError } = await supabase.auth.getUser()
+  
+  if (authError || !authUser) {
+    redirect('/auth/sign-in')
+  }
 
-export default function ProfilePage() {
-  const handleProfileUpdate = (updatedUser: User) => {
-    console.log('Profile updated:', updatedUser)
-    // Here you could update local state, make API calls, etc.
+  // Fetch user profile data from the users table
+  const { data: userData, error: userError } = await supabase
+    .from('users')
+    .select('*')
+    .eq('id', authUser.id)
+    .single()
+
+  if (userError || !userData) {
+    console.error('Error fetching user data:', userError)
+    // Fallback to auth user data if profile doesn't exist yet
+    const fallbackUser: User = {
+      id: authUser.id,
+      email: authUser.email || '',
+      name: null,
+      bio: null,
+      profile_image_url: null,
+      public_url: null,
+      timezone: null,
+      instagram_url: null,
+      website_url: null,
+      yoga_styles: null,
+      event_display_variant: null,
+      role: 'user',
+      calendar_feed_count: 0
+    }
+    
+    return (
+      <div className="p-6">
+        <Container>
+          <div className="mb-8">
+            <h1 className="text-4xl font-bold mb-4 font-serif">
+              Profile Settings
+            </h1>
+            <p className="text-foreground/70 text-lg">
+              Manage your account settings and public profile information.
+            </p>
+          </div>
+
+          <ProfileForm user={fallbackUser} />
+        </Container>
+      </div>
+    )
   }
 
   return (
@@ -50,10 +70,7 @@ export default function ProfilePage() {
           </p>
         </div>
 
-        <ProfileForm 
-          user={mockUser}
-          onUpdate={handleProfileUpdate}
-        />
+        <ProfileForm user={userData} />
       </Container>
     </div>
   )

@@ -1,13 +1,14 @@
 'use client'
 
 import React, { useMemo } from 'react'
-import { PublicEvent } from '@/lib/types'
+import { PublicEvent, Tag } from '@/lib/types'
 import { EventCard } from './EventCard'
 import { format, parseISO, isToday, isTomorrow, isThisWeek } from 'date-fns'
 import { Card, CardContent } from '@/components/ui/card'
-import { Calendar } from 'lucide-react'
+import { Calendar, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { type EventDisplayVariant, type EventTag } from '@/lib/event-types'
+import { type EventDisplayVariant, type EventTag, convertToEventTag } from '@/lib/event-types'
+import { useSupabaseQuery } from '@/lib/hooks/useSupabaseQuery'
 
 // Enhanced PublicEvent with matched tags
 interface EnhancedPublicEvent extends PublicEvent {
@@ -15,136 +16,160 @@ interface EnhancedPublicEvent extends PublicEvent {
 }
 
 interface PublicEventListProps {
-  events: EnhancedPublicEvent[]
+  userId: string
   variant?: EventDisplayVariant
   className?: string
 }
 
-// Utility function to group events by date
-const groupEventsByDate = (events: EnhancedPublicEvent[]) => {
-  const groups = new Map<string, EnhancedPublicEvent[]>()
-
-  events.forEach((event) => {
-    if (!event.start_time) return
-    
-    const eventDate = parseISO(event.start_time)
-    const dateKey = format(eventDate, 'yyyy-MM-dd')
-
-    if (!groups.has(dateKey)) {
-      groups.set(dateKey, [])
-    }
-    groups.get(dateKey)!.push(event)
-  })
-
-  // Sort groups by date and return as array
-  return Array.from(groups.entries())
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([dateKey, events]) => ({
-      dateKey,
-      date: parseISO(dateKey),
-      events,
-    }))
-}
-
-// Utility function to format date headers
-const getDateHeader = (date: Date) => {
-  if (isToday(date)) {
-    return {
-      primary: 'Today',
-      secondary: format(date, 'EEEE, MMMM d'),
-      compact: 'Today',
-    }
-  } else if (isTomorrow(date)) {
-    return {
-      primary: 'Tomorrow',
-      secondary: format(date, 'EEEE, MMMM d'),
-      compact: 'Tomorrow',
-    }
-  } else if (isThisWeek(date, { weekStartsOn: 0 })) {
-    return {
-      primary: format(date, 'EEEE'),
-      secondary: format(date, 'MMMM d'),
-      compact: format(date, 'EEE, MMM d'),
-    }
-  } else {
-    return {
-      primary: format(date, 'EEEE'),
-      secondary: format(date, 'MMMM d, yyyy'),
-      compact: format(date, 'EEE, MMM d'),
-    }
-  }
-}
-
-// Convert EnhancedPublicEvent to EventCard props
-const convertToEventCardProps = (event: EnhancedPublicEvent): {
-  id: string
-  title: string
-  dateTime: string
-  location: string | null
-  imageQuery: string
-  tags: EventTag[]
-  variant?: EventDisplayVariant
-} => {
-  const startTime = event.start_time ? parseISO(event.start_time) : new Date()
-  const endTime = event.end_time ? parseISO(event.end_time) : null
-  
-  // Format datetime string
-  const dateTime = format(startTime, 'EEE MMM d') + 
-    ' • ' + 
-    format(startTime, 'h:mm a') + 
-    (endTime ? ' - ' + format(endTime, 'h:mm a') : '')
-
-  // Use actual image URL from database if available, otherwise try tag images, then fallback to search query
-  let imageQuery: string
-  if (event.image_url) {
-    imageQuery = event.image_url
-  } else {
-    // Try to find an image from the matched tags
-    const tagWithImage = event.matchedTags.find(tag => tag.imageUrl)
-    if (tagWithImage?.imageUrl) {
-      imageQuery = tagWithImage.imageUrl
-    } else {
-      // Generate image query from available data as fallback
-      const parts = []
-      if (event.title) parts.push(event.title)
-      if (event.location) parts.push(event.location)
-      if (event.tags && event.tags.length > 0) {
-        parts.push(...event.tags.slice(0, 2))
-      }
-      imageQuery = parts.join(' ').toLowerCase() || 'yoga class'
-    }
-  }
-
-  return {
-    id: event.id || 'unknown',
-    title: event.title || 'Untitled Event',
-    dateTime,
-    location: event.location,
-    imageQuery,
-    tags: event.matchedTags, // Now we pass the actual matched tags!
-  }
-}
-
-// Date Badge Component for desktop layout
-const DateBadge: React.FC<{ label: string }> = ({ label }) => (
-  <div className="absolute -top-2 -left-2 z-10">
-    <div className="bg-blue-500 text-white text-xs font-medium px-2 py-1 rounded-full shadow-lg">
-      {label}
-    </div>
-  </div>
-)
-
 const PublicEventList: React.FC<PublicEventListProps> = ({
-  events,
+  userId,
   variant = 'compact',
   className = '',
 }) => {
-  // Group events by date
-  const groupedEvents = useMemo(() => {
-    if (!events || events.length === 0) return []
-    return groupEventsByDate(events)
-  }, [events])
+  // Fetch events using the custom hook
+  const {
+    data: events,
+    isLoading: eventsLoading,
+    error: eventsError
+  } = useSupabaseQuery<PublicEvent[]>({
+    queryKey: ['public_events', userId],
+    fetcher: async (supabase) => {
+      const { data, error } = await supabase
+        .from('public_events')
+        .select('*')
+        .eq('user_id', userId)
+        .gte('start_time', new Date().toISOString())
+        .order('start_time', { ascending: true })
+        .limit(50)
+      
+      if (error) throw error
+      return data || []
+    },
+    enabled: !!userId,
+  })
 
+  // Fetch user tags using the custom hook
+  const {
+    data: userTags,
+    isLoading: userTagsLoading,
+  } = useSupabaseQuery<Tag[]>({
+    queryKey: ['user_tags', userId],
+    fetcher: async (supabase) => {
+      const { data, error } = await supabase
+        .from('tags')
+        .select('*')
+        .eq('user_id', userId)
+      
+      if (error) throw error
+      return data || []
+    },
+    enabled: !!userId,
+  })
+
+  // Fetch global tags using the custom hook
+  const {
+    data: globalTags,
+    isLoading: globalTagsLoading,
+  } = useSupabaseQuery<Tag[]>({
+    queryKey: ['global_tags'],
+    fetcher: async (supabase) => {
+      const { data, error } = await supabase
+        .from('tags')
+        .select('*')
+        .is('user_id', null)
+      
+      if (error) throw error
+      return data || []
+    },
+  })
+
+  // Utility function to group events by date
+  const groupEventsByDate = (events: EnhancedPublicEvent[]) => {
+    const groups = new Map<string, EnhancedPublicEvent[]>()
+
+    events.forEach((event) => {
+      if (!event.start_time) return
+      
+      const startTime = parseISO(event.start_time)
+      const dateKey = format(startTime, 'yyyy-MM-dd')
+      
+      const existingGroup = groups.get(dateKey)
+      if (existingGroup) {
+        existingGroup.push(event)
+      } else {
+        groups.set(dateKey, [event])
+      }
+    })
+
+    return Array.from(groups.entries()).map(([date, events]) => ({
+      date,
+      events: events.sort((a, b) => {
+        const timeA = a.start_time ? parseISO(a.start_time).getTime() : 0
+        const timeB = b.start_time ? parseISO(b.start_time).getTime() : 0
+        return timeA - timeB
+      })
+    }))
+  }
+
+  // Get formatted date header
+  const getDateHeader = (dateString: string) => {
+    const date = parseISO(dateString)
+    
+    let label = ''
+    let compact = ''
+    
+    if (isToday(date)) {
+      label = 'Today'
+      compact = 'Today'
+    } else if (isTomorrow(date)) {
+      label = 'Tomorrow'  
+      compact = 'Tomorrow'
+    } else if (isThisWeek(date)) {
+      label = format(date, 'EEEE, MMMM d')
+      compact = format(date, 'EEE')
+    } else {
+      label = format(date, 'EEEE, MMMM d')
+      compact = format(date, 'MMM d')
+    }
+    
+    return { label, compact }
+  }
+
+  // Enhanced events with matched tags
+  const enhancedEvents: EnhancedPublicEvent[] = useMemo(() => {
+    if (!events || !userTags || !globalTags) return []
+
+    const allTags = [...userTags, ...globalTags]
+    const tagMap = new Map<string, Tag>()
+    
+    allTags.forEach(tag => {
+      if (tag.name) {
+        tagMap.set(tag.name.toLowerCase(), tag)
+      }
+    })
+
+    return events.map(event => {
+      const matchedTags: EventTag[] = []
+      
+      if (event.tags) {
+        event.tags.forEach(tagName => {
+          const tag = tagMap.get(tagName.toLowerCase())
+          if (tag) {
+            matchedTags.push(convertToEventTag(tag))
+          }
+        })
+      }
+
+      return {
+        ...event,
+        matchedTags
+      }
+    })
+  }, [events, userTags, globalTags])
+
+  // Process data for layouts
+  const groupedEvents = useMemo(() => groupEventsByDate(enhancedEvents), [enhancedEvents])
+  
   const getGridClasses = () => {
     switch (variant) {
       case 'full':
@@ -169,50 +194,140 @@ const PublicEventList: React.FC<PublicEventListProps> = ({
     })
   }, [groupedEvents])
 
-  if (!events || events.length === 0) {
+  // Convert EnhancedPublicEvent to EventCard props
+  const convertToEventCardProps = (event: EnhancedPublicEvent): {
+    id: string
+    title: string
+    dateTime: string
+    location: string | null
+    imageQuery: string
+    tags: EventTag[]
+    variant?: EventDisplayVariant
+  } => {
+    const startTime = event.start_time ? parseISO(event.start_time) : new Date()
+    const endTime = event.end_time ? parseISO(event.end_time) : null
+    
+    // Format datetime string
+    const dateTime = format(startTime, 'EEE MMM d') + 
+      ' • ' + 
+      format(startTime, 'h:mm a') + 
+      (endTime ? ' - ' + format(endTime, 'h:mm a') : '')
+
+    // Use actual image URL from database if available, otherwise try tag images, then fallback to search query
+    let imageQuery: string
+    if (event.image_url) {
+      imageQuery = event.image_url
+    } else {
+      // Try to find an image from the matched tags
+      const tagWithImage = event.matchedTags.find(tag => tag.imageUrl)
+      if (tagWithImage?.imageUrl) {
+        imageQuery = tagWithImage.imageUrl
+      } else {
+        // Generate image query from available data as fallback
+        const parts = []
+        if (event.title) parts.push(event.title)
+        if (event.location) parts.push(event.location)
+        if (event.tags && event.tags.length > 0) {
+          parts.push(...event.tags.slice(0, 2))
+        }
+        imageQuery = parts.join(' ').toLowerCase() || 'yoga class'
+      }
+    }
+
+    return {
+      id: event.id || 'unknown',
+      title: event.title || 'Untitled Event',
+      dateTime,
+      location: event.location,
+      imageQuery,
+      tags: event.matchedTags,
+    }
+  }
+
+  // Loading state
+  const isLoading = eventsLoading || userTagsLoading || globalTagsLoading
+  
+  if (isLoading) {
     return (
-      <Card className={cn('w-full', className)}>
-        <CardContent className="text-center py-12">
-          <Calendar className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-600">
-            No upcoming events scheduled at the moment.
-          </p>
-        </CardContent>
-      </Card>
+      <div className={cn('flex items-center justify-center py-12', className)}>
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-muted-foreground" />
+          <p className="text-muted-foreground">Loading events...</p>
+        </div>
+      </div>
     )
   }
+
+  // Error state
+  if (eventsError) {
+    return (
+      <div className={cn('flex items-center justify-center py-12', className)}>
+        <div className="text-center">
+          <p className="text-destructive mb-2">Failed to load events</p>
+          <p className="text-sm text-muted-foreground">{eventsError.message}</p>
+        </div>
+      </div>
+    )
+  }
+
+  // No events state
+  if (!enhancedEvents || enhancedEvents.length === 0) {
+    return (
+      <div className={cn('flex items-center justify-center py-12', className)}>
+        <Card className="p-8 text-center max-w-md mx-auto">
+          <CardContent className="pt-6">
+            <Calendar className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+            <h3 className="text-lg font-medium text-foreground mb-2">
+              No Upcoming Events
+            </h3>
+            <p className="text-muted-foreground">
+              Check back later for new classes and sessions.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  // Date Badge Component for desktop layout
+  const DateBadge: React.FC<{ label: string }> = ({ label }) => (
+    <div className="absolute -top-2 -left-2 z-10">
+      <div className="bg-blue-500 text-white text-xs font-medium px-2 py-1 rounded-full shadow-lg">
+        {label}
+      </div>
+    </div>
+  )
 
   return (
     <div className={cn('space-y-6', className)}>
       {/* Mobile Layout: Grouped by day with headers */}
       <div className="block md:hidden space-y-8">
-        {groupedEvents.map(({ dateKey, date, events: dayEvents }) => {
-          const { primary, secondary } = getDateHeader(date)
+        {groupedEvents.map(({ date, events: dayEvents }) => {
+          const { label } = getDateHeader(date)
+          const dateKey = date
 
           return (
             <div key={dateKey} className="space-y-4">
               {/* Date Header */}
-              <div className="flex items-center gap-4">
-                <div className="flex-shrink-0">
-                  <div className="text-xl font-bold text-gray-900 leading-none">
-                    {primary}
-                  </div>
-                  <div className="text-sm text-gray-600 mt-1">
-                    {secondary}
-                  </div>
-                </div>
-                <div className="flex-grow h-px bg-gradient-to-r from-gray-300 to-transparent"></div>
+              <div className="flex items-center gap-3">
+                <h3 className="text-xl font-semibold text-foreground">
+                  {label}
+                </h3>
+                <div className="flex-1 h-px bg-border" />
+                <span className="text-sm text-muted-foreground">
+                  {dayEvents.length} {dayEvents.length === 1 ? 'class' : 'classes'}
+                </span>
               </div>
 
-              {/* Events Grid for this day */}
+              {/* Events Grid for Mobile */}
               <div className="grid grid-cols-1 gap-6">
                 {dayEvents.map((event, index) => (
-                                  <div key={`${dateKey}-${index}`} className="flex flex-col">
-                  <EventCard
-                    {...convertToEventCardProps(event)}
-                    variant={variant}
-                  />
-                </div>
+                  <div key={`${dateKey}-${index}`} className="flex flex-col">
+                    <EventCard
+                      {...convertToEventCardProps(event)}
+                      variant={variant}
+                    />
+                  </div>
                 ))}
               </div>
             </div>
@@ -220,7 +335,7 @@ const PublicEventList: React.FC<PublicEventListProps> = ({
         })}
       </div>
 
-      {/* Desktop Layout: Efficient grid with day badges */}
+      {/* Desktop Layout: Clean grid with date badges */}
       <div className="hidden md:block">
         <div className={getGridClasses()}>
           {flattenedEvents.map(({ event, dayLabel, isFirstOfDay }, index) => (

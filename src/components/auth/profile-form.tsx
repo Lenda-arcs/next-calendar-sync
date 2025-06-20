@@ -5,7 +5,7 @@ import { Form, FormField, Button, useForm } from '@/components/ui'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { 
-  User, 
+  User as UserIcon, 
   Mail, 
   Globe, 
   Instagram, 
@@ -15,19 +15,8 @@ import {
   Check
 } from 'lucide-react'
 
-interface User {
-  id: string
-  email: string
-  name?: string
-  bio?: string
-  profile_image_url?: string
-  public_url?: string
-  timezone?: string
-  instagram_url?: string
-  website_url?: string
-  yoga_styles?: string[]
-  event_display_variant?: 'minimal' | 'compact' | 'full'
-}
+import { User } from '@/lib/types'
+import { useSupabaseUpdate } from '@/lib/hooks/useSupabaseMutation'
 
 interface ProfileFormProps {
   user: User
@@ -77,7 +66,7 @@ const ProfilePictureUpload: React.FC<{
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
-            <User className="h-12 w-12 text-foreground/60" />
+            <UserIcon className="h-12 w-12 text-foreground/60" />
           </div>
         )}
         <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
@@ -226,11 +215,21 @@ const Select: React.FC<{
 }
 
 export function ProfileForm({ user, onUpdate }: ProfileFormProps) {
-  const [uploadingImage, setUploadingImage] = useState(false)
-  const [profileImageFile, setProfileImageFile] = useState<File | null>(null)
   const [authError, setAuthError] = useState<string>('')
   const [successMessage, setSuccessMessage] = useState<string>('')
   const [publicUrlPreview, setPublicUrlPreview] = useState<string>('')
+
+  // Use the Supabase mutation hook for updating user profile
+  const updateUserMutation = useSupabaseUpdate<User>('users', {
+    onSuccess: (data) => {
+      setSuccessMessage('Profile updated successfully!')
+      onUpdate?.(data[0]) // Call the optional callback with updated user data
+    },
+    onError: (error) => {
+      console.error('Profile update error:', error)
+      setAuthError(`Failed to update profile: ${error.message}`)
+    },
+  })
 
   const timezoneOptions = [
     { value: 'UTC', label: 'UTC' },
@@ -257,14 +256,14 @@ export function ProfileForm({ user, onUpdate }: ProfileFormProps) {
     handleSubmit,
   } = useForm({
     initialValues: {
-      name: user.name || '',
-      bio: user.bio || '',
-      public_url: user.public_url || '',
-      timezone: user.timezone || 'UTC',
-      instagram_url: user.instagram_url || '',
-      website_url: user.website_url || '',
-      yoga_styles: user.yoga_styles || [],
-      event_display_variant: user.event_display_variant || 'compact',
+      name: user.name ?? '',
+      bio: user.bio ?? '',
+      public_url: user.public_url ?? '',
+      timezone: user.timezone ?? 'UTC',
+      instagram_url: user.instagram_url ?? '',
+      website_url: user.website_url ?? '',
+      yoga_styles: user.yoga_styles ?? [],
+      event_display_variant: user.event_display_variant ?? 'compact',
     },
     validationRules: {
       name: {
@@ -315,33 +314,25 @@ export function ProfileForm({ user, onUpdate }: ProfileFormProps) {
       setAuthError('')
       setSuccessMessage('')
 
-      try {
-        // Simulate API call for development
-        await new Promise(resolve => setTimeout(resolve, 1500))
-        
-        setSuccessMessage('Profile updated successfully!')
-        
-        if (onUpdate) {
-          const updatedUser: User = {
-            ...user,
-            name: formData.name as string,
-            bio: formData.bio as string,
-            public_url: formData.public_url as string,
-            timezone: formData.timezone as string,
-            instagram_url: formData.instagram_url as string,
-            website_url: formData.website_url as string,
-            yoga_styles: formData.yoga_styles as string[],
-            event_display_variant: formData.event_display_variant as 'minimal' | 'compact' | 'full',
-          }
-          onUpdate(updatedUser)
-        }
-
-        setProfileImageFile(null)
-
-      } catch (error) {
-        setAuthError('An error occurred while updating your profile')
-        console.error('Profile update error:', error)
+      // Prepare the update data
+      const updateData: Partial<User> = {
+        name: formData.name as string,
+        bio: formData.bio as string,
+        public_url: formData.public_url as string,
+        timezone: formData.timezone as string,
+        instagram_url: formData.instagram_url as string,
+        website_url: formData.website_url as string,
+        yoga_styles: formData.yoga_styles as string[],
+        event_display_variant: formData.event_display_variant as 'minimal' | 'compact' | 'full',
       }
+
+      console.log('Updating user:', user.id, 'with data:', updateData)
+
+      // Use the mutation to update the user profile
+      await updateUserMutation.mutateAsync({
+        id: user.id,
+        data: updateData,
+      })
     }
   })
 
@@ -379,20 +370,20 @@ export function ProfileForm({ user, onUpdate }: ProfileFormProps) {
         </div>
       )}
 
-      <Form onSubmit={handleSubmit} loading={loading || uploadingImage}>
+      <Form onSubmit={handleSubmit} loading={loading || updateUserMutation.isLoading}>
         {/* Profile Picture Section */}
         <Card variant="glass">
           <CardHeader className="text-center">
             <CardTitle className="flex items-center justify-center gap-2 font-serif">
-              <User className="h-5 w-5" />
+              <UserIcon className="h-5 w-5" />
               Profile Picture
             </CardTitle>
           </CardHeader>
           <CardContent className="flex justify-center">
             <ProfilePictureUpload
-              currentImageUrl={user.profile_image_url}
-              onImageChange={setProfileImageFile}
-              uploading={uploadingImage}
+              currentImageUrl={user.profile_image_url ?? undefined}
+              onImageChange={() => {}} // Placeholder - image upload not implemented yet
+              uploading={false}
             />
           </CardContent>
         </Card>
@@ -401,7 +392,7 @@ export function ProfileForm({ user, onUpdate }: ProfileFormProps) {
         <Card variant="glass">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 font-serif">
-              <User className="h-5 w-5" />
+              <UserIcon className="h-5 w-5" />
               Basic Information
             </CardTitle>
           </CardHeader>
@@ -420,7 +411,7 @@ export function ProfileForm({ user, onUpdate }: ProfileFormProps) {
             <FormField
               label="Email"
               type="email"
-              value={user.email}
+              value={user.email ?? ''}
               disabled
               leftIcon={<Mail className="h-4 w-4" />}
             />
@@ -544,9 +535,9 @@ export function ProfileForm({ user, onUpdate }: ProfileFormProps) {
               variant="glass"
               className="w-full"
               size="lg"
-              loading={loading || uploadingImage}
+              loading={loading || updateUserMutation.isLoading}
             >
-              {loading || uploadingImage ? 'Updating Profile...' : 'Update Profile'}
+              {loading || updateUserMutation.isLoading ? 'Updating Profile...' : 'Update Profile'}
             </Button>
           </CardContent>
         </Card>

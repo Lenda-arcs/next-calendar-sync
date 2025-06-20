@@ -66,7 +66,19 @@ export function useSupabaseMutation<TData = unknown, TVariables = unknown>({
 
         return result
       } catch (err) {
-        const error = err instanceof Error ? err : new Error('Unknown error occurred')
+        console.error('Supabase mutation error:', err)
+        
+        let error: Error
+        if (err instanceof Error) {
+          error = err
+        } else if (err && typeof err === 'object' && 'message' in err) {
+          // Handle Supabase error objects
+          const supabaseError = err as { message: string; code?: string; details?: string }
+          error = new Error(supabaseError.message || 'Database operation failed')
+        } else {
+          error = new Error('Unknown error occurred')
+        }
+        
         setError(error)
 
         await onError?.(error, variables)

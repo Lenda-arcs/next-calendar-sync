@@ -26,7 +26,8 @@ const FormField = React.forwardRef<HTMLInputElement, FormFieldProps>(
     inputClassName,
     ...inputProps
   }, ref) => {
-    const fieldId = id || `field-${Math.random().toString(36).substr(2, 9)}`
+    const reactId = React.useId()
+    const fieldId = id || `field-${reactId}`
     
     return (
       <div className={cn("space-y-2", className)}>
