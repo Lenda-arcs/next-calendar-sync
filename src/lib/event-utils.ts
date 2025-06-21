@@ -1,4 +1,4 @@
-import { PublicEvent, Tag } from './types'
+import { PublicEvent, Event, Tag } from './types'
 import { EventTag, convertToEventTag } from './event-types'
 import { formatEventDateTime } from './date-utils'
 
@@ -55,8 +55,20 @@ export function getEventImageUrl(
 }
 
 /**
- * Converts a PublicEvent to EventCard props
+ * Converts an Event or PublicEvent to EventCard props
  */
+export function convertEventToCardProps(
+  event: Event,
+  availableTags: Tag[]
+): {
+  id: string
+  title: string
+  dateTime: string
+  location: string | null
+  imageQuery: string
+  tags: EventTag[]
+  isPublic: boolean
+}
 export function convertEventToCardProps(
   event: PublicEvent,
   availableTags: Tag[]
@@ -67,6 +79,19 @@ export function convertEventToCardProps(
   location: string | null
   imageQuery: string
   tags: EventTag[]
+  isPublic: boolean
+}
+export function convertEventToCardProps(
+  event: Event | PublicEvent,
+  availableTags: Tag[]
+): {
+  id: string
+  title: string
+  dateTime: string
+  location: string | null
+  imageQuery: string
+  tags: EventTag[]
+  isPublic: boolean
 } {
   // Process tags
   const matchedTags = processEventTags(event.tags, availableTags)
@@ -77,6 +102,11 @@ export function convertEventToCardProps(
   // Format datetime
   const dateTime = formatEventDateTime(event.start_time, event.end_time)
 
+  // Determine if public - PublicEvent is always public, Event has visibility field
+  const isPublic = 'visibility' in event 
+    ? event.visibility === 'public'
+    : true // PublicEvent from public_events view is always public
+
   return {
     id: event.id || 'unknown',
     title: event.title || 'Untitled Event',
@@ -84,5 +114,6 @@ export function convertEventToCardProps(
     location: event.location,
     imageQuery: imageUrl, // This will be empty string if no image, triggering placeholder
     tags: matchedTags,
+    isPublic,
   }
 } 

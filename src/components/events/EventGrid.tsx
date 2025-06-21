@@ -17,6 +17,7 @@ interface BaseEventForGrid {
   location: string | null
   imageQuery: string
   tags: EventTag[]
+  isPublic: boolean
   start_time?: string | null // For date grouping
 }
 
@@ -318,6 +319,7 @@ const EventGrid: React.FC<EventGridProps> = ({
                         location={event.location}
                         imageQuery={event.imageQuery}
                         tags={event.tags}
+                        isPublic={event.isPublic}
                         variant={variant}
                         availableTags={availableTags}
                         onUpdate={onEventUpdate}
@@ -355,6 +357,7 @@ const EventGrid: React.FC<EventGridProps> = ({
                   location={event.location}
                   imageQuery={event.imageQuery}
                   tags={event.tags}
+                  isPublic={event.isPublic}
                   variant={variant}
                   availableTags={availableTags}
                   onUpdate={onEventUpdate}

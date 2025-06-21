@@ -17,7 +17,8 @@ import {
   RefreshCw,
   Loader2,
   Save,
-  X
+  X,
+  Filter
 } from 'lucide-react'
 import { useSupabaseQuery } from '@/lib/hooks/useSupabaseQuery'
 import { Event, Tag as TagType } from '@/lib/types'
@@ -26,30 +27,47 @@ import { convertEventToCardProps } from '@/lib/event-utils'
 import { createBrowserClient } from '@supabase/ssr'
 import { cn } from '@/lib/utils'
 
-// Type for tracking pending changes
+// Types for component
 interface PendingEventUpdate {
   id: string
   tags: string[]
   visibility: string
 }
 
+interface EventStats {
+  total: number
+  public: number
+  private: number
+}
+
+type VisibilityFilter = 'all' | 'public' | 'private'
+type TimeFilter = 'future' | 'all'
+
 // Metadata is handled by the layout since this is a client component
 
 export default function ManageEventsPage() {
-  // Get current user ID from auth session
+  // ==================== SETUP & STATE ====================
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   )
 
+  // Authentication state
   const [userId, setUserId] = React.useState<string | null>(null)
   const [authLoading, setAuthLoading] = React.useState(true)
   
-  // State for tracking pending changes
+  // Event management state
   const [pendingChanges, setPendingChanges] = React.useState<Map<string, PendingEventUpdate>>(new Map())
   const [isSaving, setIsSaving] = React.useState(false)
 
-  // Get user session
+  // Filtering state
+  const [visibilityFilter, setVisibilityFilter] = React.useState<VisibilityFilter>('all')
+  const [timeFilter, setTimeFilter] = React.useState<TimeFilter>('future')
+
+  // UI state
+  const [resetSignal, setResetSignal] = React.useState(0)
+
+  // ==================== AUTHENTICATION ====================
   React.useEffect(() => {
     const getSession = async () => {
       const { data: { session } } = await supabase.auth.getSession()
@@ -59,7 +77,7 @@ export default function ManageEventsPage() {
     getSession()
   }, [supabase.auth])
 
-  // Fetch events using the custom hook
+  // ==================== DATA FETCHING ====================
   const {
     data: events,
     isLoading: eventsLoading,
@@ -121,32 +139,80 @@ export default function ManageEventsPage() {
     },
   })
 
-  // Get all available tags for processing
+  // ==================== COMPUTED DATA ====================
+  // Combine user and global tags
   const allAvailableTags = [...(userTags || []), ...(globalTags || [])]
-
-  // Convert database events to display events for EventGrid using centralized utility
-  const displayEvents = React.useMemo(() => {
-    if (!events || !allAvailableTags.length) return []
-
-    return events.map(event => {
-      // Check if there are pending changes for this event
-      const pendingUpdate = pendingChanges.get(event.id)
-      
-      // If there are pending changes, create a modified event object
-      const eventToConvert = pendingUpdate ? {
-        ...event,
-        tags: pendingUpdate.tags,
-        visibility: pendingUpdate.visibility
-      } : event
-
-      return convertEventToCardProps(eventToConvert, allAvailableTags)
-    })
-  }, [events, allAvailableTags, pendingChanges])
 
   // Convert tags to EventTag format for the grid
   const availableEventTags = React.useMemo(() => {
     return allAvailableTags.map(tag => convertToEventTag(tag))
   }, [allAvailableTags])
+
+  // ==================== EVENT FILTERING & PROCESSING ====================
+  // Helper function to apply filters to events
+  const applyEventFilters = React.useCallback((eventList: Event[]) => {
+    const now = new Date()
+    
+    return eventList.filter(event => {
+      // Time filter
+      if (timeFilter === 'future') {
+        const startTime = event.start_time ? new Date(event.start_time) : null
+        if (startTime && startTime < now) {
+          return false
+        }
+      }
+
+      // Visibility filter (check pending changes first)
+      const pendingUpdate = pendingChanges.get(event.id)
+      const eventVisibility = pendingUpdate ? pendingUpdate.visibility : event.visibility
+      
+      if (visibilityFilter !== 'all' && eventVisibility !== visibilityFilter) {
+        return false
+      }
+
+      return true
+    })
+  }, [timeFilter, visibilityFilter, pendingChanges])
+
+  // Helper function to apply pending changes to an event
+  const applyPendingChanges = React.useCallback((event: Event) => {
+    const pendingUpdate = pendingChanges.get(event.id)
+    return pendingUpdate ? {
+      ...event,
+      tags: pendingUpdate.tags,
+      visibility: pendingUpdate.visibility
+    } : event
+  }, [pendingChanges])
+
+  // Convert database events to display events for EventGrid
+  const displayEvents = React.useMemo(() => {
+    if (!events || !allAvailableTags.length) return []
+
+    const filteredEvents = applyEventFilters(events)
+    
+    return filteredEvents.map(event => {
+      const eventWithChanges = applyPendingChanges(event)
+      return convertEventToCardProps(eventWithChanges, allAvailableTags)
+    })
+  }, [events, allAvailableTags, applyEventFilters, applyPendingChanges])
+
+  // ==================== EVENT HANDLERS ====================
+  // Helper function to check if event state matches original
+  const isEventStateOriginal = React.useCallback((eventId: string, tags: string[], visibility: string) => {
+    const originalEvent = events?.find(event => event.id === eventId)
+    if (!originalEvent) return false
+    
+    // Compare tags (handle both null and empty array cases)
+    const originalTags = originalEvent.tags || []
+    const tagsMatch = originalTags.length === tags.length && 
+      originalTags.every(tag => tags.includes(tag)) &&
+      tags.every(tag => originalTags.includes(tag))
+    
+    // Compare visibility
+    const visibilityMatch = originalEvent.visibility === visibility
+    
+    return tagsMatch && visibilityMatch
+  }, [events])
 
   // Handle event changes locally (no immediate DB update)
   const handleEventUpdate = React.useCallback((updates: {
@@ -156,10 +222,21 @@ export default function ManageEventsPage() {
   }) => {
     setPendingChanges(prev => {
       const newChanges = new Map(prev)
-      newChanges.set(updates.id, updates)
+      
+      // Check if the update matches the original state
+      const isOriginal = isEventStateOriginal(updates.id, updates.tags, updates.visibility)
+      
+      if (isOriginal) {
+        // If it matches original, remove from pending changes
+        newChanges.delete(updates.id)
+      } else {
+        // If it's different from original, add/update pending changes
+        newChanges.set(updates.id, updates)
+      }
+      
       return newChanges
     })
-  }, [])
+  }, [isEventStateOriginal])
 
   // Handle batch save of all pending changes
   const handleSaveChanges = React.useCallback(async () => {
@@ -204,17 +281,39 @@ export default function ManageEventsPage() {
 
   // Handle discarding all pending changes
   const handleDiscardChanges = React.useCallback(() => {
+    // Clear all pending changes
     setPendingChanges(new Map())
+    
+    // Force all InteractiveEventCard components to reset by changing the key
+    setResetSignal(prev => prev + 1)
   }, [])
 
   const handleRefresh = React.useCallback(async () => {
     await refetchEvents()
   }, [refetchEvents])
 
-  // Calculate stats (using original data, not pending changes)
-  const publicEventsCount = events?.filter(event => event.visibility === 'public').length || 0
-  const privateEventsCount = events?.filter(event => event.visibility === 'private').length || 0
-  const totalEventsCount = events?.length || 0
+  // Calculate stats for overview cards
+  const eventStats: EventStats = React.useMemo(() => {
+    if (!events) return { total: 0, public: 0, private: 0 }
+    
+    const filteredEvents = applyEventFilters(events)
+    
+    const publicCount = filteredEvents.filter(event => {
+      const eventWithChanges = applyPendingChanges(event)
+      return eventWithChanges.visibility === 'public'
+    }).length
+    
+    const privateCount = filteredEvents.filter(event => {
+      const eventWithChanges = applyPendingChanges(event)
+      return eventWithChanges.visibility === 'private'
+    }).length
+    
+    return {
+      total: filteredEvents.length,
+      public: publicCount,
+      private: privateCount
+    }
+  }, [events, applyEventFilters, applyPendingChanges])
 
   // Check if there are pending changes
   const hasPendingChanges = pendingChanges.size > 0
@@ -287,39 +386,116 @@ export default function ManageEventsPage() {
             </Button>
           </div>
 
+          {/* Filter Controls */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Filter className="h-5 w-5" />
+                Filter Events
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap gap-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium">Time:</span>
+                  <div className="flex gap-1">
+                    <Button
+                      variant={timeFilter === 'future' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setTimeFilter('future')}
+                    >
+                      Future Events
+                    </Button>
+                    <Button
+                      variant={timeFilter === 'all' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setTimeFilter('all')}
+                    >
+                      All Events
+                    </Button>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium">Visibility:</span>
+                  <div className="flex gap-1">
+                    <Button
+                      variant={visibilityFilter === 'all' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setVisibilityFilter('all')}
+                    >
+                      All
+                    </Button>
+                    <Button
+                      variant={visibilityFilter === 'public' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setVisibilityFilter('public')}
+                    >
+                      Public Only
+                    </Button>
+                    <Button
+                      variant={visibilityFilter === 'private' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setVisibilityFilter('private')}
+                    >
+                      Private Only
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <Card>
+            <Card 
+              className={cn(
+                "cursor-pointer transition-all duration-200 hover:shadow-md",
+                visibilityFilter === 'all' && "ring-2 ring-blue-500 ring-opacity-50"
+              )}
+              onClick={() => setVisibilityFilter('all')}
+            >
               <CardContent className="p-4">
                 <div className="flex items-center space-x-2">
                   <Calendar className="h-5 w-5 text-blue-500" />
                   <div>
-                    <p className="text-sm font-medium">Total Events</p>
-                    <p className="text-2xl font-bold">{totalEventsCount}</p>
+                    <p className="text-sm font-medium">Total Events {visibilityFilter === 'all' && '(Active)'}</p>
+                    <p className="text-2xl font-bold">{eventStats.total}</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card 
+              className={cn(
+                "cursor-pointer transition-all duration-200 hover:shadow-md",
+                visibilityFilter === 'public' && "ring-2 ring-green-500 ring-opacity-50"
+              )}
+              onClick={() => setVisibilityFilter('public')}
+            >
               <CardContent className="p-4">
                 <div className="flex items-center space-x-2">
                   <Eye className="h-5 w-5 text-green-500" />
                   <div>
-                    <p className="text-sm font-medium">Public</p>
-                    <p className="text-2xl font-bold">{publicEventsCount}</p>
+                    <p className="text-sm font-medium">Public {visibilityFilter === 'public' && '(Active)'}</p>
+                    <p className="text-2xl font-bold">{eventStats.public}</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card 
+              className={cn(
+                "cursor-pointer transition-all duration-200 hover:shadow-md",
+                visibilityFilter === 'private' && "ring-2 ring-orange-500 ring-opacity-50"
+              )}
+              onClick={() => setVisibilityFilter('private')}
+            >
               <CardContent className="p-4">
                 <div className="flex items-center space-x-2">
                   <EyeOff className="h-5 w-5 text-orange-500" />
                   <div>
-                    <p className="text-sm font-medium">Private</p>
-                    <p className="text-2xl font-bold">{privateEventsCount}</p>
+                    <p className="text-sm font-medium">Private {visibilityFilter === 'private' && '(Active)'}</p>
+                    <p className="text-2xl font-bold">{eventStats.private}</p>
                   </div>
                 </div>
               </CardContent>
@@ -408,21 +584,45 @@ export default function ManageEventsPage() {
             <CardContent className="py-12">
               <div className="text-center">
                 <Calendar className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                <h3 className="text-lg font-medium text-foreground mb-2">No events found</h3>
+                <h3 className="text-lg font-medium text-foreground mb-2">
+                  {(events?.length || 0) === 0 
+                    ? "No events found" 
+                    : "No events match your filters"
+                  }
+                </h3>
                 <p className="text-muted-foreground mb-6">
-                  Connect your calendar feeds to start importing events.
+                  {(events?.length || 0) === 0 
+                    ? "Connect your calendar feeds to start importing events."
+                    : timeFilter === 'future' && visibilityFilter !== 'all'
+                      ? `Try changing your filters to see ${visibilityFilter === 'public' ? 'private' : 'public'} events or past events.`
+                      : timeFilter === 'future'
+                        ? "Try changing the time filter to see all events including past ones."
+                        : "Try changing the visibility filter to see all events."
+                  }
                 </p>
-                <Button asChild>
-                  <a href="/app/add-calendar">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Calendar Feed
-                  </a>
-                </Button>
+                {(events?.length || 0) === 0 ? (
+                  <Button asChild>
+                    <a href="/app/add-calendar">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Calendar Feed
+                    </a>
+                  </Button>
+                ) : (
+                  <div className="flex gap-2 justify-center">
+                    <Button variant="outline" onClick={() => setVisibilityFilter('all')}>
+                      Show All Visibility
+                    </Button>
+                    <Button variant="outline" onClick={() => setTimeFilter('all')}>
+                      Show All Time
+                    </Button>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
         ) : (
           <EventGrid
+            key={resetSignal}
             events={displayEvents}
             loading={isLoading}
             error={eventsError}
@@ -445,6 +645,7 @@ export default function ManageEventsPage() {
               onClick={handleDiscardChanges}
               className="bg-background shadow-lg border-2"
               disabled={isSaving}
+              title="Discard all pending changes"
             >
               <X className="h-4 w-4" />
             </Button>
