@@ -2,7 +2,13 @@ import { notFound } from 'next/navigation'
 import { createServerClient } from '@/lib/supabase-server'
 import { Container } from '@/components/layout/container'
 import { PageSection } from '@/components/layout/page-section'
-import { TeacherHero, PublicEventList } from '@/components/events'
+import { TeacherHero } from '@/components/events'
+import { 
+  FilterProvider, 
+  ScheduleFilters, 
+  FilteredEventList, 
+  ScheduleHeader 
+} from '@/components/schedule'
 
 interface PageProps {
   params: Promise<{
@@ -11,11 +17,12 @@ interface PageProps {
 }
 
 export default async function PublicSchedulePage({ params }: PageProps) {
-  const supabase = await createServerClient()
+  // Resolve params
   const resolvedParams = await params
   const teacherSlug = resolvedParams['teacher-slug']
 
-  // Fetch teacher profile
+  // Fetch profile data (server-side)
+  const supabase = await createServerClient()
   const { data: profile, error: profileError } = await supabase
     .from('public_profiles')
     .select('*')
@@ -35,22 +42,25 @@ export default async function PublicSchedulePage({ params }: PageProps) {
         </Container>
       </PageSection>
 
-      {/* Events List Section */}
+      {/* Filter & Events Section */}
       <PageSection className="py-8 sm:py-12">
         <Container maxWidth="4xl">
-          <div className="mb-8">
-            <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
-              Upcoming Classes
-            </h2>
-            <p className="text-gray-600 dark:text-gray-300">
-              Join {profile.name || 'our teacher'} for these upcoming yoga sessions.
-            </p>
-          </div>
-          
-          <PublicEventList
-            userId={profile.id || ''}
-            variant={profile.event_display_variant || 'compact'}
-          />
+          <FilterProvider>
+            <div className="space-y-6">
+              {/* Header with Filter Statistics */}
+              <ScheduleHeader />
+              
+              {/* Filter Components */}
+              <ScheduleFilters />
+
+              {/* Filtered Events List */}
+              <FilteredEventList
+                userId={profile.id || ''}
+                variant={profile.event_display_variant || 'compact'}
+                className="filtered-events"
+              />
+            </div>
+          </FilterProvider>
         </Container>
       </PageSection>
     </div>

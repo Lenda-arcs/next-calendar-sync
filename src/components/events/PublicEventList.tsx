@@ -21,16 +21,18 @@ interface PublicEventListProps {
   userId: string
   variant?: EventDisplayVariant
   className?: string
+  events?: PublicEvent[] // Optional prop to pass pre-filtered events
 }
 
 const PublicEventList: React.FC<PublicEventListProps> = ({
   userId,
   variant = 'compact',
   className = '',
+  events: propEvents,
 }) => {
-  // Fetch events using the custom hook
+  // Fetch events using the custom hook (only if events not provided as props)
   const {
-    data: events,
+    data: fetchedEvents,
     isLoading: eventsLoading,
     error: eventsError
   } = useSupabaseQuery<PublicEvent[]>({
@@ -47,8 +49,11 @@ const PublicEventList: React.FC<PublicEventListProps> = ({
       if (error) throw error
       return data || []
     },
-    enabled: !!userId,
+    enabled: !!userId && !propEvents, // Only fetch if events not provided
   })
+
+  // Use provided events or fetched events
+  const events = propEvents || fetchedEvents
 
   // Fetch user tags using the custom hook
   const {
@@ -180,7 +185,7 @@ const PublicEventList: React.FC<PublicEventListProps> = ({
   }, [groupedEvents, allAvailableTags])
 
   // Loading state
-  const isLoading = eventsLoading || userTagsLoading || globalTagsLoading
+  const isLoading = (propEvents ? false : eventsLoading) || userTagsLoading || globalTagsLoading
   
   if (isLoading) {
     return (
