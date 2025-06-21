@@ -1,6 +1,7 @@
 import { createServerClient } from '@/lib/supabase-server'
 // import { redirect } from 'next/navigation' // Temporarily disabled for development
 import Link from 'next/link'
+import Image from 'next/image'
 import { LogoutButton } from '@/components/auth'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { 
@@ -52,15 +53,21 @@ export default async function AppLayout({ children }: AppLayoutProps) {
   return (
     <div className="min-h-screen">
       {/* Navigation Header with Glassmorphism */}
-      <header className="backdrop-blur-md bg-white/60 border-b border-white/40 shadow-xl sticky top-0 z-50">
+      <header className="backdrop-blur-md bg-gradient-to-r from-white/70 via-white/50 to-transparent border-b border-white/40 shadow-xl sticky top-0 z-50">
         <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
             <div className="flex items-center">
               <Link href="/app" className="flex items-center group">
-                <Calendar className="h-8 w-8 text-primary transition-transform group-hover:scale-110" />
-                <span className="ml-2 text-xl font-bold font-serif text-foreground tracking-tight">
-                  Calendar Sync
+                <Image 
+                  src="/assets/dummy_logo.png" 
+                  alt="SyncIt Logo" 
+                  width={32} 
+                  height={32} 
+                  className="transition-transform group-hover:scale-110"
+                />
+                <span className="ml-3 text-2xl font-bold font-serif text-foreground tracking-tight bg-gradient-to-r from-[#9C5DA3] via-[#765388] via-[#AF7D8A] to-[#4B3C4F] bg-clip-text text-transparent hover:from-[#4B3C4F] hover:via-[#AF7D8A] hover:via-[#765388] hover:to-[#9C5DA3] transition-all duration-300">
+                  SyncIt
                 </span>
               </Link>
             </div>
@@ -103,7 +110,8 @@ export default async function AppLayout({ children }: AppLayoutProps) {
                 <span className="hidden md:inline">Profile</span>
               </Link>
               
-              <LogoutButton />
+              <LogoutButton showText={false} className="sm:hidden" />
+              <LogoutButton className="hidden sm:flex" />
             </div>
           </div>
         </div>

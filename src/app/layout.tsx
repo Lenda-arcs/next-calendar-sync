@@ -16,7 +16,7 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-  title: "Calendar Sync",
+  title: "SyncIt",
   description: "Sync and manage your calendar events with ease",
 };
 
