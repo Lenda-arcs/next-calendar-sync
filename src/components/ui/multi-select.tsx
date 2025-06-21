@@ -149,7 +149,8 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({
             type="button"
             id={id}
             className={cn(
-              'w-full px-3 py-2 rounded-lg bg-background border text-sm text-left',
+              'w-full px-3 py-2 rounded-lg text-sm text-left',
+              'backdrop-blur-sm bg-white/50 border border-white/40 shadow-md',
               'focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
               'flex items-center justify-between transition-all duration-200',
               'hover:bg-accent hover:text-accent-foreground',

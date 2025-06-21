@@ -5,7 +5,7 @@ import { styleUtils } from "@/lib/design-system"
 
 const inputVariants = cva(
   [
-    "flex w-full rounded-xl bg-background text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium font-sans",
+    "flex w-full rounded-lg bg-background text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium font-sans",
     "placeholder:text-muted-foreground",
     styleUtils.focusRing,
     "disabled:cursor-not-allowed disabled:opacity-50",
@@ -26,7 +26,7 @@ const inputVariants = cva(
       },
       state: {
         default: "",
-        error: "border-red-500 focus:ring-red-500 bg-red-50/30",
+        error: "border-destructive focus:ring-destructive bg-red-50/30",
         success: "border-green-500 focus:ring-green-500 bg-green-50/30",
         warning: "border-yellow-500 focus:ring-yellow-500 bg-yellow-50/30",
       },
@@ -79,7 +79,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
         {(error || helperText) && (
           <p className={cn(
             "mt-1 text-xs",
-            hasError ? "text-red-600" : "text-muted-foreground"
+            hasError ? "text-destructive" : "text-muted-foreground"
           )}>
             {error || helperText}
           </p>

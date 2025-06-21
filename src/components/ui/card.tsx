@@ -16,7 +16,8 @@ const cardVariants = cva(
         outlined: "backdrop-blur-md bg-white/30 border-2 border-white/30 rounded-xl shadow-lg",
         ghost: "bg-transparent backdrop-blur-none",
         filled: "bg-white/70 backdrop-blur-lg border border-white/60 shadow-lg",
-        glass: "backdrop-blur-md bg-white/30 border border-white/30 rounded-xl shadow-xl",
+        glass: " bg-white/30 border border-white/30 rounded-xl shadow-xl",
+        embedded: "bg-transparent border-0 shadow-none backdrop-blur-none rounded-none",
       },
       padding: {
         none: "p-0",

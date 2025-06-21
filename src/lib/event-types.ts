@@ -17,6 +17,7 @@ export interface EventTag {
     color: string
   }
   priority?: number | null
+  userId?: string | null
 }
 
 // Enhanced display event that includes processed tags and additional display properties
@@ -49,7 +50,8 @@ export function convertToEventTag(dbTag: Tag): EventTag {
     chip: {
       color: dbTag.color || '#6B7280' // Default gray color
     },
-    priority: dbTag.priority
+    priority: dbTag.priority,
+    userId: dbTag.user_id || null
   }
 }
 

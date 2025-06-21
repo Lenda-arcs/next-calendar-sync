@@ -1,6 +1,5 @@
 import * as React from "react"
 import { cn } from "@/lib/utils"
-import { Label } from "./label"
 import { Input, InputProps } from "./input"
 
 export interface FormFieldProps extends Omit<InputProps, 'id'> {
@@ -30,25 +29,30 @@ const FormField = React.forwardRef<HTMLInputElement, FormFieldProps>(
     const fieldId = id || `field-${reactId}`
     
     return (
-      <div className={cn("space-y-2", className)}>
+      <div className={cn("w-full", className)}>
         {label && (
-          <Label 
+          <label 
             htmlFor={fieldId}
-            required={required}
-            variant={error ? "error" : "default"}
-            className={labelClassName}
+            className={cn(
+              "block text-sm font-medium mb-2 text-foreground",
+              error && "text-destructive",
+              labelClassName
+            )}
           >
             {label}
-          </Label>
+            {required && <span className="text-destructive ml-1">*</span>}
+          </label>
         )}
-        <Input
-          id={fieldId}
-          ref={ref}
-          error={error}
-          helperText={!error ? helperText : undefined}
-          className={inputClassName}
-          {...inputProps}
-        />
+        <div className="px-1">
+          <Input
+            id={fieldId}
+            ref={ref}
+            error={error}
+            helperText={!error ? helperText : undefined}
+            className={inputClassName}
+            {...inputProps}
+          />
+        </div>
       </div>
     )
   }
