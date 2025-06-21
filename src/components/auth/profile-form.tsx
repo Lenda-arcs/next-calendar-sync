@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { Form, FormField, Button, useForm } from '@/components/ui'
+import { Form, FormField, Button, useForm, Select } from '@/components/ui'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { 
@@ -114,40 +114,9 @@ const TextArea: React.FC<{
       </div>
     </div>
   )
-}
-
-// Enhanced Select Component
-const Select: React.FC<{
-  label?: string
-  value: string
-  onChange: (value: string) => void
-  options: { value: string; label: string }[]
-  placeholder?: string
-}> = ({ label, value, onChange, options, placeholder }) => {
-  return (
-    <div className="space-y-2">
-      {label && (
-        <label className="text-sm font-medium text-foreground">
-          {label}
-        </label>
-      )}
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="flex w-full rounded-xl bg-background text-sm ring-offset-background backdrop-blur-sm bg-white/50 border border-white/40 shadow-md focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-300 ease-in-out h-10 px-3 font-sans"
-      >
-        {placeholder && <option value="">{placeholder}</option>}
-        {options.map(option => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
-    </div>
-  )
-}
-
-export function ProfileForm({ user, onUpdate }: ProfileFormProps) {
+  }
+  
+  export function ProfileForm({ user, onUpdate }: ProfileFormProps) {
   const [authError, setAuthError] = useState<string>('')
   const [successMessage, setSuccessMessage] = useState<string>('')
   const [publicUrlPreview, setPublicUrlPreview] = useState<string>('')
