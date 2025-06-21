@@ -5,8 +5,7 @@ import { useSupabaseQuery } from '@/lib/hooks/useSupabaseQuery'
 import { useSupabaseMutation } from '@/lib/hooks/useSupabaseMutation'
 import { TagRule, Tag } from '@/lib/types'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { AlertCircle } from 'lucide-react'
-import DataLoader from '@/components/ui/data-loader'
+import { AlertCircle, Loader2 } from 'lucide-react'
 import { TagRulesCard } from './TagRulesCard'
 
 interface TagRuleState {
@@ -29,13 +28,14 @@ interface Props {
 
 export const TagRuleManager: React.FC<Props> = ({ userId }) => {
   const [state, setState] = useState<TagRuleState>(initialState)
+  const [optimisticRules, setOptimisticRules] = useState<TagRule[]>([])
+  const [deletedRuleIds, setDeletedRuleIds] = useState<Set<string>>(new Set())
 
   // Fetch tag rules for the user
   const { 
     data: tagRules, 
     isLoading: rulesLoading, 
-    error: rulesError, 
-    refetch: refetchRules 
+    error: rulesError
   } = useSupabaseQuery({
     queryKey: ['tag-rules', userId],
     fetcher: async (supabase) => {
@@ -79,17 +79,29 @@ export const TagRuleManager: React.FC<Props> = ({ userId }) => {
       if (error) throw error
       return data
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      // Clear form
       setState((prev) => ({
         ...prev,
         newRule: { keyword: '', selectedTag: '' },
       }))
-      refetchRules()
+      
+      // Add the new rule to optimistic state
+      if (data && data[0]) {
+        setOptimisticRules(prev => [...prev, data[0]])
+      }
+      
+      // No refetch - trust the database operation succeeded
     },
+    onError: () => {
+      // Clear optimistic state on error
+      setOptimisticRules([])
+      console.error('Failed to create tag rule')
+    }
   })
 
   // Delete tag rule mutation
-  const { mutate: deleteRule, isLoading: deleting } = useSupabaseMutation({
+  const { mutate: deleteRule } = useSupabaseMutation({
     mutationFn: async (supabase, ruleId: string) => {
       const { data, error } = await supabase
         .from('tag_rules')
@@ -100,9 +112,24 @@ export const TagRuleManager: React.FC<Props> = ({ userId }) => {
       if (error) throw error
       return data
     },
-    onSuccess: () => {
-      refetchRules()
+    onSuccess: (_, ruleId) => {
+      // Mark as deleted in optimistic state
+      setDeletedRuleIds(prev => new Set([...prev, ruleId]))
+      
+      // Remove from optimistic additions if it was recently added
+      setOptimisticRules(prev => prev.filter(rule => rule.id !== ruleId))
+      
+      // No refetch - trust the database operation succeeded
     },
+    onError: (_, ruleId) => {
+      // Remove from deleted set to restore the rule
+      setDeletedRuleIds(prev => {
+        const newSet = new Set(prev)
+        newSet.delete(ruleId)
+        return newSet
+      })
+      console.error('Failed to delete tag rule')
+    }
   })
 
   const handleAddRule = async () => {
@@ -116,13 +143,40 @@ export const TagRuleManager: React.FC<Props> = ({ userId }) => {
   }
 
   const handleDeleteRule = async (ruleId: string) => {
+    console.log('Delete rule called:', ruleId)
+    
+    // Optimistically mark as deleted
+    setDeletedRuleIds(prev => new Set([...prev, ruleId]))
+    
+    // Remove from optimistic additions if it was recently added
+    setOptimisticRules(prev => prev.filter(rule => rule.id !== ruleId))
+    
     deleteRule(ruleId)
   }
 
   const error = rulesError || tagsError
   const errorMessage = error ? error.message || error.toString() : null
-  const loading = rulesLoading || tagsLoading
-  const data = tagRules && availableTags ? { rules: tagRules, tags: availableTags } : null
+  const initialLoading = rulesLoading || tagsLoading
+  const hasData = tagRules && availableTags
+
+  // Debug logging
+  console.log('TagRuleManager render:', {
+    rulesLoading,
+    tagsLoading,
+    initialLoading,
+    hasData: !!hasData,
+    rulesCount: tagRules?.length || 0,
+    optimisticCount: optimisticRules.length,
+    deletedCount: deletedRuleIds.size
+  })
+
+  // Combine server data with optimistic updates
+  const displayRules = hasData ? [
+    // Server rules that haven't been deleted
+    ...(tagRules || []).filter(rule => !deletedRuleIds.has(rule.id)),
+    // Optimistically added rules
+    ...optimisticRules
+  ] : []
 
   return (
     <div className="space-y-8">
@@ -134,47 +188,56 @@ export const TagRuleManager: React.FC<Props> = ({ userId }) => {
         </Alert>
       )}
 
-      {(creating || deleting) && (
-        <Alert>
-          <AlertDescription>
-            {creating ? 'Adding rule...' : 'Deleting rule...'}
-          </AlertDescription>
+
+
+      {/* Initial loading state */}
+      {initialLoading && (
+        <div className="flex items-center justify-center py-8">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          <span className="ml-2 text-muted-foreground">Loading tag rules...</span>
+        </div>
+      )}
+
+      {/* Error state */}
+      {!initialLoading && error && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>{errorMessage}</AlertDescription>
         </Alert>
       )}
 
-      <DataLoader
-        data={data}
-        loading={loading}
-        error={errorMessage}
-        empty={
-          <p className="text-muted-foreground text-center">
-            No tag rules found. Create your first rule!
-          </p>
-        }
-      >
-        {(data) => (
-          <TagRulesCard
-            rules={data.rules}
-            tags={data.tags}
-            onDeleteRule={handleDeleteRule}
-            onAddRule={handleAddRule}
-            newKeyword={state.newRule.keyword}
-            setNewKeyword={(value: string) =>
-              setState((prev) => ({
-                ...prev,
-                newRule: { ...prev.newRule, keyword: value },
-              }))
-            }
-            selectedTag={state.newRule.selectedTag}
-            setSelectedTag={(value: string) =>
-              setState((prev) => ({
-                ...prev,
-                newRule: { ...prev.newRule, selectedTag: value },
-              }))
-            }
-          />
-        )}
-      </DataLoader>
+      {/* Empty state */}
+      {!initialLoading && !error && hasData && displayRules.length === 0 && availableTags.length === 0 && (
+        <div className="text-center py-8 text-muted-foreground">
+          <p>No tags available. Create some tags first to set up tag rules.</p>
+        </div>
+      )}
+
+      {/* Main content */}
+      {!initialLoading && !error && hasData && (
+        <TagRulesCard
+          rules={displayRules}
+          tags={availableTags}
+          onDeleteRule={handleDeleteRule}
+          onAddRule={handleAddRule}
+          newKeyword={state.newRule.keyword}
+          setNewKeyword={(value: string) =>
+            setState((prev) => ({
+              ...prev,
+              newRule: { ...prev.newRule, keyword: value },
+            }))
+          }
+          selectedTag={state.newRule.selectedTag}
+          setSelectedTag={(value: string) =>
+            setState((prev) => ({
+              ...prev,
+              newRule: { ...prev.newRule, selectedTag: value },
+            }))
+          }
+          isCreating={creating}
+        />
+      )}
     </div>
   )
 } 

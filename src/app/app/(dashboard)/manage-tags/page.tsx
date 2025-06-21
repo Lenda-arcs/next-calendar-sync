@@ -1,9 +1,9 @@
+import { TagLibrary } from '@/components/events/TagLibrary'
+import { TagRuleManager } from '@/components/events/TagRuleManager'
 import { Container } from '@/components/layout/container'
 import { PageSection } from '@/components/layout/page-section'
 import { createServerClient } from '@/lib/supabase-server'
 import { redirect } from 'next/navigation'
-import { TagRuleManager } from '@/components/events/TagRuleManager'
-import { TagLibrary } from '@/components/events/TagLibrary'
 
 export default async function ManageTagsPage() {
   const supabase = await createServerClient()

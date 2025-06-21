@@ -1,27 +1,22 @@
 'use client'
 
-import React, { useState, useMemo } from 'react'
+import React, { useMemo } from 'react'
 import { useSupabaseQuery } from '@/lib/hooks/useSupabaseQuery'
-import { useSupabaseMutation } from '@/lib/hooks/useSupabaseMutation'
-import { Tag, TagInsert, TagUpdate } from '@/lib/types'
-import { EventTag, convertToEventTag } from '@/lib/event-types'
+import { Tag } from '@/lib/types'
+import { convertToEventTag } from '@/lib/event-types'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { AlertCircle } from 'lucide-react'
 import DataLoader from '@/components/ui/data-loader'
 import { TagLibraryGrid } from './TagLibraryGrid'
 import { NewTagForm } from './NewTagForm'
 import { TagViewDialog } from './TagViewDialog'
+import { useTagOperations } from '@/lib/hooks/useTagOperations'
 
 interface Props {
   userId: string
 }
 
 export const TagLibrary: React.FC<Props> = ({ userId }) => {
-  const [showNewTagForm, setShowNewTagForm] = useState(false)
-  const [isEditing, setIsEditing] = useState(false)
-  const [selectedTag, setSelectedTag] = useState<EventTag | null>(null)
-  const [showViewDialog, setShowViewDialog] = useState(false)
-
   // Fetch global tags
   const { 
     data: globalTags, 
@@ -61,59 +56,23 @@ export const TagLibrary: React.FC<Props> = ({ userId }) => {
     },
   })
 
-  // Create tag mutation
-  const { mutate: createTag, isLoading: creating } = useSupabaseMutation({
-    mutationFn: async (supabase, variables: TagInsert) => {
-      const { data, error } = await supabase
-        .from('tags')
-        .insert([variables])
-        .select()
-      
-      if (error) throw error
-      return data
-    },
-    onSuccess: () => {
-      setShowNewTagForm(false)
-      setSelectedTag(null)
-      refetchCustom()
-    },
-  })
-
-  // Update tag mutation
-  const { mutate: updateTag, isLoading: updating } = useSupabaseMutation({
-    mutationFn: async (supabase, variables: { id: string; data: TagUpdate }) => {
-      const { data, error } = await supabase
-        .from('tags')
-        .update(variables.data)
-        .eq('id', variables.id)
-        .select()
-      
-      if (error) throw error
-      return data
-    },
-    onSuccess: () => {
-      setShowNewTagForm(false)
-      setIsEditing(false)
-      setSelectedTag(null)
-      refetchCustom()
-    },
-  })
-
-  // Delete tag mutation
-  const { mutate: deleteTag, isLoading: deleting } = useSupabaseMutation({
-    mutationFn: async (supabase, tagId: string) => {
-      const { data, error } = await supabase
-        .from('tags')
-        .delete()
-        .eq('id', tagId)
-        .select()
-      
-      if (error) throw error
-      return data
-    },
-    onSuccess: () => {
-      refetchCustom()
-    },
+  // Tag operations hook
+  const {
+    selectedTag,
+    showNewTagForm,
+    showViewDialog,
+    isEditing,
+    creating,
+    updating,
+    deleting,
+    handleTagClick,
+    handleEditClick,
+    handleCreateNew,
+    handleCancel,
+    handleSaveTag,
+    handleDeleteTag,
+  } = useTagOperations({ 
+    onSuccess: refetchCustom 
   })
 
   // Convert database tags to EventTags
@@ -125,70 +84,10 @@ export const TagLibrary: React.FC<Props> = ({ userId }) => {
     return customTags?.map(convertToEventTag) || []
   }, [customTags])
 
-  const handleTagClick = (tag: EventTag) => {
-    setSelectedTag(tag)
-    setShowViewDialog(true)
-  }
-
-  const handleEditClick = (tag: EventTag) => {
-    setSelectedTag(tag)
-    setIsEditing(true)
-    setShowNewTagForm(true)
-    setShowViewDialog(false)
-  }
-
-  const handleCreateNew = () => {
-    setSelectedTag(null)
-    setIsEditing(false)
-    setShowNewTagForm(true)
-  }
-
-  const handleCancel = () => {
-    setSelectedTag(null)
-    setIsEditing(false)
-    setShowNewTagForm(false)
-    setShowViewDialog(false)
-  }
-
-  const handleSaveTag = async (tagData: EventTag) => {
-    if (isEditing && selectedTag) {
-      // Update existing tag
-      const updateData: TagUpdate = {
-        name: tagData.name,
-        color: tagData.color,
-        image_url: tagData.imageUrl,
-        class_type: tagData.classType?.[0] || null,
-        audience: tagData.audience,
-        cta_label: tagData.cta?.label || null,
-        cta_url: tagData.cta?.url || null,
-        priority: tagData.priority,
-      }
-      updateTag({ id: selectedTag.id, data: updateData })
-    } else {
-      // Create new tag
-      const insertData: TagInsert = {
-        user_id: userId,
-        name: tagData.name,
-        slug: tagData.slug,
-        color: tagData.color,
-        image_url: tagData.imageUrl,
-        class_type: tagData.classType?.[0] || null,
-        audience: tagData.audience,
-        cta_label: tagData.cta?.label || null,
-        cta_url: tagData.cta?.url || null,
-        priority: tagData.priority,
-      }
-      createTag(insertData)
-    }
-  }
-
-  const handleDeleteTag = (tagId: string) => {
-    deleteTag(tagId)
-  }
-
   const error = globalError || customError
   const errorMessage = error ? error.message || error.toString() : null
   const loading = globalLoading || customLoading
+  const data = globalTags && customTags ? { globalTags: globalEventTags, customTags: customEventTags } : null
 
   return (
     <div className="space-y-8">
@@ -211,7 +110,7 @@ export const TagLibrary: React.FC<Props> = ({ userId }) => {
       )}
 
       <DataLoader
-        data={{ globalTags: globalEventTags, customTags: customEventTags }}
+        data={data}
         loading={loading}
         error={errorMessage}
         empty={
@@ -248,10 +147,7 @@ export const TagLibrary: React.FC<Props> = ({ userId }) => {
         <TagViewDialog
           tag={selectedTag}
           isOpen={showViewDialog}
-          onClose={() => {
-            setShowViewDialog(false)
-            setSelectedTag(null)
-          }}
+          onClose={handleCancel}
           onEdit={() => handleEditClick(selectedTag)}
           canEdit={!selectedTag.userId || selectedTag.userId === userId}
         />

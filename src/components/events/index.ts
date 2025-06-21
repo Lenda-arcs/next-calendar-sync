@@ -1,16 +1,26 @@
+// Event display components
 export { EventCard } from './EventCard'
+export { InteractiveEventCard } from './InteractiveEventCard'
 export { ImageGallery } from './ImageGallery'
 export { EventDetails } from './EventDetails'
-export { default as TagList } from './TagList'
-export { default as TeacherHero } from './TeacherHero'
+export { default as EventGrid } from './EventGrid'
+
+// Event list components
 export { default as PublicEventList } from './PublicEventList'
 export { default as PrivateEventList } from './PrivateEventList'
-export { InteractiveEventCard } from './InteractiveEventCard'
-export { TagManagement } from './TagManagement'
-export { default as EventGrid } from './EventGrid'
+
+// Tag management components
 export { TagRuleManager } from './TagRuleManager'
 export { TagLibrary } from './TagLibrary'
 export { TagRulesCard } from './TagRulesCard'
 export { TagLibraryGrid } from './TagLibraryGrid'
 export { NewTagForm } from './NewTagForm'
-export { TagViewDialog } from './TagViewDialog' 
+export { TagViewDialog } from './TagViewDialog'
+export { ColorPicker } from './ColorPicker'
+
+// Legacy tag components
+export { TagManagement } from './TagManagement'
+export { default as TagList } from './TagList'
+
+// Teacher components
+export { default as TeacherHero } from './TeacherHero' 

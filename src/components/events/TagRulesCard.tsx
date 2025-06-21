@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { FormField } from '@/components/ui/form-field'
 import { Select } from '@/components/ui/select'
-import { X, ArrowRight, Search, Plus } from 'lucide-react'
+import { X, ArrowRight, Search, Plus, Loader2 } from 'lucide-react'
 
 interface Props {
   rules: TagRule[]
@@ -18,6 +18,7 @@ interface Props {
   setNewKeyword: (value: string) => void
   selectedTag: string
   setSelectedTag: (value: string) => void
+  isCreating?: boolean
 }
 
 export const TagRulesCard: React.FC<Props> = ({ 
@@ -29,7 +30,10 @@ export const TagRulesCard: React.FC<Props> = ({
   setNewKeyword,
   selectedTag,
   setSelectedTag,
+  isCreating = false,
 }) => {
+  const selectedTagData = tags.find(tag => tag.id === selectedTag)
+
   return (
     <Card variant="default">
       <CardHeader>
@@ -53,6 +57,7 @@ export const TagRulesCard: React.FC<Props> = ({
                 placeholder="e.g. meditation"
                 value={newKeyword}
                 onChange={(e) => setNewKeyword(e.target.value)}
+                disabled={isCreating}
               />
             </div>
             <div className="flex-1 sm:flex-initial space-y-2">
@@ -66,14 +71,22 @@ export const TagRulesCard: React.FC<Props> = ({
                 value={selectedTag}
                 onChange={setSelectedTag}
                 placeholder="Select Tag..."
+                disabled={isCreating}
               />
             </div>
             <Button
               onClick={onAddRule}
-              disabled={!newKeyword.trim() || !selectedTag}
+              disabled={!newKeyword.trim() || !selectedTag || isCreating}
               variant="glass"
             >
-              Add Rule
+              {isCreating ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Adding...
+                </>
+              ) : (
+                'Add Rule'
+              )}
             </Button>
           </div>
         </div>
@@ -83,7 +96,7 @@ export const TagRulesCard: React.FC<Props> = ({
           <div className="flex items-center gap-2 mb-4">
             <Search className="h-4 w-4 text-muted-foreground" />
             <h3 className="text-sm font-medium text-foreground">
-              Active Rules ({rules.length})
+              Active Rules ({rules.length}{isCreating ? ' + 1 pending' : ''})
             </h3>
           </div>
           
@@ -139,8 +152,48 @@ export const TagRulesCard: React.FC<Props> = ({
                 </div>
               )
             })}
+
+            {/* Loading indicator for new rule being created */}
+            {isCreating && newKeyword && selectedTagData && (
+              <div className="flex items-center gap-2 sm:gap-3 bg-gradient-to-r from-blue-50/50 to-purple-50/30 px-3 sm:px-4 py-2 sm:py-3 rounded-lg border border-blue-200/50 animate-pulse">
+                {/* Keyword section with loading */}
+                <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1">
+                  <Loader2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-blue-500 flex-shrink-0 animate-spin" />
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-sm font-medium text-blue-700 truncate">
+                      &ldquo;{newKeyword}&rdquo;
+                    </span>
+                    <span className="text-xs text-blue-500 hidden sm:block">
+                      creating rule...
+                    </span>
+                  </div>
+                </div>
+
+                {/* Arrow connector - hidden on mobile */}
+                <ArrowRight className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-blue-400 flex-shrink-0 hidden sm:block" />
+
+                {/* Tag section */}
+                <div className="flex items-center gap-1 sm:gap-2">
+                  <span className="text-xs text-blue-500 hidden sm:inline">applies</span>
+                  <Badge 
+                    variant="secondary" 
+                    className="font-medium text-xs opacity-80"
+                    style={{ 
+                      backgroundColor: `${selectedTagData.color || '#6B7280'}20`,
+                      color: selectedTagData.color || '#6B7280',
+                      borderColor: `${selectedTagData.color || '#6B7280'}40`
+                    }}
+                  >
+                    {selectedTagData.name || 'Unknown Tag'}
+                  </Badge>
+                </div>
+
+                {/* Placeholder for delete button */}
+                <div className="h-7 w-7 sm:h-8 sm:w-8 flex-shrink-0" />
+              </div>
+            )}
             
-            {rules.length === 0 && (
+            {rules.length === 0 && !isCreating && (
               <div className="text-center py-6 sm:py-8 text-muted-foreground">
                 <Search className="h-6 w-6 sm:h-8 sm:w-8 mx-auto mb-2 text-muted/50" />
                 <p className="text-sm">No tag rules configured</p>
