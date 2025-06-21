@@ -10,7 +10,6 @@ import { Button } from '@/components/ui/button'
 import { 
   Settings, 
   Calendar, 
-  Tag, 
   Eye, 
   EyeOff,
   Plus,
@@ -386,7 +385,7 @@ export default function ManageEventsPage() {
             </Button>
           </div>
 
-          {/* Filter Controls */}
+          {/* Filter & Overview */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -394,11 +393,12 @@ export default function ManageEventsPage() {
                 Filter Events
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="flex flex-wrap gap-4">
-                <div className="flex items-center gap-2">
+            <CardContent className="space-y-6">
+              {/* Filter Controls */}
+              <div className="space-y-4">
+                <div className="flex flex-wrap items-center gap-2">
                   <span className="text-sm font-medium">Time:</span>
-                  <div className="flex gap-1">
+                  <div className="flex flex-wrap gap-1">
                     <Button
                       variant={timeFilter === 'future' ? 'default' : 'outline'}
                       size="sm"
@@ -415,104 +415,92 @@ export default function ManageEventsPage() {
                     </Button>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <span className="text-sm font-medium">Visibility:</span>
-                  <div className="flex gap-1">
+                  <div className="flex flex-wrap gap-1">
                     <Button
                       variant={visibilityFilter === 'all' ? 'default' : 'outline'}
                       size="sm"
                       onClick={() => setVisibilityFilter('all')}
                     >
-                      All
+                      All <span className="md:hidden">({eventStats.total})</span>
                     </Button>
                     <Button
                       variant={visibilityFilter === 'public' ? 'default' : 'outline'}
                       size="sm"
                       onClick={() => setVisibilityFilter('public')}
                     >
-                      Public Only
+                      Public Only <span className="md:hidden">({eventStats.public})</span>
                     </Button>
                     <Button
                       variant={visibilityFilter === 'private' ? 'default' : 'outline'}
                       size="sm"
                       onClick={() => setVisibilityFilter('private')}
                     >
-                      Private Only
+                      Private Only <span className="md:hidden">({eventStats.private})</span>
                     </Button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Overview Stats - Hidden on mobile */}
+              <div className="hidden md:grid grid-cols-3 gap-4 pt-2 border-t border-border">
+                <div 
+                  className={cn(
+                    "p-4 rounded-lg border cursor-pointer transition-all duration-200 hover:shadow-md",
+                    visibilityFilter === 'all' 
+                      ? "bg-blue-50 border-blue-200 ring-2 ring-blue-500 ring-opacity-50" 
+                      : "bg-muted/50 hover:bg-muted"
+                  )}
+                  onClick={() => setVisibilityFilter('all')}
+                >
+                  <div className="flex items-center space-x-3">
+                    <Calendar className="h-6 w-6 text-blue-500" />
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Total Events</p>
+                      <p className="text-2xl font-bold">{eventStats.total}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div 
+                  className={cn(
+                    "p-4 rounded-lg border cursor-pointer transition-all duration-200 hover:shadow-md",
+                    visibilityFilter === 'public' 
+                      ? "bg-green-50 border-green-200 ring-2 ring-green-500 ring-opacity-50" 
+                      : "bg-muted/50 hover:bg-muted"
+                  )}
+                  onClick={() => setVisibilityFilter('public')}
+                >
+                  <div className="flex items-center space-x-3">
+                    <Eye className="h-6 w-6 text-green-500" />
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Public</p>
+                      <p className="text-2xl font-bold">{eventStats.public}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div 
+                  className={cn(
+                    "p-4 rounded-lg border cursor-pointer transition-all duration-200 hover:shadow-md",
+                    visibilityFilter === 'private' 
+                      ? "bg-orange-50 border-orange-200 ring-2 ring-orange-500 ring-opacity-50" 
+                      : "bg-muted/50 hover:bg-muted"
+                  )}
+                  onClick={() => setVisibilityFilter('private')}
+                >
+                  <div className="flex items-center space-x-3">
+                    <EyeOff className="h-6 w-6 text-orange-500" />
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Private</p>
+                      <p className="text-2xl font-bold">{eventStats.private}</p>
+                    </div>
                   </div>
                 </div>
               </div>
             </CardContent>
           </Card>
-
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <Card 
-              className={cn(
-                "cursor-pointer transition-all duration-200 hover:shadow-md",
-                visibilityFilter === 'all' && "ring-2 ring-blue-500 ring-opacity-50"
-              )}
-              onClick={() => setVisibilityFilter('all')}
-            >
-              <CardContent className="p-4">
-                <div className="flex items-center space-x-2">
-                  <Calendar className="h-5 w-5 text-blue-500" />
-                  <div>
-                    <p className="text-sm font-medium">Total Events {visibilityFilter === 'all' && '(Active)'}</p>
-                    <p className="text-2xl font-bold">{eventStats.total}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card 
-              className={cn(
-                "cursor-pointer transition-all duration-200 hover:shadow-md",
-                visibilityFilter === 'public' && "ring-2 ring-green-500 ring-opacity-50"
-              )}
-              onClick={() => setVisibilityFilter('public')}
-            >
-              <CardContent className="p-4">
-                <div className="flex items-center space-x-2">
-                  <Eye className="h-5 w-5 text-green-500" />
-                  <div>
-                    <p className="text-sm font-medium">Public {visibilityFilter === 'public' && '(Active)'}</p>
-                    <p className="text-2xl font-bold">{eventStats.public}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card 
-              className={cn(
-                "cursor-pointer transition-all duration-200 hover:shadow-md",
-                visibilityFilter === 'private' && "ring-2 ring-orange-500 ring-opacity-50"
-              )}
-              onClick={() => setVisibilityFilter('private')}
-            >
-              <CardContent className="p-4">
-                <div className="flex items-center space-x-2">
-                  <EyeOff className="h-5 w-5 text-orange-500" />
-                  <div>
-                    <p className="text-sm font-medium">Private {visibilityFilter === 'private' && '(Active)'}</p>
-                    <p className="text-2xl font-bold">{eventStats.private}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center space-x-2">
-                  <Tag className="h-5 w-5 text-purple-500" />
-                  <div>
-                    <p className="text-sm font-medium">Available Tags</p>
-                    <p className="text-2xl font-bold">{(userTags?.length || 0) + (globalTags?.length || 0)}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
 
           {/* Quick Actions */}
           <Card>
