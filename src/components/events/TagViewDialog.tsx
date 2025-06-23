@@ -1,7 +1,7 @@
 'use client'
 
-import React from 'react'
-import { EventTag } from '@/lib/event-types'
+import React, { useState } from 'react'
+import { EventTag, EventDisplayVariant } from '@/lib/event-types'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -32,7 +32,7 @@ const TagInfoSection: React.FC<TagInfoSectionProps> = ({ title, icon: Icon, chil
         {title}
       </CardTitle>
     </CardHeader>
-    <CardContent className="space-y-3">
+    <CardContent className="space-y-2">
       {children}
     </CardContent>
   </Card>
@@ -53,10 +53,11 @@ export const TagViewDialog: React.FC<Props> = ({
   canEdit,
 }) => {
   const isGlobal = !tag.userId
+  const [selectedVariant, setSelectedVariant] = useState<EventDisplayVariant>('compact')
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col backdrop-blur-md bg-white/95 border border-white/40 shadow-xl">
+      <DialogContent className="max-w-[95vw] sm:max-w-5xl max-h-[90vh] flex flex-col backdrop-blur-md bg-white/95 border border-white/40 shadow-xl">
         <DialogHeader className="flex-shrink-0">
           <DialogTitle className="flex items-center gap-2">
             <div
@@ -79,27 +80,51 @@ export const TagViewDialog: React.FC<Props> = ({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto space-y-6 py-4">
+        <div className="flex-1 overflow-y-auto space-y-4 py-3">
           {/* Tag Preview */}
           <Card variant="embedded" className="bg-gradient-to-r from-gray-50/80 to-blue-50/30">
             <CardHeader>
               <CardTitle className="text-lg">Tag Preview</CardTitle>
             </CardHeader>
             <CardContent>
-              <EventCard
-                id="preview-event"
-                title="Sample Yoga Class"
-                dateTime="2024-12-20T09:00:00Z"
-                location="Studio A"
-                imageQuery="yoga class studio"
-                tags={[tag]}
-                variant="minimal"
-                forceMobile={false}
-              />
+              <div className="space-y-3">
+                {/* EventCard Preview */}
+                <div className="flex justify-center">
+                  <div className="w-full max-w-md">
+                    <EventCard
+                      id="preview-event"
+                      title="Sample Yoga Class"
+                      dateTime="2024-12-20T09:00:00Z"
+                      location="Studio A"
+                      imageQuery="yoga class studio"
+                      tags={[tag]}
+                      variant={selectedVariant}
+                      forceMobile={false}
+                    />
+                  </div>
+                </div>
+                
+                {/* Variant Toggle Group */}
+                <div className="flex justify-center">
+                  <div className="flex gap-1">
+                    {(['minimal', 'compact', 'full'] as EventDisplayVariant[]).map((variant) => (
+                      <Button
+                        key={variant}
+                        variant={selectedVariant === variant ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setSelectedVariant(variant)}
+                        className="capitalize"
+                      >
+                        {variant}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              </div>
             </CardContent>
           </Card>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             {/* Basic Info */}
             <TagInfoSection title="Basic Info" icon={Palette}>
               <InfoRow label="Name">
@@ -160,60 +185,35 @@ export const TagViewDialog: React.FC<Props> = ({
                 </InfoRow>
               )}
             </TagInfoSection>
+
+            {/* Image & CTA */}
+            {(tag.imageUrl || (tag.cta && tag.cta.label && tag.cta.url)) && (
+              <TagInfoSection title="Media & Actions" icon={ExternalLink}>
+                {tag.imageUrl && (
+                  <InfoRow label="Image URL">
+                    <p className="text-sm font-mono bg-gray-100 px-2 py-1 rounded text-xs line-clamp-2">
+                      {tag.imageUrl}
+                    </p>
+                  </InfoRow>
+                )}
+                {tag.cta && tag.cta.label && tag.cta.url && (
+                  <>
+                    <InfoRow label="Button Label">
+                      <p className="text-sm">{tag.cta.label}</p>
+                    </InfoRow>
+                    <InfoRow label="Button URL">
+                      <p className="text-sm font-mono bg-gray-100 px-2 py-1 rounded text-xs line-clamp-2">
+                        {tag.cta.url}
+                      </p>
+                    </InfoRow>
+                  </>
+                )}
+              </TagInfoSection>
+            )}
           </div>
-
-          {/* Call to Action */}
-          {tag.cta && tag.cta.label && tag.cta.url && (
-            <TagInfoSection title="Call to Action" icon={ExternalLink}>
-              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <div>
-                  <p className="text-sm font-medium">{tag.cta.label}</p>
-                  <p className="text-xs text-muted-foreground truncate">
-                    {tag.cta.url}
-                  </p>
-                </div>
-                <Button size="sm" asChild>
-                  <a
-                    href={tag.cta.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1"
-                  >
-                    Preview
-                    <ExternalLink className="h-3 w-3" />
-                  </a>
-                </Button>
-              </div>
-            </TagInfoSection>
-          )}
-
-          {/* Image */}
-          {tag.imageUrl && (
-            <Card variant="embedded">
-              <CardHeader>
-                <CardTitle className="text-base">Tag Image</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="aspect-video bg-gray-100 rounded-lg overflow-hidden">
-                  <img
-                    src={tag.imageUrl}
-                    alt={`Image for ${tag.name}`}
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      e.currentTarget.style.display = 'none'
-                      e.currentTarget.nextElementSibling?.classList.remove('hidden')
-                    }}
-                  />
-                  <div className="hidden w-full h-full flex items-center justify-center text-muted-foreground">
-                    <p className="text-sm">Failed to load image</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
         </div>
 
-        <DialogFooter className="flex-shrink-0 border-t pt-4 mt-4">
+        <DialogFooter className="flex-shrink-0 border-t pt-3 mt-3">
           <Button variant="secondary" onClick={onClose}>
             Close
           </Button>
