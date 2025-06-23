@@ -128,7 +128,7 @@ export const TagRulesCard: React.FC<Props> = ({
                   <div className="flex items-center gap-1 sm:gap-2">
                     <span className="text-xs text-muted-foreground hidden sm:inline">applies</span>
                     <TagBadge 
-                      variant="dynamic"
+                      variant="safe"
                       color={tag?.color}
                       className="font-medium text-xs"
                     >
@@ -172,7 +172,7 @@ export const TagRulesCard: React.FC<Props> = ({
                 <div className="flex items-center gap-1 sm:gap-2">
                   <span className="text-xs text-blue-500 hidden sm:inline">applies</span>
                   <TagBadge 
-                    variant="dynamic"
+                    variant="safe"
                     color={selectedTagData.color}
                     className="font-medium text-xs opacity-80"
                   >
