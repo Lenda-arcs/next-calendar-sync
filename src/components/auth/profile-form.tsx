@@ -11,21 +11,72 @@ import {
   Instagram, 
   Clock, 
   AlertCircle,
-  Check
+  Check,
+  Save,
+  RotateCcw,
+  Loader2
 } from 'lucide-react'
 
 import { User } from '@/lib/types'
 import { useSupabaseUpdate } from '@/lib/hooks/useSupabaseMutation'
 import ImageUpload from '@/components/ui/image-upload'
+import { cn } from '@/lib/utils'
 
 interface ProfileFormProps {
   user: User
   onUpdate?: (user: User) => void
 }
 
+// Floating Action Button Component for Profile Updates
+const ProfileUpdateFAB: React.FC<{
+  hasChanges: boolean
+  isSaving: boolean
+  onSave: () => void
+  onReset: () => void
+}> = ({ hasChanges, isSaving, onSave, onReset }) => {
+  if (!hasChanges) return null
 
-
-
+  return (
+    <div className="fixed bottom-6 right-6 z-50">
+      <div className="flex flex-col gap-2">
+        {/* Reset button */}
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onReset}
+          className="bg-background shadow-lg border-2"
+          disabled={isSaving}
+          title="Reset all changes"
+        >
+          <RotateCcw className="h-4 w-4" />
+        </Button>
+        
+        {/* Save button */}
+        <Button
+          onClick={onSave}
+          disabled={isSaving}
+          className={cn(
+            "shadow-lg min-w-[140px] transition-all duration-200",
+            "bg-primary hover:bg-primary/90 text-primary-foreground",
+            isSaving && "bg-primary/50"
+          )}
+        >
+          {isSaving ? (
+            <>
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              Updating...
+            </>
+          ) : (
+            <>
+              <Save className="h-4 w-4 mr-2" />
+              Update Profile
+            </>
+          )}
+        </Button>
+      </div>
+    </div>
+  )
+}
 
 // Multi-Select Component for Yoga Styles
 const YogaStylesSelect: React.FC<{
@@ -114,17 +165,19 @@ const TextArea: React.FC<{
       </div>
     </div>
   )
-  }
-  
-  export function ProfileForm({ user, onUpdate }: ProfileFormProps) {
+}
+
+export function ProfileForm({ user, onUpdate }: ProfileFormProps) {
   const [authError, setAuthError] = useState<string>('')
   const [successMessage, setSuccessMessage] = useState<string>('')
   const [publicUrlPreview, setPublicUrlPreview] = useState<string>('')
+  const [hasFormChanges, setHasFormChanges] = useState(false)
 
   // Use the Supabase mutation hook for updating user profile
   const updateUserMutation = useSupabaseUpdate<User>('users', {
     onSuccess: (data) => {
       setSuccessMessage('Profile updated successfully!')
+      setHasFormChanges(false) // Reset changes flag on successful save
       onUpdate?.(data[0]) // Call the optional callback with updated user data
     },
     onError: (error) => {
@@ -149,6 +202,18 @@ const TextArea: React.FC<{
     { value: 'full', label: 'Full - Detailed view with all information' },
   ]
 
+  const initialValues = {
+    name: user.name ?? '',
+    bio: user.bio ?? '',
+    profile_image_url: user.profile_image_url ?? '',
+    public_url: user.public_url ?? '',
+    timezone: user.timezone ?? 'UTC',
+    instagram_url: user.instagram_url ?? '',
+    website_url: user.website_url ?? '',
+    yoga_styles: user.yoga_styles ?? [],
+    event_display_variant: user.event_display_variant ?? 'compact',
+  }
+
   const {
     values,
     errors,
@@ -156,18 +221,9 @@ const TextArea: React.FC<{
     setValue,
     validateFieldOnBlur,
     handleSubmit,
+    reset,
   } = useForm({
-    initialValues: {
-      name: user.name ?? '',
-      bio: user.bio ?? '',
-      profile_image_url: user.profile_image_url ?? '',
-      public_url: user.public_url ?? '',
-      timezone: user.timezone ?? 'UTC',
-      instagram_url: user.instagram_url ?? '',
-      website_url: user.website_url ?? '',
-      yoga_styles: user.yoga_styles ?? [],
-      event_display_variant: user.event_display_variant ?? 'compact',
-    },
+    initialValues,
     validationRules: {
       name: {
         required: 'Name is required',
@@ -230,8 +286,6 @@ const TextArea: React.FC<{
         event_display_variant: formData.event_display_variant as 'minimal' | 'compact' | 'full',
       }
 
-      console.log('Updating user:', user.id, 'with data:', updateData)
-
       // Use the mutation to update the user profile
       await updateUserMutation.mutateAsync({
         id: user.id,
@@ -239,6 +293,38 @@ const TextArea: React.FC<{
       })
     }
   })
+
+  // Check if form has changes by comparing current values with initial values
+  useEffect(() => {
+    const hasChanges = Object.keys(initialValues).some(key => {
+      const initialValue = initialValues[key as keyof typeof initialValues]
+      const currentValue = values[key as keyof typeof values]
+      
+      // Handle array comparison for yoga_styles
+      if (key === 'yoga_styles') {
+        const initial = Array.isArray(initialValue) ? initialValue : []
+        const current = Array.isArray(currentValue) ? currentValue : []
+        return JSON.stringify(initial.sort()) !== JSON.stringify(current.sort())
+      }
+      
+      return initialValue !== currentValue
+    })
+    
+    setHasFormChanges(hasChanges)
+  }, [values, initialValues])
+
+  // Handle form reset
+  const handleReset = () => {
+    reset()
+    setHasFormChanges(false)
+    setAuthError('')
+    setSuccessMessage('')
+  }
+
+  // Handle save action from FAB
+  const handleSave = () => {
+    handleSubmit()
+  }
 
   // Update public URL preview
   useEffect(() => {
@@ -440,22 +526,15 @@ const TextArea: React.FC<{
             />
           </CardContent>
         </Card>
-
-        {/* Submit Button */}
-        <Card variant="glass">
-          <CardContent className="pt-6">
-            <Button
-              type="submit"
-              variant="glass"
-              className="w-full"
-              size="lg"
-              loading={loading || updateUserMutation.isLoading}
-            >
-              {loading || updateUserMutation.isLoading ? 'Updating Profile...' : 'Update Profile'}
-            </Button>
-          </CardContent>
-        </Card>
       </Form>
+
+      {/* Floating Action Button for Profile Update */}
+      <ProfileUpdateFAB
+        hasChanges={hasFormChanges}
+        isSaving={loading || updateUserMutation.isLoading}
+        onSave={handleSave}
+        onReset={handleReset}
+      />
     </div>
   )
 } 
