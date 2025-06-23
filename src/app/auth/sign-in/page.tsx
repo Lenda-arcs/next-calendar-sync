@@ -1,13 +1,14 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import Link from 'next/link'
 import { LoginForm } from '@/components/auth'
+import { PATHS } from '@/lib/paths'
 import { ArrowLeft } from 'lucide-react'
 
 export default function SignInPage() {
   return (
     <>
       <div className="text-center mb-8">
-        <Link href="/" className="inline-flex items-center text-sm text-foreground/70 hover:text-foreground font-sans transition-colors">
+        <Link href={PATHS.HOME} className="inline-flex items-center text-sm text-foreground/70 hover:text-foreground font-sans transition-colors">
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back to home
         </Link>

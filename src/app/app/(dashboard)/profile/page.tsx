@@ -1,6 +1,7 @@
 import { Container } from '@/components/layout/container'
 import { ProfileForm } from '@/components/auth'
 import { createServerClient } from '@/lib/supabase-server'
+import { PATHS } from '@/lib/paths'
 import { redirect } from 'next/navigation'
 import { User } from '@/lib/types'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -71,20 +72,20 @@ export default async function ProfilePage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <Button variant="outline" asChild>
-                    <Link href="/app">
-                      <Eye className="mr-2 h-4 w-4" />
-                      View Dashboard
-                    </Link>
-                  </Button>
-                  <Button variant="outline" asChild>
-                    <Link href="/auth/signout">
-                      <Shield className="mr-2 h-4 w-4" />
-                      Sign Out
-                    </Link>
-                  </Button>
-                </div>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Button variant="outline" asChild>
+                  <Link href={PATHS.APP.DASHBOARD}>
+                    <Eye className="mr-2 h-4 w-4" />
+                    View Dashboard
+                  </Link>
+                </Button>
+                <Button variant="outline" asChild>
+                  <Link href={PATHS.AUTH.SIGNOUT}>
+                    <Shield className="mr-2 h-4 w-4" />
+                    Sign Out
+                  </Link>
+                </Button>
+              </div>
               </CardContent>
             </Card>
           </div>
@@ -122,13 +123,13 @@ export default async function ProfilePage() {
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Button variant="outline" asChild>
-                  <Link href="/app">
+                  <Link href={PATHS.APP.DASHBOARD}>
                     <Eye className="mr-2 h-4 w-4" />
                     View Dashboard
                   </Link>
                 </Button>
                 <Button variant="outline" asChild>
-                  <Link href="/auth/signout">
+                  <Link href={PATHS.AUTH.SIGNOUT}>
                     <Shield className="mr-2 h-4 w-4" />
                     Sign Out
                   </Link>

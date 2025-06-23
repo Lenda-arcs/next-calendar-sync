@@ -7,6 +7,7 @@ import { CopyLinkButton } from '@/components/ui/copy-link-button'
 import { PrivateEventList } from '@/components/events'
 import { CalendarFeedsProfileSection } from '@/components/calendar-feeds'
 import { getUserCalendarFeeds } from '@/lib/calendar-feeds'
+import { PATHS } from '@/lib/paths'
 import Link from 'next/link'
 import { Calendar, Eye, Tags, Receipt, Link as LinkIcon } from 'lucide-react'
 
@@ -40,8 +41,8 @@ export default async function DashboardPage() {
   const feeds = calendarFeeds || []
 
   // Generate public schedule URL
-  const publicUrl = user?.public_url 
-    ? `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/schedule/${user.public_url}`
+  const publicPath = user?.public_url ?
+      `/schedule/${user.public_url}`
     : null
   const hasCustomUrl = !!user?.public_url
   const shareLabel = hasCustomUrl
@@ -73,7 +74,7 @@ export default async function DashboardPage() {
                   />
                   <div className="mt-6 text-right">
                     <Link 
-                      href="/app/manage-events"
+                      href={PATHS.APP.MANAGE_EVENTS}
                       className="text-sm text-primary hover:text-primary/80 hover:underline font-medium"
                     >
                       View all events →
@@ -94,7 +95,7 @@ export default async function DashboardPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
  
              {/* Public Schedule */}
-             {publicUrl && (
+             {publicPath && (
                <Card variant="outlined">
                  <CardHeader>
                    <CardTitle className="text-lg">Public Schedule</CardTitle>
@@ -105,7 +106,7 @@ export default async function DashboardPage() {
                  <CardContent>
                    <div className="flex items-center gap-2">
                      <CopyLinkButton
-                       url={publicUrl}
+                       url={'https://yourdomain.com' + publicPath}
                        showLabel={false}
                        label={shareLabel}
                        buttonText="Share"
@@ -115,7 +116,7 @@ export default async function DashboardPage() {
                        asChild 
                        className="flex-1"
                      >
-                       <Link href={publicUrl}>
+                       <Link href={publicPath}>
                          <Eye className="mr-2 h-4 w-4" />
                          View Public Page
                        </Link>
@@ -139,7 +140,7 @@ export default async function DashboardPage() {
                    asChild 
                    className="w-full"
                  >
-                   <Link href="/app/manage-events">
+                   <Link href={PATHS.APP.MANAGE_EVENTS}>
                      <Calendar className="mr-2 h-4 w-4" />
                      Manage Events
                    </Link>
@@ -161,7 +162,7 @@ export default async function DashboardPage() {
                    asChild 
                    className="w-full"
                  >
-                   <Link href="/app/manage-tags">
+                   <Link href={PATHS.APP.MANAGE_TAGS}>
                      <Tags className="mr-2 h-4 w-4" />
                      Manage Tag Rules
                    </Link>
@@ -183,7 +184,7 @@ export default async function DashboardPage() {
                    asChild 
                    className="w-full"
                  >
-                   <Link href="/app/manage-invoices">
+                   <Link href={PATHS.APP.MANAGE_INVOICES}>
                      <Receipt className="mr-2 h-4 w-4" />
                      Manage Invoices
                    </Link>
@@ -206,10 +207,10 @@ export default async function DashboardPage() {
                     asChild 
                     className="w-full"
                   >
-                    <Link href="/app/profile">
-                      <LinkIcon className="mr-2 h-4 w-4" />
-                      Complete Profile
-                    </Link>
+                                       <Link href={PATHS.APP.PROFILE}>
+                     <LinkIcon className="mr-2 h-4 w-4" />
+                     Complete Profile
+                   </Link>
                   </Button>
                 </CardContent>
               </Card>

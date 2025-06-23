@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { ExternalLink, Plus } from 'lucide-react'
 import { formatDate, type CalendarFeed } from '@/lib/calendar-feeds'
+import { PATHS } from '@/lib/paths'
 import Link from 'next/link'
 
 interface ConnectedFeedsListProps {
@@ -29,7 +30,7 @@ export function ConnectedFeedsList({ feeds, isLoading, onViewDetails }: Connecte
           No calendar feeds connected yet.
         </p>
         <Button asChild size="sm">
-          <Link href="/app/add-calendar">
+          <Link href={PATHS.APP.ADD_CALENDAR}>
             <Plus className="mr-2 h-4 w-4" />
             Add Calendar Feed
           </Link>
@@ -83,7 +84,7 @@ export function ConnectedFeedsList({ feeds, isLoading, onViewDetails }: Connecte
           Manage Feeds
         </Button>
         <Button asChild size="sm" variant="secondary">
-          <Link href="/app/add-calendar">
+          <Link href={PATHS.APP.ADD_CALENDAR}>
             <Plus className="mr-2 h-4 w-4" />
             Add More
           </Link>

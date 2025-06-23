@@ -5,6 +5,7 @@ import { Container } from '@/components/layout/container'
 import { PageSection } from '@/components/layout/page-section'
 import { EventCard } from '@/components/events'
 import { exampleEvents } from '@/lib/types'
+import { PATHS } from '@/lib/paths'
 
 export default function LandingPage() {
   return (
@@ -19,7 +20,7 @@ export default function LandingPage() {
             Connect your calendar, customize your page, and share your schedule.
           </h2>
           <Button asChild size="lg">
-            <Link href="/auth/sign-in">Create My Schedule Page</Link>
+            <Link href={PATHS.AUTH.SIGN_IN}>Create My Schedule Page</Link>
           </Button>
         </Container>
       </PageSection>
@@ -58,7 +59,7 @@ export default function LandingPage() {
                 Join thousands of yoga instructors who trust Calendar Sync to share their schedules.
               </p>
               <Button asChild size="lg">
-                <Link href="/auth/register">Create Your Account</Link>
+                <Link href={PATHS.AUTH.REGISTER}>Create Your Account</Link>
               </Button>
             </CardContent>
           </Card>

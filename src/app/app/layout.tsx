@@ -4,6 +4,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { LogoutButton } from '@/components/auth'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
+import { PATHS } from '@/lib/paths'
 import { 
   Calendar, 
   Home, 
@@ -13,10 +14,10 @@ import {
 } from 'lucide-react'
 
 const navigation = [
-  { name: 'Dashboard', href: '/app', icon: Home },
-  { name: 'Manage Events', href: '/app/manage-events', icon: Calendar },
-  { name: 'Manage Tags', href: '/app/manage-tags', icon: Tags },
-  { name: 'Invoices', href: '/app/manage-invoices', icon: Receipt },
+  { name: 'Dashboard', href: PATHS.APP.DASHBOARD, icon: Home },
+  { name: 'Manage Events', href: PATHS.APP.MANAGE_EVENTS, icon: Calendar },
+  { name: 'Manage Tags', href: PATHS.APP.MANAGE_TAGS, icon: Tags },
+  { name: 'Invoices', href: PATHS.APP.MANAGE_INVOICES, icon: Receipt },
 ]
 
 interface AppLayoutProps {
@@ -58,7 +59,7 @@ export default async function AppLayout({ children }: AppLayoutProps) {
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
             <div className="flex items-center">
-              <Link href="/app" className="flex items-center group">
+              <Link href={PATHS.APP.DASHBOARD} className="flex items-center group">
                 <Image 
                   src="/assets/dummy_logo.png" 
                   alt="SyncIt Logo" 
@@ -95,7 +96,7 @@ export default async function AppLayout({ children }: AppLayoutProps) {
               
               {/* Profile Link with Avatar */}
               <Link
-                href="/app/profile"
+                href={PATHS.APP.PROFILE}
                 className="flex items-center px-3 py-2 text-sm font-medium font-sans text-foreground/80 hover:text-foreground hover:bg-white/30 rounded-xl backdrop-blur-sm transition-all duration-300 hover:shadow-lg space-x-2"
               >
                 <Avatar className="h-6 w-6">
