@@ -17,9 +17,11 @@ import {
   Loader2,
   Save,
   X,
-  Filter
+  Filter,
+  ArrowLeftRight
 } from 'lucide-react'
 import { useSupabaseQuery } from '@/lib/hooks/useSupabaseQuery'
+import { useCalendarSync } from '@/lib/hooks/useCalendarSync'
 import { Event, Tag as TagType } from '@/lib/types'
 import { convertToEventTag } from '@/lib/event-types'
 import { convertEventToCardProps } from '@/lib/event-utils'
@@ -291,6 +293,13 @@ export default function ManageEventsPage() {
     await refetchEvents()
   }, [refetchEvents])
 
+  // Calendar sync functionality using custom hook
+  const { syncFeeds: handleSyncFeeds, isSyncing } = useCalendarSync({
+    userId,
+    supabase,
+    onSyncComplete: refetchEvents
+  })
+
   // Calculate stats for overview cards
   const eventStats: EventStats = React.useMemo(() => {
     if (!events) return { total: 0, public: 0, private: 0 }
@@ -374,15 +383,26 @@ export default function ManageEventsPage() {
                 )}
               </p>
             </div>
-            <Button 
-              onClick={handleRefresh}
-              disabled={isLoading}
-              variant="outline"
-              size="sm"
-            >
-              <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-              Refresh
-            </Button>
+            <div className="flex gap-2">
+              <Button 
+                onClick={handleSyncFeeds}
+                disabled={isLoading || isSyncing}
+                variant="default"
+                size="sm"
+              >
+                <ArrowLeftRight className={`h-4 w-4 mr-2 ${isSyncing ? 'animate-pulse' : ''}`} />
+                {isSyncing ? 'Syncing...' : 'Sync Feeds'}
+              </Button>
+              <Button 
+                onClick={handleRefresh}
+                disabled={isLoading}
+                variant="outline"
+                size="sm"
+              >
+                <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+                Refresh
+              </Button>
+            </div>
           </div>
 
           {/* Filter & Overview */}

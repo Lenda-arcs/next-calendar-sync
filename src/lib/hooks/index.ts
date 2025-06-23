@@ -21,4 +21,5 @@ export {
 } from './useResponsive'
 
 export { useTagForm } from './useTagForm'
-export { useTagOperations } from './useTagOperations' 
+export { useTagOperations } from './useTagOperations'
+export { useCalendarSync } from './useCalendarSync' 
