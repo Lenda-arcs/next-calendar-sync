@@ -106,7 +106,7 @@ export default async function DashboardPage() {
                  <CardContent>
                    <div className="flex items-center gap-2">
                      <CopyLinkButton
-                       url={'https://yourdomain.com' + publicPath}
+                       url={publicPath}
                        showLabel={false}
                        label={shareLabel}
                        buttonText="Share"
