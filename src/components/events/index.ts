@@ -24,4 +24,11 @@ export { TagManagement } from './TagManagement'
 export { default as TagList } from './TagList'
 
 // Teacher components
-export { default as TeacherHero } from './TeacherHero' 
+export { default as TeacherHero } from './TeacherHero'
+
+// Manage events page components
+export { default as ManageEventsHeader } from './ManageEventsHeader'
+export { default as EventsFilter } from './EventsFilter'
+export { default as QuickActions } from './QuickActions'
+export { default as EventsEmptyState } from './EventsEmptyState'
+export { default as FloatingActionButtons } from './FloatingActionButtons' 

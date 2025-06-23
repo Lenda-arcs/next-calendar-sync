@@ -4,29 +4,24 @@ import React from 'react'
 import { Container } from '@/components/layout'
 import { PageSection } from '@/components/layout'
 import EventGrid from '@/components/events/EventGrid'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import { 
-  Settings, 
-  Calendar, 
-  Eye, 
-  EyeOff,
-  Plus,
-  RefreshCw,
-  Loader2,
-  Save,
-  X,
-  Filter,
-  ArrowLeftRight
-} from 'lucide-react'
+  ManageEventsHeader,
+  EventsFilter,
+  QuickActions,
+  EventsEmptyState,
+  FloatingActionButtons,
+  NewTagForm
+} from '@/components/events'
+import { Loader2, RefreshCw } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import { useSupabaseQuery } from '@/lib/hooks/useSupabaseQuery'
+import { useSupabaseMutation } from '@/lib/hooks/useSupabaseMutation'
 import { useCalendarSync } from '@/lib/hooks/useCalendarSync'
 import { Event, Tag as TagType } from '@/lib/types'
-import { convertToEventTag } from '@/lib/event-types'
+import { convertToEventTag, EventTag } from '@/lib/event-types'
 import { convertEventToCardProps } from '@/lib/event-utils'
 import { createBrowserClient } from '@supabase/ssr'
-import { cn } from '@/lib/utils'
+import { VisibilityFilter, TimeFilter } from '@/components/events/EventsFilter'
 
 // Types for component
 interface PendingEventUpdate {
@@ -40,9 +35,6 @@ interface EventStats {
   public: number
   private: number
 }
-
-type VisibilityFilter = 'all' | 'public' | 'private'
-type TimeFilter = 'future' | 'all'
 
 // Metadata is handled by the layout since this is a client component
 
@@ -67,6 +59,9 @@ export default function ManageEventsPage() {
 
   // UI state
   const [resetSignal, setResetSignal] = React.useState(0)
+
+  // Create tag form state
+  const [isCreateTagFormOpen, setIsCreateTagFormOpen] = React.useState(false)
 
   // ==================== AUTHENTICATION ====================
   React.useEffect(() => {
@@ -105,6 +100,7 @@ export default function ManageEventsPage() {
   const {
     data: userTags,
     isLoading: userTagsLoading,
+    refetch: refetchUserTags
   } = useSupabaseQuery<TagType[]>({
     queryKey: ['user_tags', userId || 'no-user'],
     fetcher: async (supabase) => {
@@ -139,6 +135,44 @@ export default function ManageEventsPage() {
       return data || []
     },
   })
+
+  // Create tag mutation
+  const createTagMutation = useSupabaseMutation({
+    mutationFn: async (supabase, tagData: EventTag) => {
+      if (!userId) throw new Error('User not authenticated')
+
+      // Convert EventTag back to database format (following useTagOperations pattern)
+      const dbTag = {
+        name: tagData.name,
+        slug: tagData.slug || tagData.name?.toLowerCase().replace(/\s+/g, '-'),
+        color: tagData.color,
+        // Use first class type only (matching useTagOperations pattern)
+        class_type: tagData.classType?.[0] || null,
+        audience: tagData.audience || null,
+        priority: tagData.priority || null,
+        cta_label: tagData.cta?.label || null,
+        cta_url: tagData.cta?.url || null,
+        image_url: tagData.imageUrl || null,
+        user_id: userId,
+      }
+
+      const { data, error } = await supabase
+        .from('tags')
+        .insert([dbTag])
+        .select()
+        .single()
+
+      if (error) throw error
+      return data
+    },
+    onSuccess: () => {
+      // Refetch user tags to update the UI
+      refetchUserTags()
+      setIsCreateTagFormOpen(false)
+    }
+  })
+
+
 
   // ==================== COMPUTED DATA ====================
   // Combine user and global tags
@@ -300,6 +334,15 @@ export default function ManageEventsPage() {
     onSyncComplete: refetchEvents
   })
 
+  // Handle create tag form
+  const handleCreateTag = (tagData: EventTag) => {
+    createTagMutation.mutate(tagData)
+  }
+
+  const handleCreateTagFormClose = () => {
+    setIsCreateTagFormOpen(false)
+  }
+
   // Calculate stats for overview cards
   const eventStats: EventStats = React.useMemo(() => {
     if (!events) return { total: 0, public: 0, private: 0 }
@@ -371,212 +414,30 @@ export default function ManageEventsPage() {
       <PageSection>
         {/* Header */}
         <div className="flex flex-col gap-6 mb-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-foreground">Manage Events</h1>
-              <p className="text-muted-foreground mt-2">
-                Edit tags, manage visibility, and organize your classes
-                {hasPendingChanges && (
-                  <span className="ml-2 text-amber-600 font-medium">
-                    • {pendingChanges.size} unsaved change{pendingChanges.size !== 1 ? 's' : ''}
-                  </span>
-                )}
-              </p>
-            </div>
-            <div className="flex gap-2">
-              <Button 
-                onClick={handleSyncFeeds}
-                disabled={isLoading || isSyncing}
-                variant="default"
-                size="sm"
-              >
-                <ArrowLeftRight className={`h-4 w-4 mr-2 ${isSyncing ? 'animate-pulse' : ''}`} />
-                {isSyncing ? 'Syncing...' : 'Sync Feeds'}
-              </Button>
-              <Button 
-                onClick={handleRefresh}
-                disabled={isLoading}
-                variant="outline"
-                size="sm"
-              >
-                <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-                Refresh
-              </Button>
-            </div>
-          </div>
+          <ManageEventsHeader
+            hasPendingChanges={hasPendingChanges}
+            pendingChangesCount={pendingChanges.size}
+            isSyncing={isSyncing}
+            isLoading={isLoading}
+            onSyncFeeds={handleSyncFeeds}
+            onRefresh={handleRefresh}
+          />
 
           {/* Filter & Overview */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Filter className="h-5 w-5" />
-                Filter Events
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Filter Controls */}
-              <div className="space-y-4">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-sm font-medium">Time:</span>
-                  <div className="flex flex-wrap gap-1">
-                    <Button
-                      variant={timeFilter === 'future' ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => setTimeFilter('future')}
-                    >
-                      Future Events
-                    </Button>
-                    <Button
-                      variant={timeFilter === 'all' ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => setTimeFilter('all')}
-                    >
-                      All Events
-                    </Button>
-                  </div>
-                </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-sm font-medium">Visibility:</span>
-                  <div className="flex flex-wrap gap-1">
-                    <Button
-                      variant={visibilityFilter === 'all' ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => setVisibilityFilter('all')}
-                    >
-                      All <span className="md:hidden">({eventStats.total})</span>
-                    </Button>
-                    <Button
-                      variant={visibilityFilter === 'public' ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => setVisibilityFilter('public')}
-                    >
-                      Public Only <span className="md:hidden">({eventStats.public})</span>
-                    </Button>
-                    <Button
-                      variant={visibilityFilter === 'private' ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => setVisibilityFilter('private')}
-                    >
-                      Private Only <span className="md:hidden">({eventStats.private})</span>
-                    </Button>
-                  </div>
-                </div>
-              </div>
-
-              {/* Overview Stats - Hidden on mobile */}
-              <div className="hidden md:grid grid-cols-3 gap-4 pt-2 border-t border-border">
-                <div 
-                  className={cn(
-                    "p-4 rounded-lg border cursor-pointer transition-all duration-200 hover:shadow-md",
-                    visibilityFilter === 'all' 
-                      ? "bg-blue-50 border-blue-200 ring-2 ring-blue-500 ring-opacity-50" 
-                      : "bg-muted/50 hover:bg-muted"
-                  )}
-                  onClick={() => setVisibilityFilter('all')}
-                >
-                  <div className="flex items-center space-x-3">
-                    <Calendar className="h-6 w-6 text-blue-500" />
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">Total Events</p>
-                      <p className="text-2xl font-bold">{eventStats.total}</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div 
-                  className={cn(
-                    "p-4 rounded-lg border cursor-pointer transition-all duration-200 hover:shadow-md",
-                    visibilityFilter === 'public' 
-                      ? "bg-green-50 border-green-200 ring-2 ring-green-500 ring-opacity-50" 
-                      : "bg-muted/50 hover:bg-muted"
-                  )}
-                  onClick={() => setVisibilityFilter('public')}
-                >
-                  <div className="flex items-center space-x-3">
-                    <Eye className="h-6 w-6 text-green-500" />
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">Public</p>
-                      <p className="text-2xl font-bold">{eventStats.public}</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div 
-                  className={cn(
-                    "p-4 rounded-lg border cursor-pointer transition-all duration-200 hover:shadow-md",
-                    visibilityFilter === 'private' 
-                      ? "bg-orange-50 border-orange-200 ring-2 ring-orange-500 ring-opacity-50" 
-                      : "bg-muted/50 hover:bg-muted"
-                  )}
-                  onClick={() => setVisibilityFilter('private')}
-                >
-                  <div className="flex items-center space-x-3">
-                    <EyeOff className="h-6 w-6 text-orange-500" />
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">Private</p>
-                      <p className="text-2xl font-bold">{eventStats.private}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <EventsFilter
+            timeFilter={timeFilter}
+            visibilityFilter={visibilityFilter}
+            eventStats={eventStats}
+            onTimeFilterChange={setTimeFilter}
+            onVisibilityFilterChange={setVisibilityFilter}
+          />
 
           {/* Quick Actions */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Settings className="h-5 w-5" />
-                Quick Actions
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-wrap gap-2">
-                <Button variant="outline" size="sm">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create New Tag
-                </Button>
-                <Button variant="outline" size="sm">
-                  <Eye className="h-4 w-4 mr-2" />
-                  Make All Public
-                </Button>
-                <Button variant="outline" size="sm">
-                  <EyeOff className="h-4 w-4 mr-2" />
-                  Make All Private
-                </Button>
-              </div>
-              
-              <div className="mt-4">
-                <p className="text-sm text-muted-foreground mb-2">Available Tags:</p>
-                <div className="flex flex-wrap gap-2">
-                  {userTags?.map(tag => (
-                    <Badge 
-                      key={tag.id} 
-                      variant="secondary"
-                      style={{ 
-                        backgroundColor: tag.color ? `${tag.color}20` : '#f0f0f0', 
-                        color: tag.color || '#666' 
-                      }}
-                    >
-                      {tag.name}
-                    </Badge>
-                  ))}
-                  {globalTags?.map(tag => (
-                    <Badge 
-                      key={tag.id} 
-                      variant="secondary"
-                      style={{ 
-                        backgroundColor: tag.color ? `${tag.color}20` : '#f0f0f0', 
-                        color: tag.color || '#666' 
-                      }}
-                    >
-                      {tag.name}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <QuickActions
+            userTags={userTags || undefined}
+            globalTags={globalTags || undefined}
+            onCreateTag={() => setIsCreateTagFormOpen(true)}
+          />
         </div>
 
         {/* Events List */}
@@ -588,46 +449,13 @@ export default function ManageEventsPage() {
             </div>
           </div>
         ) : displayEvents.length === 0 ? (
-          <Card>
-            <CardContent className="py-12">
-              <div className="text-center">
-                <Calendar className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                <h3 className="text-lg font-medium text-foreground mb-2">
-                  {(events?.length || 0) === 0 
-                    ? "No events found" 
-                    : "No events match your filters"
-                  }
-                </h3>
-                <p className="text-muted-foreground mb-6">
-                  {(events?.length || 0) === 0 
-                    ? "Connect your calendar feeds to start importing events."
-                    : timeFilter === 'future' && visibilityFilter !== 'all'
-                      ? `Try changing your filters to see ${visibilityFilter === 'public' ? 'private' : 'public'} events or past events.`
-                      : timeFilter === 'future'
-                        ? "Try changing the time filter to see all events including past ones."
-                        : "Try changing the visibility filter to see all events."
-                  }
-                </p>
-                {(events?.length || 0) === 0 ? (
-                  <Button asChild>
-                    <a href="/app/add-calendar">
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add Calendar Feed
-                    </a>
-                  </Button>
-                ) : (
-                  <div className="flex gap-2 justify-center">
-                    <Button variant="outline" onClick={() => setVisibilityFilter('all')}>
-                      Show All Visibility
-                    </Button>
-                    <Button variant="outline" onClick={() => setTimeFilter('all')}>
-                      Show All Time
-                    </Button>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+          <EventsEmptyState
+            totalEventsCount={events?.length || 0}
+            timeFilter={timeFilter}
+            visibilityFilter={visibilityFilter}
+            onChangeVisibilityFilter={setVisibilityFilter}
+            onChangeTimeFilter={setTimeFilter}
+          />
         ) : (
           <EventGrid
             key={resetSignal}
@@ -643,46 +471,22 @@ export default function ManageEventsPage() {
       </PageSection>
 
       {/* Floating Action Button for Batch Updates */}
-      {hasPendingChanges && (
-        <div className="fixed bottom-6 right-6 z-50">
-          <div className="flex flex-col gap-2">
-            {/* Discard button */}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleDiscardChanges}
-              className="bg-background shadow-lg border-2"
-              disabled={isSaving}
-              title="Discard all pending changes"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-            
-            {/* Save button */}
-            <Button
-              onClick={handleSaveChanges}
-              disabled={isSaving}
-              className={cn(
-                "shadow-lg min-w-[120px] transition-all duration-200",
-                "bg-primary hover:bg-primary/90 text-primary-foreground",
-                isSaving && "bg-primary/50"
-              )}
-            >
-              {isSaving ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <Save className="h-4 w-4 mr-2" />
-                  Save {pendingChanges.size} Change{pendingChanges.size !== 1 ? 's' : ''}
-                </>
-              )}
-            </Button>
-          </div>
-        </div>
-      )}
+      <FloatingActionButtons
+        pendingChangesCount={pendingChanges.size}
+        isSaving={isSaving}
+        onSave={handleSaveChanges}
+        onDiscard={handleDiscardChanges}
+      />
+
+      {/* Create Tag Form */}
+      <NewTagForm
+        isOpen={isCreateTagFormOpen}
+        isEditing={false}
+        initialTag={null}
+        onSave={handleCreateTag}
+        onCancel={handleCreateTagFormClose}
+        userId={userId || ''}
+      />
     </Container>
   )
 } 
