@@ -10,6 +10,7 @@
     "generate-types": "./scripts/generate-types.sh"
   },
   "dependencies": {
+    "@netlify/plugin-nextjs": "^5.11.3",
     "@radix-ui/react-avatar": "^1.1.10",
     "@radix-ui/react-dialog": "^1.1.14",
     "@radix-ui/react-label": "^2.1.7",
