@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { EventCard } from './EventCard'
+import { EventCardVariantTabs } from './EventCardVariantTabs'
 import { Edit, Globe, ExternalLink, Palette, Users, Star } from 'lucide-react'
 import { PRIORITY_LABELS } from '@/lib/constants/tag-constants'
 
@@ -106,19 +107,11 @@ export const TagViewDialog: React.FC<Props> = ({
                 
                 {/* Variant Toggle Group */}
                 <div className="flex justify-center">
-                  <div className="flex gap-1">
-                    {(['minimal', 'compact', 'full'] as EventDisplayVariant[]).map((variant) => (
-                      <Button
-                        key={variant}
-                        variant={selectedVariant === variant ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => setSelectedVariant(variant)}
-                        className="capitalize"
-                      >
-                        {variant}
-                      </Button>
-                    ))}
-                  </div>
+                  <EventCardVariantTabs
+                    value={selectedVariant}
+                    onValueChange={setSelectedVariant}
+                    size="sm"
+                  />
                 </div>
               </div>
             </CardContent>

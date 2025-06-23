@@ -1,5 +1,6 @@
 // Event display components
 export { EventCard } from './EventCard'
+export { EventCardVariantTabs } from './EventCardVariantTabs'
 export { InteractiveEventCard } from './InteractiveEventCard'
 export { ImageGallery } from './ImageGallery'
 export { EventDetails } from './EventDetails'
