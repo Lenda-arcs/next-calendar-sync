@@ -5,8 +5,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { CopyLinkButton } from '@/components/ui/copy-link-button'
 import { PrivateEventList } from '@/components/events'
+import { CalendarFeedsProfileSection } from '@/components/calendar-feeds'
+import { getUserCalendarFeeds } from '@/lib/calendar-feeds'
 import Link from 'next/link'
-import { Calendar, Settings, Eye, Tags, Receipt, Link as LinkIcon } from 'lucide-react'
+import { Calendar, Eye, Tags, Receipt, Link as LinkIcon } from 'lucide-react'
 
 export default async function DashboardPage() {
   const supabase = await createServerClient()
@@ -24,21 +26,18 @@ export default async function DashboardPage() {
   // Fetch user profile and statistics
   const [
     { data: userData },
-    { count: feedsCount }
+    { count: feedsCount },
+    calendarFeeds
   ] = await Promise.all([
     supabase.from('users').select('*').eq('id', userId).single(),
-    supabase.from('calendar_feeds').select('*', { count: 'exact', head: true }).eq('user_id', userId)
+    supabase.from('calendar_feeds').select('*', { count: 'exact', head: true }).eq('user_id', userId),
+    getUserCalendarFeeds({ supabase, userId }).catch(() => [])
   ])
 
   const user = userData || null
   const userFeedCount = feedsCount || 0
   const hasFeeds = userFeedCount > 0
-
-  // Calendar feed CTA
-  const calendarFeedCtaText = hasFeeds 
-    ? `Connected Calendar Feeds (${userFeedCount})` 
-    : "+ Add Calendar Feed"
-  const calendarFeedCtaLink = hasFeeds ? "/app/calendar-feeds" : "/app/add-calendar"
+  const feeds = calendarFeeds || []
 
   // Generate public schedule URL
   const publicUrl = user?.public_url 
@@ -93,27 +92,6 @@ export default async function DashboardPage() {
         {/* Calendar Actions Section */}
         <PageSection title="Calendar Actions">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Calendar Feeds */}
-                         <Card variant="outlined">
-               <CardHeader>
-                 <CardTitle className="text-lg">Calendar Feeds</CardTitle>
-                 <CardDescription>
-                   Connect and manage your calendar feeds.
-                 </CardDescription>
-               </CardHeader>
-               <CardContent>
-                 <Button 
-                   variant="secondary" 
-                   asChild 
-                   className="w-full"
-                 >
-                   <Link href={calendarFeedCtaLink}>
-                     <Settings className="mr-2 h-4 w-4" />
-                     {calendarFeedCtaText}
-                   </Link>
-                 </Button>
-               </CardContent>
-             </Card>
  
              {/* Public Schedule */}
              {publicUrl && (
@@ -236,6 +214,11 @@ export default async function DashboardPage() {
                 </CardContent>
               </Card>
             )}
+          </div>
+          
+          {/* Calendar Integration */}
+          <div className="mt-6">
+            <CalendarFeedsProfileSection feeds={feeds} />
           </div>
         </PageSection>
       </Container>

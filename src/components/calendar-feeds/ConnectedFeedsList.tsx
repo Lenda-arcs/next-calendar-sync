@@ -1,0 +1,94 @@
+'use client'
+
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { ExternalLink, Plus } from 'lucide-react'
+import { formatDate, type CalendarFeed } from '@/lib/calendar-feeds'
+import Link from 'next/link'
+
+interface ConnectedFeedsListProps {
+  feeds: CalendarFeed[]
+  isLoading?: boolean
+  onViewDetails?: () => void
+}
+
+export function ConnectedFeedsList({ feeds, isLoading, onViewDetails }: ConnectedFeedsListProps) {
+  if (isLoading) {
+    return (
+      <div className="animate-pulse space-y-2">
+        <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+        <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+      </div>
+    )
+  }
+
+  if (feeds.length === 0) {
+    return (
+      <div className="text-center py-4">
+        <p className="text-muted-foreground text-sm mb-4">
+          No calendar feeds connected yet.
+        </p>
+        <Button asChild size="sm">
+          <Link href="/app/add-calendar">
+            <Plus className="mr-2 h-4 w-4" />
+            Add Calendar Feed
+          </Link>
+        </Button>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-3">
+      {feeds.slice(0, 2).map((feed) => (
+        <div
+          key={feed.id}
+          className="flex items-center justify-between p-3 bg-white/30 rounded-lg border border-white/20"
+        >
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1">
+              <h4 className="font-medium text-sm truncate">
+                {feed.calendar_name || 'Unnamed Calendar'}
+              </h4>
+              <Badge 
+                variant={feed.last_synced_at ? "default" : "secondary"}
+                className="text-xs"
+              >
+                {feed.last_synced_at ? "Active" : "Pending"}
+              </Badge>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Last synced: {formatDate(feed.last_synced_at)}
+            </p>
+          </div>
+        </div>
+      ))}
+      
+      {feeds.length > 2 && (
+        <div className="text-center pt-2">
+          <p className="text-xs text-muted-foreground mb-2">
+            +{feeds.length - 2} more feeds
+          </p>
+        </div>
+      )}
+      
+      <div className="flex gap-2 pt-2">
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="flex-1"
+          onClick={onViewDetails}
+        >
+          <ExternalLink className="mr-2 h-4 w-4" />
+          Manage Feeds
+        </Button>
+        <Button asChild size="sm" variant="secondary">
+          <Link href="/app/add-calendar">
+            <Plus className="mr-2 h-4 w-4" />
+            Add More
+          </Link>
+        </Button>
+      </div>
+    </div>
+  )
+} 

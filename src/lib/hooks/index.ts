@@ -22,4 +22,11 @@ export {
 
 export { useTagForm } from './useTagForm'
 export { useTagOperations } from './useTagOperations'
-export { useCalendarSync } from './useCalendarSync' 
+export { useCalendarSync } from './useCalendarSync'
+export { 
+  useCalendarFeeds,
+  useCalendarFeedActions,
+  useCreateCalendarFeed,
+  useDeleteCalendarFeed,
+  useSyncCalendarFeed
+} from './useCalendarFeeds' 

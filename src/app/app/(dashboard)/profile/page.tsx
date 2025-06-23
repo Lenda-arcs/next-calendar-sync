@@ -3,6 +3,10 @@ import { ProfileForm } from '@/components/auth'
 import { createServerClient } from '@/lib/supabase-server'
 import { redirect } from 'next/navigation'
 import { User } from '@/lib/types'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import Link from 'next/link'
+import { Shield, Eye, UserCog } from 'lucide-react'
 
 export default async function ProfilePage() {
   const supabase = await createServerClient()
@@ -14,7 +18,7 @@ export default async function ProfilePage() {
     redirect('/auth/sign-in')
   }
 
-  // Fetch user profile data from the users table
+  // Fetch user profile data
   const { data: userData, error: userError } = await supabase
     .from('users')
     .select('*')
@@ -52,7 +56,38 @@ export default async function ProfilePage() {
             </p>
           </div>
 
-          <ProfileForm user={fallbackUser} />
+          <div className="space-y-8">
+            <ProfileForm user={fallbackUser} />
+            
+            {/* Account Settings */}
+            <Card variant="glass">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 font-serif">
+                  <UserCog className="h-5 w-5" />
+                  Account Settings
+                </CardTitle>
+                <CardDescription>
+                  Manage your account preferences and security settings.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Button variant="outline" asChild>
+                    <Link href="/app">
+                      <Eye className="mr-2 h-4 w-4" />
+                      View Dashboard
+                    </Link>
+                  </Button>
+                  <Button variant="outline" asChild>
+                    <Link href="/auth/signout">
+                      <Shield className="mr-2 h-4 w-4" />
+                      Sign Out
+                    </Link>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </Container>
       </div>
     )
@@ -70,7 +105,38 @@ export default async function ProfilePage() {
           </p>
         </div>
 
-        <ProfileForm user={userData} />
+        <div className="space-y-8">
+          <ProfileForm user={userData} />
+          
+          {/* Account Settings */}
+          <Card variant="glass">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 font-serif">
+                <UserCog className="h-5 w-5" />
+                Account Settings
+              </CardTitle>
+              <CardDescription>
+                Manage your account preferences and security settings.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Button variant="outline" asChild>
+                  <Link href="/app">
+                    <Eye className="mr-2 h-4 w-4" />
+                    View Dashboard
+                  </Link>
+                </Button>
+                <Button variant="outline" asChild>
+                  <Link href="/auth/signout">
+                    <Shield className="mr-2 h-4 w-4" />
+                    Sign Out
+                  </Link>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </Container>
     </div>
   )
