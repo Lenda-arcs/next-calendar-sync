@@ -12,7 +12,7 @@ import {
 import { createBrowserClient } from '@supabase/ssr'
 import { useCallback } from 'react'
 
-export function useCalendarFeeds(userId: string | null) {
+export function useCalendarFeeds(userId: string ) {
   return useSupabaseQuery<CalendarFeed[]>({
     queryKey: ['calendar-feeds', userId],
     fetcher: async (supabase) => {
