@@ -3,7 +3,7 @@
 import React from 'react'
 import { TagRule, Tag } from '@/lib/types'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
+import { TagBadge } from '@/components/ui/tag-badge'
 import { Button } from '@/components/ui/button'
 import { FormField } from '@/components/ui/form-field'
 import { Select } from '@/components/ui/select'
@@ -127,17 +127,13 @@ export const TagRulesCard: React.FC<Props> = ({
                   {/* Tag section */}
                   <div className="flex items-center gap-1 sm:gap-2">
                     <span className="text-xs text-muted-foreground hidden sm:inline">applies</span>
-                    <Badge 
-                      variant="secondary" 
+                    <TagBadge 
+                      variant="dynamic"
+                      color={tag?.color}
                       className="font-medium text-xs"
-                      style={{ 
-                        backgroundColor: `${tag?.color || '#6B7280'}20`,
-                        color: tag?.color || '#6B7280',
-                        borderColor: `${tag?.color || '#6B7280'}40`
-                      }}
                     >
                       {tag?.name || 'Unknown Tag'}
-                    </Badge>
+                    </TagBadge>
                   </div>
 
                   {/* Delete button */}
@@ -175,17 +171,13 @@ export const TagRulesCard: React.FC<Props> = ({
                 {/* Tag section */}
                 <div className="flex items-center gap-1 sm:gap-2">
                   <span className="text-xs text-blue-500 hidden sm:inline">applies</span>
-                  <Badge 
-                    variant="secondary" 
+                  <TagBadge 
+                    variant="dynamic"
+                    color={selectedTagData.color}
                     className="font-medium text-xs opacity-80"
-                    style={{ 
-                      backgroundColor: `${selectedTagData.color || '#6B7280'}20`,
-                      color: selectedTagData.color || '#6B7280',
-                      borderColor: `${selectedTagData.color || '#6B7280'}40`
-                    }}
                   >
                     {selectedTagData.name || 'Unknown Tag'}
-                  </Badge>
+                  </TagBadge>
                 </div>
 
                 {/* Placeholder for delete button */}

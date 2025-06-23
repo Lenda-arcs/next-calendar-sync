@@ -4,7 +4,7 @@ import React, { useState } from 'react'
 import { EventTag, EventDisplayVariant } from '@/lib/event-types'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
+import { TagBadge } from '@/components/ui/tag-badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { EventCard } from './EventCard'
 import { EventCardVariantTabs } from './EventCardVariantTabs'
@@ -67,13 +67,13 @@ export const TagViewDialog: React.FC<Props> = ({
             />
             {tag.name || 'Unnamed Tag'}
             {isGlobal && (
-              <Badge
-                variant="secondary"
-                className="bg-blue-100/80 text-blue-700 text-xs px-2 py-0.5 flex items-center gap-1"
+              <TagBadge
+                variant="blue"
+                className="text-xs px-2 py-0.5 flex items-center gap-1"
               >
                 <Globe className="h-2.5 w-2.5" />
                 Global
-              </Badge>
+              </TagBadge>
             )}
           </DialogTitle>
           <DialogDescription>
@@ -147,9 +147,9 @@ export const TagViewDialog: React.FC<Props> = ({
                 <InfoRow label="Class Type">
                   <div className="flex flex-wrap gap-1 mt-1">
                     {tag.classType.map((type, index) => (
-                      <Badge key={index} variant="outline" className="text-xs">
+                      <TagBadge key={index} variant="purple" className="text-xs">
                         {type}
-                      </Badge>
+                      </TagBadge>
                     ))}
                   </div>
                 </InfoRow>
@@ -159,9 +159,9 @@ export const TagViewDialog: React.FC<Props> = ({
                 <InfoRow label="Target Audience">
                   <div className="flex flex-wrap gap-1 mt-1">
                     {tag.audience.map((aud, index) => (
-                      <Badge key={index} variant="outline" className="text-xs">
+                      <TagBadge key={index} variant="blue" className="text-xs">
                         {aud}
-                      </Badge>
+                      </TagBadge>
                     ))}
                   </div>
                 </InfoRow>

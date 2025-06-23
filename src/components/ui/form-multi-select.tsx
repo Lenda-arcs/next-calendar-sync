@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils'
 interface Option {
   value: string
   label: string
+  color?: string | null
 }
 
 interface FormMultiSelectProps {
@@ -22,6 +23,8 @@ interface FormMultiSelectProps {
   error?: string
   placeholder?: string
   maxSelections?: number
+  renderOption?: (option: Option, isSelected: boolean, isDisabled: boolean) => React.ReactNode
+  renderSelectedBadge?: (option: Option, onRemove: (e: React.MouseEvent) => void) => React.ReactNode
 }
 
 const FormMultiSelect: React.FC<FormMultiSelectProps> = ({
@@ -35,6 +38,8 @@ const FormMultiSelect: React.FC<FormMultiSelectProps> = ({
   error,
   placeholder = 'Select options...',
   maxSelections,
+  renderOption,
+  renderSelectedBadge,
 }) => {
   const [isOpen, setIsOpen] = React.useState(false)
 
@@ -56,14 +61,58 @@ const FormMultiSelect: React.FC<FormMultiSelectProps> = ({
     onChange?.(value.filter((v) => v !== optionValue))
   }
 
-  const getSelectedLabels = () => {
+  const getSelectedOptions = () => {
     return value.map((val) => {
       const option = options.find((opt) => opt.value === val)
-      return { value: val, label: option?.label || val }
+      return option || { value: val, label: val }
     })
   }
 
   const isMaxReached = maxSelections ? value.length >= maxSelections : false
+
+  // Default option renderer
+  const defaultRenderOption = (option: Option, isSelected: boolean, isDisabled: boolean) => (
+    <>
+      <input
+        type="checkbox"
+        checked={isSelected}
+        onChange={() => {}} // Handled by onClick above
+        disabled={isDisabled}
+        className="mr-2 accent-primary"
+      />
+      <span 
+        className={cn(
+          'text-sm', 
+          isDisabled ? 'text-muted-foreground' : 'text-foreground'
+        )}
+      >
+        {option.label}
+      </span>
+      {isDisabled && (
+        <span className="ml-auto text-xs text-muted-foreground">
+          Max reached
+        </span>
+      )}
+    </>
+  )
+
+  // Default selected badge renderer
+  const defaultRenderSelectedBadge = (option: Option, onRemove: (e: React.MouseEvent) => void) => (
+    <Badge
+      key={option.value}
+      variant="secondary"
+      className="bg-primary text-primary-foreground hover:bg-primary/90"
+    >
+      {option.label}
+      <button
+        type="button"
+        className="ml-1 hover:bg-white/20 rounded-full w-4 h-4 flex items-center justify-center text-xs"
+        onClick={onRemove}
+      >
+        ×
+      </button>
+    </Badge>
+  )
 
   return (
     <div className="w-full">
@@ -83,21 +132,10 @@ const FormMultiSelect: React.FC<FormMultiSelectProps> = ({
           >
             <div className="flex-1 flex flex-wrap gap-1">
               {value.length > 0 ? (
-                getSelectedLabels().map((item) => (
-                  <Badge
-                    key={item.value}
-                    variant="secondary"
-                    className="bg-primary text-primary-foreground hover:bg-primary/90"
-                  >
-                    {item.label}
-                    <button
-                      type="button"
-                      className="ml-1 hover:bg-white/20 rounded-full w-4 h-4 flex items-center justify-center text-xs"
-                      onClick={(e) => removeOption(item.value, e)}
-                    >
-                      ×
-                    </button>
-                  </Badge>
+                getSelectedOptions().map((option) => (
+                  renderSelectedBadge ? 
+                    renderSelectedBadge(option, (e) => removeOption(option.value, e)) :
+                    defaultRenderSelectedBadge(option, (e) => removeOption(option.value, e))
                 ))
               ) : (
                 <span className="text-muted-foreground">{placeholder}</span>
@@ -129,26 +167,10 @@ const FormMultiSelect: React.FC<FormMultiSelectProps> = ({
                   )}
                   onClick={() => !isDisabled && handleToggleOption(option.value)}
                 >
-                  <input
-                    type="checkbox"
-                    checked={isSelected}
-                    onChange={() => {}} // Handled by onClick above
-                    disabled={isDisabled}
-                    className="mr-2 accent-primary"
-                  />
-                  <span 
-                    className={cn(
-                      'text-sm', 
-                      isDisabled ? 'text-muted-foreground' : 'text-foreground'
-                    )}
-                  >
-                    {option.label}
-                  </span>
-                  {isDisabled && (
-                    <span className="ml-auto text-xs text-muted-foreground">
-                      Max reached
-                    </span>
-                  )}
+                  {renderOption ? 
+                    renderOption(option, isSelected, isDisabled) :
+                    defaultRenderOption(option, isSelected, isDisabled)
+                  }
                 </div>
               )
             })}

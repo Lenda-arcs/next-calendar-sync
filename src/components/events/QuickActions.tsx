@@ -1,7 +1,7 @@
 'use client'
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
+import { TagBadge } from '@/components/ui/tag-badge'
 import { Button } from '@/components/ui/button'
 import { Settings, Plus, Eye, EyeOff } from 'lucide-react'
 import { Tag as TagType } from '@/lib/types'
@@ -49,28 +49,22 @@ export default function QuickActions({
           <p className="text-sm text-muted-foreground mb-2">Available Tags:</p>
           <div className="flex flex-wrap gap-2">
             {userTags?.map(tag => (
-              <Badge 
+              <TagBadge 
                 key={tag.id} 
-                variant="secondary"
-                style={{ 
-                  backgroundColor: tag.color ? `${tag.color}20` : '#f0f0f0', 
-                  color: tag.color || '#666' 
-                }}
+                variant="safe"
+                color={tag.color}
               >
                 {tag.name}
-              </Badge>
+              </TagBadge>
             ))}
             {globalTags?.map(tag => (
-              <Badge 
+              <TagBadge 
                 key={tag.id} 
-                variant="secondary"
-                style={{ 
-                  backgroundColor: tag.color ? `${tag.color}20` : '#f0f0f0', 
-                  color: tag.color || '#666' 
-                }}
+                variant="safe"
+                color={tag.color}
               >
                 {tag.name}
-              </Badge>
+              </TagBadge>
             ))}
           </div>
         </div>
