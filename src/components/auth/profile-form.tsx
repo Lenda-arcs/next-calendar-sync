@@ -3,12 +3,10 @@
 import React, { useState, useEffect } from 'react'
 import { Form, FormField, Button, useForm, Select } from '@/components/ui'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { 
   User as UserIcon, 
   Mail, 
   Globe, 
-  Instagram, 
   Clock, 
   AlertCircle,
   Check,
@@ -20,6 +18,7 @@ import {
 import { User } from '@/lib/types'
 import { useSupabaseUpdate } from '@/lib/hooks/useSupabaseMutation'
 import ImageUpload from '@/components/ui/image-upload'
+import { YogaStylesSelect } from '@/components/ui/yoga-styles-select'
 import { cn } from '@/lib/utils'
 
 interface ProfileFormProps {
@@ -78,57 +77,7 @@ const ProfileUpdateFAB: React.FC<{
   )
 }
 
-// Multi-Select Component for Yoga Styles
-const YogaStylesSelect: React.FC<{
-  value: string[]
-  onChange: (styles: string[]) => void
-}> = ({ value, onChange }) => {
-  const yogaStyles = [
-    'Hatha Yoga',
-    'Vinyasa Flow', 
-    'Ashtanga',
-    'Bikram/Hot Yoga',
-    'Iyengar',
-    'Kundalini',
-    'Yin Yoga',
-    'Restorative',
-    'Power Yoga',
-    'Prenatal Yoga',
-    'Meditation',
-    'Breathwork'
-  ]
 
-  const toggleStyle = (style: string) => {
-    if (value.includes(style)) {
-      onChange(value.filter(s => s !== style))
-    } else {
-      onChange([...value, style])
-    }
-  }
-
-  return (
-    <div className="space-y-3">
-      <label className="text-sm font-medium text-foreground">
-        Yoga Styles You Teach
-      </label>
-      <div className="flex flex-wrap gap-2">
-        {yogaStyles.map(style => (
-          <Badge
-            key={style}
-            variant={value.includes(style) ? 'default' : 'outline'}
-            className="cursor-pointer transition-all hover:scale-105 backdrop-blur-sm"
-            onClick={() => toggleStyle(style)}
-          >
-            {style}
-          </Badge>
-        ))}
-      </div>
-      <p className="text-xs text-foreground/60">
-        Select the yoga styles you teach (click to toggle)
-      </p>
-    </div>
-  )
-}
 
 // Enhanced Textarea Component
 const TextArea: React.FC<{
@@ -361,33 +310,6 @@ export function ProfileForm({ user, onUpdate }: ProfileFormProps) {
       )}
 
       <Form onSubmit={handleSubmit} loading={loading || updateUserMutation.isLoading}>
-        {/* Profile Picture Section */}
-        <Card variant="glass">
-          <CardHeader className="text-center">
-            <CardTitle className="flex items-center justify-center gap-2 font-serif">
-              <UserIcon className="h-5 w-5" />
-              Profile Picture
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="flex justify-center">
-            <ImageUpload
-              currentImageUrl={user.profile_image_url}
-              onImageUrlChange={(url) => {
-                // Update the form data when a new image is uploaded
-                setValue('profile_image_url', url || '')
-              }}
-              userId={user.id}
-              aspectRatio={1} // Square aspect ratio for profile pictures
-              bucketName="profile-assets" // You'll need to create this bucket in Supabase
-              folderPath="avatars"
-              maxFileSize={5 * 1024 * 1024} // 5MB
-              allowedTypes={['image/jpeg', 'image/png', 'image/webp']}
-              className="w-32 h-32 rounded-full"
-              placeholderText="Change Profile Picture"
-            />
-          </CardContent>
-        </Card>
-
         {/* Basic Information */}
         <Card variant="glass">
           <CardHeader>
@@ -396,35 +318,45 @@ export function ProfileForm({ user, onUpdate }: ProfileFormProps) {
               Basic Information
             </CardTitle>
           </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <FormField
-              label="Full Name"
-              type="text"
-              placeholder="Your full name"
-              value={values.name as string}
-              onChange={(e) => setValue('name', e.target.value)}
-              onBlur={() => validateFieldOnBlur('name')}
-              error={errors.name}
-              required
-            />
+          <CardContent className="space-y-6">
+            {/* Profile Picture */}
+            <div className="flex justify-center">
+              <ImageUpload
+                currentImageUrl={user.profile_image_url}
+                onImageUrlChange={(url) => {
+                  // Update the form data when a new image is uploaded
+                  setValue('profile_image_url', url || '')
+                }}
+                userId={user.id}
+                aspectRatio={1} // Square aspect ratio for profile pictures
+                bucketName="profile-assets" // You'll need to create this bucket in Supabase
+                folderPath="avatars"
+                maxFileSize={5 * 1024 * 1024} // 5MB
+                allowedTypes={['image/jpeg', 'image/png', 'image/webp']}
+                className="w-32 h-32 rounded-full"
+                placeholderText="Change Profile Picture"
+              />
+            </div>
 
-            <FormField
-              label="Email"
-              type="email"
-              value={user.email ?? ''}
-              disabled
-              leftIcon={<Mail className="h-4 w-4" />}
-            />
+            {/* Name and Email Fields */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <FormField
+                label="Full Name"
+                type="text"
+                placeholder="Your full name"
+                value={values.name as string}
+                onChange={(e) => setValue('name', e.target.value)}
+                onBlur={() => validateFieldOnBlur('name')}
+                error={errors.name}
+                required
+              />
 
-            <div className="md:col-span-2">
-              <TextArea
-                label="Bio"
-                value={values.bio as string}
-                onChange={(e) => setValue('bio', e.target.value)}
-                placeholder="Tell people about yourself and your yoga practice..."
-                maxLength={500}
-                rows={4}
-                error={errors.bio}
+              <FormField
+                label="Email"
+                type="email"
+                value={user.email ?? ''}
+                disabled
+                leftIcon={<Mail className="h-4 w-4" />}
               />
             </div>
           </CardContent>
@@ -439,6 +371,16 @@ export function ProfileForm({ user, onUpdate }: ProfileFormProps) {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
+            <TextArea
+              label="Bio"
+              value={values.bio as string}
+              onChange={(e) => setValue('bio', e.target.value)}
+              placeholder="Tell people about yourself and your yoga practice..."
+              maxLength={500}
+              rows={4}
+              error={errors.bio}
+            />
+
             <div className="space-y-2">
               <FormField
                 label="Public URL"
@@ -462,10 +404,28 @@ export function ProfileForm({ user, onUpdate }: ProfileFormProps) {
               )}
             </div>
 
-            <YogaStylesSelect
-              value={values.yoga_styles as string[]}
-              onChange={(styles) => setValue('yoga_styles', styles)}
-            />
+            {/* Social Links */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <FormField
+                label="Instagram URL"
+                type="url"
+                placeholder="https://instagram.com/yourusername"
+                value={values.instagram_url as string}
+                onChange={(e) => setValue('instagram_url', e.target.value)}
+                onBlur={() => validateFieldOnBlur('instagram_url')}
+                error={errors.instagram_url}
+              />
+
+              <FormField
+                label="Website URL"
+                type="url"
+                placeholder="https://your-website.com"
+                value={values.website_url as string}
+                onChange={(e) => setValue('website_url', e.target.value)}
+                onBlur={() => validateFieldOnBlur('website_url')}
+                error={errors.website_url}
+              />
+            </div>
           </CardContent>
         </Card>
 
@@ -494,38 +454,13 @@ export function ProfileForm({ user, onUpdate }: ProfileFormProps) {
           </CardContent>
         </Card>
 
-        {/* Social Links */}
-        <Card variant="glass">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 font-serif">
-              <Instagram className="h-5 w-5" />
-              Social Links
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <FormField
-              label="Instagram URL"
-              type="url"
-              placeholder="https://instagram.com/yourusername"
-              value={values.instagram_url as string}
-              onChange={(e) => setValue('instagram_url', e.target.value)}
-              onBlur={() => validateFieldOnBlur('instagram_url')}
-              error={errors.instagram_url}
-              leftIcon={<Instagram className="h-4 w-4" />}
-            />
+        {/* Yoga Styles */}
+        <YogaStylesSelect
+          value={values.yoga_styles as string[]}
+          onChange={(styles) => setValue('yoga_styles', styles)}
+        />
 
-            <FormField
-              label="Website URL"
-              type="url"
-              placeholder="https://your-website.com"
-              value={values.website_url as string}
-              onChange={(e) => setValue('website_url', e.target.value)}
-              onBlur={() => validateFieldOnBlur('website_url')}
-              error={errors.website_url}
-              leftIcon={<Globe className="h-4 w-4" />}
-            />
-          </CardContent>
-        </Card>
+
       </Form>
 
       {/* Floating Action Button for Profile Update */}
