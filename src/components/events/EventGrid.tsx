@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useMemo } from 'react'
+import React, { useMemo, useState, useEffect } from 'react'
 import { format, isToday, isTomorrow, isThisWeek, parseISO } from 'date-fns'
 import { cn } from '@/lib/utils'
 import { EventCard } from './EventCard'
@@ -88,32 +88,36 @@ const groupEventsByDate = (events: BaseEventForGrid[]) => {
     }))
 }
 
-// Utility function to format date headers
-const getDateHeader = (date: Date) => {
-  if (isToday(date)) {
-    return {
-      primary: 'Today',
-      secondary: format(date, 'EEEE, MMMM d'),
-      compact: 'Today',
+// Utility function to format date headers (client-safe version)
+const getDateHeader = (date: Date, currentDate?: Date) => {
+  // Use provided currentDate or fallback to a static approach for SSR safety
+  if (currentDate) {
+    if (isToday(date)) {
+      return {
+        primary: 'Today',
+        secondary: format(date, 'EEEE, MMMM d'),
+        compact: 'Today',
+      }
+    } else if (isTomorrow(date)) {
+      return {
+        primary: 'Tomorrow',
+        secondary: format(date, 'EEEE, MMMM d'),
+        compact: 'Tomorrow',
+      }
+    } else if (isThisWeek(date, { weekStartsOn: 0 })) {
+      return {
+        primary: format(date, 'EEEE'),
+        secondary: format(date, 'MMMM d'),
+        compact: format(date, 'EEE'),
+      }
     }
-  } else if (isTomorrow(date)) {
-    return {
-      primary: 'Tomorrow',
-      secondary: format(date, 'EEEE, MMMM d'),
-      compact: 'Tomorrow',
-    }
-  } else if (isThisWeek(date, { weekStartsOn: 0 })) {
-    return {
-      primary: format(date, 'EEEE'),
-      secondary: format(date, 'MMMM d'),
-      compact: format(date, 'EEE'),
-    }
-  } else {
-    return {
-      primary: format(date, 'EEEE'),
-      secondary: format(date, 'MMMM d, yyyy'),
-      compact: format(date, 'MMM d'),
-    }
+  }
+  
+  // Default fallback that's safe for SSR
+  return {
+    primary: format(date, 'EEEE'),
+    secondary: format(date, 'MMMM d, yyyy'),
+    compact: format(date, 'MMM d'),
   }
 }
 
@@ -165,6 +169,13 @@ const EventGrid: React.FC<EventGridProps> = ({
   onEventUpdate,
   maxColumns,
 }) => {
+  // Client-side date state to prevent hydration mismatches
+  const [currentDate, setCurrentDate] = useState<Date | undefined>(undefined)
+  
+  useEffect(() => {
+    setCurrentDate(new Date())
+  }, [])
+
   // Group events by date
   const groupedEvents = useMemo(() => {
     if (!events || events.length === 0) return []
@@ -210,14 +221,14 @@ const EventGrid: React.FC<EventGridProps> = ({
   // Create a flattened array of events with day information for desktop layout
   const flattenedEvents = useMemo(() => {
     return groupedEvents.flatMap(({ date, events: dayEvents }) => {
-      const { compact } = getDateHeader(date)
+      const { compact } = getDateHeader(date, currentDate)
       return dayEvents.map((event, index) => ({
         event,
         dayLabel: compact,
         isFirstOfDay: index === 0,
       }))
     })
-  }, [groupedEvents])
+  }, [groupedEvents, currentDate])
 
   // Loading state
   if (loading) {
@@ -287,7 +298,7 @@ const EventGrid: React.FC<EventGridProps> = ({
       {/* Mobile Layout: Grouped by day with headers */}
       <div className="block md:hidden space-y-8">
         {groupedEvents.map(({ dateKey, date, events: dayEvents }) => {
-          const { primary, secondary } = getDateHeader(date)
+          const { primary, secondary } = getDateHeader(date, currentDate)
 
           return (
             <div key={dateKey} className="space-y-4">

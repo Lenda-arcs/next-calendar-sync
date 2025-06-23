@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useMemo } from 'react'
+import React, { useMemo, useState, useEffect } from 'react'
 import { PublicEvent, Tag } from '@/lib/types'
 import { EventCard } from './EventCard'
 import { parseISO, isToday, isTomorrow, isThisWeek, format } from 'date-fns'
@@ -30,6 +30,13 @@ const PublicEventList: React.FC<PublicEventListProps> = ({
   className = '',
   events: propEvents,
 }) => {
+  // Client-side date state to prevent hydration mismatches
+  const [currentDate, setCurrentDate] = useState<Date | undefined>(undefined)
+  
+  useEffect(() => {
+    setCurrentDate(new Date())
+  }, [])
+
   // Fetch events using the custom hook (only if events not provided as props)
   const {
     data: fetchedEvents,
@@ -118,23 +125,30 @@ const PublicEventList: React.FC<PublicEventListProps> = ({
     }))
   }
 
-  // Get formatted date header
-  const getDateHeader = (dateString: string) => {
+  // Get formatted date header (client-safe version)
+  const getDateHeader = (dateString: string, currentDate?: Date) => {
     const date = parseISO(dateString)
     
     let label = ''
     let compact = ''
     
-    if (isToday(date)) {
-      label = 'Today'
-      compact = 'Today'
-    } else if (isTomorrow(date)) {
-      label = 'Tomorrow'  
-      compact = 'Tomorrow'
-    } else if (isThisWeek(date)) {
-      label = format(date, 'EEEE, MMMM d')
-      compact = format(date, 'EEE')
+    // Only use relative dates if we have a current date (client-side)
+    if (currentDate) {
+      if (isToday(date)) {
+        label = 'Today'
+        compact = 'Today'
+      } else if (isTomorrow(date)) {
+        label = 'Tomorrow'  
+        compact = 'Tomorrow'
+      } else if (isThisWeek(date)) {
+        label = format(date, 'EEEE, MMMM d')
+        compact = format(date, 'EEE')
+      } else {
+        label = format(date, 'EEEE, MMMM d')
+        compact = format(date, 'MMM d')
+      }
     } else {
+      // Fallback for SSR - always use full date format
       label = format(date, 'EEEE, MMMM d')
       compact = format(date, 'MMM d')
     }
@@ -175,14 +189,14 @@ const PublicEventList: React.FC<PublicEventListProps> = ({
   // Create a flattened array of events with day information for desktop layout
   const flattenedEvents = useMemo(() => {
     return groupedEvents.flatMap(({ date, events: dayEvents }) => {
-      const { compact } = getDateHeader(date)
+      const { compact } = getDateHeader(date, currentDate)
       return dayEvents.map((event, index) => ({
         event: convertEventToCardProps(event, allAvailableTags),
         dayLabel: compact,
         isFirstOfDay: index === 0,
       }))
     })
-  }, [groupedEvents, allAvailableTags])
+  }, [groupedEvents, allAvailableTags, currentDate])
 
   // Loading state
   const isLoading = (propEvents ? false : eventsLoading) || userTagsLoading || globalTagsLoading
@@ -243,7 +257,7 @@ const PublicEventList: React.FC<PublicEventListProps> = ({
       {/* Mobile Layout: Grouped by day with headers */}
       <div className="block md:hidden space-y-8">
         {groupedEvents.map(({ date, events: dayEvents }) => {
-          const { label } = getDateHeader(date)
+          const { label } = getDateHeader(date, currentDate)
           const dateKey = date
 
           return (

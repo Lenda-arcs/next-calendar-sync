@@ -143,8 +143,6 @@ export const TagRuleManager: React.FC<Props> = ({ userId }) => {
   }
 
   const handleDeleteRule = async (ruleId: string) => {
-    console.log('Delete rule called:', ruleId)
-    
     // Optimistically mark as deleted
     setDeletedRuleIds(prev => new Set([...prev, ruleId]))
     
@@ -159,16 +157,7 @@ export const TagRuleManager: React.FC<Props> = ({ userId }) => {
   const initialLoading = rulesLoading || tagsLoading
   const hasData = tagRules && availableTags
 
-  // Debug logging
-  console.log('TagRuleManager render:', {
-    rulesLoading,
-    tagsLoading,
-    initialLoading,
-    hasData: !!hasData,
-    rulesCount: tagRules?.length || 0,
-    optimisticCount: optimisticRules.length,
-    deletedCount: deletedRuleIds.size
-  })
+
 
   // Combine server data with optimistic updates
   const displayRules = hasData ? [

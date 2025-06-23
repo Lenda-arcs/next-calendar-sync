@@ -6,6 +6,7 @@ import {
   DialogContent, 
   DialogHeader, 
   DialogTitle, 
+  DialogDescription,
   DialogTrigger 
 } from '@/components/ui/dialog'
 import { CalendarFeedManager } from './CalendarFeedManager'
@@ -37,6 +38,9 @@ export function CalendarFeedsModal({
       <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl font-serif">Calendar Feeds</DialogTitle>
+          <DialogDescription>
+            Manage your connected calendar feeds and sync settings.
+          </DialogDescription>
         </DialogHeader>
         <div className="mt-4">
           <CalendarFeedManager
