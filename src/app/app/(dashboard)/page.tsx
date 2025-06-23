@@ -15,11 +15,11 @@ export default async function DashboardPage() {
   const supabase = await createServerClient()
 
   const {
-    data: { session },
-  } = await supabase.auth.getSession()
+    data: { user: authUser },
+  } = await supabase.auth.getUser()
 
   // Get user data
-  const userId = session?.user.id
+  const userId = authUser?.id
   if (!userId) {
     return <div>Authentication required</div>
   }
