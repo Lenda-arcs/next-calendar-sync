@@ -8,7 +8,6 @@ import {
   DialogTitle, 
   DialogTrigger 
 } from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
 import { CalendarFeedManager } from './CalendarFeedManager'
 import { type CalendarFeed } from '@/lib/calendar-feeds'
 
