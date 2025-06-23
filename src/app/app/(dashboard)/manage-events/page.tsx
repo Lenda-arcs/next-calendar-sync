@@ -5,9 +5,7 @@ import { Container } from '@/components/layout'
 import { PageSection } from '@/components/layout'
 import EventGrid from '@/components/events/EventGrid'
 import { 
-  ManageEventsHeader,
-  EventsFilter,
-  QuickActions,
+  EventsControlPanel,
   EventsEmptyState,
   FloatingActionButtons,
   NewTagForm
@@ -21,7 +19,7 @@ import { Event, Tag as TagType } from '@/lib/types'
 import { convertToEventTag, EventTag } from '@/lib/event-types'
 import { convertEventToCardProps } from '@/lib/event-utils'
 import { createBrowserClient } from '@supabase/ssr'
-import { VisibilityFilter, TimeFilter } from '@/components/events/EventsFilter'
+import { VisibilityFilter, TimeFilter } from '@/components/events/EventsControlPanel'
 
 // Types for component
 interface PendingEventUpdate {
@@ -414,29 +412,29 @@ export default function ManageEventsPage() {
       <PageSection>
         {/* Header */}
         <div className="flex flex-col gap-6 mb-8">
-          <ManageEventsHeader
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">Manage Events</h1>
+            <p className="text-muted-foreground mt-2">
+              Edit tags, manage visibility, and organize your classes
+            </p>
+          </div>
+
+          {/* Event Management Control Panel */}
+          <EventsControlPanel
+            timeFilter={timeFilter}
+            visibilityFilter={visibilityFilter}
+            eventStats={eventStats}
+            userTags={userTags || undefined}
+            globalTags={globalTags || undefined}
             hasPendingChanges={hasPendingChanges}
             pendingChangesCount={pendingChanges.size}
             isSyncing={isSyncing}
             isLoading={isLoading}
-            onSyncFeeds={handleSyncFeeds}
-            onRefresh={handleRefresh}
-          />
-
-          {/* Filter & Overview */}
-          <EventsFilter
-            timeFilter={timeFilter}
-            visibilityFilter={visibilityFilter}
-            eventStats={eventStats}
             onTimeFilterChange={setTimeFilter}
             onVisibilityFilterChange={setVisibilityFilter}
-          />
-
-          {/* Quick Actions */}
-          <QuickActions
-            userTags={userTags || undefined}
-            globalTags={globalTags || undefined}
             onCreateTag={() => setIsCreateTagFormOpen(true)}
+            onSyncFeeds={handleSyncFeeds}
+            onRefresh={handleRefresh}
           />
         </div>
 

@@ -3,7 +3,7 @@
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Calendar, Plus } from 'lucide-react'
-import { VisibilityFilter, TimeFilter } from './EventsFilter'
+import { VisibilityFilter, TimeFilter } from './EventsControlPanel'
 
 interface EventsEmptyStateProps {
   totalEventsCount: number
