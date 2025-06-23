@@ -72,6 +72,7 @@ export const TagRulesCard: React.FC<Props> = ({
                 onChange={setSelectedTag}
                 placeholder="Select Tag..."
                 disabled={isCreating}
+                className="w-full sm:w-48"
               />
             </div>
             <Button
