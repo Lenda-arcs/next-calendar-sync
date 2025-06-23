@@ -117,7 +117,7 @@ const CardContent = React.forwardRef<
   <div 
     ref={ref} 
     className={cn(
-      !noPadding && "p-6 pt-0", 
+      !noPadding && "p-0 pt-0 sm:p-6 sm:pt-0", 
       className
     )} 
     {...props} 
