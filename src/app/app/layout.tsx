@@ -62,14 +62,11 @@ export default async function AppLayout({ children }: AppLayoutProps) {
               <Link href={PATHS.APP.DASHBOARD} className="flex items-center group">
                 <Image 
                   src="/assets/dummy_logo.png" 
-                  alt="SyncIt Logo" 
+                  alt="Logo" 
                   width={32} 
                   height={32} 
                   className="transition-transform group-hover:scale-110"
                 />
-                <span className="ml-3 text-2xl font-bold font-serif text-foreground tracking-tight bg-gradient-to-r from-[#9C5DA3] via-[#765388] via-[#AF7D8A] to-[#4B3C4F] bg-clip-text text-transparent hover:from-[#4B3C4F] hover:via-[#AF7D8A] hover:via-[#765388] hover:to-[#9C5DA3] transition-all duration-300">
-                  SyncIt
-                </span>
               </Link>
             </div>
 

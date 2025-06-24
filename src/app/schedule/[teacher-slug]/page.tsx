@@ -40,14 +40,11 @@ function MinimalNavbar({
             <Link href="/app" className="flex items-center group mr-2">
               <Image 
                 src="/assets/dummy_logo.png" 
-                alt="SyncIt Logo" 
+                alt="Logo" 
                 width={20} 
                 height={20} 
                 className="transition-transform group-hover:scale-110"
               />
-              <span className="ml-2 text-sm font-bold font-serif text-foreground tracking-tight bg-gradient-to-r from-[#9C5DA3] via-[#765388] via-[#AF7D8A] to-[#4B3C4F] bg-clip-text text-transparent">
-                SyncIt
-              </span>
             </Link>
             <Link 
               href="/app" 
