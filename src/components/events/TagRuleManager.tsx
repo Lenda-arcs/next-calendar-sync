@@ -5,7 +5,9 @@ import { useSupabaseQuery } from '@/lib/hooks/useSupabaseQuery'
 import { useSupabaseMutation } from '@/lib/hooks/useSupabaseMutation'
 import { TagRule, Tag } from '@/lib/types'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { AlertCircle, Loader2 } from 'lucide-react'
+import { AlertCircle } from 'lucide-react'
+import DataLoader from '@/components/ui/data-loader'
+import { TagRulesSkeleton } from '@/components/ui/skeleton'
 import { TagRulesCard } from './TagRulesCard'
 
 interface TagRuleState {
@@ -157,8 +159,6 @@ export const TagRuleManager: React.FC<Props> = ({ userId }) => {
   const initialLoading = rulesLoading || tagsLoading
   const hasData = tagRules && availableTags
 
-
-
   // Combine server data with optimistic updates
   const displayRules = hasData ? [
     // Server rules that haven't been deleted
@@ -167,66 +167,56 @@ export const TagRuleManager: React.FC<Props> = ({ userId }) => {
     ...optimisticRules
   ] : []
 
+  const data = hasData ? { rules: displayRules, tags: availableTags } : null
+
   return (
     <div className="space-y-8">
-      {error && (
-        <Alert variant="destructive">
+      {(creating || (error && !initialLoading)) && (
+        <Alert variant={error ? "destructive" : "default"}>
           <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Error</AlertTitle>
-          <AlertDescription>{errorMessage}</AlertDescription>
+          <AlertTitle>{error ? "Error" : "Creating Rule"}</AlertTitle>
+          <AlertDescription>
+            {error ? errorMessage : "Adding new tag rule..."}
+          </AlertDescription>
         </Alert>
       )}
 
-
-
-      {/* Initial loading state */}
-      {initialLoading && (
-        <div className="flex items-center justify-center py-8">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-          <span className="ml-2 text-muted-foreground">Loading tag rules...</span>
-        </div>
-      )}
-
-      {/* Error state */}
-      {!initialLoading && error && (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Error</AlertTitle>
-          <AlertDescription>{errorMessage}</AlertDescription>
-        </Alert>
-      )}
-
-      {/* Empty state */}
-      {!initialLoading && !error && hasData && displayRules.length === 0 && availableTags.length === 0 && (
-        <div className="text-center py-8 text-muted-foreground">
-          <p>No tags available. Create some tags first to set up tag rules.</p>
-        </div>
-      )}
-
-      {/* Main content */}
-      {!initialLoading && !error && hasData && (
-        <TagRulesCard
-          rules={displayRules}
-          tags={availableTags}
-          onDeleteRule={handleDeleteRule}
-          onAddRule={handleAddRule}
-          newKeyword={state.newRule.keyword}
-          setNewKeyword={(value: string) =>
-            setState((prev) => ({
-              ...prev,
-              newRule: { ...prev.newRule, keyword: value },
-            }))
-          }
-          selectedTag={state.newRule.selectedTag}
-          setSelectedTag={(value: string) =>
-            setState((prev) => ({
-              ...prev,
-              newRule: { ...prev.newRule, selectedTag: value },
-            }))
-          }
-          isCreating={creating}
-        />
-      )}
+      <DataLoader
+        data={data}
+        loading={initialLoading}
+        error={errorMessage}
+        skeleton={TagRulesSkeleton}
+        skeletonCount={1}
+        empty={
+          <div className="text-center py-8 text-muted-foreground">
+            <p>No tags available. Create some tags first to set up tag rules.</p>
+          </div>
+        }
+      >
+        {(data) => (
+          <TagRulesCard
+            rules={data.rules}
+            tags={data.tags}
+            onDeleteRule={handleDeleteRule}
+            onAddRule={handleAddRule}
+            newKeyword={state.newRule.keyword}
+            setNewKeyword={(value: string) =>
+              setState((prev) => ({
+                ...prev,
+                newRule: { ...prev.newRule, keyword: value },
+              }))
+            }
+            selectedTag={state.newRule.selectedTag}
+            setSelectedTag={(value: string) =>
+              setState((prev) => ({
+                ...prev,
+                newRule: { ...prev.newRule, selectedTag: value },
+              }))
+            }
+            isCreating={creating}
+          />
+        )}
+      </DataLoader>
     </div>
   )
 } 

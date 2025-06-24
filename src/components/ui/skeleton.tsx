@@ -219,11 +219,154 @@ const TableRowSkeleton: React.FC<{ columns?: number }> = ({ columns = 4 }) => (
   </div>
 )
 
+// Tag Rules Skeleton - matches TagRulesCard structure
+const TagRulesSkeleton: React.FC = () => {
+  return (
+    <Card variant="default">
+      <CardContent className="space-y-6 p-6">
+        {/* Add New Rule Section Skeleton */}
+        <div className="bg-gradient-to-r from-gray-50/50 to-blue-50/30 p-4 rounded-lg border border-gray-200/50">
+          <div className="flex items-center gap-2 mb-4">
+            <Skeleton className="h-4 w-4 rounded" />
+            <Skeleton className="h-4 w-24" />
+          </div>
+          
+          <div className="flex flex-col sm:flex-row sm:items-end gap-4 px-1">
+            <div className="flex-1 space-y-2">
+              <Skeleton className="h-4 w-16" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+            <div className="flex-1 sm:flex-initial space-y-2">
+              <Skeleton className="h-4 w-20" />
+              <Skeleton className="h-10 w-full sm:w-48" />
+            </div>
+            <Skeleton className="h-10 w-24" />
+          </div>
+        </div>
+
+        {/* Active Rules Section Skeleton */}
+        <div>
+          <div className="flex items-center gap-2 mb-4">
+            <Skeleton className="h-4 w-4 rounded" />
+            <Skeleton className="h-4 w-32" />
+          </div>
+          
+          <div className="space-y-2">
+            {Array.from({ length: 3 }).map((_, index) => (
+              <div
+                key={index}
+                className="flex items-center gap-2 sm:gap-3 bg-gradient-to-r from-gray-50/50 to-blue-50/30 px-3 sm:px-4 py-2 sm:py-3 rounded-lg border border-gray-200/50"
+              >
+                <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1">
+                  <Skeleton className="h-3.5 w-3.5 sm:h-4 sm:w-4 rounded" />
+                  <div className="flex flex-col min-w-0 space-y-1">
+                    <Skeleton className="h-4 w-20" />
+                    <Skeleton className="h-3 w-32 hidden sm:block" />
+                  </div>
+                </div>
+                <Skeleton className="h-3.5 w-3.5 sm:h-4 sm:w-4 rounded hidden sm:block" />
+                <div className="flex items-center gap-1 sm:gap-2">
+                  <Skeleton className="h-3 w-12 hidden sm:block" />
+                  <Skeleton className="h-6 w-16 rounded-full" />
+                </div>
+                <Skeleton className="h-7 w-7 sm:h-8 sm:w-8 rounded" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+// Tag Library Grid Skeleton - matches TagLibraryGrid structure
+const TagLibraryGridSkeleton: React.FC = () => {
+  return (
+    <div className="space-y-8">
+      {/* Global Tags Section Skeleton */}
+      <Card variant="default">
+        <CardContent className="p-6">
+          <div className="space-y-4">
+            <Skeleton className="h-6 w-24" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+              {Array.from({ length: 6 }).map((_, index) => (
+                <div
+                  key={index}
+                  className="p-4 rounded-lg backdrop-blur-sm bg-white/50 border border-white/40"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-start gap-3 min-w-0 flex-1">
+                      <Skeleton className="w-4 h-4 rounded-full flex-shrink-0 mt-0.5" />
+                      <div className="min-w-0 flex-1 space-y-2">
+                        <div className="flex items-center gap-2">
+                          <Skeleton className="h-4 w-20" />
+                          <Skeleton className="h-3 w-3 rounded-full" />
+                        </div>
+                        <Skeleton className="h-3 w-32" />
+                        <Skeleton className="h-3 w-24" />
+                      </div>
+                    </div>
+                    <div className="flex gap-1 flex-shrink-0">
+                      <Skeleton className="h-7 w-7 rounded" />
+                      <Skeleton className="h-7 w-7 rounded" />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Custom Tags Section Skeleton */}
+      <Card variant="default">
+        <CardContent className="p-6">
+          <div className="space-y-4">
+            <Skeleton className="h-6 w-32" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+              {Array.from({ length: 4 }).map((_, index) => (
+                <div
+                  key={index}
+                  className="p-4 rounded-lg backdrop-blur-sm bg-white/50 border border-white/40"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-start gap-3 min-w-0 flex-1">
+                      <Skeleton className="w-4 h-4 rounded-full flex-shrink-0 mt-0.5" />
+                      <div className="min-w-0 flex-1 space-y-2">
+                        <Skeleton className="h-4 w-20" />
+                        <Skeleton className="h-3 w-32" />
+                        <Skeleton className="h-3 w-24" />
+                      </div>
+                    </div>
+                    <div className="flex gap-1 flex-shrink-0">
+                      <Skeleton className="h-7 w-7 rounded" />
+                      <Skeleton className="h-7 w-7 rounded" />
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {/* Create button skeleton */}
+              <div className="p-4 rounded-lg border-2 border-dashed border-white/40 bg-white/20 flex items-center justify-center min-h-[84px]">
+                <div className="flex flex-col items-center gap-2">
+                  <Skeleton className="h-4 w-4 rounded" />
+                  <Skeleton className="h-4 w-20" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
+
 export { 
   Skeleton, 
   EventCardSkeleton,
   InteractiveEventCardSkeleton,
   ManageEventsSkeleton,
+  TagRulesSkeleton,
+  TagLibraryGridSkeleton,
   ProfileSkeleton, 
   ListItemSkeleton, 
   TableRowSkeleton 

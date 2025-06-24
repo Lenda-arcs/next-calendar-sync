@@ -28,6 +28,8 @@ export {
   EventCardSkeleton,
   InteractiveEventCardSkeleton,
   ManageEventsSkeleton,
+  TagRulesSkeleton,
+  TagLibraryGridSkeleton,
   ProfileSkeleton, 
   ListItemSkeleton, 
   TableRowSkeleton 

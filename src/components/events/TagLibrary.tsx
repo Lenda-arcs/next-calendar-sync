@@ -7,6 +7,7 @@ import { convertToEventTag } from '@/lib/event-types'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { AlertCircle } from 'lucide-react'
 import DataLoader from '@/components/ui/data-loader'
+import { TagLibraryGridSkeleton } from '@/components/ui/skeleton'
 import { TagLibraryGrid } from './TagLibraryGrid'
 import { NewTagForm } from './NewTagForm'
 import { TagViewDialog } from './TagViewDialog'
@@ -113,6 +114,8 @@ export const TagLibrary: React.FC<Props> = ({ userId }) => {
         data={data}
         loading={loading}
         error={errorMessage}
+        skeleton={TagLibraryGridSkeleton}
+        skeletonCount={1}
         empty={
           <p className="text-muted-foreground text-center">
             No tags found. Create your first tag!
