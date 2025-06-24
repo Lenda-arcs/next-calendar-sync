@@ -1,0 +1,20 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+---
+description: Input validation, security, and API handling best practices.
+alwaysApply: true
+---
+
+# ✅ Validation & Security
+
+- Validate all user input with `zod` or `valibot` before writing to DB.
+- Always wrap Supabase responses with error checks:
+  ```ts
+  const { data, error } = await supabase.from('events').select('*')
+  if (error) throw new Error(error.message)
+- Enforce RLS on all tables. Avoid relying on frontend checks.
+- Avoid leaking any anon Supabase keys beyond NEXT_PUBLIC_.
+- Use HTTP-only cookies for session tokens.

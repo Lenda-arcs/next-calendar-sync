@@ -1,0 +1,20 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+---
+description: State management best practices for complex, scalable Next.js apps using Zustand.
+alwaysApply: true
+---
+
+# 📦 Scalable State Management
+
+- Use Zustand for cross-page or persistent UI state like:
+  - selected tags
+  - active filters
+  - selected studio context
+- Define stores in `lib/state/` with tight, focused slices.
+- Use selectors (`useStore(state => state.selectedTags)`) to reduce re-renders.
+- Avoid global state for SSR data or auth — use server components and context.
+- Separate store logic from view logic — stores should contain no UI code.

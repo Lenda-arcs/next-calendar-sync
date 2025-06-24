@@ -1,0 +1,152 @@
+---
+description: Design system and theme rules for a unified aesthetic using radial gradients, glassmorphism, Tailwind, and shadcn/ui. Enforces centralized, reusable theming across components.
+alwaysApply: true
+---
+
+# 🎨 Global Design System & Theme Guidelines
+
+- Use a **centralized theme file** (e.g., `lib/theme.ts` or `lib/ui/theme.ts`) to define design tokens such as:
+  - `primary`, `accent`, `muted`, `surface`, `background`, `text`
+  - Border radius, shadows, spacing presets
+
+- Global body styles should include:
+  ```css
+  body {
+    background: radial-gradient(at 20% 20%, #fadadd 10%, transparent 40%),
+      radial-gradient(at 80% 30%, #e2a8d1 10%, transparent 40%),
+      radial-gradient(at 40% 80%, #a3bfd9 10%, transparent 40%),
+      radial-gradient(at 60% 60%, #fce5ec 10%, transparent 40%), #f8f8f8;
+    background-attachment: fixed;
+    background-size: cover;
+    font-family: "Outfit", sans-serif;
+    color: #3f3f3f;
+  }
+
+  h1, h2 {
+    font-family: "DM Serif Display", serif;
+    letter-spacing: -0.02em;
+  }
+  ```
+
+- All UI components must use classes or props derived from the centralized theme instead of hardcoded styles.
+
+# 🧊 Glassmorphism & Card Design
+
+- Use reusable glassy UI with Tailwind utilities and shadcn/ui patterns.
+- Sample card component:
+  ```tsx
+  function Card({ className, variant = "default", ...props }: CardProps) {
+    const baseClasses =
+      "backdrop-blur-md border rounded-2xl shadow-xl flex flex-col gap-6 py-6";
+
+    const variantClasses =
+      variant === "default"
+        ? "bg-white/50 border-white/40 p-6"
+        : "bg-white/30 border-white/30 rounded-xl p-4";
+
+    return (
+      <div
+        data-slot="card"
+        className={cn(baseClasses, variantClasses, className)}
+        {...props}
+      />
+    );
+  }
+  ```
+
+- Refactor this pattern into a shared UI component: `components/ui/card.tsx`.
+
+# 🧱 Use shadcn/ui Components
+
+- All buttons, inputs, dialogs, and base elements should use `shadcn/ui` where possible.
+- Customize `tailwind.config.ts` to inject design tokens for:
+  - Colors
+  - Fonts (`DM Serif Display`, `Outfit`)
+  - Radius and spacing
+- Extend default `shadcn/ui` components to adopt the soft glass aesthetic where applicable.
+
+# 🌈 Future Proofing
+
+- Use `class-variance-authority` (CVA) or `tailwind-variants` to manage variants consistently.
+- Define `theme.ts` to export tokens (colors, fonts, shadows) used across the app.
+- Theme switching or mode toggling (e.g. light/glass/dark) should use CSS variables scoped to `:root`.
+
+# 📐 Reusable Layout Components
+
+- Create layout primitives such as `PageSection`, `Container`, and `Card` for consistent page structure.
+- Place these primitives in `components/ui/` and reuse across all pages and features.
+
+# 📱 Mobile-First Design
+
+- Default to mobile styles and progressively enhance with responsive utilities.
+- Use Tailwind's `sm:`, `md:`, `lg:` prefixes sparingly and only as needed.
+- Design all UI components to be fully usable on small screens (≤ 375px width).
+- Avoid fixed dimensions; use `flex`, `gap`, and `min-w-0` patterns.
+- Ensure consistent vertical rhythm and spacing on all breakpoints.
+
+# 🧩 Component Wrappers for shadcn/ui
+
+- Create **custom wrappers** around `shadcn/ui` primitives to standardize usage and simplify repetitive markup.
+- Example: Custom `Card` component wrapping `shadcn/ui` Card:
+  ```tsx
+  import {
+    Card as ShadcnCard,
+    CardHeader,
+    CardTitle,
+    CardDescription,
+    CardContent,
+  } from "@/components/ui/card";
+
+  interface CardProps {
+    children: React.ReactNode;
+    title?: string;
+    subtitle?: string;
+    className?: string;
+    variant?: "default" | "nested";
+    onClick?: () => void;
+  }
+
+  const Card = ({
+    children,
+    title,
+    subtitle,
+    className = "",
+    variant = "default",
+    onClick,
+  }: CardProps) => {
+    return (
+      <ShadcnCard
+        variant={variant}
+        className={
+          (variant === "nested" ? "p-8" : "px-4 py-6 md:p-6") + " " + className
+        }
+        onClick={onClick}
+      >
+        {(title || subtitle) && (
+          <CardHeader>
+            {title && (
+              <CardTitle className={variant === "nested" ? "text-lg" : "text-2xl"}>
+                {title}
+              </CardTitle>
+            )}
+            {subtitle && (
+              <CardDescription className="mb-6">{subtitle}</CardDescription>
+            )}
+          </CardHeader>
+        )}
+        <CardContent>{children}</CardContent>
+      </ShadcnCard>
+    );
+  };
+
+  export default Card;
+  ```
+
+- This pattern should be applied to other components like `Button`, `Input`, `Dialog`, and `Badge` to ensure consistent props, layout, and theming.
+- Place these wrappers in `components/ui/` and use them app-wide instead of raw shadcn/ui imports.
+
+# ✅ Wrapper Component Checks
+
+- [ ] All reused shadcn/ui components are wrapped with project-specific interfaces.
+- [ ] Props like `variant`, `onClick`, `title`, `subtitle` are standardized.
+- [ ] UI elements consistently reflect design tokens and themes.

@@ -342,12 +342,6 @@ public
 .yarn/install-state.gz
 .pnp.*
 
-# Supabase
-.supabase/
-
-# Cursor AI
-.cursor/
-
 # Database
 *.db
 *.sqlite

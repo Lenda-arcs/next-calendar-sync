@@ -1,0 +1,18 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+---
+description: Data fetching guidelines for Supabase-powered Next.js apps using server components and ISR.
+alwaysApply: true
+---
+
+# 📡 Data Fetching
+
+- Use `createServerComponentClient()` for fetching data in RSCs.
+- Prefer server data fetching to client-side unless absolutely required.
+- Place all DB logic in `lib/queries/` or `lib/db.ts`.
+- Co-locate query logic by feature: `queries/teachers.ts`, `queries/tags.ts`, etc.
+- Use `revalidate` tags for incremental regeneration (`export const revalidate = 60`).
+- Wrap queries in `try/catch` and handle missing data with `notFound()` or redirects.

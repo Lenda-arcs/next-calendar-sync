@@ -1,0 +1,18 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+---
+description: Routing conventions for public and authenticated pages in a Next.js 14 + Supabase project.
+alwaysApply: true
+---
+
+# 🧭 Routing Best Practices
+
+- Dynamic public routes: use `app/[slug]/page.tsx` with `params.slug` fetching teacher data.
+- Authenticated app routes live under `app/app/` (e.g., `/app/dashboard`).
+- Always provide fallback pages (`notFound()` or loading) for dynamic content.
+- Use `middleware.ts` for route protection and locale/session-based redirects.
+- Avoid deeply nested route trees without shared layout context.
+- Leverage `metadata` export in page components for SEO.

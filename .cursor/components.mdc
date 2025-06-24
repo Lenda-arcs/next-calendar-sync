@@ -1,0 +1,18 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+---
+description: Component architecture for reusable, maintainable UI in Next.js with smart/dumb separation.
+alwaysApply: true
+---
+
+# 🧩 Component Design
+
+- Dumb components (UI only) go into `components/ui/`.
+- Smart components (data-aware) belong to `components/features/[domain]/`.
+- Do not fetch data directly in UI components — pass via props or context.
+- Use Tailwind CSS for styling; avoid external CSS frameworks.
+- Use Framer Motion or `@headlessui/react` for animations and modals.
+- Reuse common card, button, input, and layout components.

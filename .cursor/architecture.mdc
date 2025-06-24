@@ -1,0 +1,73 @@
+---
+description: Core architectural guidelines for building a scalable Next.js 14 app with modular file structure and clean separation of concerns.
+alwaysApply: true
+---
+
+# 🧱 Architecture & File Structure
+
+- Use the App Router in `app/` with file-based routing.
+- Prefer server components by default (`'use client'` only when required).
+- Place authenticated pages under `app/app/` with a shared `layout.tsx`.
+- Separate concerns:
+  - Components → `components/`
+  - Utilities → `lib/`
+  - Database queries → `lib/queries/`
+  - Zustand stores → `lib/state/`
+- Avoid prop drilling by using React Context or Zustand selectively.
+- Each domain (e.g., tags, events) should have its own folder structure.
+
+
+# 🪝 Supabase Data Hooks
+
+- Use custom hooks to handle Supabase queries and mutations in a scalable, testable, and readable way.
+- Add `useSupabaseQuery` and `useSupabaseMutation` to `lib/hooks/`:
+
+## Example: `useSupabaseQuery.ts`
+```ts
+export function useSupabaseQuery<T>(
+  key: string,
+  fetcher: (client: SupabaseClient) => Promise<T>,
+) {
+  const [data, setData] = useState<T | null>(null);
+  const [error, setError] = useState<Error | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const client = createClientComponentClient();
+    fetcher(client)
+      .then(setData)
+      .catch(setError)
+      .finally(() => setLoading(false));
+  }, [key]);
+
+  return { data, error, loading };
+}
+```
+
+## Example: `useSupabaseMutation.ts`
+```ts
+export function useSupabaseMutation<TArgs, TResult>(
+  mutateFn: (client: SupabaseClient, args: TArgs) => Promise<TResult>
+) {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+
+  async function mutate(args: TArgs) {
+    setLoading(true);
+    try {
+      const client = createClientComponentClient();
+      return await mutateFn(client, args);
+    } catch (err) {
+      setError(err as Error);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return { mutate, loading, error };
+}
+```
+
+- These hooks abstract away repetitive Supabase logic and simplify data flow in components.
+- Add optional caching or state sync via Zustand in the future.

@@ -1,0 +1,19 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+---
+description: Best practices for integrating Supabase DB and Auth into a Next.js 14 application.
+alwaysApply: true
+---
+
+# 🔐 Supabase Auth & DB
+
+- Use `@supabase/auth-helpers-nextjs` and `createServerComponentClient()` in RSCs.
+- In client components, use `createClientComponentClient()` when necessary.
+- Use Supabase middleware to protect `/app/*` routes via `getSession()`.
+- Do not pass session data manually through props.
+- Fetch user data server-side to reduce client-side auth logic.
+- Always enable and rely on RLS for row-level access control.
+- Use `supabase gen types typescript` for strong typing.

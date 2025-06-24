@@ -1,0 +1,47 @@
+---
+description: Describes the overall purpose, domain, and user goals of the app so the agent understands context deeply.
+alwaysApply: true
+---
+
+# 🌐 App Purpose: Yoga Schedule & Sharing Platform
+
+This application is a web-based platform for **yoga teachers and movement instructors** to manage and share their **upcoming classes and events** through a beautifully designed, customizable schedule page.
+
+## 🧘 Target Users
+- Independent yoga teachers
+- Movement professionals (Pilates, dance, fitness)
+- Small studios or collectives
+
+## 💡 Core Use Case
+Teachers connect their personal calendar (via .ics feed or manual input). The system parses and displays their upcoming classes on a **shareable public page**, such as `/schedule/[teacher-slug]`.
+
+## 🔐 Authenticated Features
+Teachers log in to manage:
+- Their **personal profile** (bio, photo, social links)
+- Their **event feed and parsed calendar events**
+- Tags and images for class type auto-tagging
+- Invoicing and request-based features
+
+## 🚀 Public Schedule Page
+The public page allows students to view:
+- Upcoming classes (title, type, location, time)
+- Filter by tags
+- Get metadata like level, online/offline, and teacher contact
+
+## 🛠 Technical Stack (assumed by agent)
+- Next.js 14+ with App Router
+- Supabase (DB, Auth, Edge Functions)
+- shadcn/ui + Tailwind CSS
+- React Server Components preferred
+- Mobile-first UI design
+- Reusable UI patterns (Card, PageSection, Container)
+
+## ✨ Style & Feel
+- Radial pastel gradient backgrounds
+- Glassmorphism elements (semi-transparent cards)
+- Calm, elegant serif + sans-serif typography (DM Serif Display + Outfit)
+
+## 🧠 Agent Tips
+- Respect the core user journey: connect calendar → manage content → share page
+- Ensure session-protected logic only appears in `/app/*`
+- UI should reflect lightness, flow, and simplicity — no bloat
