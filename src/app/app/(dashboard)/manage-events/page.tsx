@@ -2,7 +2,6 @@
 
 import React from 'react'
 import { Container } from '@/components/layout'
-import { PageSection } from '@/components/layout'
 import EventGrid from '@/components/events/EventGrid'
 import { 
   EventsControlPanel,
@@ -394,7 +393,7 @@ export default function ManageEventsPage() {
 
   if (eventsError) {
     return (
-      <Container maxWidth="4xl" className="px-4 sm:px-6 lg:px-8">
+      <Container>
         <div className="text-center py-12">
           <p className="text-lg font-medium text-destructive mb-2">Failed to load events</p>
           <p className="text-sm text-muted-foreground mb-4">{eventsError.message}</p>
@@ -408,18 +407,10 @@ export default function ManageEventsPage() {
   }
 
   return (
-    <Container maxWidth="4xl" className="px-4 sm:px-6 lg:px-8">
-      <PageSection>
-        {/* Header */}
-        <div className="flex flex-col gap-6 mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">Manage Events</h1>
-            <p className="text-muted-foreground mt-2">
-              Edit tags, manage visibility, and organize your classes
-            </p>
-          </div>
-
-          {/* Event Management Control Panel */}
+    <Container 
+      title="Manage Events"
+      subtitle="Edit tags, manage visibility, and organize your classes"
+    >
           <EventsControlPanel
             timeFilter={timeFilter}
             visibilityFilter={visibilityFilter}
@@ -436,7 +427,6 @@ export default function ManageEventsPage() {
             onSyncFeeds={handleSyncFeeds}
             onRefresh={handleRefresh}
           />
-        </div>
 
         {/* Events List */}
         {isLoading ? (
@@ -466,7 +456,6 @@ export default function ManageEventsPage() {
             maxColumns={2}
           />
         )}
-      </PageSection>
 
       {/* Floating Action Button for Batch Updates */}
       <FloatingActionButtons

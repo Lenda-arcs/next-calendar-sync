@@ -13,7 +13,7 @@ const Container: React.FC<ContainerProps> = ({
   children,
   title,
   subtitle,
-  maxWidth = "xl",
+  maxWidth = "4xl",
   className = "",
 }) => {
   const maxWidthClasses = {

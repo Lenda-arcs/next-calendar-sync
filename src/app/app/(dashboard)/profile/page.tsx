@@ -46,68 +46,12 @@ export default async function ProfilePage() {
     }
     
     return (
-      <div className="p-6">
-        <Container>
-          <div className="mb-8">
-            <h1 className="text-4xl font-bold mb-4 font-serif">
-              Profile Settings
-            </h1>
-            <p className="text-foreground/70 text-lg">
-              Manage your account settings and public profile information.
-            </p>
-          </div>
-
-          <div className="space-y-8">
-            <ProfileForm user={fallbackUser} />
-            
-            {/* Account Settings */}
-            <Card variant="glass">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 font-serif">
-                  <UserCog className="h-5 w-5" />
-                  Account Settings
-                </CardTitle>
-                <CardDescription>
-                  Manage your account preferences and security settings.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Button variant="outline" asChild>
-                  <Link href={PATHS.APP.DASHBOARD}>
-                    <Eye className="mr-2 h-4 w-4" />
-                    View Dashboard
-                  </Link>
-                </Button>
-                <Button variant="outline" asChild>
-                  <Link href={PATHS.AUTH.SIGNOUT}>
-                    <Shield className="mr-2 h-4 w-4" />
-                    Sign Out
-                  </Link>
-                </Button>
-              </div>
-              </CardContent>
-            </Card>
-          </div>
-        </Container>
-      </div>
-    )
-  }
-
-  return (
-    <div className="p-6">
-      <Container>
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-4 font-serif">
-            Profile Settings
-          </h1>
-          <p className="text-foreground/70 text-lg">
-            Manage your account settings and public profile information.
-          </p>
-        </div>
-
+      <Container
+        title="Profile Settings"
+        subtitle="Manage your account settings and public profile information."
+      >
         <div className="space-y-8">
-          <ProfileForm user={userData} />
+          <ProfileForm user={fallbackUser} />
           
           {/* Account Settings */}
           <Card variant="glass">
@@ -139,6 +83,46 @@ export default async function ProfilePage() {
           </Card>
         </div>
       </Container>
-    </div>
+    )
+  }
+
+  return (
+    <Container
+      title="Profile Settings"
+      subtitle="Manage your account settings and public profile information."
+    >
+      <div className="space-y-8">
+        <ProfileForm user={userData} />
+        
+        {/* Account Settings */}
+        <Card variant="glass">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 font-serif">
+              <UserCog className="h-5 w-5" />
+              Account Settings
+            </CardTitle>
+            <CardDescription>
+              Manage your account preferences and security settings.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Button variant="outline" asChild>
+                <Link href={PATHS.APP.DASHBOARD}>
+                  <Eye className="mr-2 h-4 w-4" />
+                  View Dashboard
+                </Link>
+              </Button>
+              <Button variant="outline" asChild>
+                <Link href={PATHS.AUTH.SIGNOUT}>
+                  <Shield className="mr-2 h-4 w-4" />
+                  Sign Out
+                </Link>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </Container>
   )
 } 

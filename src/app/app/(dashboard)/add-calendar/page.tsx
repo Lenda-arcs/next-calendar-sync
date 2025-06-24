@@ -37,19 +37,11 @@ export default async function AddCalendarPage() {
   }
 
   return (
-    <div className="p-6">
-      <Container>
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-4 font-serif">
-            Add Calendar Feed
-          </h1>
-          <p className="text-foreground/70 text-lg">
-            Connect another calendar to sync more events to your schedule.
-          </p>
-        </div>
-
-        <AddCalendarForm user={user} />
-      </Container>
-    </div>
+    <Container
+      title="Add Calendar Feed"
+      subtitle="Connect another calendar to sync more events to your schedule."
+    >
+      <AddCalendarForm user={user} />
+    </Container>
   )
 } 

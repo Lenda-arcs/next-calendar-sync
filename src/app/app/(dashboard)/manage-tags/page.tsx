@@ -15,7 +15,7 @@ export default async function ManageTagsPage() {
   }
 
   return (
-    <Container maxWidth="4xl">
+    <Container>
       <PageSection
         title="Tag Rules"
         subtitle="Automatically tag your calendar events using keywords"

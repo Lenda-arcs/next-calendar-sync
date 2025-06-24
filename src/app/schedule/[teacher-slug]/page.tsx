@@ -113,14 +113,14 @@ export default async function PublicSchedulePage({ params }: PageProps) {
 
       {/* Teacher Hero Section */}
       <PageSection className="py-8 sm:py-12">
-        <Container maxWidth="4xl">
+        <Container>
           <TeacherHero profile={profile} />
         </Container>
       </PageSection>
 
       {/* Filter & Events Section */}
       <PageSection className="py-8 sm:py-12">
-        <Container maxWidth="4xl">
+        <Container>
           <FilterProvider>
             <div className="space-y-6">
               {/* Header with Filter Statistics */}

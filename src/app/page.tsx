@@ -27,7 +27,7 @@ export default function LandingPage() {
 
       {/* Example Classes Section */}
       <PageSection className="py-16">
-        <Container maxWidth="4xl">
+        <Container>
           <Card>
             <CardHeader className="text-center">
               <CardTitle className="text-3xl mb-4">Example Classes</CardTitle>

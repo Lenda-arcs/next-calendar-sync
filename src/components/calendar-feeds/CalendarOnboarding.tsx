@@ -14,19 +14,14 @@ interface CalendarOnboardingProps {
 export function CalendarOnboarding({ user }: CalendarOnboardingProps) {
   return (
     <div className="min-h-screen">
-      <Container maxWidth="4xl">
+      <Container 
+        title="Welcome to Your Yoga Schedule"
+        subtitle="Connect your calendar to start building a beautiful, shareable schedule that your students will love."
+      >
         <div className="py-8 space-y-8">
           {/* Welcome Section */}
           <Card variant="glass">
             <CardContent className="text-center py-12">
-              <h1 className="text-4xl font-bold mb-4 font-serif">
-                Welcome to Your Yoga Schedule
-              </h1>
-              <p className="text-muted-foreground text-lg mb-8 max-w-2xl mx-auto">
-                Connect your calendar to start building a beautiful, shareable schedule 
-                that your students will love.
-              </p>
-              
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 max-w-2xl mx-auto">
                 <div className="text-center">
                   <Calendar className="h-8 w-8 mx-auto text-primary mb-2" />
