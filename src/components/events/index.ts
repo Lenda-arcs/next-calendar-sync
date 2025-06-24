@@ -29,4 +29,16 @@ export { default as TeacherHero } from './TeacherHero'
 // Manage events page components
 export { default as EventsControlPanel } from './EventsControlPanel'
 export { default as EventsEmptyState } from './EventsEmptyState'
-export { default as FloatingActionButtons } from './FloatingActionButtons' 
+export { default as FloatingActionButtons } from './FloatingActionButtons'
+
+// Invoice management components
+export { EventInvoiceCard } from './EventInvoiceCard'
+export { UninvoicedEventsList } from './UninvoicedEventsList'
+export { InvoiceCreationModal } from './InvoiceCreationModal'
+export { InvoiceManagement } from './InvoiceManagement'
+export { InvoiceSettings } from './InvoiceSettings'
+export { UserInvoiceSettingsModal } from './UserInvoiceSettingsModal'
+export { UserInvoiceSettingsForm } from './UserInvoiceSettingsForm'
+export { StudioManagement } from './StudioManagement'
+export { default as StudioForm } from './StudioForm'
+export { default as StudioFormModal } from './StudioFormModal' 

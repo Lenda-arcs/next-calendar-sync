@@ -1,39 +1,30 @@
 import { Container } from '@/components/layout/container'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Receipt } from 'lucide-react'
+import { InvoiceManagement } from '@/components/events/InvoiceManagement'
+import { createServerClient } from '@/lib/supabase-server'
+import { redirect } from 'next/navigation'
 
-export default function ManageInvoicesPage() {
+export default async function ManageInvoicesPage() {
+  const supabase = await createServerClient()
+  
+  const { data: { user }, error } = await supabase.auth.getUser()
+  
+  if (error || !user) {
+    redirect('/auth/sign-in')
+  }
+
   return (
     <div className="p-6">
-      <Container>
+      <Container maxWidth="4xl" className="px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
             Manage Invoices
           </h1>
           <p className="text-gray-600 dark:text-gray-300 mt-2">
-            Track and generate invoices for your services.
+            Create and track invoices for your events and services.
           </p>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Invoice Management</CardTitle>
-            <CardDescription>
-              Generate and track invoices for your events and services.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-center p-8 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
-              <Receipt className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                Invoice Dashboard
-              </h3>
-              <p className="text-gray-600 dark:text-gray-300">
-                Implement invoice generation, tracking, and payment management.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+        <InvoiceManagement userId={user.id} />
       </Container>
     </div>
   )
