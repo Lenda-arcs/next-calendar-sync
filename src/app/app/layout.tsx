@@ -12,7 +12,7 @@ import {
 } from 'lucide-react'
 
 const navigation = [
-  { name: 'Dashboard', href: PATHS.APP.DASHBOARD, icon: Home, iconName: 'Home' },
+  // { name: 'Dashboard', href: PATHS.APP.DASHBOARD, icon: Home, iconName: 'Home' },
   { name: 'Manage Events', href: PATHS.APP.MANAGE_EVENTS, icon: Calendar, iconName: 'Calendar' },
   { name: 'Manage Tags', href: PATHS.APP.MANAGE_TAGS, icon: Tags, iconName: 'Tags' },
   { name: 'Invoices', href: PATHS.APP.MANAGE_INVOICES, icon: Receipt, iconName: 'Receipt' },
