@@ -1,9 +1,7 @@
 import { createServerClient } from '@/lib/supabase-server'
 // import { redirect } from 'next/navigation' // Temporarily disabled for development
-import Link from 'next/link'
-import Image from 'next/image'
 import { LogoutButton } from '@/components/auth'
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
+import { NavLink, MobileNavMenu } from '@/components/ui'
 import { PATHS } from '@/lib/paths'
 import { 
   Calendar, 
@@ -14,11 +12,18 @@ import {
 } from 'lucide-react'
 
 const navigation = [
-  { name: 'Dashboard', href: PATHS.APP.DASHBOARD, icon: Home },
-  { name: 'Manage Events', href: PATHS.APP.MANAGE_EVENTS, icon: Calendar },
-  { name: 'Manage Tags', href: PATHS.APP.MANAGE_TAGS, icon: Tags },
-  { name: 'Invoices', href: PATHS.APP.MANAGE_INVOICES, icon: Receipt },
+  { name: 'Dashboard', href: PATHS.APP.DASHBOARD, icon: Home, iconName: 'Home' },
+  { name: 'Manage Events', href: PATHS.APP.MANAGE_EVENTS, icon: Calendar, iconName: 'Calendar' },
+  { name: 'Manage Tags', href: PATHS.APP.MANAGE_TAGS, icon: Tags, iconName: 'Tags' },
+  { name: 'Invoices', href: PATHS.APP.MANAGE_INVOICES, icon: Receipt, iconName: 'Receipt' },
 ]
+
+// For mobile navigation (only icon names)
+const mobileNavigation = navigation.map(({ name, href, iconName }) => ({
+  name,
+  href,
+  iconName
+}))
 
 interface AppLayoutProps {
   children: React.ReactNode
@@ -59,57 +64,50 @@ export default async function AppLayout({ children }: AppLayoutProps) {
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
             <div className="flex items-center">
-              <Link href={PATHS.APP.DASHBOARD} className="flex items-center group">
-                <Image 
-                  src="/assets/dummy_logo.png" 
-                  alt="Logo" 
-                  width={32} 
-                  height={32} 
-                  className="transition-transform group-hover:scale-110"
-                />
-              </Link>
+              <NavLink
+                href={PATHS.APP.DASHBOARD}
+                text="Home"
+                avatarSrc="/assets/dummy_logo.png"
+                avatarAlt="Logo"
+                fallbackIcon={Home}
+                className="group"
+              />
             </div>
 
             {/* Navigation */}
-            <nav className="hidden md:flex space-x-2">
+            <nav className="hidden lg:flex space-x-2">
               {navigation.map((item) => (
-                <Link
+                <NavLink
                   key={item.name}
                   href={item.href}
-                  className="flex items-center px-4 py-2 text-sm font-medium font-sans text-foreground/80 hover:text-foreground hover:bg-white/30 rounded-xl backdrop-blur-sm transition-all duration-300 hover:shadow-lg"
-                >
-                  <item.icon className="h-4 w-4 mr-2" />
-                  {item.name}
-                </Link>
+                  text={item.name}
+                  fallbackIcon={item.icon}
+                  showTextOnMobile={true}
+                />
               ))}
             </nav>
 
             {/* User Menu */}
             <div className="flex items-center space-x-4">
-              {/* User Info */}
+              {/* Mobile Navigation Menu */}
+              <MobileNavMenu navigation={mobileNavigation} />
+
+              {/* Desktop User Info */}
               <span className="text-sm font-sans text-foreground/70 hidden sm:block">
                 {mockUser.email}
               </span>
               
               {/* Profile Link with Avatar */}
-              <Link
+              <NavLink
                 href={PATHS.APP.PROFILE}
-                className="flex items-center px-3 py-2 text-sm font-medium font-sans text-foreground/80 hover:text-foreground hover:bg-white/30 rounded-xl backdrop-blur-sm transition-all duration-300 hover:shadow-lg space-x-2"
-              >
-                <Avatar className="h-6 w-6">
-                  <AvatarImage 
-                    src={profileImage || undefined} 
-                    alt={userProfile?.name || mockUser.email} 
-                  />
-                  <AvatarFallback className="bg-gradient-to-br from-primary/20 to-accent/20 backdrop-blur-sm border border-white/30 text-xs">
-                    <User className="h-3 w-3 text-primary" />
-                  </AvatarFallback>
-                </Avatar>
-                <span className="hidden md:inline">Profile</span>
-              </Link>
+                text="Profile"
+                avatarSrc={profileImage || undefined}
+                avatarAlt={userProfile?.name || mockUser.email}
+                fallbackIcon={User}
+              />
               
-              <LogoutButton showText={false} className="sm:hidden" />
-              <LogoutButton className="hidden sm:flex" />
+              <LogoutButton className="sm:hidden" />
+              <LogoutButton className="hidden sm:flex" showTextOnMobile={true} />
             </div>
           </div>
         </div>

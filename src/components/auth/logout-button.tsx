@@ -2,24 +2,20 @@
 
 import React from 'react'
 import { useRouter } from 'next/navigation'
-import { Button } from '@/components/ui/button'
+import { NavLink } from '@/components/ui'
 import { createClient } from '@/lib/supabase'
 import { LogOut, Loader2 } from 'lucide-react'
 
 interface LogoutButtonProps {
-  variant?: 'default' | 'outline' | 'ghost'
-  size?: 'sm' | 'lg'
   className?: string
-  showIcon?: boolean
-  showText?: boolean
+  avatarSize?: 'sm' | 'md' | 'lg'
+  showTextOnMobile?: boolean
 }
 
 export function LogoutButton({ 
-  variant = 'ghost', 
-  size = 'sm',
   className,
-  showIcon = true,
-  showText = true
+  avatarSize = 'sm',
+  showTextOnMobile = false
 }: LogoutButtonProps) {
   const router = useRouter()
   const supabase = createClient()
@@ -46,23 +42,15 @@ export function LogoutButton({
   }
 
   return (
-    <Button
-      variant={variant}
-      size={size}
+    <NavLink
+      text={loading ? 'Signing out...' : 'Sign Out'}
+      fallbackIcon={loading ? Loader2 : LogOut}
       onClick={handleLogout}
       disabled={loading}
       className={className}
-    >
-      {loading ? (
-        <Loader2 className="h-4 w-4 animate-spin" />
-      ) : (
-        showIcon && <LogOut className="h-4 w-4" />
-      )}
-      {showText && (
-        <span className={showIcon ? 'ml-2' : ''}>
-          {loading ? 'Signing out...' : 'Sign Out'}
-        </span>
-      )}
-    </Button>
+      avatarSize={avatarSize}
+      showTextOnMobile={showTextOnMobile}
+      animateIcon={loading}
+    />
   )
 } 

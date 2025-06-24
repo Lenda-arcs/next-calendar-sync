@@ -9,10 +9,8 @@ import {
   FilteredEventList, 
   ScheduleHeader 
 } from '@/components/schedule'
-import Link from 'next/link'
-import Image from 'next/image'
 import { LogoutButton } from '@/components/auth'
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
+import { NavLink } from '@/components/ui'
 import { Home, User } from 'lucide-react'
 import { User as UserType } from '@/lib/types'
 
@@ -37,22 +35,15 @@ function MinimalNavbar({
       <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-12">
           <div className="flex items-center space-x-4">
-            <Link href="/app" className="flex items-center group mr-2">
-              <Image 
-                src="/assets/dummy_logo.png" 
-                alt="Logo" 
-                width={20} 
-                height={20} 
-                className="transition-transform group-hover:scale-110"
-              />
-            </Link>
-            <Link 
-              href="/app" 
-              className="flex items-center px-3 py-1.5 text-sm font-medium text-foreground/80 hover:text-foreground hover:bg-white/40 rounded-lg transition-all duration-200"
-            >
-              <Home className="h-4 w-4 mr-2" />
-              Dashboard
-            </Link>
+            <NavLink
+              href="/app"
+              text="Home"
+              avatarSrc="/assets/dummy_logo.png"
+              avatarAlt="Logo"
+              fallbackIcon={Home}
+              avatarSize="sm"
+              className="group mr-2"
+            />
           </div>
           
           <div className="flex items-center space-x-3">
@@ -61,27 +52,19 @@ function MinimalNavbar({
             </span>
             
             {/* Profile Link with Avatar */}
-            <Link
+            <NavLink
               href="/app/profile"
-              className="flex items-center px-2 py-1.5 text-xs font-medium text-foreground/80 hover:text-foreground hover:bg-white/40 rounded-lg transition-all duration-200 space-x-2"
-            >
-              <Avatar className="h-5 w-5">
-                <AvatarImage 
-                  src={profileImage || undefined} 
-                  alt={userProfile?.name || userEmail} 
-                />
-                <AvatarFallback className="bg-gradient-to-br from-primary/20 to-accent/20 backdrop-blur-sm border border-white/30 text-xs">
-                  <User className="h-2.5 w-2.5 text-primary" />
-                </AvatarFallback>
-              </Avatar>
-              <span className="hidden sm:inline">Profile</span>
-            </Link>
+              text="Profile"
+              avatarSrc={profileImage || undefined}
+              avatarAlt={userProfile?.name || userEmail}
+              fallbackIcon={User}
+              avatarSize="sm"
+              className="text-xs font-medium px-2 py-1.5 rounded-lg"
+            />
             
             <LogoutButton 
-              variant="ghost" 
-              size="sm" 
-              showText={false}
               className="h-8 w-8 p-0"
+              avatarSize="sm"
             />
           </div>
         </div>
