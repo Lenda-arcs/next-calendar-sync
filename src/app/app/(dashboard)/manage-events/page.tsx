@@ -11,6 +11,8 @@ import {
 } from '@/components/events'
 import { Loader2, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import DataLoader from '@/components/ui/data-loader'
+import { ManageEventsSkeleton } from '@/components/ui/skeleton'
 import { useSupabaseQuery } from '@/lib/hooks/useSupabaseQuery'
 import { useSupabaseMutation } from '@/lib/hooks/useSupabaseMutation'
 import { useCalendarSync } from '@/lib/hooks/useCalendarSync'
@@ -411,32 +413,13 @@ export default function ManageEventsPage() {
       title="Manage Events"
       subtitle="Edit tags, manage visibility, and organize your classes"
     >
-          <EventsControlPanel
-            timeFilter={timeFilter}
-            visibilityFilter={visibilityFilter}
-            eventStats={eventStats}
-            userTags={userTags || undefined}
-            globalTags={globalTags || undefined}
-            hasPendingChanges={hasPendingChanges}
-            pendingChangesCount={pendingChanges.size}
-            isSyncing={isSyncing}
-            isLoading={isLoading}
-            onTimeFilterChange={setTimeFilter}
-            onVisibilityFilterChange={setVisibilityFilter}
-            onCreateTag={() => setIsCreateTagFormOpen(true)}
-            onSyncFeeds={handleSyncFeeds}
-            onRefresh={handleRefresh}
-          />
-
-        {/* Events List */}
-        {isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="text-center">
-              <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-muted-foreground" />
-              <p className="text-lg font-medium text-muted-foreground">Loading events...</p>
-            </div>
-          </div>
-        ) : displayEvents.length === 0 ? (
+      <DataLoader
+        data={displayEvents}
+        loading={isLoading}
+        error={eventsError ? 'Failed to load events' : null}
+        skeleton={ManageEventsSkeleton}
+        skeletonCount={1}
+        empty={
           <EventsEmptyState
             totalEventsCount={events?.length || 0}
             timeFilter={timeFilter}
@@ -444,18 +427,40 @@ export default function ManageEventsPage() {
             onChangeVisibilityFilter={setVisibilityFilter}
             onChangeTimeFilter={setTimeFilter}
           />
-        ) : (
-          <EventGrid
-            key={resetSignal}
-            events={displayEvents}
-            loading={isLoading}
-            error={eventsError}
-            availableTags={availableEventTags}
-            onEventUpdate={handleEventUpdate}
-            isInteractive={true}
-            maxColumns={2}
-          />
+        }
+      >
+        {(loadedEvents) => (
+          <div className="space-y-8">
+            <EventsControlPanel
+              timeFilter={timeFilter}
+              visibilityFilter={visibilityFilter}
+              eventStats={eventStats}
+              userTags={userTags || undefined}
+              globalTags={globalTags || undefined}
+              hasPendingChanges={hasPendingChanges}
+              pendingChangesCount={pendingChanges.size}
+              isSyncing={isSyncing}
+              isLoading={false}
+              onTimeFilterChange={setTimeFilter}
+              onVisibilityFilterChange={setVisibilityFilter}
+              onCreateTag={() => setIsCreateTagFormOpen(true)}
+              onSyncFeeds={handleSyncFeeds}
+              onRefresh={handleRefresh}
+            />
+
+            <EventGrid
+              key={resetSignal}
+              events={loadedEvents}
+              loading={false}
+              error={null}
+              availableTags={availableEventTags}
+              onEventUpdate={handleEventUpdate}
+              isInteractive={true}
+              maxColumns={2}
+            />
+          </div>
         )}
+      </DataLoader>
 
       {/* Floating Action Button for Batch Updates */}
       <FloatingActionButtons

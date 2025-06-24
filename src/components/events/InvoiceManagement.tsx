@@ -1,6 +1,7 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -17,12 +18,38 @@ interface InvoiceManagementProps {
   userId: string
 }
 
+type TabValue = 'uninvoiced' | 'invoices' | 'settings'
+
 export function InvoiceManagement({ userId }: InvoiceManagementProps) {
-  const [activeTab, setActiveTab] = useState<'uninvoiced' | 'invoices' | 'settings'>('uninvoiced')
+  const router = useRouter()
+  const searchParams = useSearchParams()
   const [invoiceModalOpen, setInvoiceModalOpen] = useState(false)
   const [selectedStudioId, setSelectedStudioId] = useState<string>('')
   const [selectedEventIds, setSelectedEventIds] = useState<string[]>([])
   const [selectedEvents, setSelectedEvents] = useState<EventWithStudio[]>([])
+
+  // Get active tab from URL, default to 'uninvoiced'
+  const getActiveTabFromUrl = useCallback((): TabValue => {
+    const tab = searchParams.get('tab') as TabValue
+    return ['uninvoiced', 'invoices', 'settings'].includes(tab) ? tab : 'uninvoiced'
+  }, [searchParams])
+
+  const [activeTab, setActiveTabState] = useState<TabValue>(() => {
+    const tab = searchParams.get('tab') as TabValue
+    return ['uninvoiced', 'invoices', 'settings'].includes(tab) ? tab : 'uninvoiced'
+  })
+
+  // Update local state when URL changes
+  useEffect(() => {
+    setActiveTabState(getActiveTabFromUrl())
+  }, [getActiveTabFromUrl])
+
+  // Update URL when tab changes
+  const setActiveTab = (tab: TabValue) => {
+    const params = new URLSearchParams(searchParams)
+    params.set('tab', tab)
+    router.push(`?${params.toString()}`, { scroll: false })
+  }
 
   // Fetch uninvoiced events for overview
   const { 
@@ -80,7 +107,7 @@ export function InvoiceManagement({ userId }: InvoiceManagementProps) {
 
   return (
     <div className="space-y-6">
-      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'uninvoiced' | 'invoices' | 'settings')}>
+      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as TabValue)}>
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="uninvoiced" className="flex items-center gap-2">
             <Receipt className="w-4 h-4" />

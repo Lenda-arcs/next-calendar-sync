@@ -23,3 +23,12 @@ export { Avatar, AvatarImage, AvatarFallback } from './avatar'
 export { Tabs, TabsList, TabsTrigger, TabsContent } from './tabs'
 export { NavLink } from './nav-link'
 export { MobileNavMenu } from './mobile-nav-menu'
+export { 
+  Skeleton, 
+  EventCardSkeleton,
+  InteractiveEventCardSkeleton,
+  ManageEventsSkeleton,
+  ProfileSkeleton, 
+  ListItemSkeleton, 
+  TableRowSkeleton 
+} from './skeleton'
