@@ -14,10 +14,10 @@ const inputVariants = cva(
   {
     variants: {
       variant: {
-        default: "backdrop-blur-sm bg-white/50 border border-white/40 shadow-md",
-        filled: "backdrop-blur-md bg-white/30 border border-white/30 shadow-lg",
+        default: "bg-white/50 border border-white/40 shadow-md",
+        filled: "bg-white/30 border border-white/30 shadow-lg",
         ghost: "border-0 bg-transparent backdrop-blur-none",
-        glass: "backdrop-blur-md bg-white/20 border border-white/30 shadow-xl",
+        // glass: "bg-white/20 border border-white/30 shadow-xl",
       },
       size: {
         sm: "h-8 px-3 text-sm",

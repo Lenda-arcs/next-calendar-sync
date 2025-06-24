@@ -160,7 +160,6 @@ export const NewTagForm: React.FC<Props> = ({
           </Button>
           <Button 
             type="button" 
-            variant="glass" 
             disabled={!isValid}
             onClick={handleSubmit}
           >
