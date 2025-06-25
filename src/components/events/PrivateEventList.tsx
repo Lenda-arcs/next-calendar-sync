@@ -3,8 +3,9 @@
 import React from 'react'
 import { PublicEvent, Tag } from '@/lib/types'
 import { EventCard } from './EventCard'
-
-import { Calendar, Loader2 } from 'lucide-react'
+import DataLoader from '@/components/ui/data-loader'
+import { DashboardUpcomingClassesSkeleton } from '@/components/ui/skeleton'
+import { Calendar } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { type EventDisplayVariant } from '@/lib/event-types'
 import { useSupabaseQuery } from '@/lib/hooks/useSupabaseQuery'
@@ -98,55 +99,39 @@ const PrivateEventList: React.FC<PrivateEventListProps> = ({
 
   // Loading state
   const isLoading = eventsLoading || userTagsLoading || globalTagsLoading
-  
-  if (isLoading) {
-    return (
-      <div className={cn('flex items-center justify-center py-8', className)}>
-        <div className="text-center">
-          <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2 text-muted-foreground" />
-          <p className="text-sm text-muted-foreground">Loading events...</p>
-        </div>
-      </div>
-    )
-  }
-
-  // Error state
-  if (eventsError) {
-    return (
-      <div className={cn('flex items-center justify-center py-8', className)}>
-        <div className="text-center">
-          <p className="text-sm text-destructive mb-1">Failed to load events</p>
-          <p className="text-xs text-muted-foreground">{eventsError.message}</p>
-        </div>
-      </div>
-    )
-  }
-
-  // No events state
-  if (!events || events.length === 0) {
-    return (
-      <div className={cn('py-8', className)}>
-        <div className="text-center">
-          <Calendar className="h-8 w-8 mx-auto mb-3 text-muted-foreground" />
-          <p className="text-sm text-muted-foreground">
-            No upcoming events found.
-          </p>
-        </div>
-      </div>
-    )
-  }
+  const eventsData = events && allAvailableTags.length >= 0 ? events : null
 
   return (
-    <div className={cn(getGridClasses(), className)}>
-      {events.map((event) => (
-        <div key={event.id} className="flex flex-col">
-          <EventCard
-            {...convertEventToCardProps(event, allAvailableTags)}
-            variant={variant}
-          />
+    <DataLoader
+      data={eventsData}
+      loading={isLoading}
+      error={eventsError?.message || null}
+      skeleton={DashboardUpcomingClassesSkeleton}
+      skeletonCount={1}
+      empty={
+        <div className={cn('py-8', className)}>
+          <div className="text-center">
+            <Calendar className="h-8 w-8 mx-auto mb-3 text-muted-foreground" />
+            <p className="text-sm text-muted-foreground">
+              No upcoming events found.
+            </p>
+          </div>
         </div>
-      ))}
-    </div>
+      }
+    >
+      {(events) => (
+        <div className={cn(getGridClasses(), className)}>
+          {events.map((event) => (
+            <div key={event.id} className="flex flex-col">
+              <EventCard
+                {...convertEventToCardProps(event, allAvailableTags)}
+                variant={variant}
+              />
+            </div>
+          ))}
+        </div>
+      )}
+    </DataLoader>
   )
 }
 

@@ -360,6 +360,95 @@ const TagLibraryGridSkeleton: React.FC = () => {
   )
 }
 
+// Dashboard Upcoming Classes Skeleton - matches PrivateEventList structure
+const DashboardUpcomingClassesSkeleton: React.FC = () => {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {Array.from({ length: 3 }).map((_, index) => (
+        <div key={index} className="flex flex-col">
+          <EventCardSkeleton variant="compact" />
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// Dashboard Actions Grid Skeleton - matches the action cards layout
+const DashboardActionsSkeleton: React.FC = () => {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {Array.from({ length: 4 }).map((_, index) => (
+        <Card key={index} variant="outlined">
+          <CardContent className="p-6">
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Skeleton className="h-5 w-32" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-3/4" />
+              </div>
+              <Skeleton className="h-10 w-full rounded-md" />
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  )
+}
+
+// Full Dashboard Skeleton - matches the complete dashboard layout
+const DashboardSkeleton: React.FC = () => {
+  return (
+    <div className="space-y-8">
+      {/* Header Skeleton */}
+      <div className="space-y-2">
+        <Skeleton className="h-8 w-64" />
+        <Skeleton className="h-4 w-80" />
+      </div>
+
+      {/* Upcoming Classes Section */}
+      <Card variant="glass">
+        <CardContent className="p-6">
+          <div className="space-y-6">
+            <div className="flex items-center gap-2">
+              <Skeleton className="h-5 w-5 rounded" />
+              <Skeleton className="h-6 w-48" />
+            </div>
+            <DashboardUpcomingClassesSkeleton />
+            <div className="text-right">
+              <Skeleton className="h-4 w-32 ml-auto" />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Actions Section */}
+      <div className="space-y-6">
+        <Skeleton className="h-6 w-36" />
+        <DashboardActionsSkeleton />
+        
+        {/* Calendar Integration Section */}
+        <div className="mt-6 space-y-4">
+          <Card variant="default">
+            <CardContent className="p-6">
+              <div className="space-y-4">
+                <Skeleton className="h-6 w-40" />
+                <div className="space-y-3">
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-3/4" />
+                </div>
+                <div className="flex gap-2">
+                  <Skeleton className="h-10 w-32" />
+                  <Skeleton className="h-10 w-32" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export { 
   Skeleton, 
   EventCardSkeleton,
@@ -367,6 +456,9 @@ export {
   ManageEventsSkeleton,
   TagRulesSkeleton,
   TagLibraryGridSkeleton,
+  DashboardUpcomingClassesSkeleton,
+  DashboardActionsSkeleton,
+  DashboardSkeleton,
   ProfileSkeleton, 
   ListItemSkeleton, 
   TableRowSkeleton 

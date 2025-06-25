@@ -33,6 +33,9 @@ export {
   ManageEventsSkeleton,
   TagRulesSkeleton,
   TagLibraryGridSkeleton,
+  DashboardUpcomingClassesSkeleton,
+  DashboardActionsSkeleton,
+  DashboardSkeleton,
   ProfileSkeleton, 
   ListItemSkeleton, 
   TableRowSkeleton 
