@@ -9,6 +9,8 @@ import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/
 import { EventInvoiceCard } from './EventInvoiceCard'
 import { useSupabaseQuery } from '@/lib/hooks/useSupabaseQuery'
 import { getUninvoicedEventsByStudio, calculateTotalPayout, EventWithStudio } from '@/lib/invoice-utils'
+import { useCalendarFeeds, useCalendarFeedActions } from '@/lib/hooks/useCalendarFeeds'
+import { History, RefreshCw } from 'lucide-react'
 
 interface UninvoicedEventsListProps {
   userId: string
@@ -17,6 +19,7 @@ interface UninvoicedEventsListProps {
 
 export function UninvoicedEventsList({ userId, onCreateInvoice }: UninvoicedEventsListProps) {
   const [selectedEvents, setSelectedEvents] = useState<Record<string, string[]>>({})
+  const [isHistoricalSyncing, setIsHistoricalSyncing] = useState(false)
 
   const {
     data: eventsByStudio,
@@ -28,6 +31,32 @@ export function UninvoicedEventsList({ userId, onCreateInvoice }: UninvoicedEven
     fetcher: () => getUninvoicedEventsByStudio(userId),
     enabled: !!userId
   })
+
+  const { data: calendarFeeds, isLoading: feedsLoading } = useCalendarFeeds(userId)
+  const { syncFeed } = useCalendarFeedActions()
+
+  const handleHistoricalSync = async () => {
+    if (!calendarFeeds || calendarFeeds.length === 0) return
+
+    setIsHistoricalSyncing(true)
+    try {
+      // Sync all calendar feeds in historical mode
+      const syncPromises = calendarFeeds.map(feed => 
+        syncFeed(feed.id, 'historical')
+      )
+      
+      await Promise.all(syncPromises)
+      
+      // Refetch uninvoiced events after historical sync
+      refetch()
+    } catch (error) {
+      console.error('Failed to perform historical sync:', error)
+    } finally {
+      setIsHistoricalSyncing(false) 
+    }
+  }
+
+  const hasConnectedFeeds = calendarFeeds && calendarFeeds.length > 0
 
   const handleToggleEvent = (studioId: string, eventId: string) => {
     setSelectedEvents(prev => {
@@ -115,28 +144,67 @@ export function UninvoicedEventsList({ userId, onCreateInvoice }: UninvoicedEven
   }
 
   return (
-    <DataLoader
-      data={eventsByStudio}
-      loading={isLoading}
-      error={error?.message || null}
-      empty={
-        <Card>
-          <CardContent className="py-12 text-center">
-            <div className="w-12 h-12 mx-auto mb-4 text-gray-300">
-              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
+    <div className="space-y-4">
+      {/* Historical Sync CTA - Always visible when feeds are connected */}
+      {hasConnectedFeeds && !feedsLoading && (
+        <Card className="bg-blue-50/50 border-blue-200">
+          <CardContent className="py-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div className="flex-1">
+                <h4 className="text-sm font-medium text-blue-900 mb-1">
+                  Missing older events?
+                </h4>
+                <p className="text-xs text-blue-700">
+                  Sync historical events from your connected calendar feeds to find uninvoiced classes from previous months.
+                </p>
+              </div>
+              <Button 
+                variant="outline" 
+                onClick={handleHistoricalSync}
+                disabled={isHistoricalSyncing}
+                size="sm"
+                className="bg-blue-100 hover:bg-blue-200 text-blue-800 border-blue-300 whitespace-nowrap"
+              >
+                {isHistoricalSyncing ? (
+                  <>
+                    <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                    Syncing...
+                  </>
+                ) : (
+                  <>
+                    <History className="mr-2 h-4 w-4" />
+                    Sync Historical Events
+                  </>
+                )}
+              </Button>
             </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No Uninvoiced Events</h3>
-            <p className="text-sm text-gray-600 mb-4">
-              All your completed events have been invoiced, or you don&apos;t have any events with assigned studios yet.
-            </p>
-            <Button variant="outline" onClick={() => refetch()}>
-              Refresh
-            </Button>
           </CardContent>
         </Card>
-      }
+      )}
+
+      <DataLoader
+        data={eventsByStudio}
+        loading={isLoading}
+        error={error?.message || null}
+        empty={
+          <Card>
+            <CardContent className="py-12 text-center">
+              <div className="w-12 h-12 mx-auto mb-4 text-gray-300">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No Uninvoiced Events</h3>
+              <p className="text-sm text-gray-600 mb-4">
+                All your completed events have been invoiced, or you don&apos;t have any events with assigned studios yet.
+              </p>
+              <Button variant="outline" onClick={() => refetch()}>
+                <RefreshCw className="mr-2 h-4 w-4" />
+                Refresh
+              </Button>
+            </CardContent>
+          </Card>
+        }
     >
       {(data) => {
         const studios = Object.keys(data)
@@ -264,5 +332,6 @@ export function UninvoicedEventsList({ userId, onCreateInvoice }: UninvoicedEven
         )
       }}
     </DataLoader>
+    </div>
   )
 } 

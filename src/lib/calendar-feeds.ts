@@ -65,12 +65,13 @@ export async function deleteCalendarFeed(
 export async function syncCalendarFeed(
   supabase: ReturnType<typeof createBrowserClient<Database>>,
   id: string,
+  mode: 'default' | 'historical' = 'default'
 ): Promise<{ success: boolean; count: number }> {
   try {
     const { data, error } = await supabase.functions.invoke('sync-feed', {
       body: { 
         feed_id: id,
-        mode: 'default'
+        mode: mode
       }
     })
 

@@ -56,9 +56,9 @@ export function useSyncCalendarFeed() {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   )
 
-  return useSupabaseMutation<{ success: boolean; count: number }, string>({
-    mutationFn: async (_, feedId) => {
-      return syncCalendarFeed(supabase, feedId)
+  return useSupabaseMutation<{ success: boolean; count: number }, { feedId: string; mode?: 'default' | 'historical' }>({
+    mutationFn: async (_, variables) => {
+      return syncCalendarFeed(supabase, variables.feedId, variables.mode)
     },
   })
 }
@@ -90,8 +90,8 @@ export function useCalendarFeedActions() {
     return deleteMutation.mutateAsync(feedId)
   }, [deleteMutation])
 
-  const syncFeed = useCallback(async (feedId: string) => {
-    return syncMutation.mutateAsync(feedId)
+  const syncFeed = useCallback(async (feedId: string, mode?: 'default' | 'historical') => {
+    return syncMutation.mutateAsync({ feedId, mode })
   }, [syncMutation])
 
   return {
