@@ -134,16 +134,18 @@ export const TagLibraryGrid: React.FC<Props> = ({
   userId,
 }) => {
   return (
-    <div className="space-y-8">
-      {/* Global Tags Section */}
-      {globalTags.length > 0 && (
-        <Card variant="default">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-foreground">
+    <Card variant="default">
+      <CardHeader>
+        <CardTitle className="text-foreground">Tag Library</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-8">
+        {/* Global Tags Section */}
+        {globalTags.length > 0 && (
+          <div>
+            <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+              <Globe className="h-4 w-4" />
               Global Tags
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+            </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
               {globalTags.map((tag) => (
                 <TagLibraryItem
@@ -157,16 +159,12 @@ export const TagLibraryGrid: React.FC<Props> = ({
                 />
               ))}
             </div>
-          </CardContent>
-        </Card>
-      )}
+          </div>
+        )}
 
-      {/* Custom Tags Section */}
-      <Card variant="default">
-        <CardHeader>
-          <CardTitle className="text-foreground">Your Custom Tags</CardTitle>
-        </CardHeader>
-        <CardContent>
+        {/* Custom Tags Section */}
+        <div>
+          <h3 className="text-lg font-semibold text-foreground mb-4">Your Custom Tags</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
             {customTags.map((tag) => (
               <TagLibraryItem
@@ -190,8 +188,8 @@ export const TagLibraryGrid: React.FC<Props> = ({
               </p>
             </div>
           )}
-        </CardContent>
-      </Card>
-    </div>
+        </div>
+      </CardContent>
+    </Card>
   )
 } 

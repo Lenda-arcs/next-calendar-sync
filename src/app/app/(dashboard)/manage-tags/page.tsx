@@ -1,7 +1,6 @@
 import { TagLibrary } from '@/components/events/TagLibrary'
 import { TagRuleManager } from '@/components/events/TagRuleManager'
 import { Container } from '@/components/layout/container'
-import { PageSection } from '@/components/layout/page-section'
 import { createServerClient } from '@/lib/supabase-server'
 import { redirect } from 'next/navigation'
 
@@ -15,22 +14,14 @@ export default async function ManageTagsPage() {
   }
 
   return (
-    <Container>
-      <PageSection
-        title="Tag Rules"
-        subtitle="Automatically tag your calendar events using keywords"
-        spacing="large"
-      >
+    <Container
+      title="Tag Management"
+      subtitle="Organize your calendar events with smart tagging. Set up automatic rules to tag events based on keywords, and manage your tag library to keep everything organized."
+    >
+      <div className="space-y-12">
         <TagRuleManager userId={user.id} />
-      </PageSection>
-
-      <PageSection
-        title="Tag Library"
-        subtitle="Manage your tags and see how they look on events"
-        spacing="large"
-      >
         <TagLibrary userId={user.id} />
-      </PageSection>
+      </div>
     </Container>
   )
 } 
