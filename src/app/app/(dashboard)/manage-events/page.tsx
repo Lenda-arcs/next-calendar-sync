@@ -175,7 +175,9 @@ export default function ManageEventsPage() {
 
   // ==================== COMPUTED DATA ====================
   // Combine user and global tags
-  const allAvailableTags = [...(userTags || []), ...(globalTags || [])]
+  const allAvailableTags = React.useMemo(() => {
+    return [...(userTags || []), ...(globalTags || [])]
+  }, [userTags, globalTags])
 
   // Convert tags to EventTag format for the grid
   const availableEventTags = React.useMemo(() => {

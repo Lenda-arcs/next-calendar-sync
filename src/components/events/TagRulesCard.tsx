@@ -78,7 +78,7 @@ export const TagRulesCard: React.FC<Props> = ({
             <Button
               onClick={onAddRule}
               disabled={!newKeyword.trim() || !selectedTag || isCreating}
-              variant="glass"
+              variant="secondary"
             >
               {isCreating ? (
                 <>

@@ -159,7 +159,9 @@ const PublicEventList: React.FC<PublicEventListProps> = ({
 
 
   // Get all available tags for processing
-  const allAvailableTags = [...(userTags || []), ...(globalTags || [])]
+  const allAvailableTags = useMemo(() => {
+    return [...(userTags || []), ...(globalTags || [])]
+  }, [userTags, globalTags])
 
   // Enhanced events with matched tags
   const enhancedEvents: EnhancedPublicEvent[] = useMemo(() => {

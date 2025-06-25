@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -18,6 +18,7 @@ interface UninvoicedEventsListProps {
 export function UninvoicedEventsList({ userId, onCreateInvoice }: UninvoicedEventsListProps) {
   const [selectedEvents, setSelectedEvents] = useState<Record<string, string[]>>({})
   const [expandedStudios, setExpandedStudios] = useState<Record<string, boolean>>({})
+  const initializedRef = useRef(false)
 
   const {
     data: eventsByStudio,
@@ -30,18 +31,17 @@ export function UninvoicedEventsList({ userId, onCreateInvoice }: UninvoicedEven
     enabled: !!userId
   })
 
-
-
   // Initialize studios as collapsed by default
   useEffect(() => {
-    if (eventsByStudio && Object.keys(expandedStudios).length === 0) {
+    if (eventsByStudio && !initializedRef.current) {
       const initialExpanded = Object.keys(eventsByStudio).reduce((acc, studioId) => {
         acc[studioId] = false
         return acc
       }, {} as Record<string, boolean>)
       setExpandedStudios(initialExpanded)
+      initializedRef.current = true
     }
-  }, [eventsByStudio]) // Removed expandedStudios from dependency array to prevent infinite loop
+  }, [eventsByStudio, expandedStudios])
 
   const handleToggleStudio = (studioId: string) => {
     setExpandedStudios(prev => ({

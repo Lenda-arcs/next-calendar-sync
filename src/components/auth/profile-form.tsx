@@ -151,7 +151,7 @@ export function ProfileForm({ user, onUpdate }: ProfileFormProps) {
     { value: 'full', label: 'Full - Detailed view with all information' },
   ]
 
-  const initialValues = {
+  const initialValues = React.useMemo(() => ({
     name: user.name ?? '',
     bio: user.bio ?? '',
     profile_image_url: user.profile_image_url ?? '',
@@ -161,7 +161,7 @@ export function ProfileForm({ user, onUpdate }: ProfileFormProps) {
     website_url: user.website_url ?? '',
     yoga_styles: user.yoga_styles ?? [],
     event_display_variant: user.event_display_variant ?? 'compact',
-  }
+  }), [user])
 
   const {
     values,
