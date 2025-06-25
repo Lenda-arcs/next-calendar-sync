@@ -34,3 +34,4 @@ export {
   ListItemSkeleton, 
   TableRowSkeleton 
 } from './skeleton'
+export { UnifiedDialog } from './unified-dialog'

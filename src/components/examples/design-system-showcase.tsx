@@ -37,6 +37,7 @@ import {
   DialogTitle, 
   DialogTrigger 
 } from '@/components/ui/dialog'
+import { UnifiedDialog } from '@/components/ui/unified-dialog'
 import { 
   Search, 
   Mail, 
@@ -541,21 +542,21 @@ export default function DesignSystemShowcase() {
 
       {/* Dialog Section */}
       <PageSection title="Dialogs" subtitle="Modal dialogs for user interactions">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Dialog>
             <DialogTrigger asChild>
-              <Button variant="outline">Basic Dialog</Button>
+              <Button variant="outline">Legacy Dialog</Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Basic Dialog</DialogTitle>
+                <DialogTitle>Legacy Dialog</DialogTitle>
                 <DialogDescription>
-                  This is a basic dialog with a title and description. You can add any content here.
+                  This is the old dialog style for comparison.
                 </DialogDescription>
               </DialogHeader>
               <div className="py-4">
                 <p className="text-sm text-muted-foreground">
-                  Dialog content goes here. You can include forms, text, or any other components.
+                  Old dialog content style.
                 </p>
               </div>
               <DialogFooter>
@@ -565,23 +566,8 @@ export default function DesignSystemShowcase() {
             </DialogContent>
           </Dialog>
 
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button variant="destructive">Destructive Dialog</Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Are you sure?</DialogTitle>
-                <DialogDescription>
-                  This action cannot be undone. This will permanently delete the item.
-                </DialogDescription>
-              </DialogHeader>
-              <DialogFooter>
-                <Button variant="outline">Cancel</Button>
-                <Button variant="destructive">Delete</Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+          <UnifiedDialogBasicDemo />
+          <UnifiedDialogScrollableDemo />
         </div>
       </PageSection>
 
@@ -672,5 +658,89 @@ export default function DesignSystemShowcase() {
         </Card>
       </PageSection>
     </Container>
+  )
+}
+
+// Demo components for UnifiedDialog
+function UnifiedDialogBasicDemo() {
+  const [open, setOpen] = useState(false)
+  
+  return (
+    <>
+      <Button variant="outline" onClick={() => setOpen(true)}>
+        Unified Dialog
+      </Button>
+      <UnifiedDialog
+        open={open}
+        onOpenChange={setOpen}
+        title="Enhanced Dialog"
+        description="This is the new unified dialog with glassmorphism styling, enhanced animations, and consistent layout."
+        size="md"
+        footer={
+          <>
+            <Button variant="outline" onClick={() => setOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={() => setOpen(false)}>
+              Confirm
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            This dialog features:
+          </p>
+          <ul className="text-sm text-muted-foreground space-y-1 list-disc pl-4">
+            <li>Glassmorphism styling with backdrop blur</li>
+            <li>Always-visible header and footer</li>
+            <li>Scrollable content area</li>
+            <li>Enhanced animations</li>
+            <li>Consistent design system integration</li>
+          </ul>
+        </div>
+      </UnifiedDialog>
+    </>
+  )
+}
+
+function UnifiedDialogScrollableDemo() {
+  const [open, setOpen] = useState(false)
+  
+  return (
+    <>
+      <Button variant="outline" onClick={() => setOpen(true)}>
+        Scrollable Content
+      </Button>
+      <UnifiedDialog
+        open={open}
+        onOpenChange={setOpen}
+        title="Scrollable Dialog"
+        description="This dialog demonstrates scrollable content handling with fixed header and footer."
+        size="lg"
+        footer={
+          <Button onClick={() => setOpen(false)}>
+            Close
+          </Button>
+        }
+      >
+        <div className="space-y-4">
+          {Array.from({ length: 20 }, (_, i) => (
+            <Card key={i} variant="embedded">
+              <CardHeader>
+                <CardTitle>Content Item {i + 1}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  This is content item {i + 1}. The dialog content is scrollable while the header 
+                  and footer remain fixed in place. This ensures that important actions and 
+                  information are always accessible.
+                </p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </UnifiedDialog>
+    </>
   )
 } 

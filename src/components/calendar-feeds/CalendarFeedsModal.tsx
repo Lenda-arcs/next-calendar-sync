@@ -1,14 +1,7 @@
 'use client'
 
 import React from 'react'
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogDescription,
-  DialogTrigger 
-} from '@/components/ui/dialog'
+import { UnifiedDialog } from '@/components/ui/unified-dialog'
 import { CalendarFeedManager } from './CalendarFeedManager'
 import { type CalendarFeed } from '@/lib/calendar-feeds'
 
@@ -31,27 +24,20 @@ export function CalendarFeedsModal({
   }
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>
-    
-      </DialogTrigger>
-      <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="text-2xl font-serif">Calendar Feeds</DialogTitle>
-          <DialogDescription>
-            Manage your connected calendar feeds and sync settings.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="mt-4">
-          <CalendarFeedManager
-            feeds={feeds}
-            isLoading={false}
-            onRefetch={() => {
-              // Refetch logic can be added here
-            }}
-          />
-        </div>
-      </DialogContent>
-    </Dialog>
+    <UnifiedDialog
+      open={open}
+      onOpenChange={handleOpenChange}
+      title="Calendar Feeds"
+      description="Manage your connected calendar feeds and sync settings."
+      size="xl"
+    >
+      <CalendarFeedManager
+        feeds={feeds}
+        isLoading={false}
+        onRefetch={() => {
+          // Refetch logic can be added here
+        }}
+      />
+    </UnifiedDialog>
   )
 } 

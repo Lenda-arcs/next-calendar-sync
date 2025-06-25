@@ -1,12 +1,8 @@
 "use client";
 
-import React from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "../ui/dialog";
+import React, { useState } from "react";
+import { UnifiedDialog } from "../ui/unified-dialog";
+import { Button } from "../ui/button";
 import StudioForm from "./StudioForm";
 import type { Studio } from "../../lib/types";
 
@@ -30,6 +26,8 @@ const StudioFormModal: React.FC<Props> = ({
   onStudioUpdated
 }) => {
   const isEditing = !!existingStudio;
+  const [isLoading, setIsLoading] = useState(false);
+  const [formInstance, setFormInstance] = useState<{ submit: () => void } | null>(null);
 
   const handleStudioCreated = (studio: Studio) => {
     if (onStudioCreated) {
@@ -45,26 +43,51 @@ const StudioFormModal: React.FC<Props> = ({
     onClose();
   };
 
-  return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>
-            {isEditing ? "Edit Studio Profile" : "Create Studio Profile"}
-          </DialogTitle>
-        </DialogHeader>
+  const handleFormSubmit = () => {
+    if (formInstance) {
+      formInstance.submit();
+    }
+  };
 
-        <StudioForm
-          user={user}
-          eventLocations={eventLocations}
-          onStudioCreated={handleStudioCreated}
-          existingStudio={existingStudio}
-          onStudioUpdated={handleStudioUpdated}
-          isEditing={isEditing}
-          isModal={true}
-        />
-      </DialogContent>
-    </Dialog>
+  const footerContent = (
+    <>
+      <Button variant="outline" onClick={onClose} disabled={isLoading}>
+        Cancel
+      </Button>
+      <Button 
+        onClick={handleFormSubmit}
+        disabled={isLoading}
+        className="min-w-[120px]"
+      >
+        {isLoading ? "Saving..." : isEditing ? "Update Studio" : "Create Studio"}
+      </Button>
+    </>
+  );
+
+  return (
+    <UnifiedDialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open) {
+          onClose();
+        }
+      }}
+      title={isEditing ? "Edit Studio Profile" : "Create Studio Profile"}
+      size="xl"
+      footer={footerContent}
+    >
+      <StudioForm
+        user={user}
+        eventLocations={eventLocations}
+        onStudioCreated={handleStudioCreated}
+        existingStudio={existingStudio}
+        onStudioUpdated={handleStudioUpdated}
+        isEditing={isEditing}
+        isModal={true}
+        onLoadingChange={setIsLoading}
+        onFormReady={setFormInstance}
+      />
+    </UnifiedDialog>
   );
 };
 

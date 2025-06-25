@@ -1,12 +1,7 @@
 'use client'
 
 import React from 'react'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
+import { UnifiedDialog } from '@/components/ui/unified-dialog'
 import { UserInvoiceSettingsForm } from './UserInvoiceSettingsForm'
 import { UserInvoiceSettings } from '@/lib/types'
 
@@ -33,21 +28,18 @@ export function UserInvoiceSettingsModal({
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>
-            {existingSettings ? "Edit Invoice Settings" : "Set up Invoice Settings"}
-          </DialogTitle>
-        </DialogHeader>
-
-        <UserInvoiceSettingsForm
-          userId={userId}
-          existingSettings={existingSettings}
-          onSettingsUpdated={handleSettingsUpdated}
-          isModal={true}
-        />
-      </DialogContent>
-    </Dialog>
+    <UnifiedDialog
+      open={isOpen}
+      onOpenChange={onClose}
+      title={existingSettings ? "Edit Invoice Settings" : "Set up Invoice Settings"}
+      size="xl"
+    >
+      <UserInvoiceSettingsForm
+        userId={userId}
+        existingSettings={existingSettings}
+        onSettingsUpdated={handleSettingsUpdated}
+        isModal={true}
+      />
+    </UnifiedDialog>
   )
 } 

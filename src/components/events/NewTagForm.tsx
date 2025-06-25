@@ -2,7 +2,7 @@
 
 import React from 'react'
 import { EventTag } from '@/lib/event-types'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
+import { UnifiedDialog } from '@/components/ui/unified-dialog'
 import { Button } from '@/components/ui/button'
 import { FormField } from '@/components/ui/form-field'
 import { Card, CardContent } from '@/components/ui/card'
@@ -45,22 +45,34 @@ export const NewTagForm: React.FC<Props> = ({
 
   if (!isOpen) return null
 
-  return (
-    <Dialog open={isOpen} onOpenChange={onCancel}>
-      <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col backdrop-blur-md border-white/40 shadow-xl">
-        <DialogHeader className="flex-shrink-0">
-          <DialogTitle>
-            {isEditing ? 'Edit Tag' : 'Create New Tag'}
-          </DialogTitle>
-          <DialogDescription>
-            {isEditing 
-              ? 'Update the tag information and settings below.' 
-              : 'Create a new tag to enrich your events with custom styling and metadata.'
-            }
-          </DialogDescription>
-        </DialogHeader>
+  const footerContent = (
+    <>
+      <Button type="button" variant="secondary" onClick={onCancel}>
+        Cancel
+      </Button>
+      <Button 
+        type="button" 
+        disabled={!isValid}
+        onClick={handleSubmit}
+      >
+        {isEditing ? 'Update Tag' : 'Create Tag'}
+      </Button>
+    </>
+  )
 
-        <div className="flex-1 overflow-y-auto space-y-6 py-4 px-1">
+  return (
+    <UnifiedDialog
+      open={isOpen}
+      onOpenChange={onCancel}
+      title={isEditing ? 'Edit Tag' : 'Create New Tag'}
+      description={isEditing 
+        ? 'Update the tag information and settings below.' 
+        : 'Create a new tag to enrich your events with custom styling and metadata.'
+      }
+      size="lg"
+      footer={footerContent}
+    >
+      <div className="space-y-6">
           {/* Tag Name */}
           <FormField
             id="tagName"
@@ -152,21 +164,7 @@ export const NewTagForm: React.FC<Props> = ({
             onChange={(e) => updateField('imageUrl', e.target.value)}
             placeholder="https://example.com/image.jpg"
           />
-        </div>
-
-        <DialogFooter className="flex-shrink-0 border-t pt-4 mt-4">
-          <Button type="button" variant="secondary" onClick={onCancel}>
-            Cancel
-          </Button>
-          <Button 
-            type="button" 
-            disabled={!isValid}
-            onClick={handleSubmit}
-          >
-            {isEditing ? 'Update Tag' : 'Create Tag'}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </UnifiedDialog>
   )
 } 

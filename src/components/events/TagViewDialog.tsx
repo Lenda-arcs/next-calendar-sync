@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react'
 import { EventTag, EventDisplayVariant } from '@/lib/event-types'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
+import { UnifiedDialog } from '@/components/ui/unified-dialog'
 import { Button } from '@/components/ui/button'
 import { TagBadge } from '@/components/ui/tag-badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -56,32 +56,49 @@ export const TagViewDialog: React.FC<Props> = ({
   const isGlobal = !tag.userId
   const [selectedVariant, setSelectedVariant] = useState<EventDisplayVariant>('compact')
 
-  return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-[95vw] sm:max-w-5xl max-h-[90vh] flex flex-col backdrop-blur-md bg-white/95 border border-white/40 shadow-xl">
-        <DialogHeader className="flex-shrink-0">
-          <DialogTitle className="flex items-center gap-2">
-            <div
-              className="w-4 h-4 rounded-full ring-1 ring-white/50"
-              style={{ backgroundColor: tag.color || '#6B7280' }}
-            />
-            {tag.name || 'Unnamed Tag'}
-            {isGlobal && (
-              <TagBadge
-                variant="blue"
-                className="text-xs px-2 py-0.5 flex items-center gap-1"
-              >
-                <Globe className="h-2.5 w-2.5" />
-                Global
-              </TagBadge>
-            )}
-          </DialogTitle>
-          <DialogDescription>
-            View detailed information about this tag and see how it appears on events.
-          </DialogDescription>
-        </DialogHeader>
+  const titleContent = (
+    <div className="flex items-center gap-2">
+      <div
+        className="w-4 h-4 rounded-full ring-1 ring-white/50"
+        style={{ backgroundColor: tag.color || '#6B7280' }}
+      />
+      {tag.name || 'Unnamed Tag'}
+      {isGlobal && (
+        <TagBadge
+          variant="blue"
+          className="text-xs px-2 py-0.5 flex items-center gap-1"
+        >
+          <Globe className="h-2.5 w-2.5" />
+          Global
+        </TagBadge>
+      )}
+    </div>
+  )
 
-        <div className="flex-1 overflow-y-auto space-y-4 py-3">
+  const footerContent = (
+    <>
+      <Button variant="secondary" onClick={onClose}>
+        Close
+      </Button>
+      {canEdit && (
+        <Button onClick={onEdit} variant="outline" className="flex items-center gap-2 backdrop-blur-md bg-white/50 border-white/40">
+          <Edit className="h-4 w-4" />
+          Edit Tag
+        </Button>
+      )}
+    </>
+  )
+
+  return (
+    <UnifiedDialog
+      open={isOpen}
+      onOpenChange={onClose}
+      title={titleContent}
+      description="View detailed information about this tag and see how it appears on events."
+      size="full"
+      footer={footerContent}
+    >
+      <div className="space-y-4">
           {/* Tag Preview */}
           <Card variant="embedded" className="bg-gradient-to-r from-gray-50/80 to-blue-50/30">
             <CardHeader>
@@ -204,20 +221,7 @@ export const TagViewDialog: React.FC<Props> = ({
               </TagInfoSection>
             )}
           </div>
-        </div>
-
-        <DialogFooter className="flex-shrink-0 border-t pt-3 mt-3">
-          <Button variant="secondary" onClick={onClose}>
-            Close
-          </Button>
-          {canEdit && (
-            <Button onClick={onEdit} variant="glass" className="flex items-center gap-2">
-              <Edit className="h-4 w-4" />
-              Edit Tag
-            </Button>
-          )}
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </UnifiedDialog>
   )
 } 

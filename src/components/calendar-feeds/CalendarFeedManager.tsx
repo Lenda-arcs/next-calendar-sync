@@ -6,13 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Alert } from '@/components/ui/alert'
 import DataLoader from '@/components/ui/data-loader'
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogHeader, 
-  DialogTitle
-} from '@/components/ui/dialog'
+import { UnifiedDialog } from '@/components/ui/unified-dialog'
 import { 
   Calendar, 
   RefreshCw, 
@@ -139,16 +133,14 @@ export function CalendarFeedManager({ feeds, isLoading, onRefetch }: CalendarFee
             </div>
 
             {/* Delete Confirmation Dialog */}
-            <Dialog open={!!confirmDelete} onOpenChange={() => setConfirmDelete(null)}>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Delete Calendar Feed</DialogTitle>
-                  <DialogDescription>
-                    Are you sure you want to delete this calendar feed? This action cannot be undone, 
-                    and all associated events will be removed from your schedule.
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="flex justify-end gap-3 mt-6">
+            <UnifiedDialog
+              open={!!confirmDelete}
+              onOpenChange={() => setConfirmDelete(null)}
+              title="Delete Calendar Feed"
+              description="Are you sure you want to delete this calendar feed? This action cannot be undone, and all associated events will be removed from your schedule."
+              size="sm"
+              footer={
+                <>
                   <Button variant="outline" onClick={() => setConfirmDelete(null)}>
                     Cancel
                   </Button>
@@ -159,9 +151,16 @@ export function CalendarFeedManager({ feeds, isLoading, onRefetch }: CalendarFee
                   >
                     {isDeleting ? 'Deleting...' : 'Delete Feed'}
                   </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
+                </>
+              }
+            >
+              <div className="text-center py-4">
+                <AlertCircle className="h-12 w-12 mx-auto text-destructive mb-4" />
+                <p className="text-sm text-muted-foreground">
+                  This action is permanent and cannot be reversed.
+                </p>
+              </div>
+            </UnifiedDialog>
           </>
         )}
       </DataLoader>

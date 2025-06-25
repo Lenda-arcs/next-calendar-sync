@@ -1,13 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '@/components/ui/dialog'
+import { UnifiedDialog } from '@/components/ui/unified-dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -115,14 +109,36 @@ export function InvoiceCreationModal({
 
   if (!isOpen) return null
 
-  return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>Create Invoice - {studio?.studio_name}</DialogTitle>
-        </DialogHeader>
+  const footerContent = !showSuccess ? (
+    <>
+      <Button variant="outline" onClick={onClose} disabled={createInvoiceMutation.isLoading}>
+        Cancel
+      </Button>
+      <Button 
+        onClick={handleCreateInvoice} 
+        disabled={createInvoiceMutation.isLoading || !studio || selectedEvents.length === 0}
+      >
+        {createInvoiceMutation.isLoading ? (
+          <>
+            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            Creating Invoice...
+          </>
+        ) : (
+          `Create Invoice (€${totalAmount.toFixed(2)})`
+        )}
+      </Button>
+    </>
+  ) : undefined
 
-        {showSuccess ? (
+  return (
+    <UnifiedDialog
+      open={isOpen}
+      onOpenChange={onClose}
+      title={`Create Invoice - ${studio?.studio_name || 'Unknown Studio'}`}
+      size="lg"
+      footer={footerContent}
+    >
+      {showSuccess ? (
           <div className="text-center py-8">
             <div className="mb-6">
               <div className="mx-auto flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
@@ -206,28 +222,6 @@ export function InvoiceCreationModal({
             </Card>
           </div>
         )}
-
-        {!showSuccess && (
-          <DialogFooter>
-            <Button variant="outline" onClick={onClose} disabled={createInvoiceMutation.isLoading}>
-              Cancel
-            </Button>
-            <Button 
-              onClick={handleCreateInvoice} 
-              disabled={createInvoiceMutation.isLoading || !studio || selectedEvents.length === 0}
-            >
-              {createInvoiceMutation.isLoading ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Creating Invoice...
-                </>
-              ) : (
-                `Create Invoice (€${totalAmount.toFixed(2)})`
-              )}
-            </Button>
-          </DialogFooter>
-        )}
-      </DialogContent>
-    </Dialog>
+    </UnifiedDialog>
   )
 } 

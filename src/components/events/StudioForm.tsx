@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import { Button } from "../ui/button";
 import { Card } from "../ui/card";
 import { Input } from "../ui/input";
@@ -19,6 +19,9 @@ interface Props {
   onStudioUpdated?: (studio: Studio) => void;
   isEditing?: boolean;
   isModal?: boolean;
+  onSubmit?: (e: React.FormEvent) => void;
+  onLoadingChange?: (isLoading: boolean) => void;
+  onFormReady?: (formInstance: { submit: () => void }) => void;
 }
 
 const StudioForm: React.FC<Props> = ({
@@ -28,6 +31,10 @@ const StudioForm: React.FC<Props> = ({
   onStudioCreated,
   onStudioUpdated,
   isEditing = false,
+  isModal = false,
+  onSubmit,
+  onLoadingChange,
+  onFormReady,
 }) => {
   const [formData, setFormData] = useState({
     studio_name: existingStudio?.studio_name || "",
@@ -49,6 +56,7 @@ const StudioForm: React.FC<Props> = ({
   const createMutation = useSupabaseMutation({
     mutationFn: (supabase, data: StudioInsert) => createStudio(data),
     onSuccess: (data) => {
+      onLoadingChange?.(false);
       onStudioCreated?.(data);
       if (!isEditing) {
         // Reset form
@@ -73,12 +81,13 @@ const StudioForm: React.FC<Props> = ({
   const updateMutation = useSupabaseMutation({
     mutationFn: (supabase, { id, data }: { id: string; data: StudioUpdate }) => updateStudio(id, data),
     onSuccess: (data) => {
+      onLoadingChange?.(false);
       onStudioUpdated?.(data);
     },
   });
 
   // Validation
-  const validateForm = () => {
+  const validateForm = useCallback(() => {
     const newErrors: Record<string, string> = {};
 
     if (!formData.studio_name.trim()) {
@@ -111,9 +120,9 @@ const StudioForm: React.FC<Props> = ({
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  };
+  }, [formData]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!validateForm()) {
@@ -121,6 +130,7 @@ const StudioForm: React.FC<Props> = ({
     }
 
     try {
+      onLoadingChange?.(true);
       const studioData = {
         user_id: user.id,
         studio_name: formData.studio_name.trim(),
@@ -144,8 +154,18 @@ const StudioForm: React.FC<Props> = ({
       }
     } catch (error) {
       console.error("Error saving studio:", error);
+      onLoadingChange?.(false);
     }
-  };
+  }, [
+    formData,
+    user.id,
+    isEditing,
+    existingStudio,
+    updateMutation,
+    createMutation,
+    onLoadingChange,
+    validateForm
+  ]);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -158,6 +178,20 @@ const StudioForm: React.FC<Props> = ({
 
   const isLoading = createMutation.isLoading || updateMutation.isLoading;
 
+  // Expose form submit method to parent when in modal mode
+  React.useEffect(() => {
+    if (isModal && onFormReady) {
+      onFormReady({
+        submit: () => {
+          const syntheticEvent = {
+            preventDefault: () => {},
+          } as React.FormEvent;
+          handleSubmit(syntheticEvent);
+        }
+      });
+    }
+  }, [isModal, onFormReady, handleSubmit]);
+
   const rateTypeOptions = [
     { value: "fixed", label: "Fixed Amount" },
     { value: "percentage", label: "Percentage" },
@@ -169,9 +203,8 @@ const StudioForm: React.FC<Props> = ({
     { value: "GBP", label: "GBP (£)" },
   ];
 
-  return (
-    <Card className="p-6">
-      <form onSubmit={handleSubmit} className="space-y-6">
+  const formContent = (
+    <form onSubmit={onSubmit || handleSubmit} className="space-y-6">
         {/* Basic Information */}
         <div className="space-y-4">
           <h3 className="text-lg font-semibold">Basic Information</h3>
@@ -368,17 +401,28 @@ const StudioForm: React.FC<Props> = ({
           </div>
         </div>
 
-        {/* Submit Button */}
-        <div className="flex justify-end space-x-2">
-          <Button
-            type="submit"
-            disabled={isLoading}
-            className="min-w-[120px]"
-          >
-            {isLoading ? "Saving..." : isEditing ? "Update Studio" : "Create Studio"}
-          </Button>
-        </div>
-      </form>
+        {/* Submit Button - only show when not in modal */}
+        {!isModal && (
+          <div className="flex justify-end space-x-2">
+            <Button
+              type="submit"
+              disabled={isLoading}
+              className="min-w-[120px]"
+            >
+              {isLoading ? "Saving..." : isEditing ? "Update Studio" : "Create Studio"}
+            </Button>
+          </div>
+        )}
+    </form>
+  );
+
+  if (isModal) {
+    return formContent;
+  }
+
+  return (
+    <Card className="p-6">
+      {formContent}
     </Card>
   );
 };

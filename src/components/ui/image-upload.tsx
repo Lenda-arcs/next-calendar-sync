@@ -10,13 +10,7 @@ import ReactCrop, {
 import "react-image-crop/dist/ReactCrop.css";
 import { useSupabaseQuery, useSupabaseMutation } from "@/lib/hooks";
 import DataLoader from "./data-loader";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "./dialog";
+import { UnifiedDialog } from "./unified-dialog";
 import { Button } from "./button";
 import { Alert, AlertDescription } from "./alert";
 import { AlertCircle, ChevronLeft, Upload } from "lucide-react";
@@ -462,102 +456,95 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
       </div>
 
       {/* Dialog Modal */}
-      <Dialog open={showModal} onOpenChange={setShowModal}>
-        <DialogContent
-          className="sm:max-w-4xl max-h-[90vh] p-0 flex flex-col backdrop-blur-md bg-white/95 border border-white/40"
-        >
-          <DialogHeader className="flex-row items-center justify-between p-6 border-b border-white/20 space-y-0 flex-shrink-0">
-            <div className="flex items-center space-x-2">
-              {modalStep === "crop" && (
-                <IconButton
-                  icon={<ChevronLeft className="h-4 w-4" />}
-                  variant="ghost"
-                  size="icon"
-                  onClick={handleBackToSelect}
-                  aria-label="Go back to image selection"
-                />
-              )}
-              <DialogTitle className="text-lg font-medium font-serif">
-                {modalStep === "select"
-                  ? "Select or Upload Image"
-                  : "Crop Image"}
-              </DialogTitle>
-            </div>
-          </DialogHeader>
-
-          <div className="flex-1 overflow-auto p-6">
-            {/* Error Display */}
-            {error && (
-              <Alert variant="destructive" className="mb-4">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
-
-            {/* Step Content */}
-            {modalStep === "select" ? (
-              <ExistingImagesStep
-                existingImages={existingImages}
-                isLoadingImages={isLoadingImages}
-                fetchError={fetchError?.message || null}
-                onSelectImage={handleSelectExistingImage}
-                onUploadClick={handleUploadClick}
-                maxFileSize={maxFileSize}
-                allowedTypes={allowedTypes}
-              />
-            ) : (
-              <CropImageStep
-                imgSrc={imgSrc}
-                crop={crop}
-                aspectRatio={aspectRatio}
-                onCropChange={setCrop}
-                onImageLoad={onImageLoad}
-                imgRef={imgRef}
+      <UnifiedDialog
+        open={showModal}
+        onOpenChange={setShowModal}
+        title={
+          <div className="flex items-center space-x-2">
+            {modalStep === "crop" && (
+              <IconButton
+                icon={<ChevronLeft className="h-4 w-4" />}
+                variant="ghost"
+                size="icon"
+                onClick={handleBackToSelect}
+                aria-label="Go back to image selection"
               />
             )}
+            <span className="text-lg font-medium font-serif">
+              {modalStep === "select" ? "Select or Upload Image" : "Crop Image"}
+            </span>
           </div>
-
-          {/* Dialog Footer */}
-          <DialogFooter className="border-t border-white/20 p-6">
-            {modalStep === "select" ? (
-              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center w-full gap-4">
-                <div className="text-xs text-muted-foreground space-y-1">
-                  <p>Max file size: {maxFileSize / (1024 * 1024)}MB</p>
-                  <p>
-                    Supported formats:{" "}
-                    {allowedTypes
-                      .map((t) => t.split("/")[1].toUpperCase())
-                      .join(", ")}
-                  </p>
-                </div>
-                <Button
-                  onClick={handleUploadClick}
-                  variant="glass"
-                  size="default"
-                >
-                  <Upload className="w-4 h-4 mr-2" />
-                  Upload New Image
-                </Button>
+        }
+        size="xl"
+        footer={
+          modalStep === "select" ? (
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center w-full gap-4">
+              <div className="text-xs text-muted-foreground space-y-1">
+                <p>Max file size: {maxFileSize / (1024 * 1024)}MB</p>
+                <p>
+                  Supported formats:{" "}
+                  {allowedTypes
+                    .map((t) => t.split("/")[1].toUpperCase())
+                    .join(", ")}
+                </p>
               </div>
-            ) : (
-              <>
-                <Button variant="ghost" onClick={handleBackToSelect}>
-                  Cancel
-                </Button>
-                <Button
-                  onClick={handleCropComplete}
-                  disabled={uploadMutation.isLoading}
-                  variant="glass"
-                  size="default"
-                  loading={uploadMutation.isLoading}
-                >
-                  {uploadMutation.isLoading ? "Uploading..." : "Crop & Save"}
-                </Button>
-              </>
-            )}
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+              <Button
+                onClick={handleUploadClick}
+                variant="outline"
+                size="default"
+              >
+                <Upload className="w-4 h-4 mr-2" />
+                Upload New Image
+              </Button>
+            </div>
+          ) : (
+            <>
+              <Button variant="outline" onClick={handleBackToSelect}>
+                Cancel
+              </Button>
+              <Button
+                onClick={handleCropComplete}
+                disabled={uploadMutation.isLoading}
+                size="default"
+                loading={uploadMutation.isLoading}
+              >
+                {uploadMutation.isLoading ? "Uploading..." : "Crop & Save"}
+              </Button>
+            </>
+          )
+        }
+      >
+
+        {/* Error Display */}
+        {error && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+
+        {/* Step Content */}
+        {modalStep === "select" ? (
+          <ExistingImagesStep
+            existingImages={existingImages}
+            isLoadingImages={isLoadingImages}
+            fetchError={fetchError?.message || null}
+            onSelectImage={handleSelectExistingImage}
+            onUploadClick={handleUploadClick}
+            maxFileSize={maxFileSize}
+            allowedTypes={allowedTypes}
+          />
+        ) : (
+          <CropImageStep
+            imgSrc={imgSrc}
+            crop={crop}
+            aspectRatio={aspectRatio}
+            onCropChange={setCrop}
+            onImageLoad={onImageLoad}
+            imgRef={imgRef}
+          />
+        )}
+      </UnifiedDialog>
     </div>
   );
 };

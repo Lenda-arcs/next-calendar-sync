@@ -2,16 +2,7 @@
 
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { UnifiedDialog } from "@/components/ui/unified-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Copy, Share } from "lucide-react";
@@ -38,6 +29,7 @@ const CopyLinkButton: React.FC<CopyLinkButtonProps> = ({
   dialogDescription = "Anyone who has this link will be able to view this."
 }) => {
   const [copied, setCopied] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
   const origin = useOrigin();
 
   // Determine if we need to prepend origin
@@ -70,55 +62,52 @@ const CopyLinkButton: React.FC<CopyLinkButtonProps> = ({
     );
   }
 
+  const footerContent = (
+    <Button type="button" variant="secondary" onClick={() => setIsOpen(false)}>
+      Close
+    </Button>
+  )
+
   return (
     <div className={`flex items-center gap-2 ${className}`}>
       {showLabel && (
         <span className="text-sm text-muted-foreground whitespace-nowrap">{label}</span>
       )}
-      <Dialog>
-        <DialogTrigger asChild>
-          <Button variant="outline" size="sm">
-            <Share className="w-4 h-4 mr-2" />
-            {buttonText}
-          </Button>
-        </DialogTrigger>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>{dialogTitle}</DialogTitle>
-            <DialogDescription>
-              {dialogDescription}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex items-center gap-2">
-            <div className="grid flex-1 gap-2">
-              <Label htmlFor="link" className="sr-only">
-                Link
-              </Label>
-              <Input
-                id="link"
-                value={finalUrl}
-                readOnly
-                className="text-sm"
-              />
-            </div>
-            <Button 
-              size="sm" 
-              onClick={handleCopy}
-              variant={copied ? "default" : "secondary"}
-            >
-              <Copy className="w-4 h-4" />
-              {copied ? "Copied!" : "Copy"}
-            </Button>
+      <Button variant="outline" size="sm" onClick={() => setIsOpen(true)}>
+        <Share className="w-4 h-4 mr-2" />
+        {buttonText}
+      </Button>
+      
+      <UnifiedDialog
+        open={isOpen}
+        onOpenChange={setIsOpen}
+        title={dialogTitle}
+        description={dialogDescription}
+        size="sm"
+        footer={footerContent}
+      >
+        <div className="flex items-center gap-2">
+          <div className="grid flex-1 gap-2">
+            <Label htmlFor="link" className="sr-only">
+              Link
+            </Label>
+            <Input
+              id="link"
+              value={finalUrl}
+              readOnly
+              className="text-sm"
+            />
           </div>
-          <DialogFooter className="sm:justify-start">
-            <DialogClose asChild>
-              <Button type="button" variant="secondary">
-                Close
-              </Button>
-            </DialogClose>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          <Button 
+            size="sm" 
+            onClick={handleCopy}
+            variant={copied ? "default" : "secondary"}
+          >
+            <Copy className="w-4 h-4" />
+            {copied ? "Copied!" : "Copy"}
+          </Button>
+        </div>
+      </UnifiedDialog>
     </div>
   );
 };
