@@ -51,6 +51,14 @@ export function AddCalendarForm({ user }: AddCalendarFormProps) {
   
   const createFeedMutation = useCreateCalendarFeed()
 
+  // Function to convert webcal:// URLs to https://
+  const convertWebcalToHttps = (url: string): string => {
+    if (url.startsWith('webcal://')) {
+      return url.replace('webcal://', 'https://')
+    }
+    return url
+  }
+
   // Update sync status based on mutation state
   useEffect(() => {
     if (createFeedMutation.isLoading) {
@@ -69,9 +77,12 @@ export function AddCalendarForm({ user }: AddCalendarFormProps) {
     e.preventDefault()
     if (!user?.id) return
 
+    // Convert webcal URLs to https URLs automatically
+    const processedUrl = convertWebcalToHttps(formData.calendarUrl)
+
     const feedData: CalendarFeedInsert = {
       user_id: user.id,
-      feed_url: formData.calendarUrl,
+      feed_url: processedUrl,
       calendar_name: formData.calendarName,
     }
 
@@ -280,7 +291,7 @@ export function AddCalendarForm({ user }: AddCalendarFormProps) {
                   <li>Open Calendar</li>
                   <li>Click the share icon next to your calendar name</li>
                   <li>Enable Public Calendar</li>
-                  <li>Copy the webcal:// URL and change it to https://</li>
+                  <li>Copy the webcal:// URL (we&apos;ll automatically convert it to https://)</li>
                 </ol>
               </div>
 
