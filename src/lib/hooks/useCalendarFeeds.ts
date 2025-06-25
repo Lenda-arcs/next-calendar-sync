@@ -6,6 +6,7 @@ import {
   createCalendarFeed, 
   deleteCalendarFeed, 
   syncCalendarFeed,
+  syncAllUserCalendarFeeds,
   type CalendarFeed,
   type CalendarFeedInsert 
 } from '@/lib/calendar-feeds'
@@ -55,9 +56,23 @@ export function useSyncCalendarFeed() {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   )
 
-  return useSupabaseMutation<void, string>({
+  return useSupabaseMutation<{ success: boolean; count: number }, string>({
     mutationFn: async (_, feedId) => {
       return syncCalendarFeed(supabase, feedId)
+    },
+  })
+}
+
+export function useSyncAllCalendarFeeds(userId: string) {
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
+
+  return useSupabaseMutation<{ successfulSyncs: number; totalFeeds: number; totalEvents: number }, void>({
+    mutationFn: async () => {
+      if (!userId) throw new Error('No user ID provided')
+      return syncAllUserCalendarFeeds(supabase, userId)
     },
   })
 }

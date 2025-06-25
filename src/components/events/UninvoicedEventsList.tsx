@@ -1,14 +1,14 @@
 'use client'
 
-import React, { useState, useEffect, useRef } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import React, { useState } from 'react'
+import { Card, CardContent, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import DataLoader from '@/components/ui/data-loader'
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion'
 import { EventInvoiceCard } from './EventInvoiceCard'
 import { useSupabaseQuery } from '@/lib/hooks/useSupabaseQuery'
 import { getUninvoicedEventsByStudio, calculateTotalPayout, EventWithStudio } from '@/lib/invoice-utils'
-import { ChevronRight } from 'lucide-react'
 
 interface UninvoicedEventsListProps {
   userId: string
@@ -17,8 +17,6 @@ interface UninvoicedEventsListProps {
 
 export function UninvoicedEventsList({ userId, onCreateInvoice }: UninvoicedEventsListProps) {
   const [selectedEvents, setSelectedEvents] = useState<Record<string, string[]>>({})
-  const [expandedStudios, setExpandedStudios] = useState<Record<string, boolean>>({})
-  const initializedRef = useRef(false)
 
   const {
     data: eventsByStudio,
@@ -30,25 +28,6 @@ export function UninvoicedEventsList({ userId, onCreateInvoice }: UninvoicedEven
     fetcher: () => getUninvoicedEventsByStudio(userId),
     enabled: !!userId
   })
-
-  // Initialize studios as collapsed by default
-  useEffect(() => {
-    if (eventsByStudio && !initializedRef.current) {
-      const initialExpanded = Object.keys(eventsByStudio).reduce((acc, studioId) => {
-        acc[studioId] = false
-        return acc
-      }, {} as Record<string, boolean>)
-      setExpandedStudios(initialExpanded)
-      initializedRef.current = true
-    }
-  }, [eventsByStudio, expandedStudios])
-
-  const handleToggleStudio = (studioId: string) => {
-    setExpandedStudios(prev => ({
-      ...prev,
-      [studioId]: !prev[studioId]
-    }))
-  }
 
   const handleToggleEvent = (studioId: string, eventId: string) => {
     setSelectedEvents(prev => {
@@ -162,12 +141,11 @@ export function UninvoicedEventsList({ userId, onCreateInvoice }: UninvoicedEven
       {(data) => {
         const studios = Object.keys(data)
         return (
-          <div className="space-y-6">
+          <Accordion type="multiple" className="w-full space-y-4">
             {studios.map(studioId => {
               const studioEvents = data[studioId] || []
               const studio = studioEvents[0]?.studio
               const selectedEventIds = selectedEvents[studioId] || []
-              const isExpanded = expandedStudios[studioId]
               const allEventsSelected = studioEvents.length > 0 && 
                 studioEvents.every((event) => selectedEventIds.includes(event.id))
               const someEventsSelected = selectedEventIds.length > 0
@@ -177,116 +155,112 @@ export function UninvoicedEventsList({ userId, onCreateInvoice }: UninvoicedEven
               if (!studio) return null
 
               return (
-                <Card key={studioId} variant="outlined">
-                  <CardHeader 
-                    className="cursor-pointer hover:bg-gray-50/50 transition-colors"
-                    onClick={() => handleToggleStudio(studioId)}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-2">
-                          <ChevronRight 
-                            className={`w-5 h-5 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
-                          />
-                          <CardTitle className="text-lg">{studio.studio_name}</CardTitle>
-                        </div>
-                        <Badge variant="secondary">
-                          {studioEvents.length} event{studioEvents.length !== 1 ? 's' : ''}
-                        </Badge>
-                        {studio.location_match && (
-                          <Badge variant="outline" className="text-xs">
-                            Location: {studio.location_match}
+                <AccordionItem value={studioId} key={studioId}>
+                  <Card variant="outlined" className="overflow-hidden">
+                    <AccordionTrigger className="px-6 py-4 hover:bg-gray-50/50 transition-colors hover:no-underline">
+                      <div className="flex items-center justify-between w-full mr-4">
+                        <div className="flex items-center gap-4">
+                          <div className="flex items-center gap-2">
+                            <CardTitle className="text-lg">{studio.studio_name}</CardTitle>
+                          </div>
+                          <Badge variant="secondary">
+                            {studioEvents.length} event{studioEvents.length !== 1 ? 's' : ''}
                           </Badge>
-                        )}
-                      </div>
-                      <div className="text-right">
-                        <div className="text-lg font-bold text-gray-900">
-                          €{totalPayout.toFixed(2)}
-                        </div>
-                        <div className="text-xs text-gray-600">
-                          {studio.rate_type === 'flat' ? 'Flat Rate' : 'Per Student'} • Base: €{studio.base_rate?.toFixed(2) || '0.00'}
-                        </div>
-                      </div>
-                    </div>
-                  </CardHeader>
-
-                  {isExpanded && (
-                    <CardContent className="pt-0">
-                      {/* Studio Actions */}
-                      <div className="flex items-center justify-between mb-6 p-4 bg-blue-50/50 rounded-lg">
-                        <div className="flex items-center gap-4">
-                          <Button
-                            onClick={() => handleSelectAllStudio(studioId)}
-                            variant="outline"
-                            size="sm"
-                          >
-                            {allEventsSelected ? 'Deselect All' : 'Select All'}
-                          </Button>
-                          {someEventsSelected && (
-                            <div className="text-sm text-gray-600">
-                              {selectedEventIds.length} of {studioEvents.length} events selected
-                            </div>
+                          {studio.location_match && (
+                            <Badge variant="outline" className="text-xs">
+                              Location: {studio.location_match}
+                            </Badge>
                           )}
                         </div>
-                        <div className="flex items-center gap-4">
-                          {someEventsSelected && (
-                            <div className="text-right">
-                              <div className="text-lg font-bold text-blue-600">
-                                €{selectedTotal.toFixed(2)}
+                        <div className="text-right">
+                          <div className="text-lg font-bold text-gray-900">
+                            €{totalPayout.toFixed(2)}
+                          </div>
+                          <div className="text-xs text-gray-600">
+                            {studio.rate_type === 'flat' ? 'Flat Rate' : 'Per Student'} • Base: €{studio.base_rate?.toFixed(2) || '0.00'}
+                          </div>
+                        </div>
+                      </div>
+                    </AccordionTrigger>
+
+                    <AccordionContent className="px-0 pb-0">
+                      <CardContent className="pt-0">
+                        {/* Studio Actions */}
+                        <div className="flex items-center justify-between mb-6 p-4 bg-blue-50/50 rounded-lg">
+                          <div className="flex items-center gap-4">
+                            <Button
+                              onClick={() => handleSelectAllStudio(studioId)}
+                              variant="outline"
+                              size="sm"
+                            >
+                              {allEventsSelected ? 'Deselect All' : 'Select All'}
+                            </Button>
+                            {someEventsSelected && (
+                              <div className="text-sm text-gray-600">
+                                {selectedEventIds.length} of {studioEvents.length} events selected
                               </div>
-                              <div className="text-xs text-gray-600">Selected Total</div>
-                            </div>
-                          )}
-                          <Button
-                            onClick={() => handleCreateInvoice(studioId)}
-                            disabled={!someEventsSelected}
-                            className="bg-blue-600 hover:bg-blue-700"
-                          >
-                            Create Invoice ({selectedEventIds.length})
-                          </Button>
-                        </div>
-                      </div>
-
-                      {/* Events List */}
-                      <div className="space-y-3">
-                        {(() => {
-                          const groupedEvents = groupEventsByMonth(studioEvents)
-                          const sortedMonthKeys = Object.keys(groupedEvents).sort()
-                          
-                          return sortedMonthKeys.map(monthKey => (
-                            <div key={monthKey}>
-                              {/* Month Divider */}
-                              <div className="flex items-center gap-3 my-4">
-                                <div className="flex-1 h-px bg-gray-300"></div>
-                                <div className="text-sm font-medium text-gray-600 px-3">
-                                  {getMonthLabel(monthKey)}
+                            )}
+                          </div>
+                          <div className="flex items-center gap-4">
+                            {someEventsSelected && (
+                              <div className="text-right">
+                                <div className="text-lg font-bold text-blue-600">
+                                  €{selectedTotal.toFixed(2)}
                                 </div>
-                                <div className="flex-1 h-px bg-gray-300"></div>
+                                <div className="text-xs text-gray-600">Selected Total</div>
                               </div>
-                              
-                              {/* Events for this month */}
-                              <div className="space-y-3">
-                                {groupedEvents[monthKey].map((event) => (
-                                  <EventInvoiceCard
-                                    key={event.id}
-                                    event={event}
-                                    selected={selectedEventIds.includes(event.id)}
-                                    onToggleSelect={(eventId) => handleToggleEvent(studioId, eventId)}
-                                    showCheckbox={true}
-                                    variant="compact"
-                                  />
-                                ))}
+                            )}
+                            <Button
+                              onClick={() => handleCreateInvoice(studioId)}
+                              disabled={!someEventsSelected}
+                              className="bg-blue-600 hover:bg-blue-700"
+                            >
+                              Create Invoice ({selectedEventIds.length})
+                            </Button>
+                          </div>
+                        </div>
+
+                        {/* Events List */}
+                        <div className="space-y-3">
+                          {(() => {
+                            const groupedEvents = groupEventsByMonth(studioEvents)
+                            const sortedMonthKeys = Object.keys(groupedEvents).sort()
+                            
+                            return sortedMonthKeys.map(monthKey => (
+                              <div key={monthKey}>
+                                {/* Month Divider */}
+                                <div className="flex items-center gap-3 my-4">
+                                  <div className="flex-1 h-px bg-gray-300"></div>
+                                  <div className="text-sm font-medium text-gray-600 px-3">
+                                    {getMonthLabel(monthKey)}
+                                  </div>
+                                  <div className="flex-1 h-px bg-gray-300"></div>
+                                </div>
+                                
+                                {/* Events for this month */}
+                                <div className="space-y-3">
+                                  {groupedEvents[monthKey].map((event) => (
+                                    <EventInvoiceCard
+                                      key={event.id}
+                                      event={event}
+                                      selected={selectedEventIds.includes(event.id)}
+                                      onToggleSelect={(eventId) => handleToggleEvent(studioId, eventId)}
+                                      showCheckbox={true}
+                                      variant="compact"
+                                    />
+                                  ))}
+                                </div>
                               </div>
-                            </div>
-                          ))
-                        })()}
-                      </div>
-                    </CardContent>
-                  )}
-                </Card>
+                            ))
+                          })()}
+                        </div>
+                      </CardContent>
+                    </AccordionContent>
+                  </Card>
+                </AccordionItem>
               )
             })}
-          </div>
+          </Accordion>
         )
       }}
     </DataLoader>

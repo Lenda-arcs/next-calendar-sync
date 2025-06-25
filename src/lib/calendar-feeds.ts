@@ -58,15 +58,71 @@ export async function deleteCalendarFeed(
 export async function syncCalendarFeed(
   supabase: ReturnType<typeof createBrowserClient<Database>>,
   id: string,
-): Promise<void> {
-  // TODO: Implement calendar feed sync logic
-  // For now, just update the last_synced_at timestamp
-  const { error } = await supabase
-    .from("calendar_feeds")
-    .update({ last_synced_at: new Date().toISOString() })
-    .eq("id", id)
+): Promise<{ success: boolean; count: number }> {
+  try {
+    const { data, error } = await supabase.functions.invoke('sync-feed', {
+      body: { 
+        feed_id: id,
+        mode: 'default'
+      }
+    })
 
-  if (error) throw error
+    if (error) {
+      console.error(`Failed to sync feed ${id}:`, error)
+      throw new Error(`Failed to sync feed: ${error.message}`)
+    }
+
+    const result = data as { success: boolean; count: number }
+    return result
+  } catch (err) {
+    console.error(`Failed to sync feed ${id}:`, err)
+    throw err
+  }
+}
+
+export async function syncAllUserCalendarFeeds(
+  supabase: ReturnType<typeof createBrowserClient<Database>>,
+  userId: string,
+): Promise<{ successfulSyncs: number; totalFeeds: number; totalEvents: number }> {
+  // First, fetch all calendar feeds for the user
+  const { data: feeds, error: feedsError } = await supabase
+    .from('calendar_feeds')
+    .select('id')
+    .eq('user_id', userId)
+
+  if (feedsError) {
+    throw new Error(`Failed to fetch user feeds: ${feedsError.message}`)
+  }
+
+  if (!feeds || feeds.length === 0) {
+    console.log('No calendar feeds found for user')
+    return { successfulSyncs: 0, totalFeeds: 0, totalEvents: 0 }
+  }
+
+  console.log(`Found ${feeds.length} calendar feeds to sync`)
+
+  // Sync each feed individually
+  const syncPromises = feeds.map(async (feed) => {
+    try {
+      return await syncCalendarFeed(supabase, feed.id)
+    } catch (err) {
+      console.error(`Failed to sync feed ${feed.id}:`, err)
+      return { success: false, count: 0 }
+    }
+  })
+
+  // Wait for all syncs to complete
+  const results = await Promise.all(syncPromises)
+  const successfulSyncs = results.filter(result => result.success).length
+  const totalEvents = results.reduce((sum, result) => sum + result.count, 0)
+
+  console.log(`Sync completed: ${successfulSyncs}/${feeds.length} feeds synced, ${totalEvents} total events`)
+  
+  return {
+    successfulSyncs,
+    totalFeeds: feeds.length,
+    totalEvents
+  }
 }
 
 export function formatDate(date: string | null): string {
