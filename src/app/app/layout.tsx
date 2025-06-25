@@ -1,15 +1,16 @@
 import { createServerClient } from '@/lib/supabase-server'
 // import { redirect } from 'next/navigation' // Temporarily disabled for development
 import { LogoutButton } from '@/components/auth'
-import { NavLink, MobileNavMenu } from '@/components/ui'
+import { MobileNavMenu } from '@/components/ui'
 import { PATHS } from '@/lib/paths'
 import { 
   Calendar, 
-  Home, 
-  User, 
   Tags, 
   Receipt
 } from 'lucide-react'
+import { ActiveProfileLink } from './components/ActiveProfileLink'
+import { ActiveNavLinks } from './components/ActiveNavLinks'
+import { ActiveHomeLink } from './components/ActiveHomeLink'
 
 const navigation = [
   // { name: 'Dashboard', href: PATHS.APP.DASHBOARD, icon: Home, iconName: 'Home' },
@@ -20,6 +21,13 @@ const navigation = [
 
 // For mobile navigation (only icon names)
 const mobileNavigation = navigation.map(({ name, href, iconName }) => ({
+  name,
+  href,
+  iconName
+}))
+
+// For desktop navigation (only icon names to avoid serialization issues)
+const desktopNavigation = navigation.map(({ name, href, iconName }) => ({
   name,
   href,
   iconName
@@ -64,28 +72,11 @@ export default async function AppLayout({ children }: AppLayoutProps) {
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
             <div className="flex items-center">
-              <NavLink
-                href={PATHS.APP.DASHBOARD}
-                text="Home"
-                avatarSrc="/assets/dummy_logo.png"
-                avatarAlt="Logo"
-                fallbackIcon={Home}
-                className="group"
-              />
+              <ActiveHomeLink />
             </div>
 
             {/* Navigation */}
-            <nav className="hidden lg:flex space-x-2">
-              {navigation.map((item) => (
-                <NavLink
-                  key={item.name}
-                  href={item.href}
-                  text={item.name}
-                  fallbackIcon={item.icon}
-                  showTextOnMobile={true}
-                />
-              ))}
-            </nav>
+            <ActiveNavLinks navigation={desktopNavigation} />
 
             {/* User Menu */}
             <div className="flex items-center space-x-4">
@@ -98,12 +89,10 @@ export default async function AppLayout({ children }: AppLayoutProps) {
               </span>
               
               {/* Profile Link with Avatar */}
-              <NavLink
-                href={PATHS.APP.PROFILE}
-                text="Profile"
-                avatarSrc={profileImage || undefined}
-                avatarAlt={userProfile?.name || mockUser.email}
-                fallbackIcon={User}
+              <ActiveProfileLink 
+                profileImage={profileImage}
+                userProfile={userProfile}
+                mockUser={mockUser}
               />
               
               <LogoutButton className="sm:hidden" />
