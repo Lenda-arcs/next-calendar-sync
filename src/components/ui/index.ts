@@ -21,6 +21,7 @@ export { MultiSelect, type MultiSelectOption, type MultiSelectProps } from './mu
 export { Select, type SelectOption, type SelectProps } from './select'
 export { Avatar, AvatarImage, AvatarFallback } from './avatar'
 export { Tabs, TabsList, TabsTrigger, TabsContent } from './tabs'
+export { TabContent } from './tab-content'
 export { NavLink } from './nav-link'
 export { MobileNavMenu } from './mobile-nav-menu'
 export { 
