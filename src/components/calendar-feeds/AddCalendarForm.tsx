@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select } from '@/components/ui/select'
 import { Alert } from '@/components/ui/alert'
-import { Calendar, AlertCircle, Check, ExternalLink } from 'lucide-react'
+import { Calendar, AlertCircle, Check, ExternalLink, RefreshCw, CheckCircle } from 'lucide-react'
 import { useCreateCalendarFeed } from '@/lib/hooks/useCalendarFeeds'
 import { type User } from '@/lib/types'
 import { type CalendarFeedInsert } from '@/lib/calendar-feeds'
@@ -39,9 +39,31 @@ export function AddCalendarForm({ user }: AddCalendarFormProps) {
     timezone: user?.timezone || 'UTC',
   })
   const [successMessage, setSuccessMessage] = useState('')
+  const [syncStatus, setSyncStatus] = useState<{
+    isCreating: boolean;
+    isAutoSyncing: boolean;
+    syncResult?: { success: boolean; count: number };
+  }>({
+    isCreating: false,
+    isAutoSyncing: false,
+  })
   const [showInstructions, setShowInstructions] = useState(false)
   
   const createFeedMutation = useCreateCalendarFeed()
+
+  // Update sync status based on mutation state
+  useEffect(() => {
+    if (createFeedMutation.isLoading) {
+      setSyncStatus(prev => ({ ...prev, isCreating: true, isAutoSyncing: false }))
+    } else if (createFeedMutation.data) {
+      const { syncResult } = createFeedMutation.data
+      setSyncStatus({
+        isCreating: false,
+        isAutoSyncing: false,
+        syncResult
+      })
+    }
+  }, [createFeedMutation.isLoading, createFeedMutation.data])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -54,16 +76,42 @@ export function AddCalendarForm({ user }: AddCalendarFormProps) {
     }
 
     try {
-      await createFeedMutation.mutateAsync(feedData)
-      setSuccessMessage('Calendar feed added successfully! Your events are being synced.')
+      setSyncStatus({ isCreating: true, isAutoSyncing: false })
+      
+      const result = await createFeedMutation.mutateAsync(feedData)
+      
+      if (result.syncResult.success) {
+        setSuccessMessage(
+          `Calendar feed added and synced successfully! ${result.syncResult.count} events were imported.`
+        )
+      } else {
+        setSuccessMessage(
+          'Calendar feed added successfully! However, the initial sync failed. You can manually sync it from your dashboard.'
+        )
+      }
       
       // Redirect to dashboard after success
       setTimeout(() => {
         router.push('/app')
-      }, 2000)
+      }, 3000)
     } catch (error) {
       console.error('Error adding calendar feed:', error)
+      setSyncStatus({ isCreating: false, isAutoSyncing: false })
     }
+  }
+
+  const getLoadingMessage = () => {
+    if (syncStatus.isCreating) {
+      return 'Adding calendar feed and syncing events...'
+    }
+    return 'Add Calendar Feed'
+  }
+
+  const getSuccessIcon = () => {
+    if (syncStatus.syncResult?.success) {
+      return <CheckCircle className="h-4 w-4" />
+    }
+    return <Check className="h-4 w-4" />
   }
 
   return (
@@ -71,8 +119,49 @@ export function AddCalendarForm({ user }: AddCalendarFormProps) {
       {/* Success Message */}
       {successMessage && (
         <Alert>
-          <Check className="h-4 w-4" />
+          {getSuccessIcon()}
           <div>{successMessage}</div>
+        </Alert>
+      )}
+
+      {/* Sync Progress */}
+      {syncStatus.isCreating && (
+        <Alert>
+          <RefreshCw className="h-4 w-4 animate-spin" />
+          <div>
+            <strong>Creating and syncing your calendar...</strong>
+            <p className="text-sm text-muted-foreground mt-1">
+              This may take a few moments as we import your events.
+            </p>
+          </div>
+        </Alert>
+      )}
+
+      {/* Sync Results */}
+      {syncStatus.syncResult && !successMessage && (
+        <Alert variant={syncStatus.syncResult.success ? "default" : "destructive"}>
+          {syncStatus.syncResult.success ? (
+            <CheckCircle className="h-4 w-4" />
+          ) : (
+            <AlertCircle className="h-4 w-4" />
+          )}
+          <div>
+            {syncStatus.syncResult.success ? (
+              <>
+                <strong>Feed created and synced!</strong>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {syncStatus.syncResult.count} events were imported successfully.
+                </p>
+              </>
+            ) : (
+              <>
+                <strong>Feed created, but sync failed</strong>
+                <p className="text-sm text-muted-foreground mt-1">
+                  You can manually sync from your dashboard.
+                </p>
+              </>
+            )}
+          </div>
         </Alert>
       )}
 
@@ -104,6 +193,7 @@ export function AddCalendarForm({ user }: AddCalendarFormProps) {
                 value={formData.calendarName}
                 onChange={(e) => setFormData(prev => ({ ...prev, calendarName: e.target.value }))}
                 required
+                disabled={syncStatus.isCreating}
               />
               <p className="text-xs text-muted-foreground">
                 Give your calendar feed a descriptive name
@@ -119,6 +209,7 @@ export function AddCalendarForm({ user }: AddCalendarFormProps) {
                 value={formData.calendarUrl}
                 onChange={(e) => setFormData(prev => ({ ...prev, calendarUrl: e.target.value }))}
                 required
+                disabled={syncStatus.isCreating}
               />
               <p className="text-xs text-muted-foreground">
                 This should be the public .ics feed URL from your calendar provider
@@ -131,14 +222,22 @@ export function AddCalendarForm({ user }: AddCalendarFormProps) {
               onChange={(value: string) => setFormData(prev => ({ ...prev, timezone: value }))}
               options={TIMEZONE_OPTIONS}
               placeholder="Select timezone"
+              disabled={syncStatus.isCreating}
             />
 
             <Button 
               type="submit" 
               className="w-full" 
-              disabled={createFeedMutation.isLoading}
+              disabled={syncStatus.isCreating}
             >
-              {createFeedMutation.isLoading ? 'Adding Calendar...' : 'Add Calendar Feed'}
+              {syncStatus.isCreating ? (
+                <>
+                  <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                  {getLoadingMessage()}
+                </>
+              ) : (
+                'Add Calendar Feed'
+              )}
             </Button>
           </form>
         </CardContent>

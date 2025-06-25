@@ -28,7 +28,7 @@ export async function getUserCalendarFeeds({
 export async function createCalendarFeed(
   supabase: ReturnType<typeof createBrowserClient<Database>>,
   feed: CalendarFeedInsert,
-): Promise<CalendarFeed> {
+): Promise<{ feed: CalendarFeed; syncResult: { success: boolean; count: number } }> {
   const { data, error } = await supabase
     .from("calendar_feeds")
     .insert(feed)
@@ -37,10 +37,17 @@ export async function createCalendarFeed(
 
   if (error) throw error
   
-  // TODO: Implement syncCalendarFeed function
-  // await syncCalendarFeed(data.id)
-  
-  return data
+  // Automatically sync the newly created feed
+  console.log(`Auto-syncing newly created feed: ${data.id}`)
+  try {
+    const syncResult = await syncCalendarFeed(supabase, data.id)
+    console.log(`Feed ${data.id} synced successfully: ${syncResult.count} events`)
+    return { feed: data, syncResult }
+  } catch (syncError) {
+    console.warn(`Failed to auto-sync feed ${data.id}:`, syncError)
+    // Return the feed even if sync fails - user can manually sync later
+    return { feed: data, syncResult: { success: false, count: 0 } }
+  }
 }
 
 export async function deleteCalendarFeed(

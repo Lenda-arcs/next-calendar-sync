@@ -30,7 +30,7 @@ export function useCreateCalendarFeed() {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   )
 
-  return useSupabaseMutation<CalendarFeed, CalendarFeedInsert>({
+  return useSupabaseMutation<{ feed: CalendarFeed; syncResult: { success: boolean; count: number } }, CalendarFeedInsert>({
     mutationFn: async (_, variables) => {
       return createCalendarFeed(supabase, variables)
     },
@@ -104,5 +104,6 @@ export function useCalendarFeedActions() {
     createError: createMutation.error,
     deleteError: deleteMutation.error,
     syncError: syncMutation.error,
+    createResult: createMutation.data,
   }
 } 

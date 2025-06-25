@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -14,7 +14,8 @@ import {
   ExternalLink, 
   Plus,
   Clock,
-  AlertCircle 
+  AlertCircle,
+  CheckCircle
 } from 'lucide-react'
 import { formatDate, type CalendarFeed } from '@/lib/calendar-feeds'
 import { useCalendarFeedActions } from '@/lib/hooks/useCalendarFeeds'
@@ -29,15 +30,59 @@ interface CalendarFeedManagerProps {
 export function CalendarFeedManager({ feeds, isLoading, onRefetch }: CalendarFeedManagerProps) {
   const [actionFeedId, setActionFeedId] = useState<string | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
+  const [optimisticFeeds, setOptimisticFeeds] = useState<CalendarFeed[]>(feeds)
+  const [recentlySynced, setRecentlySynced] = useState<Set<string>>(new Set())
+  const [syncResults, setSyncResults] = useState<Map<string, { success: boolean; count: number }>>(new Map())
   const { syncFeed, deleteFeed, isSyncing, isDeleting, syncError, deleteError } = useCalendarFeedActions()
+
+  // Update optimistic feeds when props change
+  React.useEffect(() => {
+    setOptimisticFeeds(feeds)
+  }, [feeds])
 
   const handleSync = async (feedId: string) => {
     try {
       setActionFeedId(feedId)
-      await syncFeed(feedId)
+      
+      // Optimistically update the last_synced_at timestamp
+      const now = new Date().toISOString()
+      setOptimisticFeeds(prev => 
+        prev.map(feed => 
+          feed.id === feedId 
+            ? { ...feed, last_synced_at: now }
+            : feed
+        )
+      )
+      
+      // Perform the actual sync
+      const result = await syncFeed(feedId)
+      
+      // Store sync results for display
+      setSyncResults(prev => new Map(prev).set(feedId, result))
+      
+      // Mark as recently synced for visual feedback
+      setRecentlySynced(prev => new Set(prev).add(feedId))
+      
+      // Remove the "recently synced" indicator after 3 seconds
+      setTimeout(() => {
+        setRecentlySynced(prev => {
+          const newSet = new Set(prev)
+          newSet.delete(feedId)
+          return newSet
+        })
+        setSyncResults(prev => {
+          const newMap = new Map(prev)
+          newMap.delete(feedId)
+          return newMap
+        })
+      }, 3000)
+      
+      // Refetch to get the latest data from server
       onRefetch?.()
     } catch (error) {
       console.error('Error syncing feed:', error)
+      // Revert optimistic update on error
+      setOptimisticFeeds(feeds)
     } finally {
       setActionFeedId(null)
     }
@@ -46,11 +91,20 @@ export function CalendarFeedManager({ feeds, isLoading, onRefetch }: CalendarFee
   const handleDelete = async (feedId: string) => {
     try {
       setActionFeedId(feedId)
+      
+      // Optimistically remove the feed from the list
+      setOptimisticFeeds(prev => prev.filter(feed => feed.id !== feedId))
+      
+      // Perform the actual deletion
       await deleteFeed(feedId)
+      
+      // Refetch to ensure consistency
       onRefetch?.()
       setConfirmDelete(null)
     } catch (error) {
       console.error('Error deleting feed:', error)
+      // Revert optimistic update on error
+      setOptimisticFeeds(feeds)
     } finally {
       setActionFeedId(null)
     }
@@ -80,7 +134,7 @@ export function CalendarFeedManager({ feeds, isLoading, onRefetch }: CalendarFee
       )}
 
       <DataLoader
-        data={feeds}
+        data={optimisticFeeds}
         loading={isLoading || false}
         error={null}
         empty={
@@ -126,6 +180,8 @@ export function CalendarFeedManager({ feeds, isLoading, onRefetch }: CalendarFee
                   key={feed.id}
                   feed={feed}
                   isProcessing={isProcessing(feed.id)}
+                  isRecentlySynced={recentlySynced.has(feed.id)}
+                  syncResult={syncResults.get(feed.id)}
                   onSync={() => handleSync(feed.id)}
                   onDelete={() => setConfirmDelete(feed.id)}
                 />
@@ -171,11 +227,20 @@ export function CalendarFeedManager({ feeds, isLoading, onRefetch }: CalendarFee
 interface CalendarFeedCardProps {
   feed: CalendarFeed
   isProcessing: boolean
+  isRecentlySynced?: boolean
+  syncResult?: { success: boolean; count: number }
   onSync: () => void
   onDelete: () => void
 }
 
-function CalendarFeedCard({ feed, isProcessing, onSync, onDelete }: CalendarFeedCardProps) {
+function CalendarFeedCard({ 
+  feed, 
+  isProcessing, 
+  isRecentlySynced, 
+  syncResult, 
+  onSync, 
+  onDelete 
+}: CalendarFeedCardProps) {
   const isActive = !!feed.last_synced_at
   const syncDate = formatDate(feed.last_synced_at)
 
@@ -190,6 +255,12 @@ function CalendarFeedCard({ feed, isProcessing, onSync, onDelete }: CalendarFeed
               <Badge variant={isActive ? "default" : "secondary"} className="text-xs">
                 {isActive ? "Active" : "Pending"}
               </Badge>
+              {isRecentlySynced && (
+                <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
+                  <CheckCircle className="h-3 w-3 mr-1" />
+                  Just Synced
+                </Badge>
+              )}
             </CardTitle>
             <CardDescription className="mt-1">
               {feed.feed_url ? (
@@ -217,6 +288,11 @@ function CalendarFeedCard({ feed, isProcessing, onSync, onDelete }: CalendarFeed
               <span className="text-muted-foreground">Last synced:</span>
               <span className="font-medium">{syncDate}</span>
             </div>
+            {syncResult && (
+              <div className="text-xs text-green-700 bg-green-50 px-2 py-1 rounded">
+                {syncResult.count} events synced
+              </div>
+            )}
           </div>
 
           {/* Action Buttons */}
