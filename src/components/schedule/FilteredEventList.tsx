@@ -11,6 +11,7 @@ import { useSupabaseQuery } from '@/lib/hooks/useSupabaseQuery'
 import DataLoader from '@/components/ui/data-loader'
 import { PublicEventListSkeleton } from '@/components/ui/skeleton'
 
+
 interface FilteredEventListProps {
   userId: string
   variant?: 'compact' | 'full' | 'minimal'
@@ -128,22 +129,26 @@ export function FilteredEventList({ userId, variant = 'compact', className }: Fi
   )
 
   return (
-    <DataLoader
-      data={filteredEvents}
-      loading={isLoading}
-      error={errorMessage}
-      empty={emptyState}
-      skeleton={() => <PublicEventListSkeleton variant={variant} />}
-      skeletonCount={1}
-    >
-      {(data) => (
-        <PublicEventList
-          userId={userId}
-          variant={variant}
-          events={data}
-          className={className}
-        />
-      )}
-    </DataLoader>
+    <>
+      <DataLoader
+        data={filteredEvents}
+        loading={isLoading}
+        error={errorMessage}
+        empty={emptyState}
+        skeleton={() => <PublicEventListSkeleton variant={variant} />}
+        skeletonCount={1}
+      >
+        {(data) => (
+          <PublicEventList
+            userId={userId}
+            variant={variant}
+            events={data}
+            className={className}
+          />
+        )}
+      </DataLoader>
+      
+
+    </>
   )
 } 

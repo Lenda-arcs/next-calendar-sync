@@ -1,7 +1,7 @@
 import { Container } from '@/components/layout/container'
 import { 
   FilterProvider, 
-  ScheduleFilters, 
+  FiltersWithShare, 
   FilteredEventList, 
   ScheduleHeader 
 } from '@/components/schedule'
@@ -21,6 +21,9 @@ export default async function PublicSchedulePage({ params }: PageProps) {
   // Create supabase client to fetch profile data for the content
   const supabase = await createServerClient()
   
+  // Check if user is authenticated
+  const { data: { user } } = await supabase.auth.getUser()
+  
   // Fetch profile data for the schedule content
   const { data: profile } = await supabase
     .from('public_profiles')
@@ -35,8 +38,12 @@ export default async function PublicSchedulePage({ params }: PageProps) {
           {/* Header with Filter Statistics */}
           <ScheduleHeader />
           
-          {/* Filter Components */}
-          <ScheduleFilters />
+          {/* Filter Components with Share CTA */}
+          <FiltersWithShare 
+            currentUserId={user?.id}
+            teacherProfileId={profile?.id || undefined}
+            teacherName={profile?.name || undefined}
+          />
 
           {/* Filtered Events List */}
           <FilteredEventList
@@ -44,6 +51,8 @@ export default async function PublicSchedulePage({ params }: PageProps) {
             variant={profile?.event_display_variant || 'compact'}
             className="filtered-events"
           />
+
+
         </div>
       </FilterProvider>
     </Container>

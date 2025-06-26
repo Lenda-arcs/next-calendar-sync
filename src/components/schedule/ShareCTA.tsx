@@ -1,0 +1,96 @@
+'use client'
+
+import React from 'react'
+import { Download, Share2 } from 'lucide-react'
+import { Button, Card, LoadingOverlay } from '@/components/ui'
+import { useScheduleFilters } from './FilterProvider'
+import { useScheduleExport, useOwnerAuth } from '@/lib/hooks'
+import { SHARE_CTA_CONTENT, EXPORT_CONFIG } from '@/lib/constants/export-constants'
+import { ExportPreview } from './ExportPreview'
+
+interface ShareCTAProps {
+  currentUserId?: string
+  teacherProfileId?: string
+  teacherName?: string
+}
+
+export function ShareCTA({ 
+  currentUserId, 
+  teacherProfileId, 
+  teacherName = 'Teacher' 
+}: ShareCTAProps) {
+  const { filteredEvents } = useScheduleFilters()
+  const { isOwner } = useOwnerAuth({ currentUserId, teacherProfileId })
+  const { handleExport, isExporting, showExportPreview, canExport } = useScheduleExport({
+    teacherName,
+    events: filteredEvents
+  })
+  
+  // Don't render if not owner or no events
+  if (!isOwner || !canExport) {
+    return null
+  }
+
+  return (
+    <>
+      {/* Share CTA Card */}
+      <Card className="p-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex-1">
+            <h3 className="text-lg font-semibold text-gray-900 mb-1">
+              {SHARE_CTA_CONTENT.TITLE}
+            </h3>
+            <p className="text-sm text-gray-600">
+              {SHARE_CTA_CONTENT.DESCRIPTION}
+            </p>
+          </div>
+          
+          <div className="flex gap-2 sm:flex-shrink-0">
+            <Button
+              onClick={handleExport}
+              disabled={isExporting}
+              size="lg"
+              className="bg-blue-600 hover:bg-blue-700 text-white min-w-[140px]"
+            >
+              {isExporting ? (
+                <>
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent mr-2" />
+                  {SHARE_CTA_CONTENT.BUTTONS.EXPORTING}
+                </>
+              ) : (
+                <>
+                  <Download className="h-5 w-5 mr-2" />
+                  {SHARE_CTA_CONTENT.BUTTONS.EXPORT}
+                </>
+              )}
+            </Button>
+            
+            <Button
+              variant="outline"
+              size="lg"
+              className="min-w-[100px]"
+              disabled={true} // TODO: Implement native share
+            >
+              <Share2 className="h-5 w-5 mr-2" />
+              {SHARE_CTA_CONTENT.BUTTONS.SHARE}
+            </Button>
+          </div>
+        </div>
+      </Card>
+
+      {/* Export preview component */}
+      <ExportPreview
+        isVisible={showExportPreview}
+        events={filteredEvents}
+        teacherName={teacherName}
+        elementId={EXPORT_CONFIG.EXPORT_ELEMENT_ID}
+      />
+
+      {/* Loading overlay */}
+      <LoadingOverlay
+        isVisible={isExporting}
+        message={EXPORT_CONFIG.EXPORT_MESSAGES.EXPORTING}
+      />
+    </>
+  )
+} 

@@ -42,3 +42,4 @@ export {
   TableRowSkeleton 
 } from './skeleton'
 export { UnifiedDialog } from './unified-dialog'
+export { LoadingOverlay } from './LoadingOverlay'

@@ -40,7 +40,7 @@ export default function TeacherScheduleLayout({
       {/* Invisible scroll trigger element */}
       <div ref={elementRef} className="h-1 w-full"></div>
 
-      {/* Main Content */}
+                   {/* Main Content */}
       <main className="flex-1 pt-8 pb-16">
         {children}
       </main>

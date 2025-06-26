@@ -18,6 +18,7 @@ export function ScheduleFilters() {
   
   const {
     filters,
+    filteredEvents,
     hasActiveFilters,
     clearAllFilters
   } = useScheduleFilters()
@@ -252,6 +253,8 @@ export function ScheduleFilters() {
           </Accordion>
         </Card>
       </div>
+
+
     </>
   )
 }
