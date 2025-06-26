@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Tabs, TabsContent, TabsList, TabsTrigger, TabContent } from '@/components/ui'
 import { Card, CardContent } from '@/components/ui/card'
@@ -30,20 +30,13 @@ export function InvoiceManagement({ userId }: InvoiceManagementProps) {
   const [selectedEvents, setSelectedEvents] = useState<EventWithStudio[]>([])
 
   // Get active tab from URL, default to 'uninvoiced'
-  const getActiveTabFromUrl = useCallback((): TabValue => {
+  const getActiveTabFromUrl = (): TabValue => {
     const tab = searchParams.get('tab') as TabValue
     return ['uninvoiced', 'invoices', 'settings'].includes(tab) ? tab : 'uninvoiced'
-  }, [searchParams])
+  }
 
-  const [activeTab, setActiveTabState] = useState<TabValue>(() => {
-    const tab = searchParams.get('tab') as TabValue
-    return ['uninvoiced', 'invoices', 'settings'].includes(tab) ? tab : 'uninvoiced'
-  })
-
-  // Update local state when URL changes
-  useEffect(() => {
-    setActiveTabState(getActiveTabFromUrl())
-  }, [getActiveTabFromUrl])
+  // Use URL as source of truth for active tab
+  const activeTab = getActiveTabFromUrl()
 
   // Update URL when tab changes
   const setActiveTab = (tab: TabValue) => {

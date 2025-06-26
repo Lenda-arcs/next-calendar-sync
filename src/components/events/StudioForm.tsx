@@ -190,7 +190,7 @@ const StudioForm: React.FC<Props> = ({
         }
       });
     }
-  }, [isModal, onFormReady, handleSubmit]);
+  }, [isModal, onFormReady]); // Remove handleSubmit from dependencies
 
   const rateTypeOptions = [
     { value: "fixed", label: "Fixed Amount" },
