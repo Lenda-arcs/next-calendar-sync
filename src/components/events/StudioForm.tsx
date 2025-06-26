@@ -8,7 +8,7 @@ import { Label } from "../ui/label";
 import { Select } from "../ui/select";
 import { Textarea } from "../ui/textarea";
 import { useSupabaseMutation } from "../../lib/hooks/useSupabaseMutation";
-import { createStudio, updateStudio } from "../../lib/invoice-utils";
+import { createStudio, updateStudio, matchEventsToStudios } from "../../lib/invoice-utils";
 import type { Studio, StudioInsert, StudioUpdate } from "../../lib/types";
 
 interface Props {
@@ -39,7 +39,7 @@ const StudioForm: React.FC<Props> = ({
   const [formData, setFormData] = useState({
     studio_name: existingStudio?.studio_name || "",
     location_match: existingStudio?.location_match || "",
-    rate_type: existingStudio?.rate_type || "fixed",
+    rate_type: existingStudio?.rate_type || "flat",
     base_rate: existingStudio?.base_rate?.toString() || "",
     billing_email: existingStudio?.billing_email || "",
     address: existingStudio?.address || "",
@@ -52,37 +52,62 @@ const StudioForm: React.FC<Props> = ({
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [matchingResults, setMatchingResults] = useState<{
+    matchedEvents: number;
+    studios: { studioId: string; studioName: string; matchedCount: number }[];
+  } | null>(null);
 
   const createMutation = useSupabaseMutation({
     mutationFn: (supabase, data: StudioInsert) => createStudio(data),
-    onSuccess: (data) => {
-      onLoadingChange?.(false);
-      onStudioCreated?.(data);
-      if (!isEditing) {
-        // Reset form
-        setFormData({
-          studio_name: "",
-          location_match: "",
-          rate_type: "fixed",
-          base_rate: "",
-          billing_email: "",
-          address: "",
-          notes: "",
-          currency: "EUR",
-          max_discount: "",
-          student_threshold: "",
-          online_penalty_per_student: "",
-          studio_penalty_per_student: "",
-        });
+    onSuccess: async (data) => {
+      try {
+        // Match events to the new studio
+        const matchResults = await matchEventsToStudios(user.id);
+        setMatchingResults(matchResults);
+        
+        onLoadingChange?.(false);
+        onStudioCreated?.(data);
+        
+        if (!isEditing) {
+          // Reset form
+          setFormData({
+            studio_name: "",
+            location_match: "",
+            rate_type: "flat",
+            base_rate: "",
+            billing_email: "",
+            address: "",
+            notes: "",
+            currency: "EUR",
+            max_discount: "",
+            student_threshold: "",
+            online_penalty_per_student: "",
+            studio_penalty_per_student: "",
+          });
+        }
+      } catch (error) {
+        console.error("Error matching events to studios:", error);
+        onLoadingChange?.(false);
+        onStudioCreated?.(data);
       }
     },
   });
 
   const updateMutation = useSupabaseMutation({
     mutationFn: (supabase, { id, data }: { id: string; data: StudioUpdate }) => updateStudio(id, data),
-    onSuccess: (data) => {
-      onLoadingChange?.(false);
-      onStudioUpdated?.(data);
+    onSuccess: async (data) => {
+      try {
+        // Match events to studios after update
+        const matchResults = await matchEventsToStudios(user.id);
+        setMatchingResults(matchResults);
+        
+        onLoadingChange?.(false);
+        onStudioUpdated?.(data);
+      } catch (error) {
+        console.error("Error matching events to studios:", error);
+        onLoadingChange?.(false);
+        onStudioUpdated?.(data);
+      }
     },
   });
 
@@ -131,26 +156,43 @@ const StudioForm: React.FC<Props> = ({
 
     try {
       onLoadingChange?.(true);
-      const studioData = {
-        user_id: user.id,
-        studio_name: formData.studio_name.trim(),
-        location_match: formData.location_match.trim(),
-        rate_type: formData.rate_type as "fixed" | "percentage",
-        base_rate: Number(formData.base_rate),
-        billing_email: formData.billing_email.trim() || null,
-        address: formData.address.trim() || null,
-        notes: formData.notes.trim() || null,
-        currency: formData.currency || null,
-        max_discount: formData.max_discount ? Number(formData.max_discount) : null,
-        student_threshold: formData.student_threshold ? Number(formData.student_threshold) : null,
-        online_penalty_per_student: formData.online_penalty_per_student ? Number(formData.online_penalty_per_student) : null,
-        studio_penalty_per_student: formData.studio_penalty_per_student ? Number(formData.studio_penalty_per_student) : null,
-      };
-
+      
       if (isEditing && existingStudio) {
-        await updateMutation.mutateAsync({ id: existingStudio.id, data: studioData as StudioUpdate });
+        // Update existing studio
+        const updateData: StudioUpdate = {
+          studio_name: formData.studio_name,
+          location_match: formData.location_match,
+          rate_type: formData.rate_type,
+          base_rate: formData.base_rate ? Number(formData.base_rate) : null,
+          student_threshold: formData.student_threshold ? Number(formData.student_threshold) : null,
+          studio_penalty_per_student: formData.studio_penalty_per_student ? Number(formData.studio_penalty_per_student) : null,
+          online_penalty_per_student: formData.online_penalty_per_student ? Number(formData.online_penalty_per_student) : null,
+          max_discount: formData.max_discount ? Number(formData.max_discount) : null,
+          billing_email: formData.billing_email || null,
+          address: formData.address || null,
+          notes: formData.notes || null,
+        };
+
+        await updateMutation.mutateAsync({ id: existingStudio.id, data: updateData });
       } else {
-        await createMutation.mutateAsync(studioData as StudioInsert);
+        // Create new studio
+        const studioData: StudioInsert = {
+          user_id: user.id,
+          studio_name: formData.studio_name,
+          location_match: formData.location_match,
+          rate_type: formData.rate_type,
+          base_rate: formData.base_rate ? Number(formData.base_rate) : null,
+          student_threshold: formData.student_threshold ? Number(formData.student_threshold) : null,
+          studio_penalty_per_student: formData.studio_penalty_per_student ? Number(formData.studio_penalty_per_student) : null,
+          online_penalty_per_student: formData.online_penalty_per_student ? Number(formData.online_penalty_per_student) : null,
+          max_discount: formData.max_discount ? Number(formData.max_discount) : null,
+          billing_email: formData.billing_email || null,
+          address: formData.address || null,
+          notes: formData.notes || null,
+          currency: "EUR", // Default currency
+        };
+
+        await createMutation.mutateAsync(studioData);
       }
     } catch (error) {
       console.error("Error saving studio:", error);
@@ -178,23 +220,30 @@ const StudioForm: React.FC<Props> = ({
 
   const isLoading = createMutation.isLoading || updateMutation.isLoading;
 
+  // Store the latest handleSubmit in a ref to avoid stale closures
+  const handleSubmitRef = React.useRef(handleSubmit);
+  handleSubmitRef.current = handleSubmit;
+
+  // Create a stable submit function that always calls the latest handleSubmit
+  const stableSubmit = React.useCallback(() => {
+    const syntheticEvent = {
+      preventDefault: () => {},
+    } as React.FormEvent;
+    handleSubmitRef.current(syntheticEvent);
+  }, []);
+
   // Expose form submit method to parent when in modal mode
   React.useEffect(() => {
     if (isModal && onFormReady) {
       onFormReady({
-        submit: () => {
-          const syntheticEvent = {
-            preventDefault: () => {},
-          } as React.FormEvent;
-          handleSubmit(syntheticEvent);
-        }
+        submit: stableSubmit
       });
     }
-  }, [isModal, onFormReady]); // Remove handleSubmit from dependencies
+  }, [isModal, onFormReady, stableSubmit]);
 
   const rateTypeOptions = [
-    { value: "fixed", label: "Fixed Amount" },
-    { value: "percentage", label: "Percentage" },
+    { value: "flat", label: "Flat Rate" },
+    { value: "per_student", label: "Per Student" },
   ];
 
   const currencyOptions = [
@@ -205,6 +254,36 @@ const StudioForm: React.FC<Props> = ({
 
   const formContent = (
     <form onSubmit={onSubmit || handleSubmit} className="space-y-6">
+        {/* Event Matching Results */}
+        {matchingResults && matchingResults.matchedEvents > 0 && (
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+            <h4 className="text-sm font-medium text-green-800 mb-2">
+              ✅ Events Matched Successfully!
+            </h4>
+            <p className="text-sm text-green-700 mb-2">
+              {matchingResults.matchedEvents} event{matchingResults.matchedEvents !== 1 ? 's' : ''} matched to studio{matchingResults.studios.length !== 1 ? 's' : ''}:
+            </p>
+            <ul className="text-sm text-green-700 space-y-1">
+              {matchingResults.studios.map((studio) => (
+                <li key={studio.studioId}>
+                  • <strong>{studio.studioName}</strong>: {studio.matchedCount} event{studio.matchedCount !== 1 ? 's' : ''}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {matchingResults && matchingResults.matchedEvents === 0 && (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+            <h4 className="text-sm font-medium text-yellow-800 mb-1">
+              ℹ️ No events matched
+            </h4>
+                         <p className="text-sm text-yellow-700">
+               No unassigned events were found matching the location pattern. Events will be automatically matched when they&apos;re imported.
+             </p>
+          </div>
+        )}
+
         {/* Basic Information */}
         <div className="space-y-4">
           <h3 className="text-lg font-semibold">Basic Information</h3>
@@ -256,7 +335,7 @@ const StudioForm: React.FC<Props> = ({
 
             <div>
               <Label htmlFor="base_rate">
-                Base Rate * {formData.rate_type === "percentage" ? "(%)" : `(${formData.currency})`}
+                Base Rate * {formData.rate_type === "per_student" ? "(per student)" : `(${formData.currency})`}
               </Label>
               <Input
                 id="base_rate"
@@ -265,7 +344,7 @@ const StudioForm: React.FC<Props> = ({
                 min="0"
                 value={formData.base_rate}
                 onChange={(e) => handleInputChange("base_rate", e.target.value)}
-                placeholder={formData.rate_type === "percentage" ? "e.g., 70" : "e.g., 45.00"}
+                placeholder={formData.rate_type === "per_student" ? "e.g., 15.00" : "e.g., 45.00"}
                 className={errors.base_rate ? "border-red-500" : ""}
               />
               {errors.base_rate && (

@@ -295,6 +295,62 @@ export async function deleteStudio(studioId: string): Promise<void> {
 }
 
 /**
+ * Match events to studios based on location patterns
+ */
+export async function matchEventsToStudios(userId: string): Promise<{
+  matchedEvents: number;
+  studios: { studioId: string; studioName: string; matchedCount: number }[];
+}> {
+  const supabase = createClient()
+  
+  // Get all user studios
+  const studios = await getUserStudios(userId);
+  
+  let totalMatchedEvents = 0;
+  const studioMatches: { studioId: string; studioName: string; matchedCount: number }[] = [];
+
+  for (const studio of studios) {
+    // Find events that match this studio's location pattern
+    const { data: matchingEvents, error } = await supabase
+      .from("events")
+      .select("id")
+      .eq("user_id", userId)
+      .is("studio_id", null) // Only match unassigned events
+      .ilike("location", `%${studio.location_match}%`);
+
+    if (error) {
+      console.error(`Error matching events for studio ${studio.id}:`, error);
+      continue;
+    }
+
+    if (matchingEvents && matchingEvents.length > 0) {
+      // Update the matched events with the studio_id
+      const { error: updateError } = await supabase
+        .from("events")
+        .update({ studio_id: studio.id })
+        .in("id", matchingEvents.map(event => event.id));
+
+      if (updateError) {
+        console.error(`Error updating events for studio ${studio.id}:`, updateError);
+        continue;
+      }
+
+      totalMatchedEvents += matchingEvents.length;
+      studioMatches.push({
+        studioId: studio.id,
+        studioName: studio.studio_name,
+        matchedCount: matchingEvents.length,
+      });
+    }
+  }
+
+  return {
+    matchedEvents: totalMatchedEvents,
+    studios: studioMatches,
+  };
+}
+
+/**
  * Get unique event locations for a user (for studio location matching)
  */
 export async function getUserEventLocations(userId: string): Promise<string[]> {
