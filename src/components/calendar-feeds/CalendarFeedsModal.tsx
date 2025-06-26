@@ -31,13 +31,13 @@ export function CalendarFeedsModal({
       description="Manage your connected calendar feeds and sync settings."
       size="xl"
     >
-      <CalendarFeedManager
-        feeds={feeds}
-        isLoading={false}
-        onRefetch={() => {
-          // Refetch logic can be added here
-        }}
-      />
+          <CalendarFeedManager
+            feeds={feeds}
+            isLoading={false}
+            onRefetch={() => {
+              // Refetch logic can be added here
+            }}
+          />
     </UnifiedDialog>
   )
 } 

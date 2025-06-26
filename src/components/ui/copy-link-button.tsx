@@ -74,9 +74,9 @@ const CopyLinkButton: React.FC<CopyLinkButtonProps> = ({
         <span className="text-sm text-muted-foreground whitespace-nowrap">{label}</span>
       )}
       <Button variant="outline" size="sm" onClick={() => setIsOpen(true)}>
-        <Share className="w-4 h-4 mr-2" />
-        {buttonText}
-      </Button>
+            <Share className="w-4 h-4 mr-2" />
+            {buttonText}
+          </Button>
       
       <UnifiedDialog
         open={isOpen}
@@ -86,27 +86,27 @@ const CopyLinkButton: React.FC<CopyLinkButtonProps> = ({
         size="sm"
         footer={footerContent}
       >
-        <div className="flex items-center gap-2">
-          <div className="grid flex-1 gap-2">
-            <Label htmlFor="link" className="sr-only">
-              Link
-            </Label>
-            <Input
-              id="link"
-              value={finalUrl}
-              readOnly
-              className="text-sm"
-            />
+          <div className="flex items-center gap-2">
+            <div className="grid flex-1 gap-2">
+              <Label htmlFor="link" className="sr-only">
+                Link
+              </Label>
+              <Input
+                id="link"
+                value={finalUrl}
+                readOnly
+                className="text-sm"
+              />
+            </div>
+            <Button 
+              size="sm" 
+              onClick={handleCopy}
+              variant={copied ? "default" : "secondary"}
+            >
+              <Copy className="w-4 h-4" />
+              {copied ? "Copied!" : "Copy"}
+            </Button>
           </div>
-          <Button 
-            size="sm" 
-            onClick={handleCopy}
-            variant={copied ? "default" : "secondary"}
-          >
-            <Copy className="w-4 h-4" />
-            {copied ? "Copied!" : "Copy"}
-          </Button>
-        </div>
       </UnifiedDialog>
     </div>
   );

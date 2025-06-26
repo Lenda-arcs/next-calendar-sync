@@ -76,17 +76,17 @@ const StudioFormModal: React.FC<Props> = ({
       size="xl"
       footer={footerContent}
     >
-      <StudioForm
-        user={user}
-        eventLocations={eventLocations}
-        onStudioCreated={handleStudioCreated}
-        existingStudio={existingStudio}
-        onStudioUpdated={handleStudioUpdated}
-        isEditing={isEditing}
-        isModal={true}
+        <StudioForm
+          user={user}
+          eventLocations={eventLocations}
+          onStudioCreated={handleStudioCreated}
+          existingStudio={existingStudio}
+          onStudioUpdated={handleStudioUpdated}
+          isEditing={isEditing}
+          isModal={true}
         onLoadingChange={setIsLoading}
         onFormReady={setFormInstance}
-      />
+        />
     </UnifiedDialog>
   );
 };

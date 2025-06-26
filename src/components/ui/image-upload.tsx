@@ -460,16 +460,16 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
         open={showModal}
         onOpenChange={setShowModal}
         title={
-          <div className="flex items-center space-x-2">
-            {modalStep === "crop" && (
-              <IconButton
-                icon={<ChevronLeft className="h-4 w-4" />}
-                variant="ghost"
-                size="icon"
-                onClick={handleBackToSelect}
-                aria-label="Go back to image selection"
-              />
-            )}
+            <div className="flex items-center space-x-2">
+              {modalStep === "crop" && (
+                <IconButton
+                  icon={<ChevronLeft className="h-4 w-4" />}
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleBackToSelect}
+                  aria-label="Go back to image selection"
+                />
+              )}
             <span className="text-lg font-medium font-serif">
               {modalStep === "select" ? "Select or Upload Image" : "Crop Image"}
             </span>
@@ -515,35 +515,35 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
         }
       >
 
-        {/* Error Display */}
-        {error && (
-          <Alert variant="destructive" className="mb-4">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
+            {/* Error Display */}
+            {error && (
+              <Alert variant="destructive" className="mb-4">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
 
-        {/* Step Content */}
-        {modalStep === "select" ? (
-          <ExistingImagesStep
-            existingImages={existingImages}
-            isLoadingImages={isLoadingImages}
-            fetchError={fetchError?.message || null}
-            onSelectImage={handleSelectExistingImage}
-            onUploadClick={handleUploadClick}
-            maxFileSize={maxFileSize}
-            allowedTypes={allowedTypes}
-          />
-        ) : (
-          <CropImageStep
-            imgSrc={imgSrc}
-            crop={crop}
-            aspectRatio={aspectRatio}
-            onCropChange={setCrop}
-            onImageLoad={onImageLoad}
-            imgRef={imgRef}
-          />
-        )}
+            {/* Step Content */}
+            {modalStep === "select" ? (
+              <ExistingImagesStep
+                existingImages={existingImages}
+                isLoadingImages={isLoadingImages}
+                fetchError={fetchError?.message || null}
+                onSelectImage={handleSelectExistingImage}
+                onUploadClick={handleUploadClick}
+                maxFileSize={maxFileSize}
+                allowedTypes={allowedTypes}
+              />
+            ) : (
+              <CropImageStep
+                imgSrc={imgSrc}
+                crop={crop}
+                aspectRatio={aspectRatio}
+                onCropChange={setCrop}
+                onImageLoad={onImageLoad}
+                imgRef={imgRef}
+              />
+            )}
       </UnifiedDialog>
     </div>
   );

@@ -66,10 +66,10 @@ export const NewTagForm: React.FC<Props> = ({
       onOpenChange={onCancel}
       title={isEditing ? 'Edit Tag' : 'Create New Tag'}
       description={isEditing 
-        ? 'Update the tag information and settings below.' 
-        : 'Create a new tag to enrich your events with custom styling and metadata.'
-      }
-      size="lg"
+              ? 'Update the tag information and settings below.' 
+              : 'Create a new tag to enrich your events with custom styling and metadata.'
+            }
+      size="xl"
       footer={footerContent}
     >
       <div className="space-y-6">
@@ -164,7 +164,7 @@ export const NewTagForm: React.FC<Props> = ({
             onChange={(e) => updateField('imageUrl', e.target.value)}
             placeholder="https://example.com/image.jpg"
           />
-      </div>
+        </div>
     </UnifiedDialog>
   )
 } 

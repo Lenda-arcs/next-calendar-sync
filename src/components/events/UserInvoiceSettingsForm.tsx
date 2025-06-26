@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -14,12 +14,17 @@ interface UserInvoiceSettingsFormProps {
   existingSettings?: UserInvoiceSettings | null
   onSettingsUpdated?: () => void
   isModal?: boolean
+  onLoadingChange?: (loading: boolean) => void
+  formRef?: React.RefObject<HTMLFormElement | null>
 }
 
 export function UserInvoiceSettingsForm({
   userId,
   existingSettings,
-  onSettingsUpdated
+  onSettingsUpdated,
+  isModal = false,
+  onLoadingChange,
+  formRef
 }: UserInvoiceSettingsFormProps) {
   const [formData, setFormData] = useState({
     full_name: '',
@@ -81,7 +86,14 @@ export function UserInvoiceSettingsForm({
     }
   })
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  // Notify parent about loading state changes
+  useEffect(() => {
+    if (onLoadingChange) {
+      onLoadingChange(settingsMutation.isLoading)
+    }
+  }, [settingsMutation.isLoading, onLoadingChange])
+
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault()
     
     const data = {
@@ -96,7 +108,7 @@ export function UserInvoiceSettingsForm({
     }
 
     await settingsMutation.mutateAsync(data)
-  }
+  }, [formData, settingsMutation, existingSettings])
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
@@ -105,8 +117,10 @@ export function UserInvoiceSettingsForm({
     }))
   }
 
+  const isFormValid = formData.full_name.trim() !== ''
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
       {/* Basic Information */}
       <div className="space-y-4">
         <h3 className="text-lg font-medium text-gray-900">Basic Information</h3>
@@ -217,22 +231,24 @@ export function UserInvoiceSettingsForm({
         </div>
       )}
 
-      {/* Submit Button */}
-      <div className="flex justify-end space-x-3">
-        <Button
-          type="submit"
-          disabled={settingsMutation.isLoading || !formData.full_name}
-        >
-          {settingsMutation.isLoading ? (
-            <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Saving...
-            </>
-          ) : (
-            existingSettings ? 'Update Settings' : 'Save Settings'
-          )}
-        </Button>
-      </div>
+      {/* Submit Button - Only show when not in modal mode */}
+      {!isModal && (
+        <div className="flex justify-end space-x-3">
+          <Button
+            type="submit"
+            disabled={settingsMutation.isLoading || !isFormValid}
+          >
+            {settingsMutation.isLoading ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              existingSettings ? 'Update Settings' : 'Save Settings'
+            )}
+          </Button>
+        </div>
+      )}
     </form>
   )
 } 

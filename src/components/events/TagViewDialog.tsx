@@ -58,20 +58,20 @@ export const TagViewDialog: React.FC<Props> = ({
 
   const titleContent = (
     <div className="flex items-center gap-2">
-      <div
-        className="w-4 h-4 rounded-full ring-1 ring-white/50"
-        style={{ backgroundColor: tag.color || '#6B7280' }}
-      />
-      {tag.name || 'Unnamed Tag'}
-      {isGlobal && (
-        <TagBadge
-          variant="blue"
-          className="text-xs px-2 py-0.5 flex items-center gap-1"
-        >
-          <Globe className="h-2.5 w-2.5" />
-          Global
-        </TagBadge>
-      )}
+            <div
+              className="w-4 h-4 rounded-full ring-1 ring-white/50"
+              style={{ backgroundColor: tag.color || '#6B7280' }}
+            />
+            {tag.name || 'Unnamed Tag'}
+            {isGlobal && (
+              <TagBadge
+                variant="blue"
+                className="text-xs px-2 py-0.5 flex items-center gap-1"
+              >
+                <Globe className="h-2.5 w-2.5" />
+                Global
+              </TagBadge>
+            )}
     </div>
   )
 
@@ -95,7 +95,7 @@ export const TagViewDialog: React.FC<Props> = ({
       onOpenChange={onClose}
       title={titleContent}
       description="View detailed information about this tag and see how it appears on events."
-      size="full"
+      size="xl"
       footer={footerContent}
     >
       <div className="space-y-4">
@@ -221,7 +221,7 @@ export const TagViewDialog: React.FC<Props> = ({
               </TagInfoSection>
             )}
           </div>
-      </div>
+        </div>
     </UnifiedDialog>
   )
 } 

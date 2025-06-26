@@ -138,7 +138,7 @@ export function InvoiceCreationModal({
       size="lg"
       footer={footerContent}
     >
-      {showSuccess ? (
+        {showSuccess ? (
           <div className="text-center py-8">
             <div className="mb-6">
               <div className="mx-auto flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
