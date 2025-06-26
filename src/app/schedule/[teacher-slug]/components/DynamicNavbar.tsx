@@ -153,7 +153,6 @@ export default function DynamicNavbar({
             transform: scale(1);
             opacity: 1;
           }
-         
           100% {
             transform: scale(0.3) translateY(-100px);
             opacity: 0.4;
@@ -175,7 +174,7 @@ export default function DynamicNavbar({
           }
           100% {
             transform: scale(1.8) translateX(-60px) translateY(20px);
-            opacity: 0.4;
+            opacity: 0.1;
           }
         }
 
