@@ -1,16 +1,3 @@
-/**
- * ScheduleFilters Component
- * 
- * Enhanced with floating filter functionality that provides:
- * - Sticky floating filter button that appears when top filters scroll out of view
- * - Consistent accordion pattern for both mobile and desktop
- * - Static accordion closes automatically when FAB is visible
- * - Smooth transition animations between states
- * - Desktop: FAB positioned bottom-right, only shows when top filters not visible
- * - Mobile: FAB positioned bottom-center
- * - Shows active filter count and clear all functionality
- */
-
 'use client'
 
 import React, { useState, useEffect, useRef } from 'react'
