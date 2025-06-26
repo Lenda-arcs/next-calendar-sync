@@ -117,7 +117,6 @@ export const TagViewDialog: React.FC<Props> = ({
                       imageQuery="yoga class studio"
                       tags={[tag]}
                       variant={selectedVariant}
-                      forceMobile={false}
                     />
                   </div>
                 </div>

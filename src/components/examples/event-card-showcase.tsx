@@ -163,7 +163,6 @@ export default function EventCardShowcase() {
               imageQuery={event.imageQuery}
               tags={event.tags}
               variant="compact"
-              forceMobile={true}
               onClick={() => handleEventClick(event.id, event.title)}
             />
           ))}

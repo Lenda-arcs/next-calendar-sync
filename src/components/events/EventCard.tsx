@@ -157,7 +157,7 @@ export const EventCard = React.memo<EventCardProps>(
               )}
 
             {/* CTA Button - Bottom Right */}
-            {ctaTag?.cta && variant !== 'minimal' && (
+            {ctaTag?.cta && shouldShowImage && (
               <div className="absolute bottom-4 right-3">
                 <Button
                   size="sm"

@@ -172,17 +172,14 @@ export default function ResponsiveTestPage() {
                   <EventCard
                     {...mockEvent}
                     variant="minimal"
-                    forceMobile={forcedBreakpoint === 'sm'}
                   />
                   <EventCard
                     {...mockEvent}
                     variant="compact"
-                    forceMobile={forcedBreakpoint === 'sm'}
                   />
                   <EventCard
                     {...mockEvent}
                     variant="full"
-                    forceMobile={forcedBreakpoint === 'sm'}
                   />
                 </div>
               </CardContent>
