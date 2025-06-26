@@ -1,6 +1,11 @@
-import { notFound } from 'next/navigation'
+import { Container } from '@/components/layout/container'
+import { 
+  FilterProvider, 
+  ScheduleFilters, 
+  FilteredEventList, 
+  ScheduleHeader 
+} from '@/components/schedule'
 import { createServerClient } from '@/lib/supabase-server'
-import TeacherScheduleClient from './TeacherScheduleClient'
 
 interface PageProps {
   params: Promise<{
@@ -9,33 +14,38 @@ interface PageProps {
 }
 
 export default async function PublicSchedulePage({ params }: PageProps) {
-  // Resolve params
+  // Resolve params to get the teacher slug
   const resolvedParams = await params
   const teacherSlug = resolvedParams['teacher-slug']
 
-  // Create supabase client
+  // Create supabase client to fetch profile data for the content
   const supabase = await createServerClient()
-
-  // Check if user is authenticated
-  const { data: { user } } = await supabase.auth.getUser()
-
-  // Note: User profile fetching removed as it's no longer needed for this page
-
-  // Fetch profile data (server-side)
-  const { data: profile, error: profileError } = await supabase
+  
+  // Fetch profile data for the schedule content
+  const { data: profile } = await supabase
     .from('public_profiles')
     .select('*')
     .eq('public_url', teacherSlug)
     .single()
 
-  if (profileError || !profile) {
-    notFound()
-  }
-
   return (
-    <TeacherScheduleClient 
-      profile={profile}
-      user={user}
-    />
+    <Container>
+      <FilterProvider>
+        <div className="space-y-6">
+          {/* Header with Filter Statistics */}
+          <ScheduleHeader />
+          
+          {/* Filter Components */}
+          <ScheduleFilters />
+
+          {/* Filtered Events List */}
+          <FilteredEventList
+            userId={profile?.id || ''}
+            variant={profile?.event_display_variant || 'compact'}
+            className="filtered-events"
+          />
+        </div>
+      </FilterProvider>
+    </Container>
   )
 } 
