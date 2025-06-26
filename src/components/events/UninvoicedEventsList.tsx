@@ -3,7 +3,6 @@
 import React, { useState } from 'react'
 import { Card, CardContent, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import DataLoader from '@/components/ui/data-loader'
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion'
 import { EventInvoiceCard } from './EventInvoiceCard'
@@ -227,28 +226,28 @@ export function UninvoicedEventsList({ userId, onCreateInvoice }: UninvoicedEven
                   <Card variant="outlined" className="overflow-hidden">
                     <AccordionTrigger className="px-6 py-4 hover:no-underline cursor-pointer group">
                       <div className="flex items-center justify-between w-full mr-4 group-hover:text-blue-600 transition-colors">
-                        <div className="flex items-center gap-4">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 flex-1">
                           <div className="flex items-center gap-2">
                             <CardTitle className="text-lg group-hover:text-blue-600 transition-colors">{studio.studio_name}</CardTitle>
-                            <div className="text-xs text-gray-400 group-hover:text-blue-500 transition-colors opacity-0 group-hover:opacity-100">
+                            <div className="text-xs text-gray-400 group-hover:text-blue-500 transition-colors opacity-0 group-hover:opacity-100 hidden sm:block">
                               Click to expand
                             </div>
                           </div>
-                          <Badge variant="secondary">
-                            {studioEvents.length} event{studioEvents.length !== 1 ? 's' : ''}
-                          </Badge>
-                          {studio.location_match && (
-                            <Badge variant="outline" className="text-xs">
-                              Location: {studio.location_match}
-                            </Badge>
-                          )}
+                          <div className="flex items-center gap-3 text-sm">
+                            <span className="text-gray-600">
+                              {studioEvents.length} event{studioEvents.length !== 1 ? 's' : ''}
+                            </span>
+                            <span className="text-gray-500 text-xs">
+                              {studio.rate_type === 'flat' ? 'Flat Rate' : 'Per Student'} • Base: €{studio.base_rate?.toFixed(2) || '0.00'}
+                            </span>
+                          </div>
                         </div>
-                        <div className="text-right">
+                        <div className="text-right flex-shrink-0">
                           <div className="text-lg font-bold text-gray-900">
                             €{totalPayout.toFixed(2)}
                           </div>
                           <div className="text-xs text-gray-600">
-                            {studio.rate_type === 'flat' ? 'Flat Rate' : 'Per Student'} • Base: €{studio.base_rate?.toFixed(2) || '0.00'}
+                            Total
                           </div>
                         </div>
                       </div>
