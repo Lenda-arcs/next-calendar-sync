@@ -138,6 +138,7 @@ export function InvoiceManagement({ userId }: InvoiceManagementProps) {
             <UninvoicedEventsList 
               userId={userId} 
               onCreateInvoice={handleCreateInvoice}
+              onCreateStudio={() => setActiveTab('settings')}
             />
           </TabContent>
         </TabsContent>

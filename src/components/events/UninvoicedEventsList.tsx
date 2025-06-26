@@ -6,19 +6,21 @@ import { Button } from '@/components/ui/button'
 import DataLoader from '@/components/ui/data-loader'
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion'
 import { EventInvoiceCard } from './EventInvoiceCard'
+import { HistoricalSyncCTA } from './HistoricalSyncCTA'
+import { UnmatchedEventsSection } from './UnmatchedEventsSection'
 import { useSupabaseQuery } from '@/lib/hooks/useSupabaseQuery'
-import { getUninvoicedEventsByStudio, calculateTotalPayout, EventWithStudio } from '@/lib/invoice-utils'
-import { useCalendarFeeds, useCalendarFeedActions } from '@/lib/hooks/useCalendarFeeds'
-import { History, RefreshCw } from 'lucide-react'
+import { getUninvoicedEventsByStudio, getUnmatchedEvents, calculateTotalPayout, EventWithStudio } from '@/lib/invoice-utils'
+import { useCalendarFeeds } from '@/lib/hooks/useCalendarFeeds'
+import { RefreshCw } from 'lucide-react'
 
 interface UninvoicedEventsListProps {
   userId: string
   onCreateInvoice?: (studioId: string, eventIds: string[]) => void
+  onCreateStudio?: () => void
 }
 
-export function UninvoicedEventsList({ userId, onCreateInvoice }: UninvoicedEventsListProps) {
+export function UninvoicedEventsList({ userId, onCreateInvoice, onCreateStudio }: UninvoicedEventsListProps) {
   const [selectedEvents, setSelectedEvents] = useState<Record<string, string[]>>({})
-  const [isHistoricalSyncing, setIsHistoricalSyncing] = useState(false)
 
   const {
     data: eventsByStudio,
@@ -31,31 +33,24 @@ export function UninvoicedEventsList({ userId, onCreateInvoice }: UninvoicedEven
     enabled: !!userId
   })
 
+  // Fetch unmatched events (events without studio assignment)
+  const {
+    data: unmatchedEvents,
+    isLoading: unmatchedLoading,
+    refetch: refetchUnmatched
+  } = useSupabaseQuery({
+    queryKey: ['unmatched-events', userId],
+    fetcher: () => getUnmatchedEvents(userId),
+    enabled: !!userId
+  })
+
   const { data: calendarFeeds, isLoading: feedsLoading } = useCalendarFeeds(userId)
-  const { syncFeed } = useCalendarFeedActions()
-
-  const handleHistoricalSync = async () => {
-    if (!calendarFeeds || calendarFeeds.length === 0) return
-
-    setIsHistoricalSyncing(true)
-    try {
-      // Sync all calendar feeds in historical mode
-      const syncPromises = calendarFeeds.map(feed => 
-        syncFeed(feed.id, 'historical')
-      )
-      
-      await Promise.all(syncPromises)
-      
-      // Refetch uninvoiced events after historical sync
-      refetch()
-    } catch (error) {
-      console.error('Failed to perform historical sync:', error)
-    } finally {
-      setIsHistoricalSyncing(false) 
-    }
-  }
 
   const hasConnectedFeeds = calendarFeeds && calendarFeeds.length > 0
+  
+  // Check if there are any uninvoiced events (matched or unmatched)
+  const hasUninvoicedEvents = (eventsByStudio && Object.keys(eventsByStudio).length > 0) || 
+                              (unmatchedEvents && unmatchedEvents.length > 0)
 
   const handleToggleEvent = (studioId: string, eventId: string) => {
     setSelectedEvents(prev => {
@@ -144,42 +139,21 @@ export function UninvoicedEventsList({ userId, onCreateInvoice }: UninvoicedEven
 
   return (
     <div className="space-y-4">
-      {/* Historical Sync CTA - Always visible when feeds are connected */}
-      {hasConnectedFeeds && !feedsLoading && (
-        <Card className="bg-blue-50/50 border-blue-200">
-          <CardContent className="py-4">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <div className="flex-1">
-                <h4 className="text-sm font-medium text-blue-900 mb-1">
-                  Missing older events?
-                </h4>
-                <p className="text-xs text-blue-700">
-                  Sync historical events from your connected calendar feeds to find uninvoiced classes from previous months.
-                </p>
-              </div>
-              <Button 
-                variant="outline" 
-                onClick={handleHistoricalSync}
-                disabled={isHistoricalSyncing}
-                size="sm"
-                className="bg-blue-100 hover:bg-blue-200 text-blue-800 border-blue-300 whitespace-nowrap"
-              >
-                {isHistoricalSyncing ? (
-                  <>
-                    <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                    Syncing...
-                  </>
-                ) : (
-                  <>
-                    <History className="mr-2 h-4 w-4" />
-                    Sync Historical Events
-                  </>
-                )}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Historical Sync CTA - Only visible when feeds are connected and no uninvoiced events exist */}
+      {hasConnectedFeeds && !feedsLoading && !hasUninvoicedEvents && (
+        <HistoricalSyncCTA 
+          calendarFeeds={calendarFeeds}
+          onSyncComplete={refetch}
+        />
       )}
+
+      {/* Unmatched Events Section */}
+      <UnmatchedEventsSection
+        unmatchedEvents={unmatchedEvents || []}
+        isLoading={unmatchedLoading}
+        onRefresh={refetchUnmatched}
+        onCreateStudio={onCreateStudio || (() => {})}
+      />
 
       <DataLoader
         data={eventsByStudio}

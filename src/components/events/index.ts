@@ -34,6 +34,8 @@ export { default as FloatingActionButtons } from './FloatingActionButtons'
 // Invoice management components
 export { EventInvoiceCard } from './EventInvoiceCard'
 export { UninvoicedEventsList } from './UninvoicedEventsList'
+export { HistoricalSyncCTA } from './HistoricalSyncCTA'
+export { UnmatchedEventsSection } from './UnmatchedEventsSection'
 export { InvoiceCreationModal } from './InvoiceCreationModal'
 export { InvoiceManagement } from './InvoiceManagement'
 export { InvoiceSettings } from './InvoiceSettings'
