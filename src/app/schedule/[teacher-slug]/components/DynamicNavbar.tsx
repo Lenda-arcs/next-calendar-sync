@@ -174,7 +174,7 @@ export default function DynamicNavbar({
           }
           100% {
             transform: scale(1.8) translateX(-60px) translateY(20px);
-            opacity: 0.1;
+            opacity: 0.05;
           }
         }
 
@@ -186,7 +186,7 @@ export default function DynamicNavbar({
             }
             100% {
               transform: scale(1.8) translateX(-140px) translateY(20px);
-              opacity: 0.4;
+              opacity: 0.05;
             }
           }
         }
