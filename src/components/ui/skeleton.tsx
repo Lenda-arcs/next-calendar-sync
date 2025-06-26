@@ -395,6 +395,69 @@ const DashboardActionsSkeleton: React.FC = () => {
   )
 }
 
+// Public Event List Skeleton - matches the complex layout structure of public events
+const PublicEventListSkeleton: React.FC<{ variant?: 'compact' | 'full' | 'minimal' }> = ({ 
+  variant = 'compact' 
+}) => {
+  const getGridClasses = () => {
+    switch (variant) {
+      case 'full':
+        return 'grid grid-cols-1 md:grid-cols-2 gap-8'
+      case 'minimal':
+        return 'grid grid-cols-1 md:grid-cols-4 gap-4'
+      case 'compact':
+      default:
+        return 'grid grid-cols-1 md:grid-cols-3 gap-6'
+    }
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Mobile Layout: Grouped by day with headers */}
+      <div className="block md:hidden space-y-8">
+        {Array.from({ length: 2 }).map((_, dayIndex) => (
+          <div key={`mobile-day-${dayIndex}`} className="space-y-4">
+            {/* Date Header */}
+            <div className="flex items-center gap-3">
+              <Skeleton className="h-6 w-32" />
+              <div className="flex-1 h-px bg-border" />
+              <Skeleton className="h-4 w-16" />
+            </div>
+
+            {/* Events Grid for Mobile */}
+            <div className="grid grid-cols-1 gap-6">
+              {Array.from({ length: 2 }).map((_, eventIndex) => (
+                <div key={`mobile-event-${dayIndex}-${eventIndex}`} className="flex flex-col">
+                  <EventCardSkeleton variant={variant} />
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Desktop Layout: Clean grid with date badges */}
+      <div className="hidden md:block">
+        <div className={getGridClasses()}>
+          {Array.from({ length: 6 }).map((_, index) => (
+            <div key={`desktop-${index}`} className="flex flex-col relative">
+              {/* Date Badge - show on first event of each "day" */}
+              {index % 3 === 0 && (
+                <div className="absolute -top-2 -left-2 z-10">
+                  <div className="bg-blue-500 text-white text-xs font-medium px-2 py-1 rounded-full shadow-lg">
+                    <Skeleton className="h-3 w-12 bg-white/30" />
+                  </div>
+                </div>
+              )}
+              <EventCardSkeleton variant={variant} />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // Full Dashboard Skeleton - matches the complete dashboard layout
 const DashboardSkeleton: React.FC = () => {
   return (
@@ -456,6 +519,7 @@ export {
   ManageEventsSkeleton,
   TagRulesSkeleton,
   TagLibraryGridSkeleton,
+  PublicEventListSkeleton,
   DashboardUpcomingClassesSkeleton,
   DashboardActionsSkeleton,
   DashboardSkeleton,

@@ -20,6 +20,8 @@ export {
   useBreakpoint,
 } from './useResponsive'
 
+export { useScrollIntoView } from './useScrollIntoView'
+
 export { useTagForm } from './useTagForm'
 export { useTagOperations } from './useTagOperations'
 export { useCalendarSync } from './useCalendarSync'

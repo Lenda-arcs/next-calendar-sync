@@ -21,13 +21,22 @@ import { cn } from '@/lib/utils'
 interface TeacherHeroProps {
   profile: PublicProfile
   className?: string
+  forceExpanded?: boolean
 }
 
 const TeacherHero: React.FC<TeacherHeroProps> = ({
   profile,
   className = '',
+  forceExpanded = false,
 }) => {
-  const [isExpanded, setIsExpanded] = useState(false)
+  const [isExpanded, setIsExpanded] = useState(forceExpanded)
+
+  // Update expanded state when forceExpanded changes
+  React.useEffect(() => {
+    if (forceExpanded) {
+      setIsExpanded(true)
+    }
+  }, [forceExpanded])
 
   // Generate description
   const getDescription = (profile: PublicProfile) => {

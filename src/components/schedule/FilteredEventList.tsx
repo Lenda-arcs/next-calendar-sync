@@ -5,9 +5,11 @@ import { PublicEvent, Tag } from '@/lib/types'
 import PublicEventList from '@/components/events/PublicEventList'
 import { useScheduleFilters } from './FilterProvider'
 import { Card, CardContent } from '@/components/ui/card'
-import { Calendar, Loader2 } from 'lucide-react'
+import { Calendar } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useSupabaseQuery } from '@/lib/hooks/useSupabaseQuery'
+import DataLoader from '@/components/ui/data-loader'
+import { PublicEventListSkeleton } from '@/components/ui/skeleton'
 
 interface FilteredEventListProps {
   userId: string
@@ -93,73 +95,55 @@ export function FilteredEventList({ userId, variant = 'compact', className }: Fi
     }
   }, [userTags, globalTags, setTags])
 
-  // Loading state
+  // Loading states
   const isLoading = eventsLoading || userTagsLoading || globalTagsLoading
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12">
+  const errorMessage = eventsError?.message || null
+  
+  // Empty state component
+  const emptyState = (
+    <Card>
+      <CardContent className="py-12">
         <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-muted-foreground" />
-          <p className="text-lg font-medium text-muted-foreground">Loading classes...</p>
+          <Calendar className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+          <h3 className="text-lg font-medium text-foreground mb-2">
+            {(events?.length || 0) === 0 
+              ? "No upcoming classes" 
+              : "No classes match your filters"
+            }
+          </h3>
+          <p className="text-muted-foreground mb-6">
+            {(events?.length || 0) === 0 
+              ? "This teacher doesn't have any upcoming classes scheduled."
+              : "Try adjusting your filters to see more classes."
+            }
+          </p>
+          {hasActiveFilters && (
+            <Button onClick={clearAllFilters} variant="outline">
+              Clear All Filters
+            </Button>
+          )}
         </div>
-      </div>
-    )
-  }
-
-  if (eventsError) {
-    return (
-      <Card>
-        <CardContent className="py-12">
-          <div className="text-center">
-            <Calendar className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-            <h3 className="text-lg font-medium text-foreground mb-2">
-              Failed to load classes
-            </h3>
-            <p className="text-muted-foreground mb-6">
-              {eventsError.message}
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-    )
-  }
-
-  if (filteredEvents.length === 0) {
-    return (
-      <Card>
-        <CardContent className="py-12">
-          <div className="text-center">
-            <Calendar className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-            <h3 className="text-lg font-medium text-foreground mb-2">
-              {(events?.length || 0) === 0 
-                ? "No upcoming classes" 
-                : "No classes match your filters"
-              }
-            </h3>
-            <p className="text-muted-foreground mb-6">
-              {(events?.length || 0) === 0 
-                ? "This teacher doesn't have any upcoming classes scheduled."
-                : "Try adjusting your filters to see more classes."
-              }
-            </p>
-            {hasActiveFilters && (
-              <Button onClick={clearAllFilters} variant="outline">
-                Clear All Filters
-              </Button>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-    )
-  }
+      </CardContent>
+    </Card>
+  )
 
   return (
-    <PublicEventList
-      userId={userId}
-      variant={variant}
-      events={filteredEvents}
-      className={className}
-    />
+    <DataLoader
+      data={filteredEvents}
+      loading={isLoading}
+      error={errorMessage}
+      empty={emptyState}
+      skeleton={() => <PublicEventListSkeleton variant={variant} />}
+      skeletonCount={1}
+    >
+      {(data) => (
+        <PublicEventList
+          userId={userId}
+          variant={variant}
+          events={data}
+          className={className}
+        />
+      )}
+    </DataLoader>
   )
 } 

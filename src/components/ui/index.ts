@@ -33,6 +33,7 @@ export {
   ManageEventsSkeleton,
   TagRulesSkeleton,
   TagLibraryGridSkeleton,
+  PublicEventListSkeleton,
   DashboardUpcomingClassesSkeleton,
   DashboardActionsSkeleton,
   DashboardSkeleton,

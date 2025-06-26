@@ -6,11 +6,13 @@ import { EventCard } from './EventCard'
 import { parseISO, isToday, isTomorrow, isThisWeek, format } from 'date-fns'
 
 import { Card, CardContent } from '@/components/ui/card'
-import { Calendar, Loader2 } from 'lucide-react'
+import { Calendar } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { type EventDisplayVariant, type EventTag } from '@/lib/event-types'
 import { useSupabaseQuery } from '@/lib/hooks/useSupabaseQuery'
 import { convertEventToCardProps, processEventTags } from '@/lib/event-utils'
+import DataLoader from '@/components/ui/data-loader'
+import { PublicEventListSkeleton } from '@/components/ui/skeleton'
 
 // Enhanced PublicEvent with matched tags
 interface EnhancedPublicEvent extends PublicEvent {
@@ -200,50 +202,26 @@ const PublicEventList: React.FC<PublicEventListProps> = ({
     })
   }, [groupedEvents, allAvailableTags, currentDate])
 
-  // Loading state
+  // Loading states
   const isLoading = (propEvents ? false : eventsLoading) || userTagsLoading || globalTagsLoading
+  const errorMessage = eventsError?.message || null
   
-  if (isLoading) {
-    return (
-      <div className={cn('flex items-center justify-center py-12', className)}>
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-muted-foreground" />
-          <p className="text-muted-foreground">Loading events...</p>
-        </div>
-      </div>
-    )
-  }
-
-  // Error state
-  if (eventsError) {
-    return (
-      <div className={cn('flex items-center justify-center py-12', className)}>
-        <div className="text-center">
-          <p className="text-destructive mb-2">Failed to load events</p>
-          <p className="text-sm text-muted-foreground">{eventsError.message}</p>
-        </div>
-      </div>
-    )
-  }
-
-  // No events state
-  if (!enhancedEvents || enhancedEvents.length === 0) {
-    return (
-      <div className={cn('flex items-center justify-center py-12', className)}>
-        <Card className="p-8 text-center max-w-md mx-auto">
-          <CardContent className="pt-6">
-            <Calendar className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-            <h3 className="text-lg font-medium text-foreground mb-2">
-              No Upcoming Events
-            </h3>
-            <p className="text-muted-foreground">
-              Check back later for new classes and sessions.
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-    )
-  }
+  // Empty state component
+  const emptyState = (
+    <div className={cn('flex items-center justify-center py-12', className)}>
+      <Card className="p-8 text-center max-w-md mx-auto">
+        <CardContent className="pt-6">
+          <Calendar className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+          <h3 className="text-lg font-medium text-foreground mb-2">
+            No Upcoming Events
+          </h3>
+          <p className="text-muted-foreground">
+            Check back later for new classes and sessions.
+          </p>
+        </CardContent>
+      </Card>
+    </div>
+  )
 
   // Date Badge Component for desktop layout
   const DateBadge: React.FC<{ label: string }> = ({ label }) => (
@@ -255,54 +233,65 @@ const PublicEventList: React.FC<PublicEventListProps> = ({
   )
 
   return (
-    <div className={cn('space-y-6', className)}>
-      {/* Mobile Layout: Grouped by day with headers */}
-      <div className="block md:hidden space-y-8">
-        {groupedEvents.map(({ date, events: dayEvents }) => {
-          const { label } = getDateHeader(date, currentDate)
-          const dateKey = date
+    <DataLoader
+      data={enhancedEvents}
+      loading={isLoading}
+      error={errorMessage}
+      empty={emptyState}
+      skeleton={() => <PublicEventListSkeleton variant={variant} />}
+      skeletonCount={1}
+    >
+      {() => (
+        <div className={cn('space-y-6', className)}>
+          {/* Mobile Layout: Grouped by day with headers */}
+          <div className="block md:hidden space-y-8">
+            {groupedEvents.map(({ date, events: dayEvents }) => {
+              const { label } = getDateHeader(date, currentDate)
+              const dateKey = date
 
-          return (
-            <div key={dateKey} className="space-y-4">
-              {/* Date Header */}
-              <div className="flex items-center gap-3">
-                <h3 className="text-xl font-semibold text-foreground">
-                  {label}
-                </h3>
-                <div className="flex-1 h-px bg-border" />
-                <span className="text-sm text-muted-foreground">
-                  {dayEvents.length} {dayEvents.length === 1 ? 'class' : 'classes'}
-                </span>
-              </div>
-
-              {/* Events Grid for Mobile */}
-              <div className="grid grid-cols-1 gap-6">
-                {dayEvents.map((event, index) => (
-                  <div key={`${dateKey}-${index}`} className="flex flex-col">
-                    <EventCard
-                      {...convertEventToCardProps(event, allAvailableTags)}
-                      variant={variant}
-                    />
+              return (
+                <div key={dateKey} className="space-y-4">
+                  {/* Date Header */}
+                  <div className="flex items-center gap-3">
+                    <h3 className="text-xl font-semibold text-foreground">
+                      {label}
+                    </h3>
+                    <div className="flex-1 h-px bg-border" />
+                    <span className="text-sm text-muted-foreground">
+                      {dayEvents.length} {dayEvents.length === 1 ? 'class' : 'classes'}
+                    </span>
                   </div>
-                ))}
-              </div>
-            </div>
-          )
-        })}
-      </div>
 
-      {/* Desktop Layout: Clean grid with date badges */}
-      <div className="hidden md:block">
-        <div className={getGridClasses()}>
-          {flattenedEvents.map(({ event, dayLabel, isFirstOfDay }, index) => (
-            <div key={`desktop-${index}`} className="flex flex-col relative">
-              {isFirstOfDay && <DateBadge label={dayLabel} />}
-              <EventCard {...event} variant={variant} />
+                  {/* Events Grid for Mobile */}
+                  <div className="grid grid-cols-1 gap-6">
+                    {dayEvents.map((event, index) => (
+                      <div key={`${dateKey}-${index}`} className="flex flex-col">
+                        <EventCard
+                          {...convertEventToCardProps(event, allAvailableTags)}
+                          variant={variant}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+
+          {/* Desktop Layout: Clean grid with date badges */}
+          <div className="hidden md:block">
+            <div className={getGridClasses()}>
+              {flattenedEvents.map(({ event, dayLabel, isFirstOfDay }, index) => (
+                <div key={`desktop-${index}`} className="flex flex-col relative">
+                  {isFirstOfDay && <DateBadge label={dayLabel} />}
+                  <EventCard {...event} variant={variant} />
+                </div>
+              ))}
             </div>
-          ))}
+          </div>
         </div>
-      </div>
-    </div>
+      )}
+    </DataLoader>
   )
 }
 
