@@ -225,11 +225,14 @@ export function UninvoicedEventsList({ userId, onCreateInvoice }: UninvoicedEven
               return (
                 <AccordionItem value={studioId} key={studioId}>
                   <Card variant="outlined" className="overflow-hidden">
-                    <AccordionTrigger className="px-6 py-4 hover:bg-gray-50/50 transition-colors hover:no-underline">
-                      <div className="flex items-center justify-between w-full mr-4">
+                    <AccordionTrigger className="px-6 py-4 hover:no-underline cursor-pointer group">
+                      <div className="flex items-center justify-between w-full mr-4 group-hover:text-blue-600 transition-colors">
                         <div className="flex items-center gap-4">
                           <div className="flex items-center gap-2">
-                            <CardTitle className="text-lg">{studio.studio_name}</CardTitle>
+                            <CardTitle className="text-lg group-hover:text-blue-600 transition-colors">{studio.studio_name}</CardTitle>
+                            <div className="text-xs text-gray-400 group-hover:text-blue-500 transition-colors opacity-0 group-hover:opacity-100">
+                              Click to expand
+                            </div>
                           </div>
                           <Badge variant="secondary">
                             {studioEvents.length} event{studioEvents.length !== 1 ? 's' : ''}
