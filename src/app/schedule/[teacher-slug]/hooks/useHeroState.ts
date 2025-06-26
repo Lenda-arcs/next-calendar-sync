@@ -7,6 +7,8 @@ type HeroState = 'auto' | 'expanded' | 'closed'
 
 export function useHeroState() {
   const [heroState, setHeroState] = useState<HeroState>('auto')
+  const [isAnimating, setIsAnimating] = useState(false)
+  const [isExpanding, setIsExpanding] = useState(false)
   
   const { elementRef, isInView } = useScrollIntoView({
     threshold: 0.8, // High threshold - collapse when mostly out of view
@@ -30,14 +32,42 @@ export function useHeroState() {
     }
   }, [isInView, heroState])
 
+  // Handle morphing animation when collapsing
+  useEffect(() => {
+    if (heroState === 'closed' || (heroState === 'auto' && !isInView)) {
+      setIsAnimating(true)
+      setIsExpanding(false)
+      // Reset animation state after animation completes
+      const timer = setTimeout(() => {
+        setIsAnimating(false)
+      }, 900) // Slightly longer than CSS animation duration
+      return () => clearTimeout(timer)
+    }
+  }, [heroState, isInView])
+
+  // Handle expanding animation reset
+  useEffect(() => {
+    if (isExpanding) {
+      // Reset expanding state after animation completes
+      const timer = setTimeout(() => {
+        setIsExpanding(false)
+      }, 900) // Slightly longer than CSS animation duration
+      return () => clearTimeout(timer)
+    }
+  }, [isExpanding])
+
   // Determine if hero should be collapsed based on state and scroll position
   const isCollapsed = heroState === 'closed' || (heroState === 'auto' && !isInView)
 
   const handleToggleHero = () => {
     if (isCollapsed) {
       setHeroState('expanded')
+      setIsExpanding(true)
+      setIsAnimating(false)
     } else {
       setHeroState('closed')
+      setIsAnimating(true)
+      setIsExpanding(false)
     }
   }
 
@@ -48,6 +78,8 @@ export function useHeroState() {
   return {
     elementRef,
     isCollapsed,
+    isAnimating,
+    isExpanding,
     handleToggleHero,
     handleCloseHero
   }

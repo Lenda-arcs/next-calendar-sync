@@ -10,6 +10,8 @@ interface DynamicNavbarProps {
   userEmail?: string
   teacherProfile: PublicProfile
   isCollapsed: boolean
+  isAnimating: boolean
+  isExpanding: boolean
   onToggleHero: () => void
   onCloseHero: () => void
 }
@@ -18,6 +20,8 @@ export default function DynamicNavbar({
   userEmail, 
   teacherProfile,
   isCollapsed,
+  isAnimating,
+  isExpanding,
   onToggleHero,
   onCloseHero
 }: DynamicNavbarProps) {
@@ -46,11 +50,17 @@ export default function DynamicNavbar({
           </div>
           
           <div className="flex items-center space-x-4">
-            {/* Collapsed Teacher Avatar - shows when collapsed */}
-            {isCollapsed && (
+            {/* Collapsed Teacher Avatar - shows when collapsed or expanding */}
+            {(isCollapsed || isExpanding) && (
               <div className="flex items-center gap-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full border border-white/40 bg-white/50 flex items-center justify-center overflow-hidden shadow-sm">
+                  <div className={`
+                    w-8 h-8 rounded-full border border-white/40 bg-white/50 
+                    flex items-center justify-center overflow-hidden shadow-sm
+                    transition-all duration-500 ease-in-out
+                    ${isAnimating ? 'animate-morph-in' : ''}
+                    ${isExpanding ? 'animate-morph-out-reverse' : ''}
+                  `}>
                     {teacherProfile?.profile_image_url ? (
                       <img
                         src={teacherProfile.profile_image_url}
@@ -90,7 +100,7 @@ export default function DynamicNavbar({
         {/* Expandable Hero Content - Hidden when collapsed */}
         <div className={`
           overflow-hidden transition-all duration-500 ease-in-out
-          ${isCollapsed ? 'max-h-0 opacity-0' : 'max-h-[800px] opacity-100'}
+          ${isCollapsed && !isExpanding ? 'max-h-0 opacity-0' : 'max-h-[800px] opacity-100'}
         `}>
           <div className="py-6 relative">
             {/* Close Button - Top Right */}
@@ -103,10 +113,107 @@ export default function DynamicNavbar({
             </button>
 
             {/* Hero Content */}
-            <TeacherHeroContent teacherProfile={teacherProfile} />
+            <TeacherHeroContent 
+              teacherProfile={teacherProfile} 
+              isAnimating={isAnimating}
+              isExpanding={isExpanding}
+            />
           </div>
         </div>
       </div>
+
+      {/* Custom CSS for morphing animation */}
+      <style jsx>{`
+        @keyframes morph-in {
+          0% {
+            transform: scale(1.8) translateX(-60px) translateY(20px);
+            opacity: 0.6;
+          }
+          100% {
+            transform: scale(1) translateX(0) translateY(0);
+            opacity: 1;
+          }
+        }
+
+        @media (min-width: 768px) {
+          @keyframes morph-in {
+            0% {
+              transform: scale(1.8) translateX(-140px) translateY(20px);
+              opacity: 0.6;
+            }
+            100% {
+              transform: scale(1) translateX(0) translateY(0);
+              opacity: 1;
+            }
+          }
+        }
+
+        @keyframes morph-out {
+          0% {
+            transform: scale(1);
+            opacity: 1;
+          }
+          50% {
+            transform: scale(1.5) translateY(-50px);
+            opacity: 0.9;
+          }
+          100% {
+            transform: scale(0.3) translateY(-100px);
+            opacity: 0.3;
+          }
+        }
+
+        .animate-morph-in {
+          animation: morph-in 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .animate-morph-out-reverse {
+          animation: morph-out-reverse 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes morph-out-reverse {
+          0% {
+            transform: scale(1) translateX(0) translateY(0);
+            opacity: 1;
+          }
+          100% {
+            transform: scale(1.8) translateX(-60px) translateY(20px);
+            opacity: 0.4;
+          }
+        }
+
+        @media (min-width: 768px) {
+          @keyframes morph-out-reverse {
+            0% {
+              transform: scale(1) translateX(0) translateY(0);
+              opacity: 1;
+            }
+            100% {
+              transform: scale(1.8) translateX(-140px) translateY(20px);
+              opacity: 0.4;
+            }
+          }
+        }
+
+        .animate-morph-out {
+          animation: morph-out 0.5s ease-in;
+        }
+
+        .animate-morph-out-fast {
+          animation: morph-out-fast 0.15s ease-in forwards;
+        }
+
+        @keyframes morph-out-fast {
+          0% {
+            transform: scale(1);
+            opacity: 1;
+          }
+          100% {
+            transform: scale(0.3) translateY(-100px);
+            opacity: 0;
+          }
+        }
+      `}</style>
     </header>
   )
 } 

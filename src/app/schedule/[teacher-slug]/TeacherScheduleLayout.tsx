@@ -18,6 +18,8 @@ export default function TeacherScheduleLayout({
   const {
     elementRef,
     isCollapsed,
+    isAnimating,
+    isExpanding,
     handleToggleHero,
     handleCloseHero
   } = useHeroState()
@@ -29,6 +31,8 @@ export default function TeacherScheduleLayout({
         userEmail={user?.email || undefined}
         teacherProfile={profile}
         isCollapsed={isCollapsed}
+        isAnimating={isAnimating}
+        isExpanding={isExpanding}
         onToggleHero={handleToggleHero}
         onCloseHero={handleCloseHero}
       />

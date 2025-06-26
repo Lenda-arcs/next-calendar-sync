@@ -7,9 +7,11 @@ import { PublicProfile } from '@/lib/types'
 
 interface TeacherHeroContentProps {
   teacherProfile: PublicProfile
+  isAnimating: boolean
+  isExpanding: boolean
 }
 
-export default function TeacherHeroContent({ teacherProfile }: TeacherHeroContentProps) {
+export default function TeacherHeroContent({ teacherProfile, isAnimating, isExpanding }: TeacherHeroContentProps) {
   // Generate description
   const getDescription = (profile: PublicProfile) => {
     if (profile?.bio && profile.bio.trim()) {
@@ -33,12 +35,18 @@ export default function TeacherHeroContent({ teacherProfile }: TeacherHeroConten
   return (
     <>
       {/* Enhanced Mobile View */}
-      <div className="md:hidden">
+      <div className="md:hidden px-4">
         <div className="space-y-4">
           {/* Profile Header */}
           <div className="flex items-center gap-4">
             <div className="flex-shrink-0">
-              <div className="w-16 h-16 rounded-full border-2 border-white/40 bg-white/50 flex items-center justify-center text-xl overflow-hidden shadow-lg">
+              <div className={`
+                w-16 h-16 rounded-full border-2 border-white/40 bg-white/50 
+                flex items-center justify-center text-xl overflow-hidden shadow-lg
+                transition-all duration-500 ease-in-out
+                ${isAnimating ? 'animate-morph-out' : ''}
+                ${isExpanding ? 'animate-morph-in-reverse' : ''}
+              `}>
                 {teacherProfile?.profile_image_url ? (
                   <img
                     src={teacherProfile.profile_image_url}
@@ -157,7 +165,13 @@ export default function TeacherHeroContent({ teacherProfile }: TeacherHeroConten
         <div className="flex items-start gap-8">
           {/* Profile Image */}
           <div className="flex-shrink-0">
-            <div className="w-24 h-24 lg:w-32 lg:h-32 rounded-full border-2 border-white/40 bg-white/50 flex items-center justify-center text-2xl lg:text-3xl overflow-hidden shadow-lg">
+            <div className={`
+              w-24 h-24 lg:w-32 lg:h-32 rounded-full border-2 border-white/40 bg-white/50 
+              flex items-center justify-center text-2xl lg:text-3xl overflow-hidden shadow-lg
+              transition-all duration-500 ease-in-out
+              ${isAnimating && !isExpanding ? 'animate-morph-out' : ''}
+              ${isExpanding ? 'animate-morph-out-fast' : ''}
+            `}>
               {teacherProfile?.profile_image_url ? (
                 <img
                   src={teacherProfile.profile_image_url}
@@ -276,6 +290,39 @@ export default function TeacherHeroContent({ teacherProfile }: TeacherHeroConten
           </div>
         </div>
       </div>
+
+      {/* Custom CSS for morphing animation */}
+      <style jsx>{`
+        @keyframes morph-out {
+          0% {
+            transform: scale(1) translateX(0) translateY(0);
+            opacity: 1;
+          }
+          100% {
+            transform: scale(0.5) translateX(-100px) translateY(-25px);
+            opacity: 0.4;
+          }
+        }
+
+        .animate-morph-out {
+          animation: morph-out 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .animate-morph-in-reverse {
+          animation: morph-in-reverse 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes morph-in-reverse {
+          0% {
+            transform: scale(0.5) translateX(-100px) translateY(-25px);
+            opacity: 0.4;
+          }
+          100% {
+            transform: scale(1) translateX(0) translateY(0);
+            opacity: 1;
+          }
+        }
+      `}</style>
     </>
   )
 } 
