@@ -36,4 +36,5 @@ export {
 export { useOrigin, useFullUrl } from './useOrigin'
 export { useEventExport } from './useEventExport'
 export { useScheduleExport } from './useScheduleExport'
-export { useOwnerAuth } from './useOwnerAuth' 
+export { useOwnerAuth } from './useOwnerAuth'
+export { useScreenshotMode } from './useScreenshotMode' 

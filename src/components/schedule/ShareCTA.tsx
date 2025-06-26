@@ -1,12 +1,14 @@
 'use client'
 
-import React from 'react'
+import React, { useState } from 'react'
 import { Download, Share2 } from 'lucide-react'
 import { Button, Card, LoadingOverlay } from '@/components/ui'
 import { useScheduleFilters } from './FilterProvider'
 import { useScheduleExport, useOwnerAuth } from '@/lib/hooks'
+import { useScreenshotMode } from '@/lib/hooks'
 import { SHARE_CTA_CONTENT, EXPORT_CONFIG } from '@/lib/constants/export-constants'
 import { ExportPreview } from './ExportPreview'
+import { ExportOptionsDialog } from '.'
 
 interface ShareCTAProps {
   currentUserId?: string
@@ -19,16 +21,32 @@ export function ShareCTA({
   teacherProfileId, 
   teacherName = 'Teacher' 
 }: ShareCTAProps) {
+  const [showExportDialog, setShowExportDialog] = useState(false)
   const { filteredEvents } = useScheduleFilters()
   const { isOwner } = useOwnerAuth({ currentUserId, teacherProfileId })
   const { handleExport, isExporting, showExportPreview, canExport } = useScheduleExport({
     teacherName,
     events: filteredEvents
   })
+  const { isScreenshotMode, activateScreenshotMode } = useScreenshotMode()
   
   // Don't render if not owner or no events
   if (!isOwner || !canExport) {
     return null
+  }
+
+  const handleExportClick = () => {
+    setShowExportDialog(true)
+  }
+
+  const handlePngExport = () => {
+    setShowExportDialog(false)
+    handleExport()
+  }
+
+  const handleScreenshotMode = () => {
+    setShowExportDialog(false)
+    activateScreenshotMode()
   }
 
   return (
@@ -47,8 +65,8 @@ export function ShareCTA({
           
           <div className="flex gap-2 sm:flex-shrink-0">
             <Button
-              onClick={handleExport}
-              disabled={isExporting}
+              onClick={handleExportClick}
+              disabled={isExporting || isScreenshotMode}
               size="lg"
               className="bg-blue-600 hover:bg-blue-700 text-white min-w-[140px]"
             >
@@ -90,6 +108,16 @@ export function ShareCTA({
       <LoadingOverlay
         isVisible={isExporting}
         message={EXPORT_CONFIG.EXPORT_MESSAGES.EXPORTING}
+      />
+
+      {/* Export Options Dialog */}
+      <ExportOptionsDialog
+        isOpen={showExportDialog}
+        onOpenChange={setShowExportDialog}
+        onPngExport={handlePngExport}
+        onScreenshotMode={handleScreenshotMode}
+        isExporting={isExporting}
+        isScreenshotMode={isScreenshotMode}
       />
     </>
   )

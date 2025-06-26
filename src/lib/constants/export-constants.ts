@@ -17,4 +17,22 @@ export const SHARE_CTA_CONTENT = {
     EXPORTING: 'Exporting...',
     SHARE: 'Share'
   }
+} as const
+
+export const EXPORT_DIALOG_CONTENT = {
+  TITLE: 'Export Your Schedule',
+  DESCRIPTION: 'Choose how you\'d like to export your filtered events for sharing.',
+  PNG_EXPORT: {
+    TITLE: 'Automatic PNG Export',
+    DESCRIPTION: 'Generates a clean PNG image optimized for Instagram stories.',
+    BUTTON: 'Generate PNG',
+    BUTTON_LOADING: 'Generating PNG...'
+  },
+  SCREENSHOT_MODE: {
+    TITLE: 'Screenshot Mode',
+    DESCRIPTION: 'Temporarily hides page elements so you can take your own screenshot with any tool.',
+    BUTTON: 'Enter Screenshot Mode',
+    BUTTON_ACTIVE: 'Screenshot mode active...',
+    ACTIVE_MESSAGE: 'Page elements hidden for 5 seconds. Take your screenshot now!'
+  }
 } as const 

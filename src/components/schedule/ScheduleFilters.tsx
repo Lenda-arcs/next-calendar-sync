@@ -18,7 +18,6 @@ export function ScheduleFilters() {
   
   const {
     filters,
-    filteredEvents,
     hasActiveFilters,
     clearAllFilters
   } = useScheduleFilters()

@@ -16,7 +16,7 @@ export function FiltersWithShare({
   teacherName 
 }: FiltersWithShareProps) {
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 screenshot-hide">
       {/* Share CTA on top for both desktop and mobile */}
       <ShareCTA 
         currentUserId={currentUserId}
