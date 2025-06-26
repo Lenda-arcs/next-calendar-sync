@@ -206,7 +206,7 @@ export function ScheduleFilters() {
           >
             <AccordionItem value="filters" className="border-none">
               <AccordionTrigger className="px-4 py-2 hover:no-underline cursor-pointer group text-sm">
-                <div className="flex items-center justify-between w-full mr-4">
+                <div className="flex items-center justify-between w-full">
                   <div className="flex items-center gap-2 flex-1 min-w-0">
                     <Filter className="h-4 w-4 flex-shrink-0" />
                     <span className="text-sm font-normal truncate">Find Your Perfect Class</span>
@@ -230,21 +230,19 @@ export function ScheduleFilters() {
                       </Badge>
                     )}
                   </div>
+                  {hasActiveFilters && (
+                    <div
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        clearAllFilters()
+                      }}
+                      className="text-xs px-2 py-0.5 h-6 hover:bg-destructive/10 hover:text-destructive transition-colors cursor-pointer rounded flex items-center justify-center ml-2 flex-shrink-0"
+                    >
+                      <X className="h-3 w-3 sm:mr-1" />
+                      <span className="hidden sm:inline">Clear All</span>
+                    </div>
+                  )}
                 </div>
-                {hasActiveFilters && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      clearAllFilters()
-                    }}
-                    className="text-xs px-2 py-0.5 mr-2 h-6 hover:bg-destructive/10 hover:text-destructive transition-colors"
-                  >
-                    <X className="h-3 w-3 sm:mr-1" />
-                    <span className="hidden sm:inline">Clear All</span>
-                  </Button>
-                )}
               </AccordionTrigger>
               <AccordionContent className="px-4 sm:px-6 pb-6">
                 <div className="space-y-6">
