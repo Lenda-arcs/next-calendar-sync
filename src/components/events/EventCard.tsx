@@ -18,7 +18,6 @@ interface EventCardProps {
   imageQuery: string
   tags?: EventTag[]
   variant?: EventDisplayVariant
-  forceMobile?: boolean
   className?: string
   onClick?: () => void
   // Optional props from EnhancedDisplayEvent that aren't used in visual display
@@ -36,7 +35,6 @@ export const EventCard = React.memo<EventCardProps>(
     imageQuery,
     tags = [],
     variant = 'compact',
-    forceMobile = false,
     className,
     onClick,
   }) => {
@@ -80,7 +78,7 @@ export const EventCard = React.memo<EventCardProps>(
 
       switch (variant) {
         case 'minimal':
-          return cn(baseClasses, 'p-2 sm:p-3')
+          return cn(baseClasses, 'p-3 sm:p-4') // Same padding as compact
         case 'full':
           return cn(baseClasses, 'p-4 sm:p-6')
         case 'compact':
@@ -102,7 +100,7 @@ export const EventCard = React.memo<EventCardProps>(
     }
 
     // Check if we should show image based on variant and screen size
-    const shouldShowImage = variant !== 'minimal' || !forceMobile
+    const shouldShowImage = variant !== 'minimal'
 
     const handleClick = () => {
       if (onClick) {
@@ -193,30 +191,7 @@ export const EventCard = React.memo<EventCardProps>(
           variant={variant}
         />
 
-        {/* Tags below content for minimal variant or when no image */}
-        {(variant === 'minimal' || !shouldShowImage) && 
-          (classTypes.length > 0 || audienceLevels.length > 0) && (
-          <div className="mt-2 space-y-1">
-            {classTypes.length > 0 && (
-              <TagList
-                tags={classTypes}
-                variant="purple"
-                layout="inline"
-                showLabel={false}
-                maxTags={3}
-              />
-            )}
-            {audienceLevels.length > 0 && (
-              <TagList
-                tags={audienceLevels}
-                variant="blue"
-                layout="inline"
-                showLabel={false}
-                maxTags={3}
-              />
-            )}
-          </div>
-        )}
+
       </Card>
     )
   }

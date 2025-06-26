@@ -25,7 +25,7 @@ export function EventDetails({
   const getTitleClasses = () => {
     switch (variant) {
       case 'minimal':
-        return 'text-sm font-medium text-foreground line-clamp-1'
+        return 'text-base font-semibold text-foreground mb-1 line-clamp-2' // Same as compact
       case 'full':
         return 'text-xl font-semibold text-foreground mb-2 line-clamp-2'
       case 'compact':
@@ -37,7 +37,7 @@ export function EventDetails({
   const getMetaClasses = () => {
     switch (variant) {
       case 'minimal':
-        return 'text-xs text-muted-foreground'
+        return 'text-sm text-muted-foreground' // Same as compact
       case 'full':
         return 'text-sm text-muted-foreground'
       case 'compact':
@@ -46,7 +46,7 @@ export function EventDetails({
     }
   }
 
-  const shouldShowIcons = variant !== 'minimal'
+
 
   return (
     <div className={cn('flex-1', className)}>
@@ -54,10 +54,10 @@ export function EventDetails({
         {title || 'Untitled Event'}
       </h3>
       
-      <div className={cn('space-y-1', variant === 'minimal' && 'space-y-0')}>
+      <div className="space-y-1">
         {/* Date and Time */}
         <div className={cn('flex items-center', getMetaClasses())}>
-          {shouldShowIcons && <Calendar className="h-3 w-3 mr-1 flex-shrink-0" />}
+          <Calendar className="h-3 w-3 mr-1 flex-shrink-0" />
           <span className="truncate">
             {dateTime}
           </span>
@@ -65,10 +65,19 @@ export function EventDetails({
 
         {/* Location */}
         {location && (
-          <div className={cn('flex items-center', getMetaClasses())}>
-            {shouldShowIcons && <MapPin className="h-3 w-3 mr-1 flex-shrink-0" />}
+          <a
+            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={cn(
+              'flex items-center hover:text-primary transition-colors cursor-pointer',
+              getMetaClasses()
+            )}
+            onClick={(e) => e.stopPropagation()} // Prevent card click when clicking location
+          >
+            <MapPin className="h-3 w-3 mr-1 flex-shrink-0" />
             <span className="truncate">{location}</span>
-          </div>
+          </a>
         )}
       </div>
     </div>
