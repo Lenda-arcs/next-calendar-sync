@@ -189,7 +189,7 @@ const StudioForm: React.FC<Props> = ({
           billing_email: formData.billing_email || null,
           address: formData.address || null,
           notes: formData.notes || null,
-          currency: "EUR", // Default currency
+          currency: "EUR", // Default currency //TODO: make this dynamic
         };
 
         await createMutation.mutateAsync(studioData);
