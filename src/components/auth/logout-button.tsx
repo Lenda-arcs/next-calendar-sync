@@ -1,10 +1,10 @@
 'use client'
 
-import React from 'react'
+import React, { useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { NavLink } from '@/components/ui'
 import { createClient } from '@/lib/supabase'
-import { LogOut, Loader2 } from 'lucide-react'
+import { LogOut } from 'lucide-react'
 
 interface LogoutButtonProps {
   className?: string
@@ -21,7 +21,7 @@ export function LogoutButton({
   const supabase = createClient()
   const [loading, setLoading] = React.useState(false)
 
-  const handleLogout = async () => {
+  const handleLogout = useCallback(async () => {
     setLoading(true)
     
     try {
@@ -39,18 +39,18 @@ export function LogoutButton({
     } finally {
       setLoading(false)
     }
-  }
+  }, [router, supabase])
 
   return (
     <NavLink
       text={loading ? 'Signing out...' : 'Sign Out'}
-      fallbackIcon={loading ? Loader2 : LogOut}
+      fallbackIcon={LogOut}
       onClick={handleLogout}
       disabled={loading}
+      isLoading={loading}
       className={className}
       avatarSize={avatarSize}
       showTextOnMobile={showTextOnMobile}
-      animateIcon={loading}
     />
   )
 } 

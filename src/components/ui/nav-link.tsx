@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { LucideIcon, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { memo } from 'react'
 
 interface NavLinkProps {
   href?: string
@@ -29,7 +30,7 @@ const iconSizes = {
   lg: 'h-4 w-4'
 }
 
-export function NavLink({ 
+export const NavLink = memo(function NavLink({ 
   href, 
   text, 
   avatarSrc, 
@@ -106,4 +107,4 @@ export function NavLink({
       {content}
     </span>
   )
-} 
+}) 

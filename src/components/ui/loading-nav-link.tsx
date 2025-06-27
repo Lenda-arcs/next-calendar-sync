@@ -1,7 +1,7 @@
 'use client'
 
 import { usePathname } from 'next/navigation'
-import { ReactNode } from 'react'
+import { ReactNode, useCallback, memo } from 'react'
 import { LucideIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { NavLink } from './nav-link'
@@ -19,7 +19,7 @@ interface LoadingNavLinkProps {
   children?: ReactNode
 }
 
-export function LoadingNavLink({
+export const LoadingNavLink = memo(function LoadingNavLink({
   href,
   text,
   icon,
@@ -36,9 +36,9 @@ export function LoadingNavLink({
   const isActive = pathname === href
   const itemIsLoading = isLoading(href)
 
-  const handleClick = () => {
+  const handleClick = useCallback(() => {
     setLoading(href)
-  }
+  }, [setLoading, href])
 
   return (
     <div onClick={handleClick}>
@@ -59,4 +59,4 @@ export function LoadingNavLink({
       {children}
     </div>
   )
-} 
+}) 
