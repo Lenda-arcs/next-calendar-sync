@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import { Card, CardContent, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import DataLoader from '@/components/ui/data-loader'
@@ -9,7 +9,7 @@ import { EventInvoiceCard } from './EventInvoiceCard'
 import { HistoricalSyncCTA } from './HistoricalSyncCTA'
 import { UnmatchedEventsSection } from './UnmatchedEventsSection'
 import { useSupabaseQuery } from '@/lib/hooks/useSupabaseQuery'
-import { getUninvoicedEventsByStudio, getUnmatchedEvents, calculateTotalPayout, EventWithStudio } from '@/lib/invoice-utils'
+import { getUninvoicedEvents, getUnmatchedEvents, calculateTotalPayout, EventWithStudio } from '@/lib/invoice-utils'
 import { useCalendarFeeds } from '@/lib/hooks/useCalendarFeeds'
 import { RefreshCw } from 'lucide-react'
 
@@ -22,16 +22,31 @@ interface UninvoicedEventsListProps {
 export function UninvoicedEventsList({ userId, onCreateInvoice, onCreateStudio }: UninvoicedEventsListProps) {
   const [selectedEvents, setSelectedEvents] = useState<Record<string, string[]>>({})
 
+  // Use the same query key as InvoiceManagement to leverage caching
   const {
-    data: eventsByStudio,
+    data: uninvoicedEvents,
     isLoading,
     error,
     refetch
   } = useSupabaseQuery({
-    queryKey: ['uninvoiced-events-by-studio', userId],
-    fetcher: () => getUninvoicedEventsByStudio(userId),
+    queryKey: ['uninvoiced-events', userId],
+    fetcher: () => getUninvoicedEvents(userId),
     enabled: !!userId
   })
+
+  // Group events by studio client-side
+  const eventsByStudio = useMemo(() => {
+    if (!uninvoicedEvents) return null
+    
+    return uninvoicedEvents.reduce((acc, event) => {
+      const studioId = event.studio_id!
+      if (!acc[studioId]) {
+        acc[studioId] = []
+      }
+      acc[studioId].push(event)
+      return acc
+    }, {} as Record<string, EventWithStudio[]>)
+  }, [uninvoicedEvents])
 
   // Fetch unmatched events (events without studio assignment)
   const {

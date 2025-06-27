@@ -1,5 +1,5 @@
 import { Container } from '@/components/layout/container'
-import { InvoiceManagement } from '@/components/events/InvoiceManagement'
+import { ManageInvoicesClient } from './ManageInvoicesClient'
 import { createServerClient } from '@/lib/supabase-server'
 import { redirect } from 'next/navigation'
 
@@ -17,7 +17,7 @@ export default async function ManageInvoicesPage() {
       title="Manage Invoices"
       subtitle="Create and track invoices for your events and services."
     >
-      <InvoiceManagement userId={user.id} />
+      <ManageInvoicesClient userId={user.id} />
     </Container>
   )
 } 
