@@ -230,38 +230,41 @@ const PublicEventList: React.FC<PublicEventListProps> = ({
       {() => (
         <div className={cn('space-y-6', className)}>
           {/* Mobile Layout: Grouped by day with headers */}
-          <div className="block md:hidden space-y-8">
-            {groupedEvents.map(({ date, events: dayEvents }) => {
-              const { label } = getDateHeader(date, currentDate)
-              const dateKey = date
+          <div className="block md:hidden">
+            {/* Container with smooth height transitions and minimum height */}
+            <div className="transition-all duration-500 ease-in-out min-h-[400px] space-y-8">
+              {groupedEvents.map(({ date, events: dayEvents }) => {
+                const { label } = getDateHeader(date, currentDate)
+                const dateKey = date
 
-              return (
-                <div key={dateKey} className="space-y-4">
-                  {/* Date Header */}
-                  <div className="flex items-center gap-3">
-                    <h3 className="text-xl font-semibold text-foreground">
-                      {label}
-                    </h3>
-                    <div className="flex-1 h-px bg-border" />
-                    <span className="text-sm text-muted-foreground">
-                      {dayEvents.length} {dayEvents.length === 1 ? 'class' : 'classes'}
-                    </span>
-                  </div>
+                return (
+                  <div key={dateKey} className="space-y-4 transition-all duration-300 ease-in-out">
+                    {/* Date Header */}
+                    <div className="flex items-center gap-3">
+                      <h3 className="text-xl font-semibold text-foreground">
+                        {label}
+                      </h3>
+                      <div className="flex-1 h-px bg-border" />
+                      <span className="text-sm text-muted-foreground">
+                        {dayEvents.length} {dayEvents.length === 1 ? 'class' : 'classes'}
+                      </span>
+                    </div>
 
-                  {/* Events Grid for Mobile */}
-                  <div className="grid grid-cols-1 gap-6">
-                    {dayEvents.map((event, index) => (
-                      <div key={`${dateKey}-${index}`} className="flex flex-col">
-                        <EventCard
-                          {...convertEventToCardProps(event, allAvailableTags)}
-                          variant={variant}
-                        />
-                      </div>
-                    ))}
+                    {/* Events Grid for Mobile */}
+                    <div className="grid grid-cols-1 gap-6">
+                      {dayEvents.map((event, index) => (
+                        <div key={`${dateKey}-${index}`} className="flex flex-col transition-all duration-300 ease-in-out">
+                          <EventCard
+                            {...convertEventToCardProps(event, allAvailableTags)}
+                            variant={variant}
+                          />
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )
-            })}
+                )
+              })}
+            </div>
           </div>
 
           {/* Desktop Layout: Clean grid with date badges */}

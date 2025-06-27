@@ -135,14 +135,20 @@ export function ScheduleFilters() {
             >
               <Filter className="h-5 w-5 mr-2" />
               <span className="font-medium">Filters</span>
-              {hasActiveFilters && (
+              
+              {/* Fixed space for badge to prevent layout shifts */}
+              <div className="ml-2 min-w-[28px] flex justify-center">
                 <Badge 
                   variant="secondary" 
-                  className="ml-2 px-2 py-0.5 text-xs animate-pulse"
+                  className={`px-2 py-0.5 text-xs transition-all duration-200 ${
+                    hasActiveFilters 
+                      ? 'opacity-100 scale-100 animate-pulse' 
+                      : 'opacity-0 scale-95 pointer-events-none'
+                  }`}
                 >
-                  {getActiveFiltersCount()}
+                  {getActiveFiltersCount() || '0'}
                 </Badge>
-              )}
+              </div>
             </Button>
           </PopoverTrigger>
           <PopoverContent 
@@ -192,7 +198,7 @@ export function ScheduleFilters() {
             className="w-full"
           >
             <AccordionItem value="filters" className="border-none">
-              <AccordionTrigger className="px-4 py-2 hover:no-underline cursor-pointer group text-sm">
+              <AccordionTrigger className="px-4 py-2 hover:no-underline cursor-pointer group text-sm min-h-[40px]">
                 <div className="flex items-center justify-between w-full">
                   <div className="flex items-center gap-2 flex-1 min-w-0">
                     <Filter className="h-4 w-4 flex-shrink-0" />
@@ -200,35 +206,50 @@ export function ScheduleFilters() {
                     <div className="text-xs text-gray-400 group-hover:text-blue-500 transition-colors opacity-0 group-hover:opacity-100 hidden sm:block flex-shrink-0">
                       Click to expand
                     </div>
-                    {hasActiveFilters && (
+                    
+                    {/* Fixed width container for badges to prevent layout shifts */}
+                    <div className="flex items-center gap-1 min-w-[80px] justify-end">
                       <Badge 
                         variant="secondary" 
-                        className="px-1.5 py-0.5 text-xs animate-pulse flex-shrink-0"
+                        className={`px-1.5 py-0.5 text-xs flex-shrink-0 transition-all duration-200 ${
+                          hasActiveFilters 
+                            ? 'opacity-100 scale-100 animate-pulse' 
+                            : 'opacity-0 scale-95 pointer-events-none'
+                        }`}
                       >
-                        {getActiveFiltersCount()}
+                        {getActiveFiltersCount() || '0'}
                       </Badge>
-                    )}
-                    {isFloatingVisible && (
+                      
                       <Badge 
                         variant="outline" 
-                        className="px-1.5 py-0.5 text-xs opacity-60 flex-shrink-0 hidden sm:inline-flex"
+                        className={`px-1.5 py-0.5 text-xs flex-shrink-0 hidden sm:inline-flex transition-all duration-200 ${
+                          isFloatingVisible 
+                            ? 'opacity-60 scale-100' 
+                            : 'opacity-0 scale-95 pointer-events-none'
+                        }`}
                       >
                         Use floating filter below
                       </Badge>
-                    )}
+                    </div>
                   </div>
-                  {hasActiveFilters && (
+                  
+                  {/* Fixed width container for clear button to prevent layout shifts */}
+                  <div className="flex items-center ml-2 min-w-[60px] justify-end">
                     <div
                       onClick={(e) => {
                         e.stopPropagation()
                         clearAllFilters()
                       }}
-                      className="text-xs px-2 py-0.5 h-6 hover:bg-destructive/10 hover:text-destructive transition-colors cursor-pointer rounded flex items-center justify-center ml-2 flex-shrink-0"
+                      className={`text-xs px-2 py-0.5 h-6 hover:bg-destructive/10 hover:text-destructive transition-all duration-200 cursor-pointer rounded flex items-center justify-center flex-shrink-0 ${
+                        hasActiveFilters 
+                          ? 'opacity-100 scale-100' 
+                          : 'opacity-0 scale-95 pointer-events-none'
+                      }`}
                     >
                       <X className="h-3 w-3 sm:mr-1" />
                       <span className="hidden sm:inline">Clear All</span>
                     </div>
-                  )}
+                  </div>
                 </div>
               </AccordionTrigger>
               <AccordionContent className="px-4 sm:px-6 pb-6">

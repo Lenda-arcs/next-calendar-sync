@@ -2,29 +2,11 @@
 
 import React from 'react'
 import { ScheduleFilters } from './ScheduleFilters'
-import { ShareCTA } from './ShareCTA'
 
-interface FiltersWithShareProps {
-  currentUserId?: string
-  teacherProfileId?: string
-  teacherName?: string
-}
-
-export function FiltersWithShare({ 
-  currentUserId, 
-  teacherProfileId, 
-  teacherName 
-}: FiltersWithShareProps) {
+export function FiltersWithShare() {
   return (
     <div className="space-y-4 screenshot-hide">
-      {/* Share CTA on top for both desktop and mobile */}
-      <ShareCTA 
-        currentUserId={currentUserId}
-        teacherProfileId={teacherProfileId}
-        teacherName={teacherName}
-      />
-      
-      {/* Filter accordion below */}
+      {/* Filter accordion */}
       <ScheduleFilters />
     </div>
   )

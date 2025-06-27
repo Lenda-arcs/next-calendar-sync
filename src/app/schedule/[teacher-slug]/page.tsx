@@ -3,7 +3,8 @@ import {
   FilterProvider, 
   FiltersWithShare, 
   FilteredEventList, 
-  ScheduleHeader 
+  ScheduleHeader,
+  ShareCTA 
 } from '@/components/schedule'
 import { createServerClient } from '@/lib/supabase-server'
 
@@ -35,15 +36,18 @@ export default async function PublicSchedulePage({ params }: PageProps) {
     <Container>
       <FilterProvider>
         <div className="space-y-6">
-          {/* Header with Filter Statistics */}
-          <ScheduleHeader />
-          
-          {/* Filter Components with Share CTA */}
-          <FiltersWithShare 
+          {/* Export Cart */}
+          <ShareCTA 
             currentUserId={user?.id}
             teacherProfileId={profile?.id || undefined}
             teacherName={profile?.name || undefined}
           />
+          
+          {/* Header with Filter Statistics */}
+          <ScheduleHeader />
+          
+          {/* Filter Components */}
+          <FiltersWithShare />
 
           {/* Filtered Events List */}
           <FilteredEventList

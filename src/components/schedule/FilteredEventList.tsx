@@ -105,26 +105,27 @@ export function FilteredEventList({ userId, variant = 'compact', className }: Fi
 
   return (
     <>
-      <DataLoader
-        data={filteredEvents}
-        loading={isLoading}
-        error={errorMessage}
-        empty={emptyState}
-        skeleton={() => <PublicEventListSkeleton variant={isScreenshotMode ? 'minimal' : variant} />}
-        skeletonCount={1}
-      >
-        {(data) => (
-          <PublicEventList
-            userId={userId}
-            variant={isScreenshotMode ? 'minimal' : variant}
-            events={data}
-            tags={allTags}
-            disableFetching={true}
-            className={className}
-          />
-        )}
-      </DataLoader>
-      
+      <div className="transition-all duration-500 ease-in-out min-h-[300px]">
+        <DataLoader
+          data={filteredEvents}
+          loading={isLoading}
+          error={errorMessage}
+          empty={emptyState}
+          skeleton={() => <PublicEventListSkeleton variant={isScreenshotMode ? 'minimal' : variant} />}
+          skeletonCount={1}
+        >
+          {(data) => (
+            <PublicEventList
+              userId={userId}
+              variant={isScreenshotMode ? 'minimal' : variant}
+              events={data}
+              tags={allTags}
+              disableFetching={true}
+              className={className}
+            />
+          )}
+        </DataLoader>
+      </div>
 
     </>
   )

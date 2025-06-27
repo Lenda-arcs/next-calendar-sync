@@ -30,8 +30,8 @@ export function ShareCTA({
   })
   const { isScreenshotMode, activateScreenshotMode } = useScreenshotMode()
   
-  // Don't render if not owner or no events
-  if (!isOwner || !canExport) {
+  // Don't render if not owner
+  if (!isOwner) {
     return null
   }
 
@@ -59,16 +59,19 @@ export function ShareCTA({
               {SHARE_CTA_CONTENT.TITLE}
             </h3>
             <p className="text-sm text-gray-600">
-              {SHARE_CTA_CONTENT.DESCRIPTION}
+              {canExport 
+                ? SHARE_CTA_CONTENT.DESCRIPTION
+                : "Apply filters to see your events and enable export functionality."
+              }
             </p>
           </div>
           
           <div className="flex gap-2 sm:flex-shrink-0">
             <Button
               onClick={handleExportClick}
-              disabled={isExporting || isScreenshotMode}
+              disabled={!canExport || isExporting || isScreenshotMode}
               size="lg"
-              className="bg-blue-600 hover:bg-blue-700 text-white min-w-[140px]"
+              className="bg-blue-600 hover:bg-blue-700 text-white min-w-[140px] disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isExporting ? (
                 <>
