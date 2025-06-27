@@ -1,6 +1,7 @@
 export * from './useCalendarFeeds'
 export * from './useCalendarSync'
 export * from './useEventExport'
+export * from './useNavLoading'
 export * from './useOrigin'
 export * from './useOwnerAuth'
 export * from './useResponsive'
