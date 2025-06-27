@@ -5,6 +5,8 @@ import Link from 'next/link'
 import { Form, FormField, Button, useForm } from '@/components/ui'
 import { createClient } from '@/lib/supabase'
 import { Mail, Lock, Eye, EyeOff, AlertCircle, Loader2 } from 'lucide-react'
+// Uncomment when you want to add CAPTCHA protection
+// import HCaptcha from '@hcaptcha/react-hcaptcha'
 
 interface LoginFormProps {
   redirectTo?: string
@@ -20,6 +22,19 @@ export function LoginForm({ redirectTo = '/app', className }: LoginFormProps) {
   const supabase = createClient()
   const [showPassword, setShowPassword] = React.useState(false)
   const [authError, setAuthError] = React.useState<string>('')
+  const [finalRedirectTo, setFinalRedirectTo] = React.useState(redirectTo)
+  // Uncomment when you want to add CAPTCHA protection
+  // const [captchaToken, setCaptchaToken] = React.useState<string | null>(null)
+  // const captchaRef = React.useRef<any>(null)
+
+  // Check for returnTo parameter in URL
+  React.useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search)
+    const returnToParam = urlParams.get('returnTo')
+    if (returnToParam) {
+      setFinalRedirectTo(returnToParam)
+    }
+  }, [redirectTo])
 
   const {
     values,
@@ -54,9 +69,18 @@ export function LoginForm({ redirectTo = '/app', className }: LoginFormProps) {
       setAuthError('')
 
       try {
+        // Get CAPTCHA token if enabled
+        // let token = captchaToken
+        // if (!token) {
+        //   const captchaResponse = await captchaRef.current?.execute({ async: true })
+        //   token = captchaResponse?.response ?? null
+        // }
+
         const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
+          // Uncomment when CAPTCHA is enabled
+          // options: { captchaToken: token ?? undefined },
         })
 
         if (error) {
@@ -66,10 +90,16 @@ export function LoginForm({ redirectTo = '/app', className }: LoginFormProps) {
 
         if (data.user) {
           // Successful login - redirect without refresh to avoid loops
-          window.location.href = redirectTo
+          window.location.href = finalRedirectTo
         }
-      } catch (error) {
-        setAuthError('An unexpected error occurred. Please try again.')
+      } catch (error: unknown) {
+        // Handle rate limiting errors
+        const errorObj = error as { status?: number; message?: string }
+        if (errorObj?.status === 429) {
+          setAuthError('Too many login attempts. Please wait a few minutes and try again.')
+        } else {
+          setAuthError('An unexpected error occurred. Please try again.')
+        }
         console.error('Login error:', error)
       }
     }
@@ -80,7 +110,7 @@ export function LoginForm({ redirectTo = '/app', className }: LoginFormProps) {
               const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback?redirect_to=${encodeURIComponent(redirectTo)}`
+          redirectTo: `${window.location.origin}/auth/callback?redirect_to=${encodeURIComponent(finalRedirectTo)}`
         }
       })
 

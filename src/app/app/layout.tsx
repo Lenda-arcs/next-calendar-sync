@@ -1,5 +1,5 @@
 import { createServerClient } from '@/lib/supabase-server'
-// import { redirect } from 'next/navigation' // Temporarily disabled for development
+import { redirect } from 'next/navigation'
 import { LogoutButton } from '@/components/auth'
 import { MobileNavMenu } from '@/components/ui'
 import { PATHS } from '@/lib/paths'
@@ -44,10 +44,10 @@ export default async function AppLayout({ children }: AppLayoutProps) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  // Temporarily disable auth check for development
-  // if (!user) {
-  //   redirect('/auth/sign-in')
-  // }
+  // Redirect to sign-in if no user is found
+  if (!user) {
+    redirect('/auth/sign-in')
+  }
 
   // Fetch user profile from database
   let userProfile = null
@@ -60,8 +60,7 @@ export default async function AppLayout({ children }: AppLayoutProps) {
     userProfile = profile
   }
 
-  // Mock user for development
-  const mockUser = user || { email: 'dev@example.com' }
+  // User is guaranteed to exist at this point due to auth check above
   const profileImage = userProfile?.profile_image_url
 
   return (
@@ -85,14 +84,14 @@ export default async function AppLayout({ children }: AppLayoutProps) {
 
               {/* Desktop User Info */}
               <span className="text-sm font-sans text-foreground/70 hidden sm:block">
-                {mockUser.email}
+                {user.email}
               </span>
               
               {/* Profile Link with Avatar */}
               <ActiveProfileLink 
                 profileImage={profileImage}
                 userProfile={userProfile}
-                mockUser={mockUser}
+                user={user}
               />
               
               <LogoutButton className="sm:hidden" />

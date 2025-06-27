@@ -2,6 +2,8 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import type { Database } from './database-generated.types'
+import { isProtectedRoute, isAuthRoute, getAuthRedirectUrl, AUTH_PATHS } from './src/lib/auth'
+import { authRateLimiter, generalRateLimiter, getClientIdentifier } from './src/lib/rate-limit'
 
 export async function middleware(req: NextRequest) {
   let supabaseResponse = NextResponse.next({
@@ -29,29 +31,96 @@ export async function middleware(req: NextRequest) {
     }
   )
 
-  // Get authenticated user - required for Server Components  
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  try {
+    const { pathname } = req.nextUrl
+    const clientId = getClientIdentifier(req)
 
-  // Handle auth routes (no authentication required)
-  if (req.nextUrl.pathname.startsWith('/auth/')) {
-    // If user is already logged in, redirect to dashboard
-    if (user) {
-      return NextResponse.redirect(new URL('/app', req.url))
+    // Apply rate limiting for auth routes
+    if (pathname.startsWith('/auth/') || pathname.startsWith('/api/auth/')) {
+      const rateLimitResult = await authRateLimiter.check(clientId)
+      
+      if (!rateLimitResult.success) {
+        return new NextResponse(
+          JSON.stringify({
+            error: 'Too many authentication attempts',
+            retryAfter: Math.ceil((rateLimitResult.resetTime - Date.now()) / 1000)
+          }),
+          {
+            status: 429,
+            headers: {
+              'Content-Type': 'application/json',
+              'X-RateLimit-Limit': '5',
+              'X-RateLimit-Remaining': '0',
+              'X-RateLimit-Reset': rateLimitResult.resetTime.toString(),
+              'Retry-After': Math.ceil((rateLimitResult.resetTime - Date.now()) / 1000).toString()
+            }
+          }
+        )
+      }
+    }
+
+    // Apply general rate limiting for API routes
+    if (pathname.startsWith('/api/')) {
+      const rateLimitResult = await generalRateLimiter.check(clientId)
+      
+      if (!rateLimitResult.success) {
+        return new NextResponse(
+          JSON.stringify({
+            error: 'Rate limit exceeded',
+            retryAfter: Math.ceil((rateLimitResult.resetTime - Date.now()) / 1000)
+          }),
+          {
+            status: 429,
+            headers: {
+              'Content-Type': 'application/json',
+              'X-RateLimit-Limit': '60',
+              'X-RateLimit-Remaining': '0',
+              'X-RateLimit-Reset': rateLimitResult.resetTime.toString()
+            }
+          }
+        )
+      }
+    }
+
+    // Get authenticated user
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser()
+
+    // If there's an error getting the user, treat as unauthenticated
+    if (error) {
+      console.error('Auth error in middleware:', error)
+    }
+
+    // Handle auth routes (should redirect authenticated users)
+    if (isAuthRoute(pathname)) {
+      if (user) {
+        const redirectUrl = getAuthRedirectUrl(req)
+        return NextResponse.redirect(new URL(redirectUrl, req.url))
+      }
+      return supabaseResponse
+    }
+
+    // Handle protected routes (require authentication)
+    if (isProtectedRoute(pathname)) {
+      if (!user) {
+        // Store the original URL for redirect after login
+        const signInUrl = new URL(AUTH_PATHS.SIGN_IN, req.url)
+        signInUrl.searchParams.set('returnTo', pathname)
+        return NextResponse.redirect(signInUrl)
+      }
+    }
+
+    return supabaseResponse
+  } catch (error) {
+    console.error('Middleware error:', error)
+    // On error, redirect to sign-in for protected routes
+    if (isProtectedRoute(req.nextUrl.pathname)) {
+      return NextResponse.redirect(new URL(AUTH_PATHS.SIGN_IN, req.url))
     }
     return supabaseResponse
   }
-
-  // Check if user is accessing protected /app routes
-  if (req.nextUrl.pathname.startsWith('/app')) {
-    // For all /app routes, require authentication
-    if (!user) {
-      return NextResponse.redirect(new URL('/auth/sign-in', req.url))
-    }
-  }
-
-        return supabaseResponse
 }
 
 export const config = {
