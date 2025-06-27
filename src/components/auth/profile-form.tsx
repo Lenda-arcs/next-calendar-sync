@@ -102,7 +102,7 @@ const TextArea: React.FC<{
         placeholder={placeholder}
         maxLength={maxLength}
         rows={rows}
-        className={`flex w-full rounded-xl bg-background text-sm ring-offset-background backdrop-blur-sm bg-white/50 border border-white/40 shadow-md placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-300 ease-in-out p-3 resize-none font-sans ${
+        className={`flex w-full rounded-xl bg-background text-sm ring-offset-background backdrop-blur-sm bg-white/50 border border-white/40 shadow-md placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-inset disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-300 ease-in-out p-3 resize-none font-sans ${
           error ? 'border-red-300 focus:ring-red-500' : ''
         }`}
       />

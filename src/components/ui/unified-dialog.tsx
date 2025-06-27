@@ -82,7 +82,7 @@ function UnifiedDialog({
             
             {/* Close Button */}
             {showCloseButton && (
-              <DialogPrimitive.Close className="absolute top-4 right-4 rounded-full p-2 opacity-70 ring-offset-background transition-all hover:opacity-100 hover:bg-white/50 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none">
+              <DialogPrimitive.Close className="absolute top-4 right-4 rounded-full p-2 opacity-70 ring-offset-background transition-all hover:opacity-100 hover:bg-white/50 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-inset disabled:pointer-events-none">
                 <XIcon className="h-4 w-4" />
                 <span className="sr-only">Close</span>
               </DialogPrimitive.Close>

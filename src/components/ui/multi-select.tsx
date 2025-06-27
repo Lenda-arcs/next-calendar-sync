@@ -151,7 +151,7 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({
             className={cn(
               'w-full px-3 py-2 rounded-lg text-sm text-left',
               'backdrop-blur-sm bg-white/50 border border-white/40 shadow-md',
-              'focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
+              'focus:outline-none focus:ring-2 focus:ring-ring focus:ring-inset',
               'flex items-center justify-between transition-all duration-200',
               'hover:bg-accent hover:text-accent-foreground',
               displayMode === 'badges' ? 'min-h-[48px] px-4 py-3' : 'h-10',

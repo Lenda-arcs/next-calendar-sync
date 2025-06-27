@@ -165,7 +165,7 @@ export const componentVariants = {
 // Utility functions for consistent styling (Enhanced)
 export const styleUtils = {
   // Focus ring utility
-  focusRing: 'focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
+  focusRing: 'focus:outline-none focus:ring-2 focus:ring-ring focus:ring-inset',
   
   // Transition utility
   transition: 'transition-all duration-300 ease-in-out',

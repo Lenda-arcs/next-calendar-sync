@@ -79,7 +79,7 @@ export const Select: React.FC<SelectProps> = ({
             className={cn(
               'w-full px-3 py-2 rounded-lg text-sm text-left h-10',
               'backdrop-blur-sm bg-white/50 border border-white/40 shadow-md',
-              'focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
+              'focus:outline-none focus:ring-2 focus:ring-ring focus:ring-inset',
               'flex items-center justify-between transition-all duration-200',
               'hover:bg-accent hover:text-accent-foreground',
               'disabled:cursor-not-allowed disabled:opacity-50',
