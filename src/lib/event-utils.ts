@@ -3,7 +3,7 @@ import { EventTag, convertToEventTag } from './event-types'
 import { formatEventDateTime } from './date-utils'
 
 /**
- * Processes tags from an event and matches them with available tags
+ * Processes tags from an event and matches them with available tags by slug
  */
 export function processEventTags(
   eventTags: string[] | null,
@@ -13,20 +13,40 @@ export function processEventTags(
 
   const tagMap = new Map<string, Tag>()
   availableTags.forEach(tag => {
-    if (tag.name) {
-      tagMap.set(tag.name.toLowerCase(), tag)
+    if (tag.slug) {
+      tagMap.set(tag.slug.toLowerCase(), tag)
     }
   })
 
   const matchedTags: EventTag[] = []
-  eventTags.forEach(tagName => {
-    const tag = tagMap.get(tagName.toLowerCase())
+  eventTags.forEach(tagSlug => {
+    const tag = tagMap.get(tagSlug.toLowerCase())
     if (tag) {
       matchedTags.push(convertToEventTag(tag))
     }
   })
 
   return matchedTags
+}
+
+/**
+ * Combines and processes both auto tags and custom tags from an event
+ */
+export function processAllEventTags(
+  autoTags: string[] | null,
+  customTags: string[] | null,
+  availableTags: Tag[]
+): EventTag[] {
+  // Combine both tag arrays, removing duplicates
+  const allTagNames = [
+    ...(autoTags || []),
+    ...(customTags || [])
+  ]
+  
+  // Remove duplicates while preserving order (custom tags take precedence)
+  const uniqueTagNames = Array.from(new Set(allTagNames))
+  
+  return processEventTags(uniqueTagNames, availableTags)
 }
 
 /**
@@ -93,13 +113,21 @@ export function convertEventToCardProps(
   tags: EventTag[]
   isPublic: boolean
 } {
-  // Process tags
-  const matchedTags = processEventTags(event.tags, availableTags)
+  // Process tags - check if event has custom_tags field (Event type) or just tags (PublicEvent type)
+  let matchedTags: EventTag[]
+  
+  if ('custom_tags' in event) {
+    // This is an Event type with both tags and custom_tags
+    matchedTags = processAllEventTags(event.tags, event.custom_tags, availableTags)
+  } else {
+    // This is a PublicEvent type with only tags field
+    matchedTags = processEventTags(event.tags, availableTags)
+  }
 
   // Get image URL (or empty string for placeholder)
   const imageUrl = getEventImageUrl(event, matchedTags)
 
-  // Format datetime
+  // Format date and time
   const dateTime = formatEventDateTime(event.start_time, event.end_time)
 
   // Determine if public - PublicEvent is always public, Event has visibility field

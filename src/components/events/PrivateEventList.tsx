@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { PublicEvent, Tag } from '@/lib/types'
+import { Event } from '@/lib/types'
 import { EventCard } from './EventCard'
 import DataLoader from '@/components/ui/data-loader'
 import { DashboardUpcomingClassesSkeleton } from '@/components/ui/skeleton'
@@ -9,6 +9,7 @@ import { Calendar } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { type EventDisplayVariant } from '@/lib/event-types'
 import { useSupabaseQuery } from '@/lib/hooks/useSupabaseQuery'
+import { useAllTags } from '@/lib/hooks/useAllTags'
 import { convertEventToCardProps } from '@/lib/event-utils'
 
 interface PrivateEventListProps {
@@ -24,16 +25,16 @@ const PrivateEventList: React.FC<PrivateEventListProps> = ({
   variant = 'compact',
   className = '',
 }) => {
-  // Fetch events using the custom hook
+  // Fetch events using the custom hook - using events table instead of public_events view
   const {
     data: events,
     isLoading: eventsLoading,
     error: eventsError
-  } = useSupabaseQuery<PublicEvent[]>({
+  } = useSupabaseQuery<Event[]>({
     queryKey: ['private_events_preview', userId],
     fetcher: async (supabase) => {
       const { data, error } = await supabase
-        .from('public_events')
+        .from('events')
         .select('*')
         .eq('user_id', userId)
         .gte('start_time', new Date().toISOString())
@@ -46,39 +47,10 @@ const PrivateEventList: React.FC<PrivateEventListProps> = ({
     enabled: !!userId,
   })
 
-  // Fetch user tags using the custom hook
-  const {
-    data: userTags,
-    isLoading: userTagsLoading,
-  } = useSupabaseQuery<Tag[]>({
-    queryKey: ['user_tags', userId],
-    fetcher: async (supabase) => {
-      const { data, error } = await supabase
-        .from('tags')
-        .select('*')
-        .eq('user_id', userId)
-      
-      if (error) throw error
-      return data || []
-    },
-    enabled: !!userId,
-  })
-
-  // Fetch global tags using the custom hook
-  const {
-    data: globalTags,
-    isLoading: globalTagsLoading,
-  } = useSupabaseQuery<Tag[]>({
-    queryKey: ['global_tags'],
-    fetcher: async (supabase) => {
-      const { data, error } = await supabase
-        .from('tags')
-        .select('*')
-        .is('user_id', null)
-      
-      if (error) throw error
-      return data || []
-    },
+  // Use shared tags hook instead of individual fetches
+  const { allTags, isLoading: tagsLoading } = useAllTags({ 
+    userId, 
+    enabled: !!userId 
   })
 
   // Get grid classes based on variant
@@ -94,12 +66,9 @@ const PrivateEventList: React.FC<PrivateEventListProps> = ({
     }
   }
 
-  // Get all available tags for processing
-  const allAvailableTags = [...(userTags || []), ...(globalTags || [])]
-
-  // Loading state
-  const isLoading = eventsLoading || userTagsLoading || globalTagsLoading
-  const eventsData = events && allAvailableTags.length >= 0 ? events : null
+  // Combined loading state
+  const isLoading = eventsLoading || tagsLoading
+  const eventsData = events && allTags.length >= 0 ? events : null
 
   return (
     <DataLoader
@@ -124,7 +93,7 @@ const PrivateEventList: React.FC<PrivateEventListProps> = ({
           {events.map((event) => (
             <div key={event.id} className="flex flex-col">
               <EventCard
-                {...convertEventToCardProps(event, allAvailableTags)}
+                {...convertEventToCardProps(event, allTags)}
                 variant={variant}
               />
             </div>

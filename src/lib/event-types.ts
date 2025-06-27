@@ -21,13 +21,14 @@ export interface EventTag {
 }
 
 // Enhanced display event that includes processed tags and additional display properties
-export interface EnhancedDisplayEvent extends Omit<Event, 'tags'> {
-  tags?: EventTag[]
-  autoTags?: EventTag[]
-  customTags?: EventTag[]
+export interface EnhancedDisplayEvent extends Omit<Event, 'tags' | 'custom_tags'> {
+  tags?: EventTag[] // Combined processed tags (both auto and custom)
+  autoTags?: EventTag[] // Only auto-generated tags (from rules)
+  customTags?: EventTag[] // Only custom tags (manually assigned)
   isPublic?: boolean
   imageQuery: string // Fallback image query when no tag images are available
-  rawTags?: string[] | null // Original database tags
+  rawAutoTags?: string[] | null // Original database tags field
+  rawCustomTags?: string[] | null // Original database custom_tags field
 }
 
 // Event display variants from our database enum

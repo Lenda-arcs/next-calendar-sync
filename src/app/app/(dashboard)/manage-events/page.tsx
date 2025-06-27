@@ -16,7 +16,8 @@ import { ManageEventsSkeleton } from '@/components/ui/skeleton'
 import { useSupabaseQuery } from '@/lib/hooks/useSupabaseQuery'
 import { useSupabaseMutation } from '@/lib/hooks/useSupabaseMutation'
 import { useCalendarSync } from '@/lib/hooks/useCalendarSync'
-import { Event, Tag as TagType } from '@/lib/types'
+import { useAllTags } from '@/lib/hooks/useAllTags'
+import { Event } from '@/lib/types'
 import { convertToEventTag, EventTag } from '@/lib/event-types'
 import { convertEventToCardProps } from '@/lib/event-utils'
 import { createBrowserClient } from '@supabase/ssr'
@@ -95,44 +96,10 @@ export default function ManageEventsPage() {
     enabled: !!userId,
   })
 
-  // Fetch user tags using the custom hook
-  const {
-    data: userTags,
-    isLoading: userTagsLoading,
-    refetch: refetchUserTags
-  } = useSupabaseQuery<TagType[]>({
-    queryKey: ['user_tags', userId || 'no-user'],
-    fetcher: async (supabase) => {
-      if (!userId) return []
-      
-      const { data, error } = await supabase
-        .from('tags')
-        .select('*')
-        .eq('user_id', userId)
-        .order('priority', { ascending: false, nullsLast: true })
-      
-      if (error) throw error
-      return data || []
-    },
-    enabled: !!userId,
-  })
-
-  // Fetch global tags using the custom hook
-  const {
-    data: globalTags,
-    isLoading: globalTagsLoading,
-  } = useSupabaseQuery<TagType[]>({
-    queryKey: ['global_tags'],
-    fetcher: async (supabase) => {
-      const { data, error } = await supabase
-        .from('tags')
-        .select('*')
-        .is('user_id', null)
-        .order('priority', { ascending: false, nullsLast: true })
-      
-      if (error) throw error
-      return data || []
-    },
+  // Use shared tags hook instead of individual fetches
+  const { allTags, isLoading: tagsLoading, refetch: refetchTags } = useAllTags({ 
+    userId, 
+    enabled: !!userId 
   })
 
   // Create tag mutation
@@ -165,19 +132,15 @@ export default function ManageEventsPage() {
       return data
     },
     onSuccess: () => {
-      // Refetch user tags to update the UI
-      refetchUserTags()
+      // Refetch tags to update the UI
+      refetchTags()
       setIsCreateTagFormOpen(false)
     }
   })
 
-
-
   // ==================== COMPUTED DATA ====================
-  // Combine user and global tags
-  const allAvailableTags = React.useMemo(() => {
-    return [...(userTags || []), ...(globalTags || [])]
-  }, [userTags, globalTags])
+  // Get all available tags from shared hook
+  const allAvailableTags = allTags
 
   // Convert tags to EventTag format for the grid
   const availableEventTags = React.useMemo(() => {
@@ -371,7 +334,7 @@ export default function ManageEventsPage() {
   const hasPendingChanges = pendingChanges.size > 0
 
   // Loading state
-  const isLoading = authLoading || eventsLoading || userTagsLoading || globalTagsLoading
+  const isLoading = authLoading || eventsLoading || tagsLoading
 
   if (authLoading) {
     return (
@@ -437,8 +400,8 @@ export default function ManageEventsPage() {
               timeFilter={timeFilter}
               visibilityFilter={visibilityFilter}
               eventStats={eventStats}
-              userTags={userTags || undefined}
-              globalTags={globalTags || undefined}
+              userTags={allTags.filter(tag => tag.user_id) || undefined}
+              globalTags={allTags.filter(tag => !tag.user_id) || undefined}
               hasPendingChanges={hasPendingChanges}
               pendingChangesCount={pendingChanges.size}
               isSyncing={isSyncing}

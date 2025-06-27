@@ -1,13 +1,14 @@
 'use client'
 
 import React, { useEffect } from 'react'
-import { PublicEvent, Tag } from '@/lib/types'
+import { PublicEvent } from '@/lib/types'
 import PublicEventList from '@/components/events/PublicEventList'
 import { useScheduleFilters } from './FilterProvider'
 import { Card, CardContent } from '@/components/ui/card'
 import { Calendar } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useSupabaseQuery } from '@/lib/hooks/useSupabaseQuery'
+import { useAllTags } from '@/lib/hooks/useAllTags'
 import DataLoader from '@/components/ui/data-loader'
 import { PublicEventListSkeleton } from '@/components/ui/skeleton'
 import { useScreenshotMode } from '@/lib/hooks/useScreenshotMode'
@@ -51,39 +52,10 @@ export function FilteredEventList({ userId, variant = 'compact', className }: Fi
     enabled: !!userId,
   })
 
-  // Fetch user tags
-  const {
-    data: userTags,
-    isLoading: userTagsLoading,
-  } = useSupabaseQuery<Tag[]>({
-    queryKey: ['user_tags', userId],
-    fetcher: async (supabase) => {
-      const { data, error } = await supabase
-        .from('tags')
-        .select('*')
-        .eq('user_id', userId)
-      
-      if (error) throw error
-      return data || []
-    },
-    enabled: !!userId,
-  })
-
-  // Fetch global tags
-  const {
-    data: globalTags,
-    isLoading: globalTagsLoading,
-  } = useSupabaseQuery<Tag[]>({
-    queryKey: ['global_tags'],
-    fetcher: async (supabase) => {
-      const { data, error } = await supabase
-        .from('tags')
-        .select('*')
-        .is('user_id', null)
-      
-      if (error) throw error
-      return data || []
-    },
+  // Use shared tags hook instead of individual fetches
+  const { allTags, isLoading: tagsLoading } = useAllTags({ 
+    userId, 
+    enabled: !!userId 
   })
 
   // Update filter context when data changes
@@ -94,13 +66,13 @@ export function FilteredEventList({ userId, variant = 'compact', className }: Fi
   }, [events, setEvents])
 
   useEffect(() => {
-    if (userTags && globalTags) {
-      setTags([...userTags, ...globalTags])
+    if (allTags.length > 0) {
+      setTags(allTags)
     }
-  }, [userTags, globalTags, setTags])
+  }, [allTags, setTags])
 
-  // Loading states
-  const isLoading = eventsLoading || userTagsLoading || globalTagsLoading
+  // Combined loading state
+  const isLoading = eventsLoading || tagsLoading
   const errorMessage = eventsError?.message || null
   
   // Empty state component

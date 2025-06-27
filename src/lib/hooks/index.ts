@@ -1,3 +1,21 @@
+export * from './useCalendarFeeds'
+export * from './useCalendarSync'
+export * from './useEventExport'
+export * from './useOrigin'
+export * from './useOwnerAuth'
+export * from './useResponsive'
+export * from './useScheduleExport'
+export * from './useScreenshotMode'
+export * from './useScrollIntoView'
+export * from './useSupabaseMutation'
+export * from './useSupabaseQuery'
+export * from './useTagForm'
+export * from './useTagOperations'
+
+// New shared hooks
+export * from './useAllTags'
+export * from './useEnhancedEvents'
+
 export {
   useSupabaseQuery,
   useSupabaseTable,
@@ -14,14 +32,6 @@ export {
   type UseSupabaseMutationResult,
 } from './useSupabaseMutation'
 
-export {
-  useResponsive,
-  useIsMobile,
-  useBreakpoint,
-} from './useResponsive'
-
-export { useScrollIntoView } from './useScrollIntoView'
-
 export { useTagForm } from './useTagForm'
 export { useTagOperations } from './useTagOperations'
 export { useCalendarSync } from './useCalendarSync'
@@ -34,7 +44,6 @@ export {
 } from './useCalendarFeeds'
 
 export { useOrigin, useFullUrl } from './useOrigin'
-export { useEventExport } from './useEventExport'
 export { useScheduleExport } from './useScheduleExport'
 export { useOwnerAuth } from './useOwnerAuth'
 export { useScreenshotMode } from './useScreenshotMode' 

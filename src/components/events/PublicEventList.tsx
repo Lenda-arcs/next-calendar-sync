@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useMemo, useState, useEffect } from 'react'
-import { PublicEvent, Tag } from '@/lib/types'
+import { Event, PublicEvent } from '@/lib/types'
 import { EventCard } from './EventCard'
 import { parseISO, isToday, isTomorrow, isThisWeek, format } from 'date-fns'
 
@@ -10,20 +10,27 @@ import { Calendar } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { type EventDisplayVariant, type EventTag } from '@/lib/event-types'
 import { useSupabaseQuery } from '@/lib/hooks/useSupabaseQuery'
-import { convertEventToCardProps, processEventTags } from '@/lib/event-utils'
+import { useAllTags } from '@/lib/hooks/useAllTags'
+import { convertEventToCardProps, processAllEventTags } from '@/lib/event-utils'
 import DataLoader from '@/components/ui/data-loader'
 import { PublicEventListSkeleton } from '@/components/ui/skeleton'
 
-// Enhanced PublicEvent with matched tags
+// Enhanced Event/PublicEvent with matched tags
+interface EnhancedEvent extends Event {
+  matchedTags: EventTag[]
+}
+
 interface EnhancedPublicEvent extends PublicEvent {
   matchedTags: EventTag[]
 }
+
+type EnhancedEventUnion = EnhancedEvent | EnhancedPublicEvent
 
 interface PublicEventListProps {
   userId: string
   variant?: EventDisplayVariant
   className?: string
-  events?: PublicEvent[] // Optional prop to pass pre-filtered events
+  events?: (Event | PublicEvent)[] // Accept both Event and PublicEvent types for backward compatibility
 }
 
 const PublicEventList: React.FC<PublicEventListProps> = ({
@@ -44,13 +51,14 @@ const PublicEventList: React.FC<PublicEventListProps> = ({
     data: fetchedEvents,
     isLoading: eventsLoading,
     error: eventsError
-  } = useSupabaseQuery<PublicEvent[]>({
+  } = useSupabaseQuery<Event[]>({
     queryKey: ['public_events', userId],
     fetcher: async (supabase) => {
       const { data, error } = await supabase
-        .from('public_events')
+        .from('events')
         .select('*')
         .eq('user_id', userId)
+        .eq('visibility', 'public') // Only fetch public events
         .gte('start_time', new Date().toISOString())
         .order('start_time', { ascending: true })
         .limit(50)
@@ -64,44 +72,15 @@ const PublicEventList: React.FC<PublicEventListProps> = ({
   // Use provided events or fetched events
   const events = propEvents || fetchedEvents
 
-  // Fetch user tags using the custom hook
-  const {
-    data: userTags,
-    isLoading: userTagsLoading,
-  } = useSupabaseQuery<Tag[]>({
-    queryKey: ['user_tags', userId],
-    fetcher: async (supabase) => {
-      const { data, error } = await supabase
-        .from('tags')
-        .select('*')
-        .eq('user_id', userId)
-      
-      if (error) throw error
-      return data || []
-    },
-    enabled: !!userId,
-  })
-
-  // Fetch global tags using the custom hook
-  const {
-    data: globalTags,
-    isLoading: globalTagsLoading,
-  } = useSupabaseQuery<Tag[]>({
-    queryKey: ['global_tags'],
-    fetcher: async (supabase) => {
-      const { data, error } = await supabase
-        .from('tags')
-        .select('*')
-        .is('user_id', null)
-      
-      if (error) throw error
-      return data || []
-    },
+  // Use shared tags hook instead of individual fetches
+  const { allTags, isLoading: tagsLoading } = useAllTags({ 
+    userId, 
+    enabled: !!userId 
   })
 
   // Utility function to group events by date
-  const groupEventsByDate = (events: EnhancedPublicEvent[]) => {
-    const groups = new Map<string, EnhancedPublicEvent[]>()
+  const groupEventsByDate = (events: EnhancedEventUnion[]) => {
+    const groups = new Map<string, EnhancedEventUnion[]>()
 
     events.forEach((event) => {
       if (!event.start_time) return
@@ -158,20 +137,20 @@ const PublicEventList: React.FC<PublicEventListProps> = ({
     return { label, compact }
   }
 
-
-
-  // Get all available tags for processing
-  const allAvailableTags = useMemo(() => {
-    return [...(userTags || []), ...(globalTags || [])]
-  }, [userTags, globalTags])
+  // Get all available tags for processing (now using shared hook)
+  const allAvailableTags = allTags
 
   // Enhanced events with matched tags
-  const enhancedEvents: EnhancedPublicEvent[] = useMemo(() => {
+  const enhancedEvents: EnhancedEventUnion[] = useMemo(() => {
     if (!events || !allAvailableTags.length) return []
 
     return events.map(event => ({
       ...event,
-      matchedTags: processEventTags(event.tags, allAvailableTags)
+      matchedTags: processAllEventTags(
+        event.tags, 
+        'custom_tags' in event ? event.custom_tags : null, 
+        allAvailableTags
+      )
     }))
   }, [events, allAvailableTags])
 
@@ -203,7 +182,7 @@ const PublicEventList: React.FC<PublicEventListProps> = ({
   }, [groupedEvents, allAvailableTags, currentDate])
 
   // Loading states
-  const isLoading = (propEvents ? false : eventsLoading) || userTagsLoading || globalTagsLoading
+  const isLoading = (propEvents ? false : eventsLoading) || tagsLoading
   const errorMessage = eventsError?.message || null
   
   // Empty state component
