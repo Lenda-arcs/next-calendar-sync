@@ -1,7 +1,14 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
+
+// Simple global cache to prevent duplicate requests
+const globalCache = new Map<string, {
+  data: unknown
+  timestamp: number
+  promise?: Promise<unknown>
+}>()
 
 export interface UseSupabaseQueryOptions<T> {
   queryKey: string[]
@@ -20,16 +27,18 @@ export interface UseSupabaseQueryResult<T> {
 }
 
 export function useSupabaseQuery<T = unknown>({
-  queryKey, // eslint-disable-line @typescript-eslint/no-unused-vars
+  queryKey,
   fetcher,
   enabled = true,
   refetchOnWindowFocus = false,
   staleTime = 5 * 60 * 1000, // 5 minutes
 }: UseSupabaseQueryOptions<T>): UseSupabaseQueryResult<T> {
+  const cacheKey = queryKey.join('|')
   const [data, setData] = useState<T | null>(null)
   const [error, setError] = useState<Error | null>(null)
   const [isLoading, setIsLoading] = useState(enabled)
   const [lastFetch, setLastFetch] = useState<number>(0)
+  const mountedRef = useRef(true)
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -40,27 +49,96 @@ export function useSupabaseQuery<T = unknown>({
     if (!enabled) return
 
     const now = Date.now()
-    const isStale = now - lastFetch > staleTime
+    
+    // Check cache first
+    const cached = globalCache.get(cacheKey)
+    if (cached && (now - cached.timestamp < staleTime)) {
+      if (mountedRef.current) {
+        setData(cached.data as T)
+        setError(null)
+        setIsLoading(false)
+        setLastFetch(cached.timestamp)
+      }
+      return
+    }
 
+    // If there's already a pending request for this key, wait for it
+    if (cached?.promise) {
+      try {
+        const result = await cached.promise
+        if (mountedRef.current) {
+          setData(result as T)
+          setError(null)
+          setIsLoading(false)
+          setLastFetch(now)
+        }
+      } catch (err) {
+        if (mountedRef.current) {
+          setError(err instanceof Error ? err : new Error('Unknown error occurred'))
+          setIsLoading(false)
+        }
+      }
+      return
+    }
+
+    const isStale = now - lastFetch > staleTime
     if (data && !isStale) return
 
     try {
-      setIsLoading(true)
-      setError(null)
-      const result = await fetcher(supabase)
-      setData(result)
-      setLastFetch(now)
+      if (mountedRef.current) {
+        setIsLoading(true)
+        setError(null)
+      }
+      
+      // Create and cache the promise
+      const promise = fetcher(supabase)
+      globalCache.set(cacheKey, {
+        data: null,
+        timestamp: now,
+        promise
+      })
+      
+      const result = await promise
+      
+      // Update cache with result
+      globalCache.set(cacheKey, {
+        data: result,
+        timestamp: now
+      })
+      
+      if (mountedRef.current) {
+        setData(result)
+        setLastFetch(now)
+      }
     } catch (err) {
-      setError(err instanceof Error ? err : new Error('Unknown error occurred'))
+      const error = err instanceof Error ? err : new Error('Unknown error occurred')
+      
+      // Remove failed request from cache
+      globalCache.delete(cacheKey)
+      
+      if (mountedRef.current) {
+        setError(error)
+      }
     } finally {
-      setIsLoading(false)
+      if (mountedRef.current) {
+        setIsLoading(false)
+      }
     }
-  }, [enabled, fetcher, supabase, staleTime, lastFetch, data])
+  }, [enabled, fetcher, supabase, staleTime, lastFetch, data, cacheKey])
 
   const refetch = useCallback(async () => {
+    // Clear cache for this key
+    globalCache.delete(cacheKey)
     setLastFetch(0) // Force refetch by resetting last fetch time
     await fetchData()
-  }, [fetchData])
+  }, [fetchData, cacheKey])
+
+  useEffect(() => {
+    mountedRef.current = true
+    return () => {
+      mountedRef.current = false
+    }
+  }, [])
 
   useEffect(() => {
     fetchData()

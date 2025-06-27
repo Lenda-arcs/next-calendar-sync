@@ -15,12 +15,14 @@ import { useTagOperations } from '@/lib/hooks/useTagOperations'
 
 interface Props {
   userId: string
+  globalTags?: Tag[] // Accept global tags as props to avoid duplicate fetching
+  customTags?: Tag[] // Accept custom tags as props to avoid duplicate fetching
 }
 
-export const TagLibrary: React.FC<Props> = ({ userId }) => {
-  // Fetch global tags
+export const TagLibrary: React.FC<Props> = ({ userId, globalTags: propGlobalTags, customTags: propCustomTags }) => {
+  // Fetch global tags (only if not provided as props)
   const { 
-    data: globalTags, 
+    data: fetchedGlobalTags, 
     isLoading: globalLoading, 
     error: globalError 
   } = useSupabaseQuery({
@@ -35,11 +37,12 @@ export const TagLibrary: React.FC<Props> = ({ userId }) => {
       if (error) throw error
       return data as Tag[]
     },
+    enabled: !propGlobalTags, // Only fetch if not provided as props
   })
 
-  // Fetch user's custom tags
+  // Fetch user's custom tags (only if not provided as props)
   const { 
-    data: customTags, 
+    data: fetchedCustomTags, 
     isLoading: customLoading, 
     error: customError, 
     refetch: refetchCustom 
@@ -55,7 +58,12 @@ export const TagLibrary: React.FC<Props> = ({ userId }) => {
       if (error) throw error
       return data as Tag[]
     },
+    enabled: !propCustomTags, // Only fetch if not provided as props
   })
+
+  // Use provided tags or fetched tags
+  const globalTags = propGlobalTags || fetchedGlobalTags
+  const customTags = propCustomTags || fetchedCustomTags
 
   // Tag operations hook
   const {
@@ -87,7 +95,7 @@ export const TagLibrary: React.FC<Props> = ({ userId }) => {
 
   const error = globalError || customError
   const errorMessage = error ? error.message || error.toString() : null
-  const loading = globalLoading || customLoading
+  const loading = (propGlobalTags ? false : globalLoading) || (propCustomTags ? false : customLoading)
   const data = globalTags && customTags ? { globalTags: globalEventTags, customTags: customEventTags } : null
 
   return (

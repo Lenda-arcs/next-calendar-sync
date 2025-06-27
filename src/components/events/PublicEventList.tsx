@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useMemo, useState, useEffect } from 'react'
-import { Event, PublicEvent } from '@/lib/types'
+import { Event, PublicEvent, Tag } from '@/lib/types'
 import { EventCard } from './EventCard'
 import { parseISO, isToday, isTomorrow, isThisWeek, format } from 'date-fns'
 
@@ -31,6 +31,8 @@ interface PublicEventListProps {
   variant?: EventDisplayVariant
   className?: string
   events?: (Event | PublicEvent)[] // Accept both Event and PublicEvent types for backward compatibility
+  tags?: Tag[] // Accept tags as props to avoid duplicate fetching
+  disableFetching?: boolean // Explicitly disable data fetching when data is provided externally
 }
 
 const PublicEventList: React.FC<PublicEventListProps> = ({
@@ -38,6 +40,8 @@ const PublicEventList: React.FC<PublicEventListProps> = ({
   variant = 'compact',
   className = '',
   events: propEvents,
+  tags: propTags,
+  disableFetching = false,
 }) => {
   // Client-side date state to prevent hydration mismatches
   const [currentDate, setCurrentDate] = useState<Date | undefined>(undefined)
@@ -52,7 +56,7 @@ const PublicEventList: React.FC<PublicEventListProps> = ({
     isLoading: eventsLoading,
     error: eventsError
   } = useSupabaseQuery<Event[]>({
-    queryKey: ['public_events', userId],
+    queryKey: ['public_events_standalone', userId], // Different query key to avoid conflicts
     fetcher: async (supabase) => {
       const { data, error } = await supabase
         .from('events')
@@ -66,17 +70,20 @@ const PublicEventList: React.FC<PublicEventListProps> = ({
       if (error) throw error
       return data || []
     },
-    enabled: !!userId && !propEvents, // Only fetch if events not provided
+    enabled: !!userId && !propEvents && !disableFetching, // Only fetch if events not provided and fetching not disabled
   })
 
   // Use provided events or fetched events
   const events = propEvents || fetchedEvents
 
-  // Use shared tags hook instead of individual fetches
-  const { allTags, isLoading: tagsLoading } = useAllTags({ 
+  // Use shared tags hook only if tags not provided as props
+  const { allTags: fetchedTags, isLoading: tagsLoading } = useAllTags({ 
     userId, 
-    enabled: !!userId 
+    enabled: !!userId && !propTags && !disableFetching
   })
+  
+  // Use provided tags or fetched tags - ensure type compatibility
+  const allTags: Tag[] = propTags || fetchedTags || []
 
   // Utility function to group events by date
   const groupEventsByDate = (events: EnhancedEventUnion[]) => {
@@ -182,7 +189,7 @@ const PublicEventList: React.FC<PublicEventListProps> = ({
   }, [groupedEvents, allAvailableTags, currentDate])
 
   // Loading states
-  const isLoading = (propEvents ? false : eventsLoading) || tagsLoading
+  const isLoading = (propEvents ? false : eventsLoading) || (propTags ? false : tagsLoading)
   const errorMessage = eventsError?.message || null
   
   // Empty state component

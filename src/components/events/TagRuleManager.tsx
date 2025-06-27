@@ -26,9 +26,10 @@ const initialState: TagRuleState = {
 
 interface Props {
   userId: string
+  availableTags?: Tag[] // Accept tags as props to avoid duplicate fetching
 }
 
-export const TagRuleManager: React.FC<Props> = ({ userId }) => {
+export const TagRuleManager: React.FC<Props> = ({ userId, availableTags: propTags }) => {
   const [state, setState] = useState<TagRuleState>(initialState)
   const [optimisticRules, setOptimisticRules] = useState<TagRule[]>([])
   const [deletedRuleIds, setDeletedRuleIds] = useState<Set<string>>(new Set())
@@ -51,9 +52,9 @@ export const TagRuleManager: React.FC<Props> = ({ userId }) => {
     },
   })
 
-  // Fetch available tags for the user
+  // Fetch available tags for the user (only if not provided as props)
   const { 
-    data: availableTags, 
+    data: fetchedTags, 
     isLoading: tagsLoading, 
     error: tagsError 
   } = useSupabaseQuery({
@@ -68,7 +69,11 @@ export const TagRuleManager: React.FC<Props> = ({ userId }) => {
       if (error) throw error
       return data as Tag[]
     },
+    enabled: !propTags, // Only fetch if tags not provided as props
   })
+
+  // Use provided tags or fetched tags
+  const availableTags = propTags || fetchedTags
 
   // Create tag rule mutation
   const { mutate: createRule, isLoading: creating } = useSupabaseMutation({
@@ -156,7 +161,7 @@ export const TagRuleManager: React.FC<Props> = ({ userId }) => {
 
   const error = rulesError || tagsError
   const errorMessage = error ? error.message || error.toString() : null
-  const initialLoading = rulesLoading || tagsLoading
+  const initialLoading = rulesLoading || (propTags ? false : tagsLoading)
   const hasData = tagRules && availableTags
 
   // Combine server data with optimistic updates

@@ -118,6 +118,8 @@ export function FilteredEventList({ userId, variant = 'compact', className }: Fi
             userId={userId}
             variant={isScreenshotMode ? 'minimal' : variant}
             events={data}
+            tags={allTags}
+            disableFetching={true}
             className={className}
           />
         )}
