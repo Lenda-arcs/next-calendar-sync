@@ -108,7 +108,7 @@ export function UserInvoiceSettingsForm({
     }
 
     await settingsMutation.mutateAsync(data)
-  }, [formData, settingsMutation, existingSettings])
+  }, [formData, settingsMutation])
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({

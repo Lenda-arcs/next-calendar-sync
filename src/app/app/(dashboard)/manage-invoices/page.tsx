@@ -20,4 +20,4 @@ export default async function ManageInvoicesPage() {
       <ManageInvoicesClient userId={user.id} />
     </Container>
   )
-} 
+}  

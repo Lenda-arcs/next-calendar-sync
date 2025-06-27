@@ -90,7 +90,6 @@ export function MobileNavMenu({ navigation }: MobileNavMenuProps) {
                   href={item.href}
                   text={item.name}
                   icon={IconComponent}
-                  loadingStyle="progress"
                   showTextOnMobile={true}
                   className="w-full justify-start px-2 py-1.5 text-sm"
                   activeClassName="bg-white/90 text-foreground font-semibold shadow-md border-l-2 border-l-primary border border-white/80 backdrop-blur-sm"
