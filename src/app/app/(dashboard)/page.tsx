@@ -2,14 +2,12 @@ import { createServerClient } from '@/lib/supabase-server'
 import { Container } from '@/components/layout/container'
 import { PageSection } from '@/components/layout/page-section'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { CopyLinkButton } from '@/components/ui/copy-link-button'
+import { CopyLinkButton, LoadingLink, LoadingButtonLink } from '@/components/ui'
 import { PrivateEventList } from '@/components/events'
 import { CalendarFeedsProfileSection } from '@/components/calendar-feeds'
 import { getUserCalendarFeeds } from '@/lib/calendar-feeds'
 import { PATHS } from '@/lib/paths'
-import Link from 'next/link'
-import { Calendar, Eye, Tags, Receipt, Link as LinkIcon } from 'lucide-react'
+import { Calendar } from 'lucide-react'
 
 export default async function DashboardPage() {
   const supabase = await createServerClient()
@@ -73,12 +71,12 @@ export default async function DashboardPage() {
                     eventCount={3}
                   />
                   <div className="mt-6 text-right">
-                    <Link 
+                    <LoadingLink 
                       href={PATHS.APP.MANAGE_EVENTS}
                       className="text-sm text-primary hover:text-primary/80 hover:underline font-medium"
                     >
                       View all events →
-                    </Link>
+                    </LoadingLink>
                   </div>
                 </div>
               ) : (
@@ -111,16 +109,14 @@ export default async function DashboardPage() {
                        label={shareLabel}
                        buttonText="Share"
                      />
-                     <Button 
-                       variant="secondary" 
-                       asChild 
+                     <LoadingButtonLink
+                       href={publicPath}
+                       variant="secondary"
                        className="flex-1"
+                       iconName="Eye"
                      >
-                       <Link href={publicPath}>
-                         <Eye className="mr-2 h-4 w-4" />
-                         View Public Page
-                       </Link>
-                     </Button>
+                       View Public Page
+                     </LoadingButtonLink>
                    </div>
                  </CardContent>
                </Card>
@@ -135,16 +131,14 @@ export default async function DashboardPage() {
                  </CardDescription>
                </CardHeader>
                <CardContent>
-                 <Button 
-                   variant="default" 
-                   asChild 
+                 <LoadingButtonLink
+                   href={PATHS.APP.MANAGE_EVENTS}
+                   variant="default"
                    className="w-full"
+                   iconName="Calendar"
                  >
-                   <Link href={PATHS.APP.MANAGE_EVENTS}>
-                     <Calendar className="mr-2 h-4 w-4" />
-                     Manage Events
-                   </Link>
-                 </Button>
+                   Manage Events
+                 </LoadingButtonLink>
                </CardContent>
              </Card>
  
@@ -157,16 +151,14 @@ export default async function DashboardPage() {
                  </CardDescription>
                </CardHeader>
                <CardContent>
-                 <Button 
-                   variant="default" 
-                   asChild 
+                 <LoadingButtonLink
+                   href={PATHS.APP.MANAGE_TAGS}
+                   variant="default"
                    className="w-full"
+                   iconName="Tags"
                  >
-                   <Link href={PATHS.APP.MANAGE_TAGS}>
-                     <Tags className="mr-2 h-4 w-4" />
-                     Manage Tag Rules
-                   </Link>
-                 </Button>
+                   Manage Tag Rules
+                 </LoadingButtonLink>
                </CardContent>
              </Card>
  
@@ -179,16 +171,14 @@ export default async function DashboardPage() {
                  </CardDescription>
                </CardHeader>
                <CardContent>
-                 <Button 
-                   variant="default" 
-                   asChild 
+                 <LoadingButtonLink
+                   href={PATHS.APP.MANAGE_INVOICES}
+                   variant="default"
                    className="w-full"
+                   iconName="Receipt"
                  >
-                   <Link href={PATHS.APP.MANAGE_INVOICES}>
-                     <Receipt className="mr-2 h-4 w-4" />
-                     Manage Invoices
-                   </Link>
-                 </Button>
+                   Manage Invoices
+                 </LoadingButtonLink>
                </CardContent>
              </Card>
  
@@ -202,16 +192,14 @@ export default async function DashboardPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Button 
-                    variant="outline" 
-                    asChild 
+                  <LoadingButtonLink
+                    href={PATHS.APP.PROFILE}
+                    variant="outline"
                     className="w-full"
+                    iconName="LinkIcon"
                   >
-                                       <Link href={PATHS.APP.PROFILE}>
-                     <LinkIcon className="mr-2 h-4 w-4" />
-                     Complete Profile
-                   </Link>
-                  </Button>
+                    Complete Profile
+                  </LoadingButtonLink>
                 </CardContent>
               </Card>
             )}
