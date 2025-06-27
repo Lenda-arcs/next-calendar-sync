@@ -29,6 +29,9 @@ export function MobileNavMenu({ navigation }: MobileNavMenuProps) {
   const pathname = usePathname()
   const [isOpen, setIsOpen] = useState(false)
 
+  // Check if any navigation item is currently active
+  const hasActiveItem = navigation.some(item => pathname === item.href)
+
   useEffect(() => {
     const handleScroll = () => {
       if (isOpen) {
@@ -62,7 +65,10 @@ export function MobileNavMenu({ navigation }: MobileNavMenuProps) {
     <div className="lg:hidden">
       <Popover open={isOpen} onOpenChange={setIsOpen}>
         <PopoverTrigger asChild>
-          <button className="flex items-center px-3 py-2 text-sm font-medium font-sans text-foreground/80 hover:text-foreground hover:bg-white/30 rounded-xl backdrop-blur-sm transition-all duration-300 hover:shadow-lg space-x-2">
+          <button className={cn(
+            "flex items-center px-3 py-2 text-sm font-medium font-sans text-foreground/80 hover:text-foreground hover:bg-white/30 rounded-xl backdrop-blur-sm transition-all duration-300 hover:shadow-lg space-x-2",
+            hasActiveItem && "bg-white/60 text-foreground shadow-sm border border-white/60"
+          )}>
             <div className="h-6 w-6 bg-gradient-to-br from-primary/20 to-accent/20 backdrop-blur-sm border border-white/30 rounded-full flex items-center justify-center">
               <Menu className="h-3 w-3 text-primary" />
             </div>
@@ -86,7 +92,7 @@ export function MobileNavMenu({ navigation }: MobileNavMenuProps) {
                   showTextOnMobile={true}
                   className={cn(
                     "w-full justify-start px-2 py-1.5 text-sm",
-                    isActive && "bg-white/60 text-foreground shadow-sm border border-white/60"
+                    isActive && "bg-white/90 text-foreground font-semibold shadow-md border-l-2 border-l-primary border border-white/80 backdrop-blur-sm"
                   )}
                 />
               )
