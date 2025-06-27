@@ -1,10 +1,9 @@
 'use client'
 
-import { NavLink, Popover, PopoverTrigger, PopoverContent } from '@/components/ui'
+import { LoadingNavLink, Popover, PopoverTrigger, PopoverContent } from '@/components/ui'
 import { Menu, Calendar, Home, User, Tags, Receipt, LucideIcon } from 'lucide-react'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
-import { useNavLoading } from '@/lib/hooks'
 import { useState, useEffect } from 'react'
 
 interface NavigationItem {
@@ -29,7 +28,6 @@ const iconMap: Record<string, LucideIcon> = {
 export function MobileNavMenu({ navigation }: MobileNavMenuProps) {
   const pathname = usePathname()
   const [isOpen, setIsOpen] = useState(false)
-  const { setLoading, getLoadingProps } = useNavLoading('progress') // Using subtle progress cursor
 
   // Check if any navigation item is currently active
   const hasActiveItem = navigation.some(item => pathname === item.href)
@@ -63,10 +61,6 @@ export function MobileNavMenu({ navigation }: MobileNavMenuProps) {
     setIsOpen(false)
   }, [pathname])
 
-  const handleLinkClick = (href: string) => {
-    setLoading(href)
-  }
-
   return (
     <div className="lg:hidden">
       <Popover open={isOpen} onOpenChange={setIsOpen}>
@@ -88,25 +82,19 @@ export function MobileNavMenu({ navigation }: MobileNavMenuProps) {
         >
           <div className="space-y-1">
             {navigation.map((item) => {
-              const isActive = pathname === item.href
               const IconComponent = iconMap[item.iconName]
-              const loadingProps = getLoadingProps(item.href, IconComponent)
               
               return (
-                <div key={item.name} onClick={() => handleLinkClick(item.href)}>
-                  <NavLink
-                    href={item.href}
-                    text={item.name}
-                    fallbackIcon={loadingProps.icon}
-                    showTextOnMobile={true}
-                    animateIcon={loadingProps.animateIcon}
-                    className={cn(
-                      "w-full justify-start px-2 py-1.5 text-sm transition-all duration-200",
-                      isActive && "bg-white/90 text-foreground font-semibold shadow-md border-l-2 border-l-primary border border-white/80 backdrop-blur-sm",
-                      loadingProps.className
-                    )}
-                  />
-                </div>
+                <LoadingNavLink
+                  key={item.name}
+                  href={item.href}
+                  text={item.name}
+                  icon={IconComponent}
+                  loadingStyle="progress"
+                  showTextOnMobile={true}
+                  className="w-full justify-start px-2 py-1.5 text-sm"
+                  activeClassName="bg-white/90 text-foreground font-semibold shadow-md border-l-2 border-l-primary border border-white/80 backdrop-blur-sm"
+                />
               )
             })}
           </div>

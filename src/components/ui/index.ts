@@ -25,6 +25,7 @@ export { TabContent } from './tab-content'
 export { Collapsible, CollapsibleTrigger, CollapsibleContent } from './collapsible'
 export { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from './accordion'
 export { NavLink } from './nav-link'
+export { LoadingNavLink } from './loading-nav-link'
 export { MobileNavMenu } from './mobile-nav-menu'
 export { 
   Skeleton, 
