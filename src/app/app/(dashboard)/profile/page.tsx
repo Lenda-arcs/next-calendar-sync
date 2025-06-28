@@ -42,7 +42,8 @@ export default async function ProfilePage() {
       yoga_styles: null,
       event_display_variant: null,
       role: 'user',
-      calendar_feed_count: 0
+      calendar_feed_count: 0,
+      is_featured: null
     }
     
     return (
