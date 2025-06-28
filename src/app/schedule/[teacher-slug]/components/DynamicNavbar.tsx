@@ -1,7 +1,7 @@
 'use client'
 
 import { LogoutButton } from '@/components/auth'
-import { NavLink } from '@/components/ui'
+import { LoadingNavLink } from '@/components/ui'
 import { Home, User, X } from 'lucide-react'
 import { PublicProfile } from '@/lib/types'
 import TeacherHeroContent from './TeacherHeroContent'
@@ -40,13 +40,12 @@ export default function DynamicNavbar({
         {/* Top Navigation Bar - Always Visible */}
         <div className="flex justify-between items-center h-14">
           <div className="flex items-center space-x-4">
-            <NavLink
+            <LoadingNavLink
               href={isLoggedIn ? "/app" : "/"}
               text="Home"
               avatarSrc="/assets/dummy_logo.png"
               avatarAlt="Logo"
-              fallbackIcon={Home}
-              avatarSize="sm"
+              icon={Home}
               className="group mr-2"
             />
           </div>
