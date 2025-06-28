@@ -288,7 +288,7 @@ export type Database = {
           created_at: string | null
           currency: string | null
           id: string
-          location_match: string
+          location_match: string[] | null
           max_discount: number | null
           notes: string | null
           online_penalty_per_student: number | null
@@ -305,7 +305,7 @@ export type Database = {
           created_at?: string | null
           currency?: string | null
           id?: string
-          location_match: string
+          location_match?: string[] | null
           max_discount?: number | null
           notes?: string | null
           online_penalty_per_student?: number | null
@@ -322,7 +322,7 @@ export type Database = {
           created_at?: string | null
           currency?: string | null
           id?: string
-          location_match?: string
+          location_match?: string[] | null
           max_discount?: number | null
           notes?: string | null
           online_penalty_per_student?: number | null

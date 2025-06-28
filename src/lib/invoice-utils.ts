@@ -310,17 +310,35 @@ export async function matchEventsToStudios(userId: string): Promise<{
   const studioMatches: { studioId: string; studioName: string; matchedCount: number }[] = [];
 
   for (const studio of studios) {
-    // Find events that match this studio's location pattern
-    const { data: matchingEvents, error } = await supabase
-      .from("events")
-      .select("id")
-      .eq("user_id", userId)
-      .is("studio_id", null) // Only match unassigned events
-      .ilike("location", `%${studio.location_match}%`);
-
-    if (error) {
-      console.error(`Error matching events for studio ${studio.id}:`, error);
+    // Skip studios with no location patterns
+    if (!studio.location_match || studio.location_match.length === 0) {
       continue;
+    }
+
+    // Find events that match any of this studio's location patterns
+    const matchingEvents: { id: string }[] = [];
+    
+    for (const locationPattern of studio.location_match) {
+      const { data: events, error } = await supabase
+        .from("events")
+        .select("id")
+        .eq("user_id", userId)
+        .is("studio_id", null) // Only match unassigned events
+        .ilike("location", `%${locationPattern}%`);
+
+      if (error) {
+        console.error(`Error matching events for studio ${studio.id} with pattern "${locationPattern}":`, error);
+        continue;
+      }
+
+      if (events) {
+        // Add events to our matching list, avoiding duplicates
+        for (const event of events) {
+          if (!matchingEvents.find(e => e.id === event.id)) {
+            matchingEvents.push(event);
+          }
+        }
+      }
     }
 
     if (matchingEvents && matchingEvents.length > 0) {

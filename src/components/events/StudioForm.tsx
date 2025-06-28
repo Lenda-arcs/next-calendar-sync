@@ -6,6 +6,7 @@ import { Card } from "../ui/card";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Select } from "../ui/select";
+import FormMultiSelect from "../ui/form-multi-select";
 import { Textarea } from "../ui/textarea";
 import { useSupabaseMutation } from "../../lib/hooks/useSupabaseMutation";
 import { createStudio, updateStudio, matchEventsToStudios } from "../../lib/invoice-utils";
@@ -38,7 +39,7 @@ const StudioForm: React.FC<Props> = ({
 }) => {
   const [formData, setFormData] = useState({
     studio_name: existingStudio?.studio_name || "",
-    location_match: existingStudio?.location_match || "",
+    location_match: existingStudio?.location_match || [],
     rate_type: existingStudio?.rate_type || "flat",
     base_rate: existingStudio?.base_rate?.toString() || "",
     billing_email: existingStudio?.billing_email || "",
@@ -72,7 +73,7 @@ const StudioForm: React.FC<Props> = ({
           // Reset form
           setFormData({
             studio_name: "",
-            location_match: "",
+            location_match: [],
             rate_type: "flat",
             base_rate: "",
             billing_email: "",
@@ -119,8 +120,8 @@ const StudioForm: React.FC<Props> = ({
       newErrors.studio_name = "Studio name is required";
     }
 
-    if (!formData.location_match.trim()) {
-      newErrors.location_match = "Location match is required";
+    if (!formData.location_match || formData.location_match.length === 0) {
+      newErrors.location_match = "At least one location match is required";
     }
 
     if (!formData.base_rate || isNaN(Number(formData.base_rate)) || Number(formData.base_rate) <= 0) {
@@ -304,17 +305,17 @@ const StudioForm: React.FC<Props> = ({
             </div>
 
             <div>
-              <Label htmlFor="location_match">Location Match *</Label>
-              <Select
+              <FormMultiSelect
+                id="location_match"
+                name="location_match"
+                label="Location Match"
                 options={eventLocations.map(location => ({ value: location, label: location }))}
                 value={formData.location_match}
-                onChange={(value) => handleInputChange("location_match", value)}
-                placeholder="Select location to match"
-                className={errors.location_match ? "border-red-500" : ""}
+                onChange={(values) => setFormData(prev => ({ ...prev, location_match: values }))}
+                placeholder="Select locations to match"
+                required
+                error={errors.location_match}
               />
-              {errors.location_match && (
-                <p className="text-sm text-red-500 mt-1">{errors.location_match}</p>
-              )}
             </div>
           </div>
         </div>

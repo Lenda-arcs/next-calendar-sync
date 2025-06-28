@@ -14,6 +14,9 @@ export function extractStudentCounts(description, isHistorical = false) {
 export function matchStudioId(location, studios) {
   if (!location || !studios) return null;
   const lowerLoc = location.toLowerCase();
-  const match = studios.find((s)=>lowerLoc.includes(s.location_match.toLowerCase()));
+  const match = studios.find((s) => {
+    if (!s.location_match || !Array.isArray(s.location_match)) return false;
+    return s.location_match.some(pattern => lowerLoc.includes(pattern.toLowerCase()));
+  });
   return match?.id || null;
 }

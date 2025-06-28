@@ -125,7 +125,15 @@ export function StudioManagement({ userId }: StudioManagementProps) {
                           {studio.studio_name}
                         </CardTitle>
                         <p className="text-sm text-gray-600">
-                          Matches: &quot;{studio.location_match}&quot;
+                          Matches: {studio.location_match && studio.location_match.length > 0 
+                            ? studio.location_match.map((location, index) => (
+                                <span key={index}>
+                                  &quot;{location}&quot;
+                                  {studio.location_match && index < studio.location_match.length - 1 ? ', ' : ''}
+                                </span>
+                              ))
+                            : 'No locations'
+                          }
                         </p>
                       </div>
                       <div className="flex space-x-1 ml-4">
