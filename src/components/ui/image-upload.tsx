@@ -58,6 +58,7 @@ interface ExistingImagesStepProps {
   allowedTypes: string[];
   maxImages?: number;
   currentCount: number;
+  aspectRatio?: number;
 }
 
 interface CropImageStepProps {
@@ -110,6 +111,7 @@ const ExistingImagesStep: React.FC<ExistingImagesStepProps> = ({
   allowedTypes, // eslint-disable-line @typescript-eslint/no-unused-vars
   maxImages,
   currentCount,
+  aspectRatio,
 }) => {
   const isAtLimit = maxImages ? currentCount >= maxImages : false;
   
@@ -152,7 +154,10 @@ const ExistingImagesStep: React.FC<ExistingImagesStepProps> = ({
               {images.map((image) => (
                 <div
                   key={image.name}
-                  className="relative aspect-video rounded-lg overflow-hidden group"
+                  className="relative rounded-lg overflow-hidden group"
+                  style={{
+                    aspectRatio: aspectRatio ? `${aspectRatio}` : '16 / 9'
+                  }}
                 >
                   <img
                     src={image.url}
@@ -688,6 +693,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
                 allowedTypes={allowedTypes}
                 maxImages={maxImages}
                 currentCount={existingImages?.length || 0}
+                aspectRatio={aspectRatio}
               />
             ) : (
               <CropImageStep
