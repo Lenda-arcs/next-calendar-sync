@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { Search } from 'lucide-react'
-import { Input, Popover, PopoverContent, PopoverTrigger, LoadingLink } from '@/components/ui'
+import { Input, LoadingLink } from '@/components/ui'
 import { useSupabaseQuery } from '@/lib/hooks/useSupabaseQuery'
 import { PublicProfile } from '@/lib/types'
 import { PATHS } from '@/lib/paths'
@@ -11,7 +11,7 @@ export function TeacherSearch() {
   const [query, setQuery] = useState('')
   const [open, setOpen] = useState(false)
 
-  const { data: teachers = [], isLoading } = useSupabaseQuery<PublicProfile[]>({
+  const { data: teachersData, isLoading } = useSupabaseQuery<PublicProfile[]>({
     queryKey: ['teacher-search', query],
     fetcher: async (supabase) => {
       if (!query) return []
@@ -28,20 +28,27 @@ export function TeacherSearch() {
     staleTime: 60_000,
   })
 
+  // Ensure teachers is always an array to prevent null.length errors
+  const teachers = teachersData || []
+
   return (
-    <Popover open={open && query.length > 0} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Input
-          leftIcon={<Search className="h-4 w-4" />}
-          placeholder="Search teachers..."
-          value={query}
-          onChange={(e) => {
-            setQuery(e.target.value)
-            setOpen(true)
-          }}
-        />
-      </PopoverTrigger>
-      <PopoverContent className="p-0 w-72">
+    <div className="relative">
+      <Input
+        leftIcon={<Search className="h-4 w-4" />}
+        placeholder="Search teachers..."
+        value={query}
+        onChange={(e) => {
+          setQuery(e.target.value)
+          setOpen(true)
+        }}
+        onFocus={() => setOpen(true)}
+        onBlur={() => {
+          // Delay closing to allow for clicks on results
+          setTimeout(() => setOpen(false), 150)
+        }}
+      />
+      {open && query.length > 0 && (
+        <div className="absolute top-full left-0 right-0 z-50 mt-1 rounded-lg border bg-popover p-0 shadow-md outline-none w-72">
         {isLoading ? (
           <div className="p-4 text-center text-sm">Loading...</div>
         ) : teachers.length > 0 ? (
@@ -71,7 +78,8 @@ export function TeacherSearch() {
         ) : (
           <div className="p-4 text-sm text-muted-foreground">No results found</div>
         )}
-      </PopoverContent>
-    </Popover>
+        </div>
+      )}
+    </div>
   )
 }

@@ -11,19 +11,22 @@ export default async function ScheduleIndexPage() {
   const { data: featured } = await supabase
     .from('users')
     .select('id, name, profile_image_url, bio, public_url')
-    .eq('is_featured', true)
+    // .eq('is_featured', true)
     .order('name', { ascending: true })
     .limit(6)
+
+  // Handle potential errors and provide fallback
+  const featuredTeachers = featured || []
 
   return (
     <Container title="Browse Teachers" subtitle="Search for your favourite instructors" maxWidth="4xl">
       <div className="py-4">
         <TeacherSearch />
       </div>
-      {featured && featured.length > 0 && (
+      {featuredTeachers.length > 0 && (
         <PageSection title="Featured Teachers" spacing="large">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {featured.map((t) => (
+            {featuredTeachers.map((t) => (
               <TeacherCard key={t.id!} teacher={t} />
             ))}
           </div>
