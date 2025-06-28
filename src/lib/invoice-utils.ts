@@ -159,6 +159,107 @@ export async function createInvoice(invoiceData: InvoiceInsert): Promise<Invoice
 }
 
 /**
+ * Update an existing invoice
+ */
+export async function updateInvoice(invoiceId: string, updates: Partial<InvoiceInsert>): Promise<Invoice> {
+  const supabase = createClient()
+  
+  const { data, error } = await supabase
+    .from("invoices")
+    .update(updates)
+    .eq("id", invoiceId)
+    .select()
+    .single()
+
+  if (error) {
+    console.error("Error updating invoice:", error)
+    throw new Error(`Failed to update invoice: ${error.message}`)
+  }
+
+  return data
+}
+
+/**
+ * Get a single invoice with details by ID
+ */
+export async function getInvoiceById(invoiceId: string): Promise<InvoiceWithDetails | null> {
+  const supabase = createClient()
+  
+  const { data, error } = await supabase
+    .from("invoices")
+    .select(`
+      *,
+      studio:studios(*),
+      events(*)
+    `)
+    .eq("id", invoiceId)
+    .single()
+
+  if (error) {
+    if (error.code === 'PGRST116') return null // Not found
+    console.error("Error fetching invoice:", error)
+    throw new Error(`Failed to fetch invoice: ${error.message}`)
+  }
+
+  return {
+    ...data,
+    events: data.events || [],
+    event_count: data.events?.length || 0,
+  }
+}
+
+/**
+ * Unlink events from their current invoice
+ */
+export async function unlinkEventsFromInvoice(eventIds: string[]): Promise<void> {
+  const supabase = createClient()
+  
+  const { error } = await supabase
+    .from("events")
+    .update({ invoice_id: null })
+    .in("id", eventIds)
+
+  if (error) {
+    console.error("Error unlinking events from invoice:", error)
+    throw new Error(`Failed to unlink events from invoice: ${error.message}`)
+  }
+}
+
+/**
+ * Update invoice status
+ */
+export async function updateInvoiceStatus(
+  invoiceId: string, 
+  status: 'draft' | 'sent' | 'paid' | 'overdue' | 'cancelled',
+  timestamp?: string
+): Promise<Invoice> {
+  const supabase = createClient()
+  
+  const updates: Partial<InvoiceInsert> = { status }
+  
+  // Set appropriate timestamp based on status
+  if (status === 'sent' && timestamp) {
+    updates.sent_at = timestamp
+  } else if (status === 'paid' && timestamp) {
+    updates.paid_at = timestamp
+  }
+
+  const { data, error } = await supabase
+    .from("invoices")
+    .update(updates)
+    .eq("id", invoiceId)
+    .select()
+    .single()
+
+  if (error) {
+    console.error("Error updating invoice status:", error)
+    throw new Error(`Failed to update invoice status: ${error.message}`)
+  }
+
+  return data
+}
+
+/**
  * Link events to an invoice
  */
 export async function linkEventsToInvoice(eventIds: string[], invoiceId: string): Promise<void> {

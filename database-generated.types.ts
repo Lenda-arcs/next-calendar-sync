@@ -170,9 +170,12 @@ export type Database = {
           id: string
           invoice_number: string | null
           notes: string | null
+          paid_at: string | null
           pdf_url: string | null
           period_end: string
           period_start: string
+          sent_at: string | null
+          status: Database["public"]["Enums"]["invoice_status"]
           studio_id: string
           user_id: string
         }
@@ -183,9 +186,12 @@ export type Database = {
           id?: string
           invoice_number?: string | null
           notes?: string | null
+          paid_at?: string | null
           pdf_url?: string | null
           period_end: string
           period_start: string
+          sent_at?: string | null
+          status?: Database["public"]["Enums"]["invoice_status"]
           studio_id: string
           user_id: string
         }
@@ -196,9 +202,12 @@ export type Database = {
           id?: string
           invoice_number?: string | null
           notes?: string | null
+          paid_at?: string | null
           pdf_url?: string | null
           period_end?: string
           period_start?: string
+          sent_at?: string | null
+          status?: Database["public"]["Enums"]["invoice_status"]
           studio_id?: string
           user_id?: string
         }
@@ -519,6 +528,7 @@ export type Database = {
             | null
           id: string
           instagram_url: string | null
+          is_featured: boolean | null
           name: string | null
           profile_image_url: string | null
           public_url: string | null
@@ -536,6 +546,7 @@ export type Database = {
             | null
           id?: string
           instagram_url?: string | null
+          is_featured?: boolean | null
           name?: string | null
           profile_image_url?: string | null
           public_url?: string | null
@@ -553,6 +564,7 @@ export type Database = {
             | null
           id?: string
           instagram_url?: string | null
+          is_featured?: boolean | null
           name?: string | null
           profile_image_url?: string | null
           public_url?: string | null
@@ -694,6 +706,7 @@ export type Database = {
     }
     Enums: {
       event_display_variant: "minimal" | "compact" | "full"
+      invoice_status: "draft" | "sent" | "paid" | "overdue" | "cancelled"
       user_role: "user" | "beta" | "moderator" | "admin"
     }
     CompositeTypes: {
@@ -811,6 +824,7 @@ export const Constants = {
   public: {
     Enums: {
       event_display_variant: ["minimal", "compact", "full"],
+      invoice_status: ["draft", "sent", "paid", "overdue", "cancelled"],
       user_role: ["user", "beta", "moderator", "admin"],
     },
   },

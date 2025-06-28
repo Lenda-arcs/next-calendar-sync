@@ -28,6 +28,8 @@ export function InvoiceManagement({ userId }: InvoiceManagementProps) {
   const [selectedStudioId, setSelectedStudioId] = useState<string>('')
   const [selectedEventIds, setSelectedEventIds] = useState<string[]>([])
   const [selectedEvents, setSelectedEvents] = useState<EventWithStudio[]>([])
+  const [modalMode, setModalMode] = useState<'create' | 'edit'>('create')
+  const [editingInvoice, setEditingInvoice] = useState<InvoiceWithDetails | null>(null)
 
   // Get active tab from URL, default to 'uninvoiced'
   const getActiveTabFromUrl = (): TabValue => {
@@ -68,9 +70,20 @@ export function InvoiceManagement({ userId }: InvoiceManagementProps) {
   })
 
   const handleCreateInvoice = (studioId: string, eventIds: string[], events: EventWithStudio[]) => {
+    setModalMode('create')
+    setEditingInvoice(null)
     setSelectedStudioId(studioId)
     setSelectedEventIds(eventIds)
     setSelectedEvents(events)
+    setInvoiceModalOpen(true)
+  }
+
+  const handleEditInvoice = (invoice: InvoiceWithDetails) => {
+    setModalMode('edit')
+    setEditingInvoice(invoice)
+    setSelectedStudioId(invoice.studio_id)
+    setSelectedEventIds(invoice.events.map(e => e.id))
+    setSelectedEvents(invoice.events.map(event => ({ ...event, studio: invoice.studio })))
     setInvoiceModalOpen(true)
   }
 
@@ -84,8 +97,10 @@ export function InvoiceManagement({ userId }: InvoiceManagementProps) {
     // Switch to invoices tab to show the new invoice
     setActiveTab('invoices')
     
-    // Close the modal
+    // Close the modal and reset state
     setInvoiceModalOpen(false)
+    setModalMode('create')
+    setEditingInvoice(null)
     setSelectedStudioId('')
     setSelectedEventIds([])
     setSelectedEvents([])
@@ -172,7 +187,7 @@ export function InvoiceManagement({ userId }: InvoiceManagementProps) {
               {(invoices: InvoiceWithDetails[]) => (
                 <div className="space-y-4">
                   {invoices.map((invoice) => (
-                    <InvoiceCard key={invoice.id} invoice={invoice} />
+                    <InvoiceCard key={invoice.id} invoice={invoice} onEdit={handleEditInvoice} />
                   ))}
                 </div>
               )}
@@ -190,7 +205,7 @@ export function InvoiceManagement({ userId }: InvoiceManagementProps) {
         </TabsContent>
       </Tabs>
 
-      {/* Invoice Creation Modal */}
+      {/* Invoice Creation/Edit Modal */}
       <InvoiceCreationModal
         isOpen={invoiceModalOpen}
         onClose={() => setInvoiceModalOpen(false)}
@@ -198,6 +213,8 @@ export function InvoiceManagement({ userId }: InvoiceManagementProps) {
         studioId={selectedStudioId}
         eventIds={selectedEventIds}
         events={selectedEvents}
+        mode={modalMode}
+        existingInvoice={editingInvoice || undefined}
         onSuccess={handleInvoiceSuccess}
       />
     </div>

@@ -2,7 +2,8 @@ import { useState, useEffect, useMemo } from 'react'
 import { 
   generateInvoiceNumber, 
   calculateEventPayout, 
-  EventWithStudio 
+  EventWithStudio,
+  InvoiceWithDetails
 } from '@/lib/invoice-utils'
 
 interface EditableEventData {
@@ -16,12 +17,16 @@ interface UseInvoiceCreationStateProps {
   isOpen: boolean
   eventIds: string[]
   events: EventWithStudio[]
+  mode?: 'create' | 'edit'
+  existingInvoice?: InvoiceWithDetails
 }
 
 export function useInvoiceCreationState({ 
   isOpen, 
   eventIds, 
-  events 
+  events, 
+  mode, 
+  existingInvoice 
 }: UseInvoiceCreationStateProps) {
   const [invoiceNumber, setInvoiceNumber] = useState('')
   const [notes, setNotes] = useState('')
@@ -42,23 +47,49 @@ export function useInvoiceCreationState({
   // Initialize editable events when modal opens with events
   useEffect(() => {
     if (isOpen && selectedEvents.length > 0 && editableEvents.length === 0) {
-      const items: EditableEventData[] = selectedEvents.map(event => ({
-        id: event.id,
-        title: event.title || 'Untitled Event',
-        rate: event.studio ? calculateEventPayout(event, event.studio) : 0,
-        date: event.start_time ? new Date(event.start_time).toLocaleDateString() : 'No date'
-      }))
+      let items: EditableEventData[]
+      
+      if (mode === 'edit' && existingInvoice) {
+        // In edit mode, use existing invoice data and calculate rates using the invoice's studio
+        items = existingInvoice.events.map(event => ({
+          id: event.id,
+          title: event.title || 'Untitled Event',
+          rate: existingInvoice.studio ? calculateEventPayout(event, existingInvoice.studio) : 0,
+          date: event.start_time ? new Date(event.start_time).toLocaleDateString() : 'No date'
+        }))
+      } else {
+        // In create mode, calculate from selected events
+        items = selectedEvents.map(event => ({
+          id: event.id,
+          title: event.title || 'Untitled Event',
+          rate: event.studio ? calculateEventPayout(event, event.studio) : 0,
+          date: event.start_time ? new Date(event.start_time).toLocaleDateString() : 'No date'
+        }))
+      }
       
       setEditableEvents(items)
     }
-  }, [isOpen, selectedEvents, editableEvents.length])
+  }, [isOpen, selectedEvents, editableEvents.length, mode, existingInvoice])
 
   // Generate invoice number when modal opens
   useEffect(() => {
     if (isOpen && !invoiceNumber) {
-      setInvoiceNumber(generateInvoiceNumber('INV'))
+      if (mode === 'edit' && existingInvoice?.invoice_number) {
+        // In edit mode, use existing invoice number
+        setInvoiceNumber(existingInvoice.invoice_number)
+      } else {
+        // In create mode, generate new invoice number
+        setInvoiceNumber(generateInvoiceNumber('INV'))
+      }
     }
-  }, [isOpen, invoiceNumber])
+  }, [isOpen, invoiceNumber, mode, existingInvoice])
+
+  // Initialize notes from existing invoice in edit mode
+  useEffect(() => {
+    if (isOpen && mode === 'edit' && existingInvoice?.notes && !notes) {
+      setNotes(existingInvoice.notes)
+    }
+  }, [isOpen, mode, existingInvoice, notes])
 
   // Reset all state when modal closes
   useEffect(() => {
