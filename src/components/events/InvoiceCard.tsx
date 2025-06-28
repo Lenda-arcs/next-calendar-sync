@@ -2,9 +2,9 @@ import React, { useState } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Select } from '@/components/ui/select'
 import { InvoiceWithDetails } from '@/lib/invoice-utils'
-import { Edit3, Eye, FileText } from 'lucide-react'
+import { Edit3, Eye, FileText, Loader2 } from 'lucide-react'
 
 interface InvoiceCardProps {
   invoice: InvoiceWithDetails
@@ -13,6 +13,8 @@ interface InvoiceCardProps {
 }
 
 export const InvoiceCard: React.FC<InvoiceCardProps> = ({ invoice, onEdit, onStatusChange }) => {
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false)
+
   const getStatusBadge = (status: string) => {
     const variants = {
       draft: { variant: 'secondary' as const, text: 'Draft', color: 'bg-gray-100 text-gray-800' },
@@ -30,8 +32,26 @@ export const InvoiceCard: React.FC<InvoiceCardProps> = ({ invoice, onEdit, onSta
   }
 
   const canEdit = invoice.status === 'draft'
+  const canChangeStatus = !!invoice.pdf_url && invoice.status !== 'cancelled'
   const ButtonIcon = canEdit ? Edit3 : Eye
   const buttonText = canEdit ? 'Edit' : 'View'
+
+  const statusOptions = [
+    { value: 'sent', label: 'Sent' },
+    { value: 'paid', label: 'Paid' },
+    { value: 'overdue', label: 'Overdue' }
+  ]
+
+  const handleStatusChange = async (newStatus: string) => {
+    if (!onStatusChange || isUpdatingStatus) return
+    
+    setIsUpdatingStatus(true)
+    try {
+      await onStatusChange(invoice.id, newStatus as 'sent' | 'paid' | 'overdue')
+    } finally {
+      setIsUpdatingStatus(false)
+    }
+  }
 
   return (
     <Card>
@@ -43,6 +63,12 @@ export const InvoiceCard: React.FC<InvoiceCardProps> = ({ invoice, onEdit, onSta
                 {invoice.invoice_number || `Invoice ${invoice.id.slice(0, 8)}`}
               </h3>
               {getStatusBadge(invoice.status)}
+              {invoice.pdf_url && (
+                <div className="flex items-center gap-1 text-xs text-gray-500">
+                  <FileText className="w-3 h-3" />
+                  PDF
+                </div>
+              )}
             </div>
             <p className="text-sm text-gray-600 mb-2">
               {invoice.studio?.studio_name || 'Unknown Studio'}
@@ -70,6 +96,25 @@ export const InvoiceCard: React.FC<InvoiceCardProps> = ({ invoice, onEdit, onSta
                 </Badge>
               )}
             </div>
+            
+            {/* Status Change Controls */}
+            {canChangeStatus && (
+              <div className="flex items-center gap-2">
+                <Select
+                  value={invoice.status}
+                  onChange={handleStatusChange}
+                  options={statusOptions}
+                  placeholder="Change status"
+                  className="w-32"
+                  disabled={isUpdatingStatus}
+                />
+                {isUpdatingStatus && (
+                  <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+                )}
+              </div>
+            )}
+            
+            {/* Edit/View Button */}
             {onEdit && (
               <Button 
                 variant="outline" 

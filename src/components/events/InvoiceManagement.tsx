@@ -12,7 +12,7 @@ import { InvoiceCreationModal } from './InvoiceCreationModal'
 import { InvoiceSettings } from './InvoiceSettings'
 import { InvoiceCard } from './InvoiceCard'
 import { useSupabaseQuery } from '@/lib/hooks/useSupabaseQuery'
-import { getUserInvoices, getUninvoicedEvents, EventWithStudio, InvoiceWithDetails } from '@/lib/invoice-utils'
+import { getUserInvoices, getUninvoicedEvents, updateInvoiceStatus, EventWithStudio, InvoiceWithDetails } from '@/lib/invoice-utils'
 import { Receipt, FileText, Settings } from 'lucide-react'
 
 interface InvoiceManagementProps {
@@ -85,6 +85,19 @@ export function InvoiceManagement({ userId }: InvoiceManagementProps) {
     setSelectedEventIds(invoice.events.map(e => e.id))
     setSelectedEvents(invoice.events.map(event => ({ ...event, studio: invoice.studio })))
     setInvoiceModalOpen(true)
+  }
+
+  const handleStatusChange = async (invoiceId: string, newStatus: 'sent' | 'paid' | 'overdue') => {
+    try {
+      const timestamp = new Date().toISOString()
+      await updateInvoiceStatus(invoiceId, newStatus, timestamp)
+      
+      // Refresh invoices list to show updated status
+      refetchInvoices()
+    } catch (error) {
+      console.error('Failed to update invoice status:', error)
+      // You might want to show a toast notification here
+    }
   }
 
   const handleInvoiceSuccess = () => {
@@ -187,7 +200,12 @@ export function InvoiceManagement({ userId }: InvoiceManagementProps) {
               {(invoices: InvoiceWithDetails[]) => (
                 <div className="space-y-4">
                   {invoices.map((invoice) => (
-                    <InvoiceCard key={invoice.id} invoice={invoice} onEdit={handleEditInvoice} />
+                    <InvoiceCard 
+                      key={invoice.id} 
+                      invoice={invoice} 
+                      onEdit={handleEditInvoice}
+                      onStatusChange={handleStatusChange}
+                    />
                   ))}
                 </div>
               )}
