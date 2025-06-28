@@ -1,19 +1,19 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React from 'react'
 import { UnifiedDialog } from '@/components/ui/unified-dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { EditableEventItem } from './EditableEventItem'
+import { useInvoiceCreationState } from './useInvoiceCreationState'
 import { useSupabaseQuery } from '@/lib/hooks/useSupabaseQuery'
 import { useSupabaseMutation } from '@/lib/hooks/useSupabaseMutation'
 import {
   getUserStudios,
   createInvoice,
   linkEventsToInvoice,
-  generateInvoiceNumber,
-  calculateEventPayout,
   EventWithStudio
 } from '@/lib/invoice-utils'
 import { InvoiceInsert } from '@/lib/types'
@@ -25,7 +25,7 @@ interface InvoiceCreationModalProps {
   userId: string
   studioId: string
   eventIds: string[]
-  events?: EventWithStudio[]
+  events: EventWithStudio[]
   onSuccess?: () => void
 }
 
@@ -35,12 +35,27 @@ export function InvoiceCreationModal({
   userId,
   studioId,
   eventIds,
-  events = [],
+  events,
   onSuccess
 }: InvoiceCreationModalProps) {
-  const [invoiceNumber, setInvoiceNumber] = useState('')
-  const [notes, setNotes] = useState('')
-  const [showSuccess, setShowSuccess] = useState(false)
+  // Use the custom hook for state management
+  const {
+    invoiceNumber,
+    setInvoiceNumber,
+    notes,
+    setNotes,
+    showSuccess,
+    setShowSuccess,
+    editableEvents,
+    selectedEvents,
+    totalAmount,
+    handleEventUpdate,
+    isReady
+  } = useInvoiceCreationState({
+    isOpen,
+    eventIds,
+    events
+  })
 
   // Get studio details
   const { data: studios } = useSupabaseQuery({
@@ -50,17 +65,6 @@ export function InvoiceCreationModal({
   })
 
   const studio = studios?.find((s) => s.id === studioId)
-  const selectedEvents = events.filter(event => eventIds.includes(event.id))
-  const totalAmount = selectedEvents.reduce((sum, event) => {
-    return sum + (event.studio ? calculateEventPayout(event, event.studio) : 0)
-  }, 0)
-
-  // Generate invoice number on open
-  useEffect(() => {
-    if (isOpen && !invoiceNumber) {
-      setInvoiceNumber(generateInvoiceNumber('INV'))
-    }
-  }, [isOpen, invoiceNumber])
 
   // Invoice creation mutation
   const createInvoiceMutation = useSupabaseMutation({
@@ -73,17 +77,8 @@ export function InvoiceCreationModal({
     }
   })
 
-  // Reset state when modal closes
-  useEffect(() => {
-    if (!isOpen) {
-      setShowSuccess(false)
-      setNotes('')
-      setInvoiceNumber('')
-    }
-  }, [isOpen])
-
   const handleCreateInvoice = async () => {
-    if (!studio || selectedEvents.length === 0) return
+    if (!studio || editableEvents.length === 0) return
     
     try {
       const eventDates = selectedEvents.map(e => new Date(e.start_time!))
@@ -116,7 +111,7 @@ export function InvoiceCreationModal({
       </Button>
       <Button 
         onClick={handleCreateInvoice} 
-        disabled={createInvoiceMutation.isLoading || !studio || selectedEvents.length === 0}
+        disabled={createInvoiceMutation.isLoading || !studio || editableEvents.length === 0 || !isReady}
       >
         {createInvoiceMutation.isLoading ? (
           <>
@@ -194,30 +189,43 @@ export function InvoiceCreationModal({
 
             <Card>
               <CardHeader>
-                <CardTitle>Events ({selectedEvents.length})</CardTitle>
+                <CardTitle>
+                  Events {isReady && `(${editableEvents.length})`}
+                </CardTitle>
+                {isReady && (
+                  <p className="text-sm text-gray-600 mt-1">
+                    Click the edit icon to modify the title and rate for each event.
+                  </p>
+                )}
               </CardHeader>
               <CardContent>
-                <div className="space-y-2">
-                  {selectedEvents.map(event => (
-                    <div key={event.id} className="flex justify-between items-center py-2 border-b">
-                      <div>
-                        <div className="font-medium">{event.title || 'Untitled Event'}</div>
-                        <div className="text-sm text-gray-600">
-                          {event.start_time ? new Date(event.start_time).toLocaleDateString() : 'No date'}
-                        </div>
-                      </div>
-                      <div className="font-bold">
-                        €{event.studio ? calculateEventPayout(event, event.studio).toFixed(2) : '0.00'}
+                {isReady ? (
+                  <>
+                    <div className="space-y-4">
+                      {editableEvents.map(item => (
+                        <EditableEventItem
+                          key={item.id}
+                          id={item.id}
+                          title={item.title}
+                          rate={item.rate}
+                          date={item.date}
+                          onUpdate={handleEventUpdate}
+                          disabled={createInvoiceMutation.isLoading}
+                        />
+                      ))}
+                    </div>
+                    <div className="border-t pt-4 mt-6">
+                      <div className="flex justify-between items-center text-lg font-bold">
+                        <span>Total:</span>
+                        <span>€{totalAmount.toFixed(2)}</span>
                       </div>
                     </div>
-                  ))}
-                </div>
-                <div className="border-t pt-4 mt-4">
-                  <div className="flex justify-between items-center text-lg font-bold">
-                    <span>Total:</span>
-                    <span>€{totalAmount.toFixed(2)}</span>
+                  </>
+                ) : (
+                  <div className="text-center py-8">
+                    <p className="text-gray-600">No events selected.</p>
                   </div>
-                </div>
+                )}
               </CardContent>
             </Card>
           </div>

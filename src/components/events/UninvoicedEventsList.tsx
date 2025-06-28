@@ -15,7 +15,7 @@ import { RefreshCw } from 'lucide-react'
 
 interface UninvoicedEventsListProps {
   userId: string
-  onCreateInvoice?: (studioId: string, eventIds: string[]) => void
+  onCreateInvoice?: (studioId: string, eventIds: string[], events: EventWithStudio[]) => void
   onCreateStudio?: () => void
 }
 
@@ -133,7 +133,9 @@ export function UninvoicedEventsList({ userId, onCreateInvoice, onCreateStudio }
   const handleCreateInvoice = (studioId: string) => {
     const eventIds = selectedEvents[studioId] || []
     if (eventIds.length > 0 && onCreateInvoice) {
-      onCreateInvoice(studioId, eventIds)
+      const studioEvents = eventsByStudio?.[studioId] || []
+      const selectedEventsData = studioEvents.filter(event => eventIds.includes(event.id))
+      onCreateInvoice(studioId, eventIds, selectedEventsData)
     }
   }
 

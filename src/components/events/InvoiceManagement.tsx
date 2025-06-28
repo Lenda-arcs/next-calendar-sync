@@ -67,17 +67,14 @@ export function InvoiceManagement({ userId }: InvoiceManagementProps) {
     enabled: !!userId
   })
 
-  const handleCreateInvoice = (studioId: string, eventIds: string[]) => {
-    const eventsForInvoice = uninvoicedEvents?.filter(event => eventIds.includes(event.id)) || []
+  const handleCreateInvoice = (studioId: string, eventIds: string[], events: EventWithStudio[]) => {
     setSelectedStudioId(studioId)
     setSelectedEventIds(eventIds)
-    setSelectedEvents(eventsForInvoice)
+    setSelectedEvents(events)
     setInvoiceModalOpen(true)
   }
 
   const handleInvoiceSuccess = () => {
-    console.log('Invoice success callback triggered, refetching data...')
-    
     // Force refetch of uninvoiced events
     refetchUninvoiced()
     
@@ -86,8 +83,6 @@ export function InvoiceManagement({ userId }: InvoiceManagementProps) {
     
     // Switch to invoices tab to show the new invoice
     setActiveTab('invoices')
-    
-    console.log('Data refetch completed, switched to invoices tab')
     
     // Close the modal
     setInvoiceModalOpen(false)
