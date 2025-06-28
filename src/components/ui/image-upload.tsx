@@ -22,7 +22,7 @@ interface ImageUploadProps {
   userId: string;
   aspectRatio?: number;
   bucketName: string;
-  folderPath: string;
+  folderPath: string; // This will be automatically prefixed with userId
   maxFileSize?: number;
   allowedTypes?: string[];
   className?: string;
@@ -77,6 +77,12 @@ function centerAspectCrop(
   );
 }
 
+// Helper function to create user-specific folder path
+function createUserFolderPath(userId: string, folderPath: string): string {
+  // Create user-specific folder structure: users/{userId}/{folderPath}
+  return `users/${userId}/${folderPath}`;
+}
+
 // Component for Step 1: Select Existing Images
 const ExistingImagesStep: React.FC<ExistingImagesStepProps> = ({
   existingImages,
@@ -91,7 +97,7 @@ const ExistingImagesStep: React.FC<ExistingImagesStepProps> = ({
     <>
       <div className="mb-6">
         <h4 className="text-sm font-medium text-gray-700 mb-3">
-          Existing Images
+          Your Existing Images
         </h4>
         <DataLoader
           data={existingImages}
@@ -99,7 +105,7 @@ const ExistingImagesStep: React.FC<ExistingImagesStepProps> = ({
           error={fetchError}
           empty={
             <div className="text-center py-8 text-gray-500">
-              No existing images found
+              No existing images found. Upload your first image below.
             </div>
           }
         >
@@ -194,6 +200,9 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
   const imgRef = useRef<HTMLImageElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Create user-specific folder path
+  const userFolderPath = createUserFolderPath(userId, folderPath);
+
   // Fetch existing images using useSupabaseQuery - only when dialog is opened
   const {
     data: existingImages,
@@ -201,15 +210,25 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
     error: fetchError,
     refetch: fetchImages,
   } = useSupabaseQuery<BucketImage[]>({
-    queryKey: ['bucket_images', bucketName, folderPath],
+    queryKey: ['bucket_images', bucketName, userFolderPath],
     fetcher: async (supabase) => {
       const { data, error } = await supabase.storage
         .from(bucketName)
-        .list(folderPath, {
+        .list(userFolderPath, {
           sortBy: { column: "created_at", order: "desc" },
         });
 
-      if (error) throw error;
+      if (error) {
+        // If folder doesn't exist, return empty array instead of throwing
+        if (error.message.includes('The resource was not found')) {
+          return [];
+        }
+        throw error;
+      }
+
+      if (!data || data.length === 0) {
+        return [];
+      }
 
       return await Promise.all(
         data.map(async (file: { name: string; created_at: string }) => {
@@ -217,7 +236,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
             data: { publicUrl },
           } = supabase.storage
             .from(bucketName)
-            .getPublicUrl(`${folderPath}/${file.name}`);
+            .getPublicUrl(`${userFolderPath}/${file.name}`);
 
           return {
             name: file.name,
@@ -231,8 +250,10 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
   });
 
   // Upload mutation using useSupabaseMutation
-  const uploadMutation = useSupabaseMutation<{ url: string }, { file: Uint8Array; filePath: string }>({
-    mutationFn: async (supabase, { file, filePath }) => {
+  const uploadMutation = useSupabaseMutation<{ url: string }, { file: Uint8Array; fileName: string }>({
+    mutationFn: async (supabase, { file, fileName }) => {
+      const filePath = `${userFolderPath}/${fileName}`;
+      
       const { error: uploadError } = await supabase.storage
         .from(bucketName)
         .upload(filePath, file, {
@@ -379,15 +400,14 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
 
         try {
           const fileExt = "webp";
-          const fileName = `${userId}-${Date.now()}.${fileExt}`;
-          const filePath = `${folderPath}/${fileName}`;
+          const fileName = `${Date.now()}.${fileExt}`;
 
           const arrayBuffer = await blob.arrayBuffer();
           const uint8Array = new Uint8Array(arrayBuffer);
 
           await uploadMutation.mutateAsync({
             file: uint8Array,
-            filePath,
+            fileName,
           });
         } catch (err) {
           console.error("Error processing image:", err);
@@ -405,8 +425,6 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
     setCrop(undefined);
     setError(null);
   };
-
-
 
   return (
     <div className="w-full">
