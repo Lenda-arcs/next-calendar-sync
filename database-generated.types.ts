@@ -519,6 +519,7 @@ export type Database = {
             | null
           id: string
           instagram_url: string | null
+          is_featured: boolean | null
           name: string | null
           profile_image_url: string | null
           public_url: string | null
@@ -536,6 +537,7 @@ export type Database = {
             | null
           id?: string
           instagram_url?: string | null
+          is_featured?: boolean | null
           name?: string | null
           profile_image_url?: string | null
           public_url?: string | null
@@ -553,6 +555,7 @@ export type Database = {
             | null
           id?: string
           instagram_url?: string | null
+          is_featured?: boolean | null
           name?: string | null
           profile_image_url?: string | null
           public_url?: string | null
