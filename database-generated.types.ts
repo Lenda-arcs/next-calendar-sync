@@ -223,6 +223,63 @@ export type Database = {
           },
         ]
       }
+      rate_limit_blocks: {
+        Row: {
+          action: string
+          blocked_at: string | null
+          blocked_until: string
+          id: string
+          identifier: string
+          metadata: Json | null
+          reason: string | null
+        }
+        Insert: {
+          action?: string
+          blocked_at?: string | null
+          blocked_until: string
+          id?: string
+          identifier: string
+          metadata?: Json | null
+          reason?: string | null
+        }
+        Update: {
+          action?: string
+          blocked_at?: string | null
+          blocked_until?: string
+          id?: string
+          identifier?: string
+          metadata?: Json | null
+          reason?: string | null
+        }
+        Relationships: []
+      }
+      rate_limits: {
+        Row: {
+          action: string
+          created_at: string | null
+          expires_at: string
+          id: string
+          identifier: string
+          metadata: Json | null
+        }
+        Insert: {
+          action?: string
+          created_at?: string | null
+          expires_at: string
+          id?: string
+          identifier: string
+          metadata?: Json | null
+        }
+        Update: {
+          action?: string
+          created_at?: string | null
+          expires_at?: string
+          id?: string
+          identifier?: string
+          metadata?: Json | null
+        }
+        Relationships: []
+      }
       studios: {
         Row: {
           address: string | null
@@ -619,6 +676,10 @@ export type Database = {
       }
     }
     Functions: {
+      cleanup_expired_rate_limits: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       get_my_uid: {
         Args: Record<PropertyKey, never>
         Returns: string
