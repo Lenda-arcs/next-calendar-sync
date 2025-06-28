@@ -12,6 +12,7 @@ interface DynamicNavbarProps {
   isCollapsed: boolean
   isAnimating: boolean
   isExpanding: boolean
+  shouldShowJumpingCTA: boolean
   onToggleHero: () => void
   onCloseHero: () => void
 }
@@ -22,6 +23,7 @@ export default function DynamicNavbar({
   isCollapsed,
   isAnimating,
   isExpanding,
+  shouldShowJumpingCTA,
   onToggleHero,
   onCloseHero
 }: DynamicNavbarProps) {
@@ -58,8 +60,9 @@ export default function DynamicNavbar({
                     w-8 h-8 rounded-full border border-white/40 bg-white/50 
                     flex items-center justify-center overflow-hidden shadow-sm
                     transition-all duration-500 ease-in-out
-                    ${isAnimating ? 'animate-morph-in' : ''}
-                    ${isExpanding ? 'animate-morph-out-reverse' : ''}
+                    ${isAnimating ? 'md:animate-morph-in' : ''}
+                    ${isExpanding ? 'md:animate-morph-out-reverse' : ''}
+                    ${shouldShowJumpingCTA ? 'animate-jump' : ''}
                   `}>
                     {teacherProfile?.profile_image_url ? (
                       <img
@@ -73,7 +76,10 @@ export default function DynamicNavbar({
                   </div>
                   <button
                     onClick={onToggleHero}
-                    className="text-sm font-medium text-gray-900 hover:text-gray-700 transition-colors duration-200"
+                    className={`
+                      text-sm font-medium text-gray-900 hover:text-gray-700 transition-colors duration-200
+                      ${shouldShowJumpingCTA ? 'animate-jump' : ''}
+                    `}
                   >
                     {teacherProfile?.name || 'Teacher'}
                   </button>
@@ -124,10 +130,25 @@ export default function DynamicNavbar({
 
       {/* Custom CSS for morphing animation */}
       <style jsx>{`
+        /* Jumping animation for CTA */
+        @keyframes jump {
+          0%, 100% {
+            transform: translateY(0);
+          }
+          50% {
+            transform: translateY(-8px);
+          }
+        }
+
+        .animate-jump {
+          animation: jump 0.6s ease-in-out infinite;
+        }
+
+        /* Reduced mobile animations - only apply morph animations on medium screens and up */
         @keyframes morph-in {
           0% {
-            transform: scale(1.8) translateX(-60px) translateY(20px);
-            opacity: 0.6;
+            transform: scale(1.1) translateX(-20px) translateY(10px);
+            opacity: 0.8;
           }
           100% {
             transform: scale(1) translateX(0) translateY(0);
@@ -159,11 +180,11 @@ export default function DynamicNavbar({
           }
         }
 
-        .animate-morph-in {
+        .md\\:animate-morph-in {
           animation: morph-in 0.8s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
-        .animate-morph-out-reverse {
+        .md\\:animate-morph-out-reverse {
           animation: morph-out-reverse 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
 
@@ -173,8 +194,8 @@ export default function DynamicNavbar({
             opacity: 1;
           }
           100% {
-            transform: scale(1.8) translateX(-60px) translateY(20px);
-            opacity: 0.05;
+            transform: scale(1.1) translateX(-20px) translateY(10px);
+            opacity: 0.1;
           }
         }
 

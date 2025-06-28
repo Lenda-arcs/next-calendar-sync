@@ -21,6 +21,7 @@ export default function TeacherScheduleLayout({
     isCollapsed,
     isAnimating,
     isExpanding,
+    shouldShowJumpingCTA,
     handleToggleHero,
     handleCloseHero
   } = useHeroState()
@@ -35,6 +36,7 @@ export default function TeacherScheduleLayout({
           isCollapsed={isCollapsed}
           isAnimating={isAnimating}
           isExpanding={isExpanding}
+          shouldShowJumpingCTA={shouldShowJumpingCTA}
           onToggleHero={handleToggleHero}
           onCloseHero={handleCloseHero}
         />

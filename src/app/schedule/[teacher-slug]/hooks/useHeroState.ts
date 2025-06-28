@@ -6,14 +6,39 @@ import { useScrollIntoView } from '@/lib/hooks'
 type HeroState = 'auto' | 'expanded' | 'closed'
 
 export function useHeroState() {
-  const [heroState, setHeroState] = useState<HeroState>('auto')
+  const [heroState, setHeroState] = useState<HeroState>('closed') // Start closed by default
   const [isAnimating, setIsAnimating] = useState(false)
   const [isExpanding, setIsExpanding] = useState(false)
+  const [shouldShowJumpingCTA, setShouldShowJumpingCTA] = useState(false)
+  const [hasPageLoaded, setHasPageLoaded] = useState(false)
+  const [hasUsedCTA, setHasUsedCTA] = useState(false) // Track if user has ever opened the hero
   
   const { elementRef, isInView } = useScrollIntoView({
     threshold: 0.8, // High threshold - collapse when mostly out of view
     rootMargin: '-80px 0px 0px 0px' // Account for navbar
   })
+
+  // Track page load
+  useEffect(() => {
+    setHasPageLoaded(true)
+  }, [])
+
+  // Show jumping CTA after 5 seconds, only if hero is still closed AND user hasn't used CTA before
+  useEffect(() => {
+    if (!hasPageLoaded || hasUsedCTA) return
+
+    const timer = setTimeout(() => {
+      if (heroState === 'closed') {
+        setShouldShowJumpingCTA(true)
+        // Stop jumping after 3 seconds
+        setTimeout(() => {
+          setShouldShowJumpingCTA(false)
+        }, 3000)
+      }
+    }, 5000)
+
+    return () => clearTimeout(timer)
+  }, [hasPageLoaded, heroState, hasUsedCTA])
 
   // Reset to auto state when scrolling back into view from collapsed state
   useEffect(() => {
@@ -64,6 +89,10 @@ export function useHeroState() {
       setHeroState('expanded')
       setIsExpanding(true)
       setIsAnimating(false)
+      // Stop jumping animation when user interacts
+      setShouldShowJumpingCTA(false)
+      // Mark that user has used the CTA
+      setHasUsedCTA(true)
     } else {
       setHeroState('closed')
       setIsAnimating(true)
@@ -80,6 +109,7 @@ export function useHeroState() {
     isCollapsed,
     isAnimating,
     isExpanding,
+    shouldShowJumpingCTA,
     handleToggleHero,
     handleCloseHero
   }
