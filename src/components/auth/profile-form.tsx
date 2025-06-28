@@ -335,6 +335,7 @@ export function ProfileForm({ user, onUpdate }: ProfileFormProps) {
                 allowedTypes={['image/jpeg', 'image/png', 'image/webp']}
                 className="w-32 h-32 rounded-full"
                 placeholderText="Change Profile Picture"
+                maxImages={5} // Limit: 5 avatar images per user
               />
             </div>
 

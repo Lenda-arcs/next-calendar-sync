@@ -13,7 +13,18 @@ import DataLoader from "./data-loader";
 import { UnifiedDialog } from "./unified-dialog";
 import { Button } from "./button";
 import { Alert, AlertDescription } from "./alert";
-import { AlertCircle, ChevronLeft, Upload } from "lucide-react";
+import { 
+  AlertDialog, 
+  AlertDialogAction, 
+  AlertDialogCancel, 
+  AlertDialogContent, 
+  AlertDialogDescription, 
+  AlertDialogFooter, 
+  AlertDialogHeader, 
+  AlertDialogTitle, 
+  AlertDialogTrigger 
+} from "./alert-dialog";
+import { AlertCircle, ChevronLeft, Upload, X } from "lucide-react";
 import IconButton from "./icon-button";
 
 interface ImageUploadProps {
@@ -27,6 +38,7 @@ interface ImageUploadProps {
   allowedTypes?: string[];
   className?: string;
   placeholderText?: string;
+  maxImages?: number; // Maximum number of images allowed in this folder
 }
 
 interface BucketImage {
@@ -41,8 +53,11 @@ interface ExistingImagesStepProps {
   fetchError: string | null;
   onSelectImage: (image: BucketImage) => void;
   onUploadClick: () => void;
+  onDeleteImage: (image: BucketImage) => void;
   maxFileSize: number;
   allowedTypes: string[];
+  maxImages?: number;
+  currentCount: number;
 }
 
 interface CropImageStepProps {
@@ -90,15 +105,38 @@ const ExistingImagesStep: React.FC<ExistingImagesStepProps> = ({
   fetchError,
   onSelectImage,
   onUploadClick, // eslint-disable-line @typescript-eslint/no-unused-vars
+  onDeleteImage,
   maxFileSize, // eslint-disable-line @typescript-eslint/no-unused-vars
   allowedTypes, // eslint-disable-line @typescript-eslint/no-unused-vars
+  maxImages,
+  currentCount,
 }) => {
+  const isAtLimit = maxImages ? currentCount >= maxImages : false;
+  
   return (
     <>
       <div className="mb-6">
-        <h4 className="text-sm font-medium text-gray-700 mb-3">
-          Your Existing Images
-        </h4>
+        <div className="flex items-center justify-between mb-3">
+          <h4 className="text-sm font-medium text-gray-700">
+            Your Existing Images
+          </h4>
+          {maxImages && (
+            <span className={`text-xs px-2 py-1 rounded-full ${
+              isAtLimit ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-600'
+            }`}>
+              {currentCount} / {maxImages}
+            </span>
+          )}
+        </div>
+        
+        {isAtLimit && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              You&apos;ve reached the maximum limit of {maxImages} images. Delete existing images to upload new ones.
+            </AlertDescription>
+          </Alert>
+        )}
         <DataLoader
           data={existingImages}
           loading={isLoadingImages}
@@ -114,19 +152,52 @@ const ExistingImagesStep: React.FC<ExistingImagesStepProps> = ({
               {images.map((image) => (
                 <div
                   key={image.name}
-                  className="relative aspect-video rounded-lg overflow-hidden cursor-pointer group"
-                  onClick={() => onSelectImage(image)}
+                  className="relative aspect-video rounded-lg overflow-hidden group"
                 >
                   <img
                     src={image.url}
                     alt={image.name}
                     className="w-full h-full object-cover"
                   />
-                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                  
+                  {/* Select overlay */}
+                  <div 
+                    className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer"
+                    onClick={() => onSelectImage(image)}
+                  >
                     <span className="text-white text-sm font-medium">
                       Select
                     </span>
                   </div>
+                  
+                  {/* Delete button */}
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <button
+                        className="absolute top-1 right-1 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete Image?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This will permanently delete this image from your storage. This action cannot be undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => onDeleteImage(image)}
+                          className="bg-red-600 hover:bg-red-700 text-white"
+                        >
+                          Delete Image
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </div>
               ))}
             </div>
@@ -187,6 +258,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
   allowedTypes = DEFAULT_ALLOWED_TYPES,
   className = "",
   placeholderText = "Change Image",
+  maxImages,
 }) => {
   const [previewUrl, setPreviewUrl] = useState<string | null>(
     currentImageUrl || null,
@@ -280,7 +352,38 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
     },
     onError: (error) => {
       console.error("Error uploading image:", error);
-      setError("Failed to upload image. Please try again.");
+      
+      // Check for server-side RLS policy violation (storage limit exceeded)
+      if (error.message?.includes('row-level security policy') || 
+          error.message?.includes('policy')) {
+        const limitText = maxImages ? `${maxImages} images` : 'the storage limit';
+        setError(`You have reached your ${limitText} limit. Please delete some existing images before uploading new ones.`);
+      } else if (error.message?.includes('413') || error.message?.includes('too large')) {
+        setError("Image file is too large. Please compress your image or choose a smaller file.");
+      } else {
+        setError(`Upload failed: ${error.message || 'Please try again.'}`);
+      }
+    },
+  });
+
+  // Delete mutation using useSupabaseMutation
+  const deleteMutation = useSupabaseMutation<void, { fileName: string }>({
+    mutationFn: async (supabase, { fileName }) => {
+      const filePath = `${userFolderPath}/${fileName}`;
+      
+      const { error } = await supabase.storage
+        .from(bucketName)
+        .remove([filePath]);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      // Refresh the image list after deletion
+      fetchImages();
+    },
+    onError: (error) => {
+      console.error("Error deleting image:", error);
+      setError("Failed to delete image. Please try again.");
     },
   });
 
@@ -319,6 +422,12 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
     setError(null);
   };
 
+  const handleDeleteImage = (image: BucketImage) => {
+    // Extract filename from the image name
+    const fileName = image.name;
+    deleteMutation.mutate({ fileName });
+  };
+
   const handleUploadClick = () => {
     fileInputRef.current?.click();
   };
@@ -328,6 +437,15 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
     setError(null);
 
     if (!file) return;
+
+    // Check image count limit
+    const currentCount = existingImages?.length || 0;
+    if (maxImages && currentCount >= maxImages) {
+      setError(
+        `You've reached the maximum limit of ${maxImages} images. Please delete an existing image before uploading a new one.`
+      );
+      return;
+    }
 
     const fileSizeMB = (file.size / (1024 * 1024)).toFixed(1);
     const maxSizeMB = (maxFileSize / (1024 * 1024)).toFixed(0);
@@ -472,6 +590,11 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
             Supported formats:{" "}
             {allowedTypes.map((t) => t.split("/")[1].toUpperCase()).join(", ")}
           </p>
+          {maxImages && (
+            <p>
+              Image limit: {maxImages} images maximum
+            </p>
+          )}
         </div>
       </div>
 
@@ -507,14 +630,23 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
                     .map((t) => t.split("/")[1].toUpperCase())
                     .join(", ")}
                 </p>
+                {maxImages && (
+                  <p>
+                    Image limit: {existingImages?.length || 0} / {maxImages}
+                  </p>
+                )}
               </div>
               <Button
                 onClick={handleUploadClick}
                 variant="outline"
                 size="default"
+                disabled={maxImages ? (existingImages?.length || 0) >= maxImages : false}
               >
                 <Upload className="w-4 h-4 mr-2" />
-                Upload New Image
+                {maxImages && (existingImages?.length || 0) >= maxImages 
+                  ? "Limit Reached" 
+                  : "Upload New Image"
+                }
               </Button>
             </div>
           ) : (
@@ -551,8 +683,11 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
                 fetchError={fetchError?.message || null}
                 onSelectImage={handleSelectExistingImage}
                 onUploadClick={handleUploadClick}
+                onDeleteImage={handleDeleteImage}
                 maxFileSize={maxFileSize}
                 allowedTypes={allowedTypes}
+                maxImages={maxImages}
+                currentCount={existingImages?.length || 0}
               />
             ) : (
               <CropImageStep

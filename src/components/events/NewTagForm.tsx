@@ -173,6 +173,7 @@ export const NewTagForm: React.FC<Props> = ({
                 allowedTypes={['image/jpeg', 'image/png', 'image/webp']}
                 className="w-64 h-36 rounded-lg"
                 placeholderText="Add Tag Image"
+                maxImages={10} // Limit: 10 tag images per user
               />
             </div>
           </div>
