@@ -3,6 +3,7 @@
 import { LoadingNavLink } from '@/components/ui'
 import { PATHS } from '@/lib/paths'
 import { Home } from 'lucide-react'
+import dummyLogo from '@/assets/dummy_logo.png'
 
 export function ActiveHomeLink() {
   return (
@@ -10,7 +11,7 @@ export function ActiveHomeLink() {
       href={PATHS.APP.DASHBOARD}
       text="Home"
       icon={Home}
-      avatarSrc="/assets/dummy_logo.png"
+      avatarSrc={dummyLogo.src}
       avatarAlt="Logo"
       className="group"
     />

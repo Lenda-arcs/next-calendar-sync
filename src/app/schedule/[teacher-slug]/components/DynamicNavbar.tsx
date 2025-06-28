@@ -5,6 +5,7 @@ import { LoadingNavLink } from '@/components/ui'
 import { Home, User, X } from 'lucide-react'
 import { PublicProfile } from '@/lib/types'
 import TeacherHeroContent from './TeacherHeroContent'
+import dummyLogo from '@/assets/dummy_logo.png'
 
 interface DynamicNavbarProps {
   userEmail?: string
@@ -48,7 +49,7 @@ export default function DynamicNavbar({
             <LoadingNavLink
               href={isLoggedIn ? "/app" : "/"}
               text="Home"
-              avatarSrc="/assets/dummy_logo.png"
+              avatarSrc={dummyLogo.src}
               avatarAlt="Logo"
               icon={Home}
               className="group mr-2"
