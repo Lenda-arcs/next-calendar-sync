@@ -46,9 +46,20 @@ const PublicEventList: React.FC<PublicEventListProps> = ({
   // Client-side date state to prevent hydration mismatches
   const [currentDate, setCurrentDate] = useState<Date | undefined>(undefined)
   
+  // State for expanded cards (variant switching)
+  const [expandedCards, setExpandedCards] = useState<Record<string, EventDisplayVariant>>({})
+  
   useEffect(() => {
     setCurrentDate(new Date())
   }, [])
+
+  // Handle variant change for interactive cards
+  const handleVariantChange = (eventId: string, newVariant: EventDisplayVariant) => {
+    setExpandedCards(prev => ({
+      ...prev,
+      [eventId]: newVariant
+    }))
+  }
 
   // Fetch events using the custom hook (only if events not provided as props)
   const {
@@ -252,14 +263,19 @@ const PublicEventList: React.FC<PublicEventListProps> = ({
 
                     {/* Events Grid for Mobile */}
                     <div className="grid grid-cols-1 gap-6">
-                      {dayEvents.map((event, index) => (
-                        <div key={`${dateKey}-${index}`} className="flex flex-col transition-all duration-300 ease-in-out">
-                          <EventCard
-                            {...convertEventToCardProps(event, allAvailableTags)}
-                            variant={variant}
-                          />
-                        </div>
-                      ))}
+                      {dayEvents.map((event, index) => {
+                        const eventKey = `mobile-${dateKey}-${index}`
+                        const currentVariant = expandedCards[eventKey] || variant
+                        return (
+                          <div key={eventKey} className="flex flex-col transition-all duration-300 ease-in-out">
+                            <EventCard
+                              {...convertEventToCardProps(event, allAvailableTags)}
+                              variant={currentVariant}
+                              onVariantChange={(newVariant) => handleVariantChange(eventKey, newVariant)}
+                            />
+                          </div>
+                        )
+                      })}
                     </div>
                   </div>
                 )
@@ -270,12 +286,20 @@ const PublicEventList: React.FC<PublicEventListProps> = ({
           {/* Desktop Layout: Clean grid with date badges */}
           <div className="hidden md:block">
             <div className={getGridClasses()}>
-              {flattenedEvents.map(({ event, dayLabel, isFirstOfDay }, index) => (
-                <div key={`desktop-${index}`} className="flex flex-col relative">
-                  {isFirstOfDay && <DateBadge label={dayLabel} />}
-                  <EventCard {...event} variant={variant} />
-                </div>
-              ))}
+              {flattenedEvents.map(({ event, dayLabel, isFirstOfDay }, index) => {
+                const eventKey = `desktop-${index}`
+                const currentVariant = expandedCards[eventKey] || variant
+                return (
+                  <div key={eventKey} className="flex flex-col relative">
+                    {isFirstOfDay && <DateBadge label={dayLabel} />}
+                    <EventCard 
+                      {...event} 
+                      variant={currentVariant}
+                      onVariantChange={(newVariant) => handleVariantChange(eventKey, newVariant)}
+                    />
+                  </div>
+                )
+              })}
             </div>
           </div>
         </div>

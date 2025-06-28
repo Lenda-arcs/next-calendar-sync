@@ -20,6 +20,7 @@ interface EventCardProps {
   variant?: EventDisplayVariant
   className?: string
   onClick?: () => void
+  onVariantChange?: (newVariant: EventDisplayVariant) => void
   // Optional props from EnhancedDisplayEvent that aren't used in visual display
   isPublic?: boolean
   autoTags?: EventTag[]
@@ -37,6 +38,7 @@ export const EventCard = React.memo<EventCardProps>(
     variant = 'compact',
     className,
     onClick,
+    onVariantChange,
   }) => {
     // Get all image URLs from tags
     const imageUrls = tags
@@ -103,7 +105,16 @@ export const EventCard = React.memo<EventCardProps>(
     const shouldShowImage = variant !== 'minimal'
 
     const handleClick = () => {
-      if (onClick) {
+      if (onVariantChange) {
+        // Toggle between minimal and compact
+        if (variant === 'minimal') {
+          onVariantChange('compact')
+        } else if (variant === 'compact') {
+          onVariantChange('minimal')
+        } else if (onClick) {
+          onClick()
+        }
+      } else if (onClick) {
         onClick()
       }
     }
@@ -119,7 +130,7 @@ export const EventCard = React.memo<EventCardProps>(
       <Card
         variant="default"
         padding="none"
-        interactive={!!onClick}
+        interactive={!!(onClick || onVariantChange)}
         className={cn(getCardClasses(), className)}
         onClick={handleClick}
         onKeyDown={handleKeyDown}
@@ -157,7 +168,7 @@ export const EventCard = React.memo<EventCardProps>(
               )}
 
             {/* CTA Button - Bottom Right */}
-            {ctaTag?.cta && shouldShowImage && (
+            {ctaTag?.cta && (
               <div className="absolute bottom-4 right-3">
                 <Button
                   size="sm"
@@ -191,7 +202,31 @@ export const EventCard = React.memo<EventCardProps>(
           variant={variant}
         />
 
-
+        {/* CTA Button for minimal variant - Top right corner */}
+        {variant === 'minimal' && ctaTag?.cta && (
+          <div className="absolute top-3 right-3">
+            <Button
+              size="sm"
+              variant="default"
+              asChild
+              style={{
+                backgroundColor: ctaTag.chip.color,
+                borderColor: ctaTag.chip.color,
+                color: '#FFFFFF',
+              }}
+              className="shadow-sm hover:shadow-md text-xs"
+            >
+              <a
+                href={ctaTag.cta.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()} // Prevent card click when clicking CTA
+              >
+                {ctaTag.cta.label}
+              </a>
+            </Button>
+          </div>
+        )}
       </Card>
     )
   }

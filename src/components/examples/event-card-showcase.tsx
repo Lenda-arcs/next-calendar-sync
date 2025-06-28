@@ -82,9 +82,19 @@ const mockEvents = [
  * Demonstrates the EventCard component with different variants and configurations
  */
 export default function EventCardShowcase() {
+  const [expandedCards, setExpandedCards] = React.useState<Record<string, EventDisplayVariant>>({})
+  
   const handleEventClick = (eventId: string, title: string) => {
     console.log(`Clicked event: ${eventId} - ${title}`)
     // In a real app, this would navigate to event details or open a modal
+  }
+
+  const handleVariantChange = (eventId: string, newVariant: EventDisplayVariant) => {
+    console.log(`Expanding card ${eventId} to ${newVariant}`)
+    setExpandedCards(prev => ({
+      ...prev,
+      [eventId]: newVariant
+    }))
   }
 
   return (
@@ -131,22 +141,26 @@ export default function EventCardShowcase() {
         </div>
       </PageSection>
 
-      {/* Minimal Variant */}
-      <PageSection title="Minimal Variant" subtitle="Compact event cards optimized for dense layouts">
+      {/* Minimal Variant with Expansion */}
+      <PageSection title="Minimal Variant (Interactive)" subtitle="Click minimal cards to expand them to compact view">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {mockEvents.map((event) => (
-            <EventCard
-              key={`minimal-${event.id}`}
-              id={event.id}
-              title={event.title}
-              dateTime={event.dateTime}
-              location={event.location}
-              imageQuery={event.imageQuery}
-              tags={event.tags}
-              variant="minimal"
-              onClick={() => handleEventClick(event.id, event.title)}
-            />
-          ))}
+          {mockEvents.map((event) => {
+            const currentVariant = expandedCards[`minimal-${event.id}`] || 'minimal'
+            return (
+              <EventCard
+                key={`minimal-${event.id}`}
+                id={event.id}
+                title={event.title}
+                dateTime={event.dateTime}
+                location={event.location}
+                imageQuery={event.imageQuery}
+                tags={event.tags}
+                variant={currentVariant}
+                onVariantChange={(newVariant) => handleVariantChange(`minimal-${event.id}`, newVariant)}
+                onClick={currentVariant !== 'minimal' ? () => handleEventClick(event.id, event.title) : undefined}
+              />
+            )
+          })}
         </div>
       </PageSection>
 
