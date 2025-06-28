@@ -68,6 +68,7 @@ export function calculateTotalPayout(events: Event[], studio: Studio): number {
 
 /**
  * Get uninvoiced events for a user
+ * Excludes events marked as excluded from studio matching
  */
 export async function getUninvoicedEvents(userId: string): Promise<EventWithStudio[]> {
   const supabase = createClient()
@@ -82,6 +83,7 @@ export async function getUninvoicedEvents(userId: string): Promise<EventWithStud
     .lt("end_time", new Date().toISOString()) // Events that have ended
     .is("invoice_id", null) // Not yet invoiced
     .not("studio_id", "is", null) // Has studio assigned
+    .eq("exclude_from_studio_matching", false) // Not excluded from studio matching
     .order("end_time", { ascending: false })
 
   if (error) {
@@ -215,6 +217,7 @@ export async function getUserStudios(userId: string): Promise<Studio[]> {
 
 /**
  * Get events that have no studio assigned (unmatched events)
+ * Excludes events marked as excluded from studio matching
  */
 export async function getUnmatchedEvents(userId: string): Promise<Event[]> {
   const supabase = createClient()
@@ -226,6 +229,7 @@ export async function getUnmatchedEvents(userId: string): Promise<Event[]> {
     .lt("end_time", new Date().toISOString()) // Events that have ended
     .is("invoice_id", null) // Not yet invoiced
     .is("studio_id", null) // No studio assigned
+    .eq("exclude_from_studio_matching", false) // Not excluded from studio matching
     .order("end_time", { ascending: false })
 
   if (error) {
@@ -324,6 +328,7 @@ export async function matchEventsToStudios(userId: string): Promise<{
         .select("id")
         .eq("user_id", userId)
         .is("studio_id", null) // Only match unassigned events
+        .eq("exclude_from_studio_matching", false) // Not excluded from studio matching
         .ilike("location", `%${locationPattern}%`);
 
       if (error) {
@@ -366,6 +371,23 @@ export async function matchEventsToStudios(userId: string): Promise<{
     matchedEvents: totalMatchedEvents,
     studios: studioMatches,
   };
+}
+
+/**
+ * Mark an event as excluded from studio matching
+ */
+export async function markEventAsExcluded(eventId: string, excluded: boolean = true): Promise<void> {
+  const supabase = createClient()
+  
+  const { error } = await supabase
+    .from("events")
+    .update({ exclude_from_studio_matching: excluded })
+    .eq("id", eventId)
+
+  if (error) {
+    console.error("Error updating event exclusion status:", error)
+    throw new Error(`Failed to update event: ${error.message}`)
+  }
 }
 
 /**

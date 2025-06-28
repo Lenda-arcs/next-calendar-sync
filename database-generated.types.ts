@@ -57,6 +57,7 @@ export type Database = {
           custom_tags: string[] | null
           description: string | null
           end_time: string | null
+          exclude_from_studio_matching: boolean | null
           feed_id: string
           id: string
           image_url: string | null
@@ -80,6 +81,7 @@ export type Database = {
           custom_tags?: string[] | null
           description?: string | null
           end_time?: string | null
+          exclude_from_studio_matching?: boolean | null
           feed_id: string
           id?: string
           image_url?: string | null
@@ -103,6 +105,7 @@ export type Database = {
           custom_tags?: string[] | null
           description?: string | null
           end_time?: string | null
+          exclude_from_studio_matching?: boolean | null
           feed_id?: string
           id?: string
           image_url?: string | null

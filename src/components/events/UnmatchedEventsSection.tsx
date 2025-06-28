@@ -3,11 +3,13 @@
 import { useState } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Building2, RefreshCw, Plus, Eye } from 'lucide-react'
+import { Building2, RefreshCw, Plus, Eye, X } from 'lucide-react'
 import { useCalendarFeeds, useCalendarFeedActions } from '@/lib/hooks/useCalendarFeeds'
+import { useSupabaseMutation } from '@/lib/hooks/useSupabaseMutation'
 import { UnifiedDialog } from '@/components/ui/unified-dialog'
 import { EventCard } from './EventCard'
 import { Event } from '@/lib/types'
+import { markEventAsExcluded } from '@/lib/invoice-utils'
 
 type UnmatchedEvent = Event
 
@@ -28,8 +30,22 @@ export function UnmatchedEventsSection({
 }: UnmatchedEventsSectionProps) {
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [showEventsDialog, setShowEventsDialog] = useState(false)
+  const [excludingEventId, setExcludingEventId] = useState<string | null>(null)
   const { data: calendarFeeds } = useCalendarFeeds(userId)
   const { syncFeed } = useCalendarFeedActions()
+
+  // Mark event as excluded mutation
+  const excludeEventMutation = useSupabaseMutation({
+    mutationFn: (supabase, eventId: string) => markEventAsExcluded(eventId, true),
+    onSuccess: () => {
+      onRefresh() // Refresh the list to remove the excluded event
+      setExcludingEventId(null)
+    },
+    onError: (error) => {
+      console.error('Error excluding event:', error)
+      setExcludingEventId(null)
+    }
+  })
 
   // Format date for EventCard
   const formatEventDateTime = (startTime: string | null) => {
@@ -43,6 +59,12 @@ export function UnmatchedEventsSection({
       minute: '2-digit',
       hour12: true
     })
+  }
+
+  // Handle excluding an event from studio matching
+  const handleExcludeEvent = async (eventId: string) => {
+    setExcludingEventId(eventId)
+    await excludeEventMutation.mutateAsync(eventId)
   }
 
   // Enhanced refresh that syncs feeds first, then refetches data
@@ -160,7 +182,7 @@ export function UnmatchedEventsSection({
         open={showEventsDialog}
         onOpenChange={setShowEventsDialog}
         title={`Unmatched Events (${unmatchedEvents.length})`}
-        description="These events don't have a studio assigned yet. Create studio profiles to automatically match events and generate invoices."
+        description="These events don't have a studio assigned yet. Create studio profiles to automatically match events and generate invoices. Use 'Free Event' to exclude events that shouldn't be invoiced (like free classes or personal practice)."
         size="lg"
         footer={
           <Button 
@@ -173,16 +195,38 @@ export function UnmatchedEventsSection({
       >
         <div className="space-y-4">
           {unmatchedEvents.map((event) => (
-            <EventCard
-              key={event.id}
-              id={event.id}
-              title={event.title || 'Untitled Event'}
-              dateTime={formatEventDateTime(event.start_time)}
-              location={event.location}
-              imageQuery={event.image_url || ''}
-              variant="minimal"
-              tags={[]}
-            />
+            <div key={event.id} className="flex items-center gap-3 p-3 border rounded-lg bg-white">
+              <div className="flex-1 min-w-0">
+                <EventCard
+                  id={event.id}
+                  title={event.title || 'Untitled Event'}
+                  dateTime={formatEventDateTime(event.start_time)}
+                  location={event.location}
+                  imageQuery={event.image_url || ''}
+                  variant="minimal"
+                  tags={[]}
+                />
+              </div>
+              
+              {/* Exclude button */}
+              <div className="flex-shrink-0">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleExcludeEvent(event.id)}
+                  disabled={excludingEventId === event.id}
+                  className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                  title="Mark as free event (exclude from studio matching)"
+                >
+                  {excludingEventId === event.id ? (
+                    <RefreshCw className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <X className="h-4 w-4" />
+                  )}
+                  <span className="ml-1 hidden sm:inline">Free Event</span>
+                </Button>
+              </div>
+            </div>
           ))}
           
           {unmatchedEvents.length === 0 && (
