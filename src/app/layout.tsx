@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { DM_Serif_Display, Outfit } from "next/font/google";
 import "./globals.css";
 import SupabaseProvider from '@/components/providers/supabase-provider'
+import { Toaster } from "@/components/ui/sonner"
 
 const dmSerifDisplay = DM_Serif_Display({
   variable: "--font-dm-serif",
@@ -31,6 +32,7 @@ export default function RootLayout({
         <SupabaseProvider>
         {children}
         </SupabaseProvider>
+        <Toaster />
       </body>
     </html>
   );

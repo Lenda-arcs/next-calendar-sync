@@ -16,11 +16,13 @@ import {
   updateInvoice,
   linkEventsToInvoice,
   unlinkEventsFromInvoice,
+  generateInvoicePDF,
   EventWithStudio,
   InvoiceWithDetails
 } from '@/lib/invoice-utils'
 import { InvoiceInsert } from '@/lib/types'
-import { Loader2, CheckCircle } from 'lucide-react'
+import { toast } from 'sonner'
+import { Loader2, CheckCircle, FileText } from 'lucide-react'
 
 interface InvoiceCreationModalProps {
   isOpen: boolean
@@ -66,6 +68,18 @@ export function InvoiceCreationModal({
     existingInvoice
   })
 
+  // State for PDF generation
+  const [createdInvoiceId, setCreatedInvoiceId] = React.useState<string | null>(null)
+  const [isGeneratingPDF, setIsGeneratingPDF] = React.useState(false)
+
+  // Reset PDF state when modal opens/closes
+  React.useEffect(() => {
+    if (!isOpen) {
+      setCreatedInvoiceId(null)
+      setIsGeneratingPDF(false)
+    }
+  }, [isOpen])
+
   // Get studio details
   const { data: studios } = useSupabaseQuery({
     queryKey: ['user-studios', userId],
@@ -103,6 +117,9 @@ export function InvoiceCreationModal({
           await linkEventsToInvoice(eventsToLink, invoice.id)
         }
       }
+      
+      // Store the invoice ID for PDF generation
+      setCreatedInvoiceId(invoice.id)
       setShowSuccess(true)
     }
   })
@@ -145,6 +162,33 @@ export function InvoiceCreationModal({
       }
     } catch (error) {
       console.error('Failed to save invoice:', error)
+    }
+  }
+
+  const handleGeneratePDF = async () => {
+    if (!createdInvoiceId) return
+    
+    setIsGeneratingPDF(true)
+    try {
+      const { pdf_url } = await generateInvoicePDF(createdInvoiceId)
+      
+      toast('PDF Generated Successfully!', {
+        description: 'Your invoice PDF has been created and is ready to view.',
+        action: {
+          label: 'View PDF',
+          onClick: () => window.open(pdf_url, '_blank')
+        },
+        duration: 8000
+      })
+      
+    } catch (error) {
+      console.error('Failed to generate PDF:', error)
+      toast.error('PDF Generation Failed', {
+        description: 'Unable to generate PDF. Please try again.',
+        duration: 6000
+      })
+    } finally {
+      setIsGeneratingPDF(false)
     }
   }
 
@@ -192,6 +236,24 @@ export function InvoiceCreationModal({
             </div>
 
             <div className="flex justify-center space-x-4">
+              <Button
+                variant="outline"
+                onClick={handleGeneratePDF}
+                disabled={isGeneratingPDF || !createdInvoiceId}
+                className="flex items-center gap-2"
+              >
+                {isGeneratingPDF ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Generating PDF...
+                  </>
+                ) : (
+                  <>
+                    <FileText className="w-4 h-4" />
+                    Generate PDF
+                  </>
+                )}
+              </Button>
               <Button 
                 onClick={() => {
                   onClose()

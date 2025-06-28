@@ -12,7 +12,8 @@ import { InvoiceCreationModal } from './InvoiceCreationModal'
 import { InvoiceSettings } from './InvoiceSettings'
 import { InvoiceCard } from './InvoiceCard'
 import { useSupabaseQuery } from '@/lib/hooks/useSupabaseQuery'
-import { getUserInvoices, getUninvoicedEvents, updateInvoiceStatus, EventWithStudio, InvoiceWithDetails } from '@/lib/invoice-utils'
+import { getUserInvoices, getUninvoicedEvents, updateInvoiceStatus, generateInvoicePDF, deleteInvoice, EventWithStudio, InvoiceWithDetails } from '@/lib/invoice-utils'
+import { toast } from 'sonner'
 import { Receipt, FileText, Settings } from 'lucide-react'
 
 interface InvoiceManagementProps {
@@ -97,6 +98,56 @@ export function InvoiceManagement({ userId }: InvoiceManagementProps) {
     } catch (error) {
       console.error('Failed to update invoice status:', error)
       // You might want to show a toast notification here
+    }
+  }
+
+  const handleGeneratePDF = async (invoiceId: string) => {
+    try {
+      const { pdf_url } = await generateInvoicePDF(invoiceId)
+      
+      // Refresh invoices list to show updated PDF URL
+      refetchInvoices()
+      
+      // Show success toast with option to view PDF
+      toast('PDF Generated Successfully!', {
+        description: 'Your invoice PDF has been created and is ready to view.',
+        action: {
+          label: 'View PDF',
+          onClick: () => window.open(pdf_url, '_blank'),
+        },
+        duration: 8000
+      })
+    } catch (error) {
+      console.error('Failed to generate PDF:', error)
+      toast.error('PDF Generation Failed', {
+        description: 'Unable to generate PDF. Please try again.',
+        duration: 6000
+      })
+    }
+  }
+
+  const handleViewPDF = (pdfUrl: string) => {
+    window.open(pdfUrl, '_blank')
+  }
+
+  const handleDeleteInvoice = async (invoiceId: string) => {
+    try {
+      await deleteInvoice(invoiceId)
+      
+      // Refresh both uninvoiced events and invoices lists
+      refetchUninvoiced()
+      refetchInvoices()
+      
+      toast('Invoice Deleted Successfully', {
+        description: 'Invoice, PDF file, and all event links have been removed. Events are now available for future invoicing.',
+        duration: 5000
+      })
+    } catch (error) {
+      console.error('Failed to delete invoice:', error)
+      toast.error('Failed to Delete Invoice', {
+        description: 'Unable to delete the invoice. Please try again.',
+        duration: 6000
+      })
     }
   }
 
@@ -205,6 +256,9 @@ export function InvoiceManagement({ userId }: InvoiceManagementProps) {
                       invoice={invoice} 
                       onEdit={handleEditInvoice}
                       onStatusChange={handleStatusChange}
+                      onGeneratePDF={handleGeneratePDF}
+                      onViewPDF={handleViewPDF}
+                      onDelete={handleDeleteInvoice}
                     />
                   ))}
                 </div>
