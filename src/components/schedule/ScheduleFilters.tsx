@@ -131,16 +131,16 @@ export function ScheduleFilters() {
           <PopoverTrigger asChild>
             <Button
               size="lg"
-              className="rounded-full shadow-lg bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-3 h-auto min-w-[120px] transition-all duration-200 hover:scale-105"
+              className="rounded-full shadow-lg bg-primary hover:bg-primary/90 text-primary-foreground px-3 sm:px-4 py-3 h-auto min-w-[48px] sm:min-w-[120px] transition-all duration-200 hover:scale-105"
             >
-              <Filter className="h-5 w-5 mr-2" />
-              <span className="font-medium">Filters</span>
+              <Filter className="h-5 w-5 sm:mr-2" />
+              <span className="font-medium hidden sm:inline">Filters</span>
               
-              {/* Fixed space for badge to prevent layout shifts */}
-              <div className="ml-2 min-w-[28px] flex justify-center">
+              {/* Compact badge positioned closer to icon */}
+              <div className="ml-0.5 sm:ml-1 min-w-[20px] flex justify-center">
                 <Badge 
                   variant="secondary" 
-                  className={`px-2 py-0.5 text-xs transition-all duration-200 ${
+                  className={`px-1 py-0 text-[10px] leading-4 min-w-[16px] h-4 flex items-center justify-center transition-all duration-200 ${
                     hasActiveFilters 
                       ? 'opacity-100 scale-100 animate-pulse' 
                       : 'opacity-0 scale-95 pointer-events-none'
@@ -198,17 +198,17 @@ export function ScheduleFilters() {
             className="w-full"
           >
             <AccordionItem value="filters" className="border-none">
-              <AccordionTrigger className="px-4 py-2 hover:no-underline cursor-pointer group text-sm min-h-[40px]">
+              <AccordionTrigger className="px-2 sm:px-4 py-2 hover:no-underline cursor-pointer group text-sm min-h-[40px]">
                 <div className="flex items-center justify-between w-full">
-                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                  <div className="flex items-center gap-1 sm:gap-2 flex-1 min-w-0">
                     <Filter className="h-4 w-4 flex-shrink-0" />
                     <span className="text-sm font-normal truncate">Find Your Perfect Class</span>
                     <div className="text-xs text-gray-400 group-hover:text-blue-500 transition-colors opacity-0 group-hover:opacity-100 hidden sm:block flex-shrink-0">
                       Click to expand
                     </div>
                     
-                    {/* Fixed width container for badges to prevent layout shifts */}
-                    <div className="flex items-center gap-1 min-w-[80px] justify-end">
+                    {/* Responsive badge container - smaller on mobile */}
+                    <div className="flex items-center gap-1 min-w-[32px] sm:min-w-[80px] justify-end">
                       <Badge 
                         variant="secondary" 
                         className={`px-1.5 py-0.5 text-xs flex-shrink-0 transition-all duration-200 ${
@@ -233,14 +233,14 @@ export function ScheduleFilters() {
                     </div>
                   </div>
                   
-                  {/* Fixed width container for clear button to prevent layout shifts */}
-                  <div className="flex items-center ml-2 min-w-[60px] justify-end">
+                  {/* Responsive clear button container - smaller on mobile */}
+                  <div className="flex items-center ml-1 sm:ml-2 min-w-[24px] sm:min-w-[60px] justify-end">
                     <div
                       onClick={(e) => {
                         e.stopPropagation()
                         clearAllFilters()
                       }}
-                      className={`text-xs px-2 py-0.5 h-6 hover:bg-destructive/10 hover:text-destructive transition-all duration-200 cursor-pointer rounded flex items-center justify-center flex-shrink-0 ${
+                      className={`text-xs px-1 sm:px-2 py-0.5 h-6 hover:bg-destructive/10 hover:text-destructive transition-all duration-200 cursor-pointer rounded flex items-center justify-center flex-shrink-0 ${
                         hasActiveFilters 
                           ? 'opacity-100 scale-100' 
                           : 'opacity-0 scale-95 pointer-events-none'

@@ -31,14 +31,19 @@ export default function DynamicNavbar({
 
   return (
     <header className={`
-      backdrop-blur-md bg-gradient-to-r from-white/80 via-white/60 to-transparent 
-      border-b border-white/40 shadow-sm sticky top-0 z-50 
-      transition-all duration-500 ease-in-out
+      sticky top-0 z-50 transition-all duration-700 ease-in-out
+      ${isCollapsed 
+        ? 'bg-transparent border-transparent shadow-none' 
+        : 'backdrop-blur-md bg-gradient-to-r from-white/80 via-white/60 to-transparent border-b border-white/40 shadow-sm'
+      }
       ${isCollapsed ? 'py-0' : 'py-4 md:py-8'}
     `}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Top Navigation Bar - Always Visible */}
-        <div className="flex justify-between items-center h-14">
+        {/* Full Navigation Bar - Visible when expanded */}
+        <div className={`
+          flex justify-between items-center h-14 transition-all duration-700 ease-in-out
+          ${isCollapsed ? 'opacity-0 scale-95 pointer-events-none' : 'opacity-100 scale-100'}
+        `}>
           <div className="flex items-center space-x-4">
             <LoadingNavLink
               href={isLoggedIn ? "/app" : "/"}
@@ -51,41 +56,6 @@ export default function DynamicNavbar({
           </div>
           
           <div className="flex items-center space-x-4">
-            {/* Collapsed Teacher Avatar - shows when collapsed or expanding */}
-            {(isCollapsed || isExpanding) && (
-              <div className="flex items-center gap-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                <div className="flex items-center gap-2">
-                  <div className={`
-                    w-8 h-8 rounded-full border border-white/40 bg-white/50 
-                    flex items-center justify-center overflow-hidden shadow-sm
-                    transition-all duration-500 ease-in-out
-                    ${isAnimating ? 'md:animate-morph-in' : ''}
-                    ${isExpanding ? 'md:animate-morph-out-reverse' : ''}
-                    ${shouldShowJumpingCTA ? 'animate-jump' : ''}
-                  `}>
-                    {teacherProfile?.profile_image_url ? (
-                      <img
-                        src={teacherProfile.profile_image_url}
-                        alt={`${teacherProfile.name || "Teacher"}'s profile picture`}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <User className="h-4 w-4 text-gray-600" />
-                    )}
-                  </div>
-                  <button
-                    onClick={onToggleHero}
-                    className={`
-                      text-sm font-medium text-gray-900 hover:text-gray-700 transition-colors duration-200
-                      ${shouldShowJumpingCTA ? 'animate-jump' : ''}
-                    `}
-                  >
-                    {teacherProfile?.name || 'Teacher'}
-                  </button>
-                </div>
-              </div>
-            )}
-
             {/* Logged in user elements */}
             {isLoggedIn && (
               <>
@@ -101,6 +71,53 @@ export default function DynamicNavbar({
             )}
           </div>
         </div>
+
+        {/* Minimal Floating Profile Trigger - Visible when collapsed */}
+        {(isCollapsed || isExpanding) && (
+          <div className={`
+            fixed top-4 right-4 z-[60] transition-all duration-700 ease-in-out
+            ${isCollapsed && !isExpanding 
+              ? 'opacity-100 translate-y-0 scale-100' 
+              : 'opacity-0 translate-y-2 scale-95 pointer-events-none'
+            }
+          `}>
+            <button
+              onClick={onToggleHero}
+              className={`
+                flex items-center gap-3 px-4 py-2 rounded-full
+                backdrop-blur-xl bg-white/90 border border-white/50 shadow-lg
+                hover:bg-white/95 hover:shadow-xl hover:scale-105
+                transition-all duration-300 ease-out
+                ${shouldShowJumpingCTA ? 'animate-jump' : ''}
+              `}
+            >
+              <div className={`
+                w-8 h-8 rounded-full border border-white/40 bg-white/50 
+                flex items-center justify-center overflow-hidden shadow-sm
+                transition-all duration-500 ease-in-out
+                ${isAnimating ? 'md:animate-morph-in' : ''}
+                ${isExpanding ? 'md:animate-morph-out-reverse' : ''}
+                ${shouldShowJumpingCTA ? 'animate-jump' : ''}
+              `}>
+                {teacherProfile?.profile_image_url ? (
+                  <img
+                    src={teacherProfile.profile_image_url}
+                    alt={`${teacherProfile.name || "Teacher"}'s profile picture`}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <User className="h-4 w-4 text-gray-600" />
+                )}
+              </div>
+              <span className={`
+                text-xs font-medium text-gray-900 
+                ${shouldShowJumpingCTA ? 'animate-jump' : ''}
+              `}>
+                {teacherProfile?.name || 'Teacher'}
+              </span>
+            </button>
+          </div>
+        )}
 
         {/* Expandable Hero Content - Hidden when collapsed */}
         <div className={`
@@ -141,6 +158,37 @@ export default function DynamicNavbar({
 
         .animate-jump {
           animation: jump 0.6s ease-in-out infinite;
+        }
+
+        /* Floating profile trigger animations */
+        @keyframes slide-in-from-top-right {
+          0% {
+            transform: translateX(100%) translateY(-100%) scale(0.8);
+            opacity: 0;
+          }
+          100% {
+            transform: translateX(0) translateY(0) scale(1);
+            opacity: 1;
+          }
+        }
+
+        @keyframes slide-out-to-top-right {
+          0% {
+            transform: translateX(0) translateY(0) scale(1);
+            opacity: 1;
+          }
+          100% {
+            transform: translateX(50%) translateY(-50%) scale(0.8);
+            opacity: 0;
+          }
+        }
+
+        .animate-slide-in-floating {
+          animation: slide-in-from-top-right 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .animate-slide-out-floating {
+          animation: slide-out-to-top-right 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
 
         /* Reduced mobile animations - only apply morph animations on medium screens and up */

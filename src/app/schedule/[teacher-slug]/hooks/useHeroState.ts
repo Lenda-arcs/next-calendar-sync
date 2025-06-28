@@ -12,6 +12,7 @@ export function useHeroState() {
   const [shouldShowJumpingCTA, setShouldShowJumpingCTA] = useState(false)
   const [hasPageLoaded, setHasPageLoaded] = useState(false)
   const [hasUsedCTA, setHasUsedCTA] = useState(false) // Track if user has ever opened the hero
+  const [wasManuallyOpened, setWasManuallyOpened] = useState(false) // Track if hero was manually opened while out of view
   
   const { elementRef, isInView } = useScrollIntoView({
     threshold: 0.8, // High threshold - collapse when mostly out of view
@@ -47,15 +48,22 @@ export function useHeroState() {
     }
   }, [isInView, heroState])
 
-  // Auto-close expanded hero when scrolling out of view
+  // Auto-close expanded hero when scrolling out of view (but not if manually opened while out of view)
   useEffect(() => {
-    if (!isInView && heroState === 'expanded') {
+    if (!isInView && heroState === 'expanded' && !wasManuallyOpened) {
       const timer = setTimeout(() => {
         setHeroState('auto')
       }, 500)
       return () => clearTimeout(timer)
     }
-  }, [isInView, heroState])
+  }, [isInView, heroState, wasManuallyOpened])
+
+  // Reset wasManuallyOpened flag when hero is closed or when back in view
+  useEffect(() => {
+    if (heroState === 'closed' || isInView) {
+      setWasManuallyOpened(false)
+    }
+  }, [heroState, isInView])
 
   // Handle morphing animation when collapsing
   useEffect(() => {
@@ -93,6 +101,10 @@ export function useHeroState() {
       setShouldShowJumpingCTA(false)
       // Mark that user has used the CTA
       setHasUsedCTA(true)
+      // Mark as manually opened if out of view
+      if (!isInView) {
+        setWasManuallyOpened(true)
+      }
     } else {
       setHeroState('closed')
       setIsAnimating(true)
