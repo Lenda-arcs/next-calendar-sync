@@ -48,7 +48,7 @@ export function TeacherSearch() {
         }}
       />
       {open && query.length > 0 && (
-        <div className="absolute top-full left-0 right-0 z-50 mt-1 rounded-lg border bg-popover p-0 shadow-md outline-none w-72">
+        <div className="absolute top-full left-0 right-0 z-50 mt-1 rounded-lg border bg-popover p-0 shadow-md outline-none w-72"> 
         {isLoading ? (
           <div className="p-4 text-center text-sm">Loading...</div>
         ) : teachers.length > 0 ? (
