@@ -10,6 +10,7 @@ import { Select } from '@/components/ui/select'
 import { ColorPicker } from './ColorPicker'
 import { useTagForm } from '@/lib/hooks/useTagForm'
 import { AUDIENCE_OPTIONS, PRIORITY_OPTIONS } from '@/lib/constants/tag-constants'
+import ImageUpload from '@/components/ui/image-upload'
 
 interface Props {
   isOpen: boolean
@@ -155,15 +156,26 @@ export const NewTagForm: React.FC<Props> = ({
             </CardContent>
           </Card>
 
-          {/* Image URL */}
-          <FormField
-            id="imageUrl"
-            label="Image URL (Optional)"
-            type="url"
-            value={formData.imageUrl || ''}
-            onChange={(e) => updateField('imageUrl', e.target.value)}
-            placeholder="https://example.com/image.jpg"
-          />
+          {/* Tag Image */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-foreground">
+              Tag Image (Optional)
+            </label>
+            <div className="flex justify-center">
+              <ImageUpload
+                currentImageUrl={formData.imageUrl || null}
+                onImageUrlChange={(url) => updateField('imageUrl', url || '')}
+                userId={userId}
+                aspectRatio={16/9} // Wide aspect ratio for tag images
+                bucketName="profile-assets"
+                folderPath="tag-images"
+                maxFileSize={5 * 1024 * 1024} // 5MB
+                allowedTypes={['image/jpeg', 'image/png', 'image/webp']}
+                className="w-64 h-36 rounded-lg"
+                placeholderText="Add Tag Image"
+              />
+            </div>
+          </div>
         </div>
     </UnifiedDialog>
   )

@@ -190,10 +190,11 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
   const [imgSrc, setImgSrc] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [modalStep, setModalStep] = useState<"select" | "crop">("select");
+  const [hasOpenedModal, setHasOpenedModal] = useState(false);
   const imgRef = useRef<HTMLImageElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Fetch existing images using useSupabaseQuery
+  // Fetch existing images using useSupabaseQuery - only when dialog is opened
   const {
     data: existingImages,
     isLoading: isLoadingImages,
@@ -226,7 +227,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
         }),
       );
     },
-    enabled: modalStep === 'select' && showModal,
+    enabled: hasOpenedModal && modalStep === 'select' && showModal,
   });
 
   // Upload mutation using useSupabaseMutation
@@ -286,6 +287,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
   const handleClick = () => {
     setShowModal(true);
     setModalStep("select");
+    setHasOpenedModal(true);
     setError(null);
   };
 
