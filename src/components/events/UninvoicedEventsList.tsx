@@ -274,45 +274,66 @@ export function UninvoicedEventsList({ userId, onCreateInvoice, onCreateStudio }
                       </div>
                     </AccordionTrigger>
 
-                    <AccordionContent className="px-0 pb-0">
-                      <CardContent className="pt-0">
+                    <AccordionContent className="px-0 pb-0 overflow-hidden">
+                      <CardContent className="pt-0 overflow-hidden">
                         {/* Studio Actions */}
-                        <div className="flex items-center justify-between mb-6 p-4 bg-blue-50/50 rounded-lg">
-                          <div className="flex items-center gap-4">
-                            <Button
-                              onClick={() => handleSelectAllStudio(studioId)}
-                              variant="outline"
-                              size="sm"
-                            >
-                              {allEventsSelected ? 'Deselect All' : 'Select All'}
-                            </Button>
-                            {someEventsSelected && (
-                              <div className="text-sm text-gray-600">
-                                {selectedEventIds.length} of {studioEvents.length} events selected
-                              </div>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-4">
-                            {someEventsSelected && (
-                              <div className="text-right">
-                                <div className="text-lg font-bold text-blue-600">
-                                  €{selectedTotal.toFixed(2)}
+                        <div className="mb-6 p-4 bg-blue-50/50 rounded-lg space-y-4">
+                          {/* Mobile: Stack vertically, Desktop: Side by side */}
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                            {/* Left side: Select controls */}
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                              <Button
+                                onClick={() => handleSelectAllStudio(studioId)}
+                                variant="outline"
+                                size="sm"
+                                className="w-full sm:w-auto"
+                              >
+                                {allEventsSelected ? 'Deselect All' : 'Select All'}
+                              </Button>
+                              {someEventsSelected && (
+                                <div className="text-sm text-gray-600 text-center sm:text-left">
+                                  {selectedEventIds.length} of {studioEvents.length} events selected
                                 </div>
-                                <div className="text-xs text-gray-600">Selected Total</div>
+                              )}
+                            </div>
+
+                            {/* Right side: Total and Create Invoice */}
+                            {someEventsSelected && (
+                              <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+                                <div className="text-center sm:text-right">
+                                  <div className="text-lg font-bold text-blue-600">
+                                    €{selectedTotal.toFixed(2)}
+                                  </div>
+                                  <div className="text-xs text-gray-600">Selected Total</div>
+                                </div>
+                                <Button
+                                  onClick={() => handleCreateInvoice(studioId)}
+                                  disabled={!someEventsSelected}
+                                  className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto"
+                                >
+                                  <span className="sm:hidden">Create Invoice</span>
+                                  <span className="hidden sm:inline">Create Invoice ({selectedEventIds.length})</span>
+                                </Button>
                               </div>
                             )}
-                            <Button
-                              onClick={() => handleCreateInvoice(studioId)}
-                              disabled={!someEventsSelected}
-                              className="bg-blue-600 hover:bg-blue-700"
-                            >
-                              Create Invoice ({selectedEventIds.length})
-                            </Button>
                           </div>
+
+                          {/* Mobile-only: Create Invoice button when no events selected */}
+                          {!someEventsSelected && (
+                            <div className="sm:hidden">
+                              <Button
+                                onClick={() => handleCreateInvoice(studioId)}
+                                disabled={!someEventsSelected}
+                                className="bg-blue-600 hover:bg-blue-700 w-full opacity-50"
+                              >
+                                Create Invoice (0)
+                              </Button>
+                            </div>
+                          )}
                         </div>
 
                         {/* Events List */}
-                        <div className="space-y-3">
+                        <div className="space-y-3 overflow-hidden">
                           {(() => {
                             const groupedEvents = groupEventsByMonth(studioEvents)
                             const sortedMonthKeys = Object.keys(groupedEvents).sort()
@@ -329,7 +350,7 @@ export function UninvoicedEventsList({ userId, onCreateInvoice, onCreateStudio }
                                 </div>
                                 
                                 {/* Events for this month */}
-                                <div className="space-y-3">
+                                <div className="space-y-3 overflow-hidden">
                                   {groupedEvents[monthKey].map((event) => (
                                     <EventInvoiceCard
                                       key={event.id}

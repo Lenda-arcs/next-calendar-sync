@@ -40,11 +40,12 @@ export function EventInvoiceCard({
   return (
     <Card 
       className={cn(
-        "transition-all duration-150 hover:shadow-sm",
-        selected && "ring-1 ring-blue-400 bg-blue-50/30",
-        variant === 'compact' && "shadow-sm"
+        "transition-all duration-150 hover:shadow-sm overflow-hidden",
+        selected && "border-blue-400 bg-blue-50/30 shadow-sm",
+        !selected && "border-gray-200",
+        variant === 'compact' && "shadow-sm",
+        showCheckbox && "cursor-pointer hover:bg-gray-50/50"
       )}
-      interactive={showCheckbox}
       onClick={showCheckbox ? () => onToggleSelect(event.id) : undefined}
     >
       <CardContent className={cn(
@@ -59,7 +60,7 @@ export function EventInvoiceCard({
               checked={selected}
               onChange={() => onToggleSelect(event.id)}
               onClick={(e: React.MouseEvent) => e.stopPropagation()}
-              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded flex-shrink-0"
+              className="h-4 w-4 text-blue-600 focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 border-gray-300 rounded flex-shrink-0"
             />
           )}
           
