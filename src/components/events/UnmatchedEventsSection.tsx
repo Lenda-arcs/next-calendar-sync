@@ -1,8 +1,10 @@
 'use client'
 
+import { useState } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Building2, RefreshCw, Plus } from 'lucide-react'
+import { useCalendarFeeds, useCalendarFeedActions } from '@/lib/hooks/useCalendarFeeds'
 
 interface UnmatchedEvent {
   id: string
@@ -15,14 +17,48 @@ interface UnmatchedEventsSectionProps {
   isLoading: boolean
   onRefresh: () => void
   onCreateStudio: () => void
+  userId: string
 }
 
 export function UnmatchedEventsSection({ 
   unmatchedEvents, 
   isLoading, 
   onRefresh, 
-  onCreateStudio 
+  onCreateStudio,
+  userId
 }: UnmatchedEventsSectionProps) {
+  const [isRefreshing, setIsRefreshing] = useState(false)
+  const { data: calendarFeeds } = useCalendarFeeds(userId)
+  const { syncFeed } = useCalendarFeedActions()
+
+  // Enhanced refresh that syncs feeds first, then refetches data
+  const handleRefresh = async () => {
+    if (!calendarFeeds || calendarFeeds.length === 0) {
+      // If no feeds, just call original refresh
+      onRefresh()
+      return
+    }
+
+    setIsRefreshing(true)
+    try {
+      // Sync all calendar feeds in historical mode
+      const syncPromises = calendarFeeds.map(feed => 
+        syncFeed(feed.id, 'historical')
+      )
+      
+      await Promise.all(syncPromises)
+      
+      // Then call the original refresh function
+      onRefresh()
+    } catch (error) {
+      console.error('Failed to sync feeds during refresh:', error)
+      // Still call refresh even if sync fails
+      onRefresh()
+    } finally {
+      setIsRefreshing(false)
+    }
+  }
+
   if (!unmatchedEvents || unmatchedEvents.length === 0) {
     return null
   }
@@ -66,14 +102,14 @@ export function UnmatchedEventsSection({
             <Button 
               variant="outline" 
               size="sm"
-              onClick={onRefresh}
-              disabled={isLoading}
+              onClick={handleRefresh}
+              disabled={isLoading || isRefreshing}
               className="bg-orange-100 hover:bg-orange-200 text-orange-800 border-orange-300"
             >
-              {isLoading ? (
+              {(isLoading || isRefreshing) ? (
                 <>
                   <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                  Refreshing...
+                  {isRefreshing ? 'Syncing...' : 'Refreshing...'}
                 </>
               ) : (
                 <>

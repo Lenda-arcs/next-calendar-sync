@@ -10,7 +10,7 @@ import { HistoricalSyncCTA } from './HistoricalSyncCTA'
 import { UnmatchedEventsSection } from './UnmatchedEventsSection'
 import { useSupabaseQuery } from '@/lib/hooks/useSupabaseQuery'
 import { getUninvoicedEvents, getUnmatchedEvents, calculateTotalPayout, EventWithStudio } from '@/lib/invoice-utils'
-import { useCalendarFeeds } from '@/lib/hooks/useCalendarFeeds'
+import { useCalendarFeeds, useCalendarFeedActions } from '@/lib/hooks/useCalendarFeeds'
 import { RefreshCw } from 'lucide-react'
 
 interface UninvoicedEventsListProps {
@@ -21,6 +21,7 @@ interface UninvoicedEventsListProps {
 
 export function UninvoicedEventsList({ userId, onCreateInvoice, onCreateStudio }: UninvoicedEventsListProps) {
   const [selectedEvents, setSelectedEvents] = useState<Record<string, string[]>>({})
+  const [isRefreshing, setIsRefreshing] = useState(false)
 
   // Use the same query key as InvoiceManagement to leverage caching
   const {
@@ -33,6 +34,8 @@ export function UninvoicedEventsList({ userId, onCreateInvoice, onCreateStudio }
     fetcher: () => getUninvoicedEvents(userId),
     enabled: !!userId
   })
+
+  const { syncFeed } = useCalendarFeedActions()
 
   // Group events by studio client-side
   const eventsByStudio = useMemo(() => {
@@ -66,6 +69,34 @@ export function UninvoicedEventsList({ userId, onCreateInvoice, onCreateStudio }
   // Check if there are any uninvoiced events (matched or unmatched)
   const hasUninvoicedEvents = (eventsByStudio && Object.keys(eventsByStudio).length > 0) || 
                               (unmatchedEvents && unmatchedEvents.length > 0)
+
+  // Enhanced refresh that syncs feeds first, then refetches data
+  const handleRefresh = async () => {
+    if (!calendarFeeds || calendarFeeds.length === 0) {
+      // If no feeds, just refetch data
+      refetch()
+      return
+    }
+
+    setIsRefreshing(true)
+    try {
+      // Sync all calendar feeds in historical mode
+      const syncPromises = calendarFeeds.map(feed => 
+        syncFeed(feed.id, 'historical')
+      )
+      
+      await Promise.all(syncPromises)
+      
+      // Then refetch the data
+      refetch()
+    } catch (error) {
+      console.error('Failed to sync feeds during refresh:', error)
+      // Still refetch data even if sync fails
+      refetch()
+    } finally {
+      setIsRefreshing(false)
+    }
+  }
 
   const handleToggleEvent = (studioId: string, eventId: string) => {
     setSelectedEvents(prev => {
@@ -168,6 +199,7 @@ export function UninvoicedEventsList({ userId, onCreateInvoice, onCreateStudio }
         isLoading={unmatchedLoading}
         onRefresh={refetchUnmatched}
         onCreateStudio={onCreateStudio || (() => {})}
+        userId={userId}
       />
 
       <DataLoader
@@ -186,9 +218,9 @@ export function UninvoicedEventsList({ userId, onCreateInvoice, onCreateStudio }
               <p className="text-sm text-gray-600 mb-4">
                 All your completed events have been invoiced, or you don&apos;t have any events with assigned studios yet.
               </p>
-              <Button variant="outline" onClick={() => refetch()}>
-                <RefreshCw className="mr-2 h-4 w-4" />
-                Refresh
+              <Button variant="outline" onClick={handleRefresh} disabled={isRefreshing}>
+                <RefreshCw className={`mr-2 h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                {isRefreshing ? 'Syncing & Refreshing...' : 'Refresh'}
               </Button>
             </CardContent>
           </Card>
