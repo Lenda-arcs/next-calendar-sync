@@ -64,7 +64,7 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({
     }
   }
 
-  const removeOption = (optionValue: string, e: React.MouseEvent) => {
+  const removeOption = (optionValue: string, e: React.MouseEvent | React.KeyboardEvent) => {
     e.preventDefault()
     e.stopPropagation()
     onChange(value.filter((v) => v !== optionValue))
@@ -93,13 +93,20 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({
                 className="bg-primary text-primary-foreground hover:bg-primary/90"
               >
                 {item.label}
-                <button
-                  type="button"
-                  className="ml-1 hover:bg-white/20 rounded-full w-4 h-4 flex items-center justify-center text-xs"
+                <span
+                  role="button"
+                  tabIndex={0}
+                  className="ml-1 hover:bg-white/20 rounded-full w-4 h-4 flex items-center justify-center text-xs cursor-pointer"
                   onClick={(e) => removeOption(item.value, e)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault()
+                      removeOption(item.value, e)
+                    }
+                  }}
                 >
                   <X className="h-2 w-2" />
-                </button>
+                </span>
               </Badge>
             ))}
           </div>
@@ -145,11 +152,12 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({
       
       <Popover open={isOpen} onOpenChange={setIsOpen}>
         <PopoverTrigger asChild>
-          <button
-            type="button"
+          <div
+            role="button"
+            tabIndex={0}
             id={id}
             className={cn(
-              'w-full px-3 py-2 rounded-lg text-sm text-left',
+              'w-full px-3 py-2 rounded-lg text-sm text-left cursor-pointer',
               'backdrop-blur-sm bg-white/50 border border-white/40 shadow-md',
               'focus:outline-none focus:ring-2 focus:ring-ring focus:ring-inset',
               'flex items-center justify-between transition-all duration-200',
@@ -157,6 +165,12 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({
               displayMode === 'badges' ? 'min-h-[48px] px-4 py-3' : 'h-10',
               error ? 'border-destructive focus:ring-destructive' : 'border-input'
             )}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                setIsOpen(!isOpen)
+              }
+            }}
           >
             {getDisplayContent()}
             <ChevronDown className={cn(
@@ -164,7 +178,7 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({
               displayMode === 'badges' ? 'ml-2' : 'ml-1',
               isOpen ? 'rotate-180' : ''
             )} />
-          </button>
+          </div>
         </PopoverTrigger>
         
         <PopoverContent 

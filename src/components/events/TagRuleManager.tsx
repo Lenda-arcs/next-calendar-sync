@@ -8,8 +8,8 @@ import { TagRule, Tag } from '@/lib/types'
 
 // Extended TagRule interface to handle new fields until database types are regenerated
 interface ExtendedTagRule extends TagRule {
-  keywords?: string[]
-  location_keywords?: string[]
+  keywords: string[] | null
+  location_keywords: string[] | null
 }
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { AlertCircle } from 'lucide-react'
@@ -23,6 +23,8 @@ interface TagRuleState {
     locationKeywords: string[]
     selectedTag: string
   }
+  editingRule: ExtendedTagRule | null
+  isEditing: boolean
 }
 
 const initialState: TagRuleState = {
@@ -31,6 +33,8 @@ const initialState: TagRuleState = {
     locationKeywords: [],
     selectedTag: '',
   },
+  editingRule: null,
+  isEditing: false,
 }
 
 interface Props {
@@ -127,6 +131,50 @@ export const TagRuleManager: React.FC<Props> = ({ userId, availableTags: propTag
     }
   })
 
+  // Update tag rule mutation
+  const { mutate: updateRule, isLoading: updating } = useSupabaseMutation({
+    mutationFn: async (supabase, variables: { 
+      id: string;
+      keywords: string[]; 
+      location_keywords: string[]; 
+      tag_id: string 
+    }) => {
+      const { data, error } = await supabase
+        .from('tag_rules')
+        .update({
+          keywords: variables.keywords,
+          location_keywords: variables.location_keywords,
+          tag_id: variables.tag_id,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', variables.id)
+        .select()
+      
+      if (error) throw error
+      return data
+    },
+    onSuccess: (data) => {
+      // Clear editing state
+      setState((prev) => ({
+        ...prev,
+        editingRule: null,
+        isEditing: false,
+      }))
+      
+      // Update optimistic state
+      if (data && data[0]) {
+        setOptimisticRules(prev => prev.map(rule => 
+          rule.id === data[0].id ? { ...rule, ...data[0] } : rule
+        ))
+      }
+      
+      // No refetch - trust the database operation succeeded
+    },
+    onError: () => {
+      console.error('Failed to update tag rule')
+    }
+  })
+
   // Delete tag rule mutation
   const { mutate: deleteRule } = useSupabaseMutation({
     mutationFn: async (supabase, ruleId: string) => {
@@ -171,6 +219,38 @@ export const TagRuleManager: React.FC<Props> = ({ userId, availableTags: propTag
       location_keywords: state.newRule.locationKeywords,
       tag_id: state.newRule.selectedTag,
     })
+  }
+
+  const handleEditRule = (rule: ExtendedTagRule) => {
+    setState((prev) => ({
+      ...prev,
+      editingRule: rule,
+      isEditing: true,
+    }))
+  }
+
+  const handleUpdateRule = async () => {
+    if (!state.editingRule) return
+    
+    const hasKeywords = (state.editingRule.keywords?.length || 0) > 0
+    const hasLocationKeywords = (state.editingRule.location_keywords?.length || 0) > 0
+    
+    if ((!hasKeywords && !hasLocationKeywords) || !state.editingRule.tag_id) return
+
+    updateRule({
+      id: state.editingRule.id,
+      keywords: state.editingRule.keywords || [],
+      location_keywords: state.editingRule.location_keywords || [],
+      tag_id: state.editingRule.tag_id,
+    })
+  }
+
+  const handleCancelEdit = () => {
+    setState((prev) => ({
+      ...prev,
+      editingRule: null,
+      isEditing: false,
+    }))
   }
 
   const handleDeleteRule = async (ruleId: string) => {
@@ -232,7 +312,10 @@ export const TagRuleManager: React.FC<Props> = ({ userId, availableTags: propTag
             tags={data.tags}
             keywordSuggestions={data.keywordSuggestions}
             onDeleteRule={handleDeleteRule}
+            onEditRule={handleEditRule}
             onAddRule={handleAddRule}
+            onUpdateRule={handleUpdateRule}
+            onCancelEdit={handleCancelEdit}
             newKeywords={state.newRule.keywords}
             setNewKeywords={(value: string[]) =>
               setState((prev) => ({
@@ -254,7 +337,16 @@ export const TagRuleManager: React.FC<Props> = ({ userId, availableTags: propTag
                 newRule: { ...prev.newRule, selectedTag: value },
               }))
             }
+            editingRule={state.editingRule}
+            setEditingRule={(rule: ExtendedTagRule | null) =>
+              setState((prev) => ({
+                ...prev,
+                editingRule: rule,
+              }))
+            }
+            isEditing={state.isEditing}
             isCreating={creating}
+            isUpdating={updating}
             suggestionsLoading={suggestionsLoading}
           />
         )}

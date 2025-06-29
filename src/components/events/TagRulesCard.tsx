@@ -7,7 +7,7 @@ import { TagBadge } from '@/components/ui/tag-badge'
 import { Button } from '@/components/ui/button'
 import { Select } from '@/components/ui/select'
 import { MultiSelect, MultiSelectOption } from '@/components/ui/multi-select'
-import { X, ArrowRight, Search, Plus, Loader2 } from 'lucide-react'
+import { X, ArrowRight, Search, Plus, Loader2, Edit2, Check } from 'lucide-react'
 
 interface KeywordSuggestion {
   keyword: string
@@ -17,8 +17,8 @@ interface KeywordSuggestion {
 
 // Extended TagRule interface to handle new fields until database types are regenerated
 interface ExtendedTagRule extends TagRule {
-  keywords?: string[]
-  location_keywords?: string[]
+  keywords: string[] | null
+  location_keywords: string[] | null
 }
 
 interface Props {
@@ -26,14 +26,21 @@ interface Props {
   tags: Tag[]
   keywordSuggestions: KeywordSuggestion[]
   onDeleteRule: (ruleId: string) => void
+  onEditRule: (rule: ExtendedTagRule) => void
   onAddRule: () => void
+  onUpdateRule: () => void
+  onCancelEdit: () => void
   newKeywords: string[]
   setNewKeywords: (value: string[]) => void
   newLocationKeywords: string[]
   setNewLocationKeywords: (value: string[]) => void
   selectedTag: string
   setSelectedTag: (value: string) => void
+  editingRule: ExtendedTagRule | null
+  setEditingRule: (rule: ExtendedTagRule | null) => void
+  isEditing: boolean
   isCreating?: boolean
+  isUpdating?: boolean
   suggestionsLoading?: boolean
 }
 
@@ -42,14 +49,21 @@ export const TagRulesCard: React.FC<Props> = ({
   tags, 
   keywordSuggestions,
   onDeleteRule,
+  onEditRule,
   onAddRule,
+  onUpdateRule,
+  onCancelEdit,
   newKeywords,
   setNewKeywords,
   newLocationKeywords,
   setNewLocationKeywords,
   selectedTag,
   setSelectedTag,
+  editingRule,
+  setEditingRule,
+  isEditing,
   isCreating = false,
+  isUpdating = false,
   suggestionsLoading = false,
 }) => {
   const selectedTagData = tags.find(tag => tag.id === selectedTag)
@@ -77,6 +91,97 @@ export const TagRulesCard: React.FC<Props> = ({
         <CardTitle className="text-foreground">Tag Rules</CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
+        {/* Edit Rule Section */}
+        {isEditing && editingRule && (
+          <div className="bg-gradient-to-r from-blue-50/50 to-purple-50/30 p-4 rounded-lg border border-blue-200/50 mb-6">
+            <div className="flex items-center gap-2 mb-4">
+              <Edit2 className="h-4 w-4 text-blue-600" />
+              <h3 className="text-sm font-medium text-blue-900">Edit Rule</h3>
+            </div>
+            
+            <div className="space-y-4">
+              {/* Edit Keywords for title/description */}
+              <div className="flex-1">
+                <MultiSelect
+                  label="Keywords (Title/Description)"
+                  placeholder="Select or type keywords..."
+                  options={titleSuggestionOptions}
+                  value={editingRule.keywords || []}
+                  onChange={(value: string[]) => setEditingRule({ ...editingRule, keywords: value })}
+                  maxSelections={5}
+                  showCounts={true}
+                  displayMode="badges"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Match these keywords in event titles or descriptions (max 5)
+                </p>
+              </div>
+
+              {/* Edit Keywords for location */}
+              <div className="flex-1">
+                <MultiSelect
+                  label="Location Keywords (Optional)"
+                  placeholder="Select or type location keywords..."
+                  options={locationSuggestionOptions}
+                  value={editingRule.location_keywords || []}
+                  onChange={(value: string[]) => setEditingRule({ ...editingRule, location_keywords: value })}
+                  maxSelections={5}
+                  showCounts={true}
+                  displayMode="badges"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Match these keywords in event locations (max 5)
+                </p>
+              </div>
+
+              {/* Edit Tag selection */}
+              <div className="flex flex-col sm:flex-row sm:items-end gap-4">
+                <div className="flex-1 sm:flex-initial space-y-2">
+                  <Select
+                    id="editTagSelect"
+                    label="Select Tag"
+                    options={tags.map((tag) => ({
+                      value: tag.id,
+                      label: tag.name || 'Unnamed Tag'
+                    }))}
+                    value={editingRule.tag_id || ''}
+                    onChange={(value: string) => setEditingRule({ ...editingRule, tag_id: value })}
+                    placeholder="Select Tag..."
+                    className="w-full sm:w-48"
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    onClick={onUpdateRule}
+                    disabled={
+                      ((editingRule.keywords || []).length === 0 && (editingRule.location_keywords || []).length === 0) || 
+                      !editingRule.tag_id || 
+                      isUpdating
+                    }
+                    variant="default"
+                  >
+                    {isUpdating ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                        Updating...
+                      </>
+                    ) : (
+                      'Update Rule'
+                    )}
+                  </Button>
+                  <Button
+                    onClick={onCancelEdit}
+                    disabled={isUpdating}
+                    variant="outline"
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Add New Rule Section */}
         <div className="bg-gradient-to-r from-gray-50/50 to-blue-50/30 p-4 rounded-lg border border-gray-200/50">
           <div className="flex items-center gap-2 mb-4">
@@ -170,10 +275,16 @@ export const TagRulesCard: React.FC<Props> = ({
           <div className="space-y-2">
             {rules.map((rule) => {
               const tag = tags.find((t) => t.id === rule.tag_id)
+              const isCurrentlyEditing = isEditing && editingRule?.id === rule.id
+              
               return (
                 <div
                   key={rule.id}
-                  className="flex items-center gap-2 sm:gap-3 bg-gradient-to-r from-gray-50/50 to-blue-50/30 px-3 sm:px-4 py-2 sm:py-3 rounded-lg border border-gray-200/50 hover:shadow-sm transition-all duration-200"
+                  className={`flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-3 rounded-lg border transition-all duration-200 ${
+                    isCurrentlyEditing 
+                      ? 'bg-gradient-to-r from-blue-50/50 to-purple-50/30 border-blue-200/50 shadow-md' 
+                      : 'bg-gradient-to-r from-gray-50/50 to-blue-50/30 border-gray-200/50 hover:shadow-sm'
+                  }`}
                 >
                   {/* Keyword section */}
                   <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1">
@@ -231,15 +342,54 @@ export const TagRulesCard: React.FC<Props> = ({
                     </TagBadge>
                   </div>
 
-                  {/* Delete button */}
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors h-7 w-7 sm:h-8 sm:w-8 flex-shrink-0 p-0"
-                    onClick={() => onDeleteRule(rule.id)}
-                  >
-                    <X className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                  </Button>
+                  {/* Action buttons */}
+                  <div className="flex items-center gap-1">
+                    {isCurrentlyEditing ? (
+                      <>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-green-600 hover:text-green-700 hover:bg-green-50 transition-colors h-7 w-7 sm:h-8 sm:w-8 flex-shrink-0 p-0"
+                          onClick={onUpdateRule}
+                          disabled={isUpdating}
+                        >
+                          {isUpdating ? (
+                            <Loader2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 animate-spin" />
+                          ) : (
+                            <Check className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                          )}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-muted-foreground hover:text-foreground hover:bg-gray-100 transition-colors h-7 w-7 sm:h-8 sm:w-8 flex-shrink-0 p-0"
+                          onClick={onCancelEdit}
+                          disabled={isUpdating}
+                        >
+                          <X className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-muted-foreground hover:text-blue-600 hover:bg-blue-50 transition-colors h-7 w-7 sm:h-8 sm:w-8 flex-shrink-0 p-0"
+                          onClick={() => onEditRule(rule)}
+                        >
+                          <Edit2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors h-7 w-7 sm:h-8 sm:w-8 flex-shrink-0 p-0"
+                          onClick={() => onDeleteRule(rule.id)}
+                        >
+                          <X className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                        </Button>
+                      </>
+                    )}
+                  </div>
                 </div>
               )
             })}
