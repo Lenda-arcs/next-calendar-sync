@@ -47,7 +47,11 @@ serve(async (req)=>{
       const description = entry.description ?? "";
       const content = `${summary} ${description}`.toLowerCase();
       const eventTags = matchTags(content, rules || [], tagMap);
-      const instances = generateRecurrenceInstances(entry, daysToSync);
+      // Calculate the appropriate start date for recurrence generation
+      const recurrenceStartDate = isHistorical ? 
+        new Date(nowUTC.getTime() - daysToSync * 24 * 60 * 60 * 1000) : 
+        nowUTC;
+      const instances = generateRecurrenceInstances(entry, daysToSync, recurrenceStartDate);
       for (const instance of instances){
         const instanceEndTimeUTC = new Date(ensureUTCString(instance.end));
         if (shouldSkip(instanceEndTimeUTC)) continue;

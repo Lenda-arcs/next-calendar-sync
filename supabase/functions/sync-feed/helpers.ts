@@ -10,7 +10,7 @@ function getCorsHeaders(origin) {
     "Access-Control-Allow-Methods": "POST, OPTIONS"
   };
 }
-function generateRecurrenceInstances(entry, windowDays = 90) {
+function generateRecurrenceInstances(entry, windowDays = 90, startFromDate) {
   if (!entry.rrule) return [
     {
       ...entry
@@ -18,8 +18,21 @@ function generateRecurrenceInstances(entry, windowDays = 90) {
   ];
   const exdates = entry.exdate ? Object.values(entry.exdate).map((d)=>new Date(d)) : [];
   const nowUTC = new Date();
+  
+  // Use provided start date or calculate based on window
+  // For historical mode, we want to look back from now
+  // For default mode, we want to start from the earlier of now or event start
+  let startUTC;
+  if (startFromDate) {
+    startUTC = new Date(startFromDate);
+  } else {
+    // Look back by the window days to catch historical instances
+    const windowStart = new Date(nowUTC.getTime() - windowDays * 24 * 60 * 60 * 1000);
+    startUTC = windowStart;
+  }
+  
   const untilUTC = new Date(nowUTC.getTime() + windowDays * 24 * 60 * 60 * 1000);
-  return entry.rrule.between(nowUTC, untilUTC, true).filter((date)=>!exdates.find((ex)=>date.getTime() === new Date(ex).getTime())).map((date)=>{
+  return entry.rrule.between(startUTC, untilUTC, true).filter((date)=>!exdates.find((ex)=>date.getTime() === new Date(ex).getTime())).map((date)=>{
     const duration = entry.end.getTime() - entry.start.getTime();
     // Create new date objects and preserve timezone info
     const newStart = new Date(date.getTime());

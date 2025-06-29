@@ -66,9 +66,9 @@ export function UninvoicedEventsList({ userId, onCreateInvoice, onCreateStudio }
 
   const hasConnectedFeeds = calendarFeeds && calendarFeeds.length > 0
   
-  // Check if there are any uninvoiced events (matched or unmatched)
-  const hasUninvoicedEvents = (eventsByStudio && Object.keys(eventsByStudio).length > 0) || 
-                              (unmatchedEvents && unmatchedEvents.length > 0)
+  // Check if there are any uninvoiced events (matched or unmatched) //TODO: enable this again
+  // const hasUninvoicedEvents = (eventsByStudio && Object.keys(eventsByStudio).length > 0) || 
+  //                             (unmatchedEvents && unmatchedEvents.length > 0)
 
   // Enhanced refresh that syncs feeds first, then refetches data
   const handleRefresh = async () => {
@@ -188,7 +188,7 @@ export function UninvoicedEventsList({ userId, onCreateInvoice, onCreateStudio }
   return (
     <div className="space-y-4">
       {/* Historical Sync CTA - Only visible when feeds are connected and no uninvoiced events exist */}
-      {hasConnectedFeeds && !feedsLoading && !hasUninvoicedEvents && (
+      {hasConnectedFeeds && !feedsLoading &&  (
         <HistoricalSyncCTA 
           calendarFeeds={calendarFeeds}
           onSyncComplete={refetch}
