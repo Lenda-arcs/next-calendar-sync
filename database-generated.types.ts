@@ -365,19 +365,28 @@ export type Database = {
         Row: {
           id: string
           keyword: string | null
+          keywords: string[] | null
+          location_keywords: string[] | null
           tag_id: string | null
+          updated_at: string | null
           user_id: string | null
         }
         Insert: {
           id?: string
           keyword?: string | null
+          keywords?: string[] | null
+          location_keywords?: string[] | null
           tag_id?: string | null
+          updated_at?: string | null
           user_id?: string | null
         }
         Update: {
           id?: string
           keyword?: string | null
+          keywords?: string[] | null
+          location_keywords?: string[] | null
           tag_id?: string | null
+          updated_at?: string | null
           user_id?: string | null
         }
         Relationships: [
@@ -698,6 +707,10 @@ export type Database = {
       get_my_uid: {
         Args: Record<PropertyKey, never>
         Returns: string
+      }
+      get_user_image_count: {
+        Args: { user_id: string; folder_type?: string }
+        Returns: number
       }
       set_role_context: {
         Args: Record<PropertyKey, never>

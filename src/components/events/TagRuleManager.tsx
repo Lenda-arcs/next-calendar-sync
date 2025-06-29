@@ -3,7 +3,14 @@
 import React, { useState } from 'react'
 import { useSupabaseQuery } from '@/lib/hooks/useSupabaseQuery'
 import { useSupabaseMutation } from '@/lib/hooks/useSupabaseMutation'
+import { useKeywordSuggestions } from '@/lib/hooks/useKeywordSuggestions'
 import { TagRule, Tag } from '@/lib/types'
+
+// Extended TagRule interface to handle new fields until database types are regenerated
+interface ExtendedTagRule extends TagRule {
+  keywords?: string[]
+  location_keywords?: string[]
+}
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { AlertCircle } from 'lucide-react'
 import DataLoader from '@/components/ui/data-loader'
@@ -12,14 +19,16 @@ import { TagRulesCard } from './TagRulesCard'
 
 interface TagRuleState {
   newRule: {
-    keyword: string
+    keywords: string[]
+    locationKeywords: string[]
     selectedTag: string
   }
 }
 
 const initialState: TagRuleState = {
   newRule: {
-    keyword: '',
+    keywords: [],
+    locationKeywords: [],
     selectedTag: '',
   },
 }
@@ -31,7 +40,7 @@ interface Props {
 
 export const TagRuleManager: React.FC<Props> = ({ userId, availableTags: propTags }) => {
   const [state, setState] = useState<TagRuleState>(initialState)
-  const [optimisticRules, setOptimisticRules] = useState<TagRule[]>([])
+  const [optimisticRules, setOptimisticRules] = useState<ExtendedTagRule[]>([])
   const [deletedRuleIds, setDeletedRuleIds] = useState<Set<string>>(new Set())
 
   // Fetch tag rules for the user
@@ -48,7 +57,7 @@ export const TagRuleManager: React.FC<Props> = ({ userId, availableTags: propTag
         .eq('user_id', userId)
       
       if (error) throw error
-      return data as TagRule[]
+      return data as ExtendedTagRule[]
     },
   })
 
@@ -75,9 +84,20 @@ export const TagRuleManager: React.FC<Props> = ({ userId, availableTags: propTag
   // Use provided tags or fetched tags
   const availableTags = propTags || fetchedTags
 
+  // Fetch keyword suggestions
+  const { allSuggestions: keywordSuggestions, isLoading: suggestionsLoading } = useKeywordSuggestions({
+    userId,
+    enabled: !!userId
+  })
+
   // Create tag rule mutation
   const { mutate: createRule, isLoading: creating } = useSupabaseMutation({
-    mutationFn: async (supabase, variables: { user_id: string; keyword: string; tag_id: string }) => {
+    mutationFn: async (supabase, variables: { 
+      user_id: string; 
+      keywords: string[]; 
+      location_keywords: string[]; 
+      tag_id: string 
+    }) => {
       const { data, error } = await supabase
         .from('tag_rules')
         .insert([variables])
@@ -90,7 +110,7 @@ export const TagRuleManager: React.FC<Props> = ({ userId, availableTags: propTag
       // Clear form
       setState((prev) => ({
         ...prev,
-        newRule: { keyword: '', selectedTag: '' },
+        newRule: { keywords: [], locationKeywords: [], selectedTag: '' },
       }))
       
       // Add the new rule to optimistic state
@@ -140,11 +160,15 @@ export const TagRuleManager: React.FC<Props> = ({ userId, availableTags: propTag
   })
 
   const handleAddRule = async () => {
-    if (!state.newRule.keyword.trim() || !state.newRule.selectedTag) return
+    const hasKeywords = state.newRule.keywords.length > 0
+    const hasLocationKeywords = state.newRule.locationKeywords.length > 0
+    
+    if ((!hasKeywords && !hasLocationKeywords) || !state.newRule.selectedTag) return
 
     createRule({
       user_id: userId,
-      keyword: state.newRule.keyword.trim(),
+      keywords: state.newRule.keywords,
+      location_keywords: state.newRule.locationKeywords,
       tag_id: state.newRule.selectedTag,
     })
   }
@@ -172,7 +196,11 @@ export const TagRuleManager: React.FC<Props> = ({ userId, availableTags: propTag
     ...optimisticRules
   ] : []
 
-  const data = hasData ? { rules: displayRules, tags: availableTags } : null
+  const data = hasData ? { 
+    rules: displayRules, 
+    tags: availableTags, 
+    keywordSuggestions: keywordSuggestions || [] 
+  } : null
 
   return (
     <div className="space-y-8">
@@ -202,13 +230,21 @@ export const TagRuleManager: React.FC<Props> = ({ userId, availableTags: propTag
           <TagRulesCard
             rules={data.rules}
             tags={data.tags}
+            keywordSuggestions={data.keywordSuggestions}
             onDeleteRule={handleDeleteRule}
             onAddRule={handleAddRule}
-            newKeyword={state.newRule.keyword}
-            setNewKeyword={(value: string) =>
+            newKeywords={state.newRule.keywords}
+            setNewKeywords={(value: string[]) =>
               setState((prev) => ({
                 ...prev,
-                newRule: { ...prev.newRule, keyword: value },
+                newRule: { ...prev.newRule, keywords: value },
+              }))
+            }
+            newLocationKeywords={state.newRule.locationKeywords}
+            setNewLocationKeywords={(value: string[]) =>
+              setState((prev) => ({
+                ...prev,
+                newRule: { ...prev.newRule, locationKeywords: value },
               }))
             }
             selectedTag={state.newRule.selectedTag}
@@ -219,6 +255,7 @@ export const TagRuleManager: React.FC<Props> = ({ userId, availableTags: propTag
               }))
             }
             isCreating={creating}
+            suggestionsLoading={suggestionsLoading}
           />
         )}
       </DataLoader>

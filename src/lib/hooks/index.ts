@@ -48,4 +48,4 @@ export {
 export { useOrigin, useFullUrl } from './useOrigin'
 export { useScheduleExport } from './useScheduleExport'
 export { useOwnerAuth } from './useOwnerAuth'
-export { useScreenshotMode } from './useScreenshotMode' 
+export { useKeywordSuggestions } from './useKeywordSuggestions' 

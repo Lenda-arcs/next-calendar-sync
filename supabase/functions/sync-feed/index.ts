@@ -24,7 +24,7 @@ serve(async (req)=>{
       status: 404,
       headers: corsHeaders
     });
-    const { data: rules } = await supabase.from("tag_rules").select("keyword, tag_id").eq("user_id", feed.user_id);
+    const { data: rules } = await supabase.from("tag_rules").select("keyword, keywords, location_keywords, tag_id").eq("user_id", feed.user_id);
     const { data: tags } = await supabase.from("tags").select("id, slug");
     const tagMap = Object.fromEntries((tags || []).map((t)=>[
         t.id,
@@ -46,7 +46,7 @@ serve(async (req)=>{
       const summary = entry.summary ?? "";
       const description = entry.description ?? "";
       const content = `${summary} ${description}`.toLowerCase();
-      const eventTags = matchTags(content, rules || [], tagMap);
+      const eventTags = matchTags(content, entry.location, rules || [], tagMap);
       // Calculate the appropriate start date for recurrence generation
       const recurrenceStartDate = isHistorical ? 
         new Date(nowUTC.getTime() - daysToSync * 24 * 60 * 60 * 1000) : 

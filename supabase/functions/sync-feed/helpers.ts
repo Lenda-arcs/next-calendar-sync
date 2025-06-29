@@ -116,9 +116,25 @@ function ensureUTCString(dateInput) {
   // Fallback: try to create a Date from it
   return new Date(dateInput).toISOString();
 }
-function matchTags(content, rules, tagMap) {
-  const auto_tag_ids = rules.filter((r)=>content.includes(r.keyword.toLowerCase())).map((r)=>r.tag_id);
-  return auto_tag_ids.map((id)=>tagMap[id]).filter(Boolean);
+function matchTags(content, location, rules, tagMap) {
+  const auto_tag_ids = rules.filter((r) => {
+    // Check if any keyword in the rule matches the content
+    const keywordMatch = r.keywords && r.keywords.some(keyword => 
+      content.includes(keyword.toLowerCase())
+    );
+    
+    // Check if any location keyword matches the location
+    const locationMatch = r.location_keywords && location && r.location_keywords.some(keyword => 
+      location.toLowerCase().includes(keyword.toLowerCase())
+    );
+    
+    // For backward compatibility, check single keyword field
+    const legacyMatch = r.keyword && content.includes(r.keyword.toLowerCase());
+    
+    return keywordMatch || locationMatch || legacyMatch;
+  }).map((r) => r.tag_id);
+  
+  return auto_tag_ids.map((id) => tagMap[id]).filter(Boolean);
 }
 async function fetchExistingEvents(supabase, userId, feedId, windowStart, windowEnd) {
   return await supabase.from("events").select("id, uid, recurrence_id, start_time").eq("user_id", userId).eq("feed_id", feedId).gte("start_time", windowStart.toISOString()).lte("start_time", windowEnd.toISOString());
