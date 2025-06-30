@@ -1,33 +1,18 @@
 import { createClient } from '@/lib/supabase'
-import { Event, BillingEntity as BaseBillingEntity, Invoice, InvoiceInsert, UserInvoiceSettings, BillingEntityInsert, BillingEntityUpdate } from '@/lib/types'
+import { Event, Invoice, InvoiceInsert, UserInvoiceSettings, BillingEntity, BillingEntityInsert, BillingEntityUpdate } from '@/lib/types'
 
 // Extended Event interface for substitute teaching  
-export interface ExtendedEvent extends Event {
-  invoice_type?: 'studio_invoice' | 'teacher_invoice' | null
-  substitute_notes?: string | null
+export interface ExtendedEvent extends Omit<Event, 'invoice_type' | 'substitute_notes'> {
+  invoice_type: 'studio_invoice' | 'teacher_invoice' | null
+  substitute_notes: string | null
 }
 
-// Extended billing entity interface (renamed from Studio)
-export interface BillingEntity extends BaseBillingEntity {
-  recipient_type: 'studio' | 'internal_teacher' | 'external_teacher'
-  recipient_user_id?: string | null
-  recipient_name?: string | null  
-  recipient_email?: string | null
-  recipient_phone?: string | null
-  tax_id?: string | null | undefined
-  vat_id?: string | null | undefined
-  iban?: string | null | undefined
-  bic?: string | null | undefined
-  entity_name: string  // Renamed from studio_name
-}
-
+// Event with billing entity relationship
 export interface EventWithBillingEntity extends Event {
   billing_entity: BillingEntity | null
-  invoice_type?: 'studio_invoice' | 'teacher_invoice' | null
-  substitute_notes?: string | null
 }
 
-// For backward compatibility, keep the studio interface
+// For backward compatibility, keep the studio interface (maps to billing entity)
 export interface EventWithStudio extends Event {
   studio: BillingEntity | null
 }
@@ -51,35 +36,35 @@ export function generateInvoiceNumber(userPrefix: string = "INV"): string {
 }
 
 /**
- * Calculate payout for a single event based on studio rules
+ * Calculate payout for a single event based on billing entity rules
  */
-export function calculateEventPayout(event: Event, studio: BillingEntity): number {
-  if (!studio.base_rate) return 0
+export function calculateEventPayout(event: Event, billingEntity: BillingEntity): number {
+  if (!billingEntity.base_rate) return 0
 
-  let payout = studio.base_rate
+  let payout = billingEntity.base_rate
 
-  if (studio.rate_type === "per_student") {
+  if (billingEntity.rate_type === "per_student") {
     // For per-student rates, we might apply different logic
     // For now, just use base rate as minimum
     return payout
   }
 
   // Apply penalties if configured
-  if (studio.studio_penalty_per_student && event.students_studio !== null) {
-    const threshold = studio.student_threshold || 0
+  if (billingEntity.studio_penalty_per_student && event.students_studio !== null) {
+    const threshold = billingEntity.student_threshold || 0
     if (event.students_studio < threshold) {
       const missingStudents = threshold - event.students_studio
-      payout -= missingStudents * studio.studio_penalty_per_student
+      payout -= missingStudents * billingEntity.studio_penalty_per_student
     }
   }
 
-  if (studio.online_penalty_per_student && event.students_online) {
-    payout -= event.students_online * studio.online_penalty_per_student
+  if (billingEntity.online_penalty_per_student && event.students_online) {
+    payout -= event.students_online * billingEntity.online_penalty_per_student
   }
 
   // Apply maximum discount limit
-  if (studio.max_discount) {
-    const minimumPayout = studio.base_rate - studio.max_discount
+  if (billingEntity.max_discount) {
+    const minimumPayout = billingEntity.base_rate - billingEntity.max_discount
     payout = Math.max(payout, minimumPayout)
   }
 
@@ -89,13 +74,13 @@ export function calculateEventPayout(event: Event, studio: BillingEntity): numbe
 /**
  * Calculate total payout for multiple events
  */
-export function calculateTotalPayout(events: Event[], studio: BillingEntity): number {
-  return events.reduce((total, event) => total + calculateEventPayout(event, studio), 0)
+export function calculateTotalPayout(events: Event[], billingEntity: BillingEntity): number {
+  return events.reduce((total, event) => total + calculateEventPayout(event, billingEntity), 0)
 }
 
 /**
  * Get uninvoiced events for a user
- * Excludes events marked as excluded from studio matching
+ * Excludes events marked as excluded from billing entity matching
  */
 export async function getUninvoicedEvents(userId: string): Promise<EventWithStudio[]> {
   const supabase = createClient()
@@ -118,11 +103,11 @@ export async function getUninvoicedEvents(userId: string): Promise<EventWithStud
     throw new Error(`Failed to fetch uninvoiced events: ${error.message}`)
   }
 
-  return data || []
+  return (data || []) as EventWithStudio[]
 }
 
 /**
- * Get uninvoiced events grouped by studio
+ * Get uninvoiced events grouped by billing entity
  */
 export async function getUninvoicedEventsByStudio(userId: string): Promise<Record<string, EventWithStudio[]>> {
   const events = await getUninvoicedEvents(userId)
@@ -420,7 +405,7 @@ export async function getUserInvoiceSettings(userId: string): Promise<UserInvoic
 }
 
 /**
- * Get user studios
+ * Get user billing entities (studios and teachers)
  */
 export async function getUserStudios(userId: string): Promise<BillingEntity[]> {
   const supabase = createClient()
@@ -432,8 +417,8 @@ export async function getUserStudios(userId: string): Promise<BillingEntity[]> {
     .order("entity_name", { ascending: true })
 
   if (error) {
-    console.error("Error fetching user studios:", error)
-    throw new Error(`Failed to fetch studios: ${error.message}`)
+    console.error("Error fetching user billing entities:", error)
+    throw new Error(`Failed to fetch billing entities: ${error.message}`)
   }
 
   return data || []
@@ -465,65 +450,65 @@ export async function getUnmatchedEvents(userId: string): Promise<Event[]> {
 }
 
 /**
- * Create a new studio
+ * Create a new billing entity (studio or teacher)
  */
-export async function createStudio(studioData: BillingEntityInsert): Promise<BillingEntity> {
+export async function createStudio(entityData: BillingEntityInsert): Promise<BillingEntity> {
   const supabase = createClient()
   
   const { data, error } = await supabase
     .from("billing_entities")
-    .insert(studioData)
+    .insert(entityData)
     .select()
     .single()
 
   if (error) {
-    console.error("Error creating studio:", error)
-    throw new Error(`Failed to create studio: ${error.message}`)
+    console.error("Error creating billing entity:", error)
+    throw new Error(`Failed to create billing entity: ${error.message}`)
   }
 
   return data
 }
 
 /**
- * Update an existing studio
+ * Update an existing billing entity
  */
-export async function updateStudio(studioId: string, studioData: BillingEntityUpdate): Promise<BillingEntity> {
+export async function updateStudio(entityId: string, entityData: BillingEntityUpdate): Promise<BillingEntity> {
   const supabase = createClient()
   
   const { data, error } = await supabase
     .from("billing_entities")
-    .update(studioData)
-    .eq("id", studioId)
+    .update(entityData)
+    .eq("id", entityId)
     .select()
     .single()
 
   if (error) {
-    console.error("Error updating studio:", error)
-    throw new Error(`Failed to update studio: ${error.message}`)
+    console.error("Error updating billing entity:", error)
+    throw new Error(`Failed to update billing entity: ${error.message}`)
   }
 
   return data
 }
 
 /**
- * Delete a studio
+ * Delete a billing entity
  */
-export async function deleteStudio(studioId: string): Promise<void> {
+export async function deleteStudio(entityId: string): Promise<void> {
   const supabase = createClient()
   
   const { error } = await supabase
     .from("billing_entities")
     .delete()
-    .eq("id", studioId)
+    .eq("id", entityId)
 
   if (error) {
-    console.error("Error deleting studio:", error)
-    throw new Error(`Failed to delete studio: ${error.message}`)
+    console.error("Error deleting billing entity:", error)
+    throw new Error(`Failed to delete billing entity: ${error.message}`)
   }
 }
 
 /**
- * Match events to studios based on location patterns
+ * Match events to billing entities based on location patterns
  */
 export async function matchEventsToStudios(userId: string): Promise<{
   matchedEvents: number;
@@ -920,7 +905,8 @@ export async function getUserEventLocations(userId: string): Promise<string[]> {
   }
 
   // Get unique locations and filter out null/empty strings
-  const locations = [...new Set(data.map(event => event.location).filter((location): location is string => Boolean(location)))]
+  const locationSet = new Set(data.map(event => event.location).filter((location): location is string => Boolean(location)))
+  const locations = Array.from(locationSet)
   return locations.sort()
 }
 
@@ -968,7 +954,7 @@ export async function revertEventsToStudioInvoicing(eventIds: string[]): Promise
     .limit(1)
     .single()
 
-  if (eventError || !eventData) {
+  if (eventError || !eventData || !eventData.user_id) {
     console.error("Error fetching event data:", eventError)
     throw new Error("Failed to fetch event data for reverting")
   }

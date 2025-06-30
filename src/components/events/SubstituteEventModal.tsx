@@ -52,7 +52,7 @@ export function SubstituteEventModal({
   
   // Fetch existing teacher billing entities
   const { data: teacherEntities, isLoading: entitiesLoading } = useSupabaseQuery({
-    queryKey: ['teacher-billing-entities', userId],
+    queryKey: ['teacher-billing-entities', userId || 'none'],
     fetcher: async () => {
       if (!userId) return []
       return await getTeacherBillingEntities(userId as string)

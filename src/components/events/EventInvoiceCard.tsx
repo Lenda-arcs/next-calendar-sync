@@ -1,10 +1,10 @@
 'use client'
 
-import React from 'react'
+import React, { useMemo } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Event, BillingEntity } from '@/lib/types'
-import { calculateEventPayout } from '@/lib/invoice-utils'
+
 import { cn } from '@/lib/utils'
 import { Users } from 'lucide-react'
 
@@ -39,7 +39,37 @@ export function EventInvoiceCard({
     })
   }
 
-  const payout = event.studio ? calculateEventPayout(event, event.studio as any) : 0
+  // Memoized payout calculation - only recalculates when relevant properties change
+  const payout = useMemo(() => {
+    if (!event.studio || !event.studio.base_rate) return 0
+    
+    let calculatedPayout = event.studio.base_rate
+    
+    // Apply penalties if configured
+    if (event.studio.studio_penalty_per_student && event.students_studio !== null && event.studio.student_threshold) {
+      const threshold = event.studio.student_threshold
+      if (event.students_studio < threshold) {
+        const missingStudents = threshold - event.students_studio
+        calculatedPayout -= missingStudents * event.studio.studio_penalty_per_student
+      }
+    }
+    
+    if (event.studio.online_penalty_per_student && event.students_online) {
+      calculatedPayout -= event.students_online * event.studio.online_penalty_per_student
+    }
+    
+    // Apply maximum discount limit
+    if (event.studio.max_discount) {
+      const minimumPayout = event.studio.base_rate - event.studio.max_discount
+      calculatedPayout = Math.max(calculatedPayout, minimumPayout)
+    }
+    
+    return Math.max(calculatedPayout, 0)
+  }, [
+    event.studio,
+    event.students_studio,
+    event.students_online
+  ])
 
   return (
     <Card 

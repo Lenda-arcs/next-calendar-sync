@@ -122,7 +122,7 @@ export const InvoiceCard: React.FC<InvoiceCardProps> = ({ invoice, onEdit, onSta
                 )}
               </div>
               <p className="text-sm text-gray-600 mb-1 truncate">
-                {invoice.studio?.studio_name || 'Unknown Studio'}
+                {invoice.studio?.entity_name || 'Unknown Studio'}
               </p>
               <div className="flex items-center gap-2 text-xs text-gray-600">
                 <div className="text-xs text-gray-600">

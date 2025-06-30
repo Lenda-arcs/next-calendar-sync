@@ -219,7 +219,7 @@ export function InvoiceCreationModal({
     <UnifiedDialog
       open={isOpen}
       onOpenChange={onClose}
-      title={`${mode === 'edit' ? 'Edit' : 'Create'} Invoice - ${studio?.studio_name || 'Unknown Studio'}`}
+      title={`${mode === 'edit' ? 'Edit' : 'Create'} Invoice - ${studio?.entity_name || 'Unknown Studio'}`}
       size="lg"
       footer={footerContent}
     >

@@ -170,7 +170,7 @@ const BillingEntityForm: React.FC<Props> = ({
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  }, [formData]);
+  }, [formData, entityType]);
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();

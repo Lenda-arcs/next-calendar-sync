@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useMemo } from 'react'
+import React, { useState, useCallback, useMemo } from 'react'
 import { Card, CardContent, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import DataLoader from '@/components/ui/data-loader'
@@ -155,8 +155,6 @@ export function UninvoicedEventsList({ userId, onCreateInvoice, onCreateStudio }
     }
   }
 
-
-
   const handleBatchSubstitute = (studioId: string) => {
     const eventIds = selectedEvents[studioId] || []
     if (eventIds.length > 0) {
@@ -215,19 +213,50 @@ export function UninvoicedEventsList({ userId, onCreateInvoice, onCreateStudio }
     ? uninvoicedEvents?.filter(event => substituteEventIds.includes(event.id)) || []
     : []
 
-  const getSelectedTotal = (studioId: string): number => {
-    if (!eventsByStudio?.[studioId]) return 0
+  // Memoized selected totals for each studio to avoid recalculating on every render
+  const selectedTotals = useMemo(() => {
+    if (!eventsByStudio) return {}
     
-    const selectedEventIds = selectedEvents[studioId] || []
-    const selectedEventsData = eventsByStudio[studioId].filter(event => 
-      selectedEventIds.includes(event.id)
-    )
+    const totals: Record<string, number> = {}
+    Object.keys(eventsByStudio).forEach(studioId => {
+      const selectedEventIds = selectedEvents[studioId] || []
+      if (selectedEventIds.length === 0) {
+        totals[studioId] = 0
+        return
+      }
+      
+      const selectedEventsData = eventsByStudio[studioId].filter(event => 
+        selectedEventIds.includes(event.id)
+      )
+      const studio = eventsByStudio[studioId][0]?.studio
+      
+      if (studio) {
+        totals[studioId] = calculateTotalPayout(selectedEventsData, studio)
+      } else {
+        totals[studioId] = 0
+      }
+    })
     
-    const studio = eventsByStudio[studioId][0]?.studio
-    if (!studio) return 0
+    return totals
+  }, [eventsByStudio, selectedEvents])
+
+  // Memoized total payouts for each studio
+  const studioTotalPayouts = useMemo(() => {
+    if (!eventsByStudio) return {}
     
-    return calculateTotalPayout(selectedEventsData, studio)
-  }
+    const totals: Record<string, number> = {}
+    Object.keys(eventsByStudio).forEach(studioId => {
+      const studioEvents = eventsByStudio[studioId] || []
+      const studio = studioEvents[0]?.studio
+      totals[studioId] = studio ? calculateTotalPayout(studioEvents, studio) : 0
+    })
+    
+    return totals
+  }, [eventsByStudio])
+
+  const getSelectedTotal = useCallback((studioId: string): number => {
+    return selectedTotals[studioId] || 0
+  }, [selectedTotals])
 
   const groupEventsByMonth = (events: EventWithStudio[]) => {
     const grouped: Record<string, EventWithStudio[]> = {}
@@ -262,7 +291,7 @@ export function UninvoicedEventsList({ userId, onCreateInvoice, onCreateStudio }
   }
 
   // Helper function to determine if billing entity is a teacher
-  const isTeacherBillingEntity = (studio: { recipient_type?: string } | null) => {
+  const isTeacherBillingEntity = (studio: { recipient_type: string | null } | null) => {
     return studio?.recipient_type === 'internal_teacher' || 
            studio?.recipient_type === 'external_teacher'
   }
@@ -329,7 +358,7 @@ export function UninvoicedEventsList({ userId, onCreateInvoice, onCreateStudio }
               const allEventsSelected = studioEvents.length > 0 && 
                 studioEvents.every((event) => selectedEventIds.includes(event.id))
               const someEventsSelected = selectedEventIds.length > 0
-              const totalPayout = studio ? calculateTotalPayout(studioEvents, studio) : 0
+              const totalPayout = studioTotalPayouts[studioId] || 0
               const selectedTotal = getSelectedTotal(studioId)
 
               if (!studio) return null
