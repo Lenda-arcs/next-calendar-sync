@@ -39,7 +39,7 @@ export function EventInvoiceCard({
     })
   }
 
-  const payout = event.studio ? calculateEventPayout(event, event.studio) : 0
+  const payout = event.studio ? calculateEventPayout(event, event.studio as any) : 0
 
   return (
     <Card 

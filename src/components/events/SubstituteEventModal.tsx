@@ -51,11 +51,11 @@ export function SubstituteEventModal({
   const originalStudioId = targetEvents[0]?.studio_id
   
   // Fetch existing teacher billing entities
-  const { data: teacherEntities, isLoading: entitiesLoading, refetch: refetchTeacherEntities } = useSupabaseQuery({
+  const { data: teacherEntities, isLoading: entitiesLoading } = useSupabaseQuery({
     queryKey: ['teacher-billing-entities', userId],
     fetcher: async () => {
       if (!userId) return []
-      return await getTeacherBillingEntities(userId)
+      return await getTeacherBillingEntities(userId as string)
     },
     enabled: !!userId && isOpen
   })
@@ -228,11 +228,11 @@ export function SubstituteEventModal({
     <UnifiedDialog
       open={isOpen}
       onOpenChange={handleClose}
-      title={isBatchMode ? `Change to Teacher Billing (${targetEvents.length} events)` : "Change to Teacher Billing"}
+      title={isBatchMode ? `Change to Teacher Billing (${targetEvents.length} events)` : 'Change to Teacher Billing'}
       description={
         isBatchMode 
           ? `Change the billing entity for ${targetEvents.length} selected events from studio to teacher.`
-          : `Change the billing entity for "${event?.title || 'this event'}" from studio to teacher.`
+          : `Change the billing entity for &quot;${event?.title || 'this event'}&quot; from studio to teacher.`
       }
       size="lg"
       footer={footer}
@@ -319,7 +319,7 @@ export function SubstituteEventModal({
               />
             ) : (
               <div className="text-sm text-gray-600">
-                No saved teacher contacts found. Use "New Teacher" to add one.
+                No saved teacher contacts found. Use &quot;New Teacher&quot; to add one.
               </div>
             )}
           </div>

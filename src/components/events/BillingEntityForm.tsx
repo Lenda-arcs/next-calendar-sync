@@ -75,7 +75,7 @@ const BillingEntityForm: React.FC<Props> = ({
         setMatchingResults(matchResults);
         
         onLoadingChange?.(false);
-        onStudioCreated?.(data);
+        onStudioCreated?.(data as BillingEntity);
         
         if (!isEditing) {
           // Reset form
@@ -100,7 +100,7 @@ const BillingEntityForm: React.FC<Props> = ({
       } catch (error) {
         console.error("Error matching events to studios:", error);
         onLoadingChange?.(false);
-        onStudioCreated?.(data);
+        onStudioCreated?.(data as BillingEntity);
       }
     },
   });
@@ -114,11 +114,11 @@ const BillingEntityForm: React.FC<Props> = ({
         setMatchingResults(matchResults);
         
         onLoadingChange?.(false);
-        onStudioUpdated?.(data);
+        onStudioUpdated?.(data as BillingEntity);
       } catch (error) {
         console.error("Error matching events to studios:", error);
         onLoadingChange?.(false);
-        onStudioUpdated?.(data);
+        onStudioUpdated?.(data as BillingEntity);
       }
     },
   });
@@ -241,7 +241,8 @@ const BillingEntityForm: React.FC<Props> = ({
     updateMutation,
     createMutation,
     onLoadingChange,
-    validateForm
+    validateForm,
+    entityType
   ]);
 
   const handleInputChange = (field: string, value: string) => {
