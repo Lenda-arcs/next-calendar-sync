@@ -1,12 +1,39 @@
 import { createClient } from '@/lib/supabase'
-import { Event, Studio, Invoice, InvoiceInsert, UserInvoiceSettings, StudioInsert, StudioUpdate } from '@/lib/types'
+import { Event, BillingEntity as BaseBillingEntity, Invoice, InvoiceInsert, UserInvoiceSettings, BillingEntityInsert, BillingEntityUpdate } from '@/lib/types'
 
+// Extended Event interface for substitute teaching  
+export interface ExtendedEvent extends Event {
+  invoice_type?: 'studio_invoice' | 'teacher_invoice' | null
+  substitute_notes?: string | null
+}
+
+// Extended billing entity interface (renamed from Studio)
+export interface BillingEntity extends BaseBillingEntity {
+  recipient_type: 'studio' | 'internal_teacher' | 'external_teacher'
+  recipient_user_id?: string | null
+  recipient_name?: string | null  
+  recipient_email?: string | null
+  recipient_phone?: string | null
+  tax_id?: string | null | undefined
+  vat_id?: string | null | undefined
+  iban?: string | null | undefined
+  bic?: string | null | undefined
+  entity_name: string  // Renamed from studio_name
+}
+
+export interface EventWithBillingEntity extends Event {
+  billing_entity: BillingEntity | null
+  invoice_type?: 'studio_invoice' | 'teacher_invoice' | null
+  substitute_notes?: string | null
+}
+
+// For backward compatibility, keep the studio interface
 export interface EventWithStudio extends Event {
-  studio: Studio | null
+  studio: BillingEntity | null
 }
 
 export interface InvoiceWithDetails extends Invoice {
-  studio: Studio
+  studio: BillingEntity
   events: Event[]
   event_count: number
 }
@@ -26,7 +53,7 @@ export function generateInvoiceNumber(userPrefix: string = "INV"): string {
 /**
  * Calculate payout for a single event based on studio rules
  */
-export function calculateEventPayout(event: Event, studio: Studio): number {
+export function calculateEventPayout(event: Event, studio: BillingEntity): number {
   if (!studio.base_rate) return 0
 
   let payout = studio.base_rate
@@ -62,7 +89,7 @@ export function calculateEventPayout(event: Event, studio: Studio): number {
 /**
  * Calculate total payout for multiple events
  */
-export function calculateTotalPayout(events: Event[], studio: Studio): number {
+export function calculateTotalPayout(events: Event[], studio: BillingEntity): number {
   return events.reduce((total, event) => total + calculateEventPayout(event, studio), 0)
 }
 
@@ -77,13 +104,13 @@ export async function getUninvoicedEvents(userId: string): Promise<EventWithStud
     .from("events")
     .select(`
       *,
-      studio:studios(*)
+      studio:billing_entities(*)
     `)
     .eq("user_id", userId)
     .lt("end_time", new Date().toISOString()) // Events that have ended
     .is("invoice_id", null) // Not yet invoiced
-    .not("studio_id", "is", null) // Has studio assigned
-    .eq("exclude_from_studio_matching", false) // Not excluded from studio matching
+    .not("studio_id", "is", null) // Has billing entity assigned (studio OR teacher)
+    .or("exclude_from_studio_matching.eq.false,invoice_type.eq.teacher_invoice") // Studio events OR teacher invoice events
     .order("end_time", { ascending: false })
 
   if (error) {
@@ -120,7 +147,7 @@ export async function getUserInvoices(userId: string): Promise<InvoiceWithDetail
     .from("invoices")
     .select(`
       *,
-      studio:studios(*),
+      studio:billing_entities(*),
       events(*)
     `)
     .eq("user_id", userId)
@@ -189,7 +216,7 @@ export async function getInvoiceById(invoiceId: string): Promise<InvoiceWithDeta
     .from("invoices")
     .select(`
       *,
-      studio:studios(*),
+      studio:billing_entities(*),
       events(*)
     `)
     .eq("id", invoiceId)
@@ -395,14 +422,14 @@ export async function getUserInvoiceSettings(userId: string): Promise<UserInvoic
 /**
  * Get user studios
  */
-export async function getUserStudios(userId: string): Promise<Studio[]> {
+export async function getUserStudios(userId: string): Promise<BillingEntity[]> {
   const supabase = createClient()
   
   const { data, error } = await supabase
-    .from("studios")
+    .from("billing_entities")
     .select("*")
     .eq("user_id", userId)
-    .order("studio_name", { ascending: true })
+    .order("entity_name", { ascending: true })
 
   if (error) {
     console.error("Error fetching user studios:", error)
@@ -440,11 +467,11 @@ export async function getUnmatchedEvents(userId: string): Promise<Event[]> {
 /**
  * Create a new studio
  */
-export async function createStudio(studioData: StudioInsert): Promise<Studio> {
+export async function createStudio(studioData: BillingEntityInsert): Promise<BillingEntity> {
   const supabase = createClient()
   
   const { data, error } = await supabase
-    .from("studios")
+    .from("billing_entities")
     .insert(studioData)
     .select()
     .single()
@@ -460,11 +487,11 @@ export async function createStudio(studioData: StudioInsert): Promise<Studio> {
 /**
  * Update an existing studio
  */
-export async function updateStudio(studioId: string, studioData: StudioUpdate): Promise<Studio> {
+export async function updateStudio(studioId: string, studioData: BillingEntityUpdate): Promise<BillingEntity> {
   const supabase = createClient()
   
   const { data, error } = await supabase
-    .from("studios")
+    .from("billing_entities")
     .update(studioData)
     .eq("id", studioId)
     .select()
@@ -485,7 +512,7 @@ export async function deleteStudio(studioId: string): Promise<void> {
   const supabase = createClient()
   
   const { error } = await supabase
-    .from("studios")
+    .from("billing_entities")
     .delete()
     .eq("id", studioId)
 
@@ -558,7 +585,7 @@ export async function matchEventsToStudios(userId: string): Promise<{
       totalMatchedEvents += matchingEvents.length;
       studioMatches.push({
         studioId: studio.id,
-        studioName: studio.studio_name,
+        studioName: studio.entity_name,
         matchedCount: matchingEvents.length,
       });
     }
@@ -588,6 +615,282 @@ export async function markEventAsExcluded(eventId: string, excluded: boolean = t
 }
 
 /**
+ * Get events that are excluded from studio matching
+ */
+export async function getExcludedEvents(userId: string): Promise<Event[]> {
+  const supabase = createClient()
+  
+  const { data, error } = await supabase
+    .from("events")
+    .select("*")
+    .eq("user_id", userId)
+    .lt("end_time", new Date().toISOString()) // Events that have ended
+    .is("invoice_id", null) // Not yet invoiced
+    .eq("exclude_from_studio_matching", true) // Explicitly excluded
+    .not("invoice_type", "eq", "teacher_invoice") // But not teacher invoices (those go in main list)
+    .order("end_time", { ascending: false })
+
+  if (error) {
+    console.error("Error fetching excluded events:", error)
+    throw new Error(`Failed to fetch excluded events: ${error.message}`)
+  }
+
+  return data || []
+}
+
+/**
+ * Toggle the exclude_from_studio_matching setting for an event
+ */
+export async function toggleEventExclusion(eventId: string): Promise<{ excluded: boolean }> {
+  const supabase = createClient()
+  
+  // First get the current state
+  const { data: currentEvent, error: fetchError } = await supabase
+    .from("events")
+    .select("exclude_from_studio_matching")
+    .eq("id", eventId)
+    .single()
+
+  if (fetchError) {
+    console.error("Error fetching event for exclusion toggle:", fetchError)
+    throw new Error(`Failed to fetch event: ${fetchError.message}`)
+  }
+
+  const newExclusionState = !currentEvent.exclude_from_studio_matching
+
+  const { error } = await supabase
+    .from("events")
+    .update({ exclude_from_studio_matching: newExclusionState })
+    .eq("id", eventId)
+
+  if (error) {
+    console.error("Error toggling event exclusion status:", error)
+    throw new Error(`Failed to toggle event exclusion: ${error.message}`)
+  }
+
+  return { excluded: newExclusionState }
+}
+
+// Types for invoice recipients
+export interface InternalRecipient {
+  type: 'internal'
+  userId: string
+}
+
+export interface ExternalRecipient {
+  type: 'external'
+  name: string
+  email: string
+  address?: string
+  phone?: string
+  taxInfo?: {
+    taxId?: string
+    vatId?: string
+    iban?: string
+    bic?: string
+  }
+}
+
+export type InvoiceRecipient = InternalRecipient | ExternalRecipient
+
+/**
+ * Create or find a billing entity for a teacher recipient
+ * This creates a billing_entities record for substitute teaching scenarios
+ */
+export async function createTeacherBillingEntity(
+  userId: string,
+  recipient: InvoiceRecipient
+): Promise<string> {
+  const supabase = createClient()
+  
+  if (!recipient) {
+    throw new Error('Recipient is undefined in createTeacherBillingEntity')
+  }
+  
+  if (!recipient.type) {
+    throw new Error('Recipient type is undefined in createTeacherBillingEntity')
+  }
+  
+  // First, check if a billing entity already exists for this recipient
+  let existingEntityQuery = supabase
+    .from("billing_entities")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("recipient_type", recipient.type === 'internal' ? 'internal_teacher' : 'external_teacher')
+
+  if (recipient.type === 'internal') {
+    existingEntityQuery = existingEntityQuery.eq("recipient_user_id", recipient.userId)
+  } else {
+    existingEntityQuery = existingEntityQuery
+      .eq("recipient_name", recipient.name)
+      .eq("recipient_email", recipient.email)
+  }
+
+  const { data: existingEntity, error: searchError } = await existingEntityQuery.single()
+
+  // If we found an existing entity, return its ID
+  if (!searchError && existingEntity) {
+    return existingEntity.id
+  }
+
+  // No existing entity found, create a new one
+  const entityName = recipient.type === 'internal' 
+    ? `Teacher (Internal: ${recipient.userId})`
+    : `Teacher: ${recipient.name}`
+
+  const insertData: BillingEntityInsert = {
+    user_id: userId,
+    entity_name: entityName,
+    recipient_type: recipient.type === 'internal' ? 'internal_teacher' : 'external_teacher',
+    notes: `Substitute teacher recipient - ${recipient.type}`
+  }
+
+  if (recipient.type === 'internal') {
+    insertData.recipient_user_id = recipient.userId
+  } else {
+    // External teacher details
+    insertData.recipient_name = recipient.name
+    insertData.recipient_email = recipient.email
+    insertData.billing_email = recipient.email
+    insertData.address = recipient.address || null
+    insertData.recipient_phone = recipient.phone || null
+    
+    // Tax information
+    if (recipient.taxInfo) {
+      insertData.tax_id = recipient.taxInfo.taxId || null
+      insertData.vat_id = recipient.taxInfo.vatId || null
+      insertData.iban = recipient.taxInfo.iban || null
+      insertData.bic = recipient.taxInfo.bic || null
+    }
+  }
+
+  const { data: newEntity, error: createError } = await supabase
+    .from("billing_entities")
+    .insert(insertData)
+    .select("id")
+    .single()
+
+  if (createError) {
+    throw new Error(`Failed to create teacher billing entity: ${createError.message}`)
+  }
+
+  return newEntity.id
+}
+
+/**
+ * Set up an event for teacher-to-teacher invoicing using an existing billing entity
+ */
+export async function setupSubstituteEventWithExistingEntity(
+  eventId: string,
+  billingEntityId: string,
+  substituteNotes?: string
+): Promise<void> {
+  const supabase = createClient()
+
+  // Update the event to reference the existing billing entity and mark as teacher invoice
+  const { error } = await supabase
+    .from("events")
+    .update({
+      studio_id: billingEntityId, // Reference the existing billing entity
+      invoice_type: 'teacher_invoice',
+      substitute_notes: substituteNotes || null,
+      exclude_from_studio_matching: true // Exclude from automatic studio matching
+    })
+    .eq("id", eventId)
+
+  if (error) {
+    console.error("Error setting up substitute event with existing entity:", error)
+    throw new Error(`Failed to setup substitute event: ${error.message}`)
+  }
+}
+
+/**
+ * Set up an event for teacher-to-teacher invoicing (substitute scenario)
+ * Creates a billing entity for the recipient and links the event to it
+ */
+export async function setupSubstituteEvent(
+  eventId: string, 
+  recipient: InvoiceRecipient,
+  substituteNotes?: string
+): Promise<void> {
+  const supabase = createClient()
+  
+  // First get the event to know which user owns it
+  const { data: event, error: eventError } = await supabase
+    .from("events")
+    .select("user_id")
+    .eq("id", eventId)
+    .single()
+
+  if (eventError) {
+    throw new Error(`Failed to find event: ${eventError.message}`)
+  }
+
+  if (!event.user_id) {
+    throw new Error('Event has no associated user')
+  }
+
+  // Create or find the billing entity for this recipient
+  const billingEntityId = await createTeacherBillingEntity(event.user_id, recipient)
+
+  // Update the event to reference the billing entity and mark as teacher invoice
+  const { error } = await supabase
+    .from("events")
+    .update({
+      studio_id: billingEntityId, // Reference the billing entity
+      invoice_type: 'teacher_invoice',
+      substitute_notes: substituteNotes || null,
+      exclude_from_studio_matching: true // Exclude from automatic studio matching
+    })
+    .eq("id", eventId)
+
+  if (error) {
+    console.error("Error setting up substitute event:", error)
+    throw new Error(`Failed to setup substitute event: ${error.message}`)
+  }
+}
+
+/**
+ * Get the display name for a billing entity
+ */
+export function getBillingEntityDisplayName(entity: BillingEntity): string {
+  if (entity.recipient_name) {
+    return entity.recipient_name
+  }
+  return entity.entity_name
+}
+
+/**
+ * Get the email for a billing entity
+ */
+export function getBillingEntityEmail(entity: BillingEntity): string | null {
+  return entity.recipient_email || entity.billing_email || null
+}
+
+/**
+ * Get events that need teacher-to-teacher invoicing (substitute events)
+ */
+export async function getSubstituteEvents(userId: string): Promise<Event[]> {
+  const supabase = createClient()
+  
+  const { data, error } = await supabase
+    .from("events")
+    .select("*")
+    .eq("user_id", userId) // Events taught by this user
+    .eq("invoice_type", "teacher_invoice") // Teacher-to-teacher invoicing
+    .lt("end_time", new Date().toISOString()) // Events that have ended
+    .is("invoice_id", null) // Not yet invoiced
+    .order("end_time", { ascending: false })
+
+  if (error) {
+    console.error("Error fetching substitute events:", error)
+    throw new Error(`Failed to fetch substitute events: ${error.message}`)
+  }
+
+  return data || []
+}
+
+/**
  * Get unique event locations for a user (for studio location matching)
  */
 export async function getUserEventLocations(userId: string): Promise<string[]> {
@@ -607,4 +910,81 @@ export async function getUserEventLocations(userId: string): Promise<string[]> {
   // Get unique locations and filter out null/empty strings
   const locations = [...new Set(data.map(event => event.location).filter((location): location is string => Boolean(location)))]
   return locations.sort()
+}
+
+/**
+ * Get all teacher billing entities for a user (both internal and external teachers)
+ */
+export async function getTeacherBillingEntities(userId: string): Promise<BillingEntity[]> {
+  const supabase = createClient()
+  
+  const { data, error } = await supabase
+    .from("billing_entities")
+    .select("*")
+    .eq("user_id", userId)
+    .in("recipient_type", ["internal_teacher", "external_teacher"])
+    .order("entity_name")
+
+  if (error) {
+    console.error("Error fetching teacher billing entities:", error)
+    throw new Error(`Failed to fetch teacher billing entities: ${error.message}`)
+  }
+
+  return data || []
+}
+
+/**
+ * Revert teacher invoice events back to studio invoicing
+ * This will re-match the events to studios based on location patterns
+ */
+export async function revertEventsToStudioInvoicing(eventIds: string[]): Promise<{
+  revertedEvents: number;
+  matchedEvents: number;
+  studios: { studioId: string; studioName: string; matchedCount: number }[];
+}> {
+  const supabase = createClient()
+  
+  if (!eventIds || eventIds.length === 0) {
+    return { revertedEvents: 0, matchedEvents: 0, studios: [] }
+  }
+
+  // First, get the user_id from one of the events
+  const { data: eventData, error: eventError } = await supabase
+    .from("events")
+    .select("user_id")
+    .in("id", eventIds)
+    .limit(1)
+    .single()
+
+  if (eventError || !eventData) {
+    console.error("Error fetching event data:", eventError)
+    throw new Error("Failed to fetch event data for reverting")
+  }
+
+  const userId = eventData.user_id
+
+  // Step 1: Reset the events to studio_invoice type and clear substitute data
+  const { error: resetError } = await supabase
+    .from("events")
+    .update({
+      invoice_type: 'studio_invoice',
+      substitute_notes: null,
+      studio_id: null, // Clear current studio assignment so they can be re-matched
+      exclude_from_studio_matching: false // Enable studio matching again
+    })
+    .in("id", eventIds)
+
+  if (resetError) {
+    console.error("Error resetting events:", resetError)
+    throw new Error(`Failed to reset events: ${resetError.message}`)
+  }
+
+  // Step 2: Re-match the events to studios based on location patterns
+  const matchResults = await matchEventsToStudios(userId)
+
+  return {
+    revertedEvents: eventIds.length,
+    matchedEvents: matchResults.matchedEvents,
+    studios: matchResults.studios
+  }
 } 

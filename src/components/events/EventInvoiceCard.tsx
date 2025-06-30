@@ -2,16 +2,19 @@
 
 import React from 'react'
 import { Card, CardContent } from '@/components/ui/card'
-import { Event, Studio } from '@/lib/types'
+import { Button } from '@/components/ui/button'
+import { Event, BillingEntity } from '@/lib/types'
 import { calculateEventPayout } from '@/lib/invoice-utils'
 import { cn } from '@/lib/utils'
+import { Users } from 'lucide-react'
 
 interface EventInvoiceCardProps {
-  event: Event & { studio: Studio | null }
+  event: Event & { studio: BillingEntity | null }
   selected: boolean
   onToggleSelect: (eventId: string) => void
   showCheckbox?: boolean
   variant?: 'default' | 'compact'
+  onSetupSubstitute?: (eventId: string) => void
 }
 
 export function EventInvoiceCard({
@@ -19,7 +22,8 @@ export function EventInvoiceCard({
   selected,
   onToggleSelect,
   showCheckbox = true,
-  variant = 'default'
+  variant = 'default',
+  onSetupSubstitute
 }: EventInvoiceCardProps) {
   const formatDate = (dateString: string | null) => {
     if (!dateString) return ""
@@ -104,7 +108,7 @@ export function EventInvoiceCard({
         </div>
         
         {/* Payout section - right aligned on desktop, separate row on mobile */}
-        <div className="flex justify-between sm:justify-end sm:flex-col sm:text-right items-center sm:items-end flex-shrink-0">
+        <div className="flex justify-between sm:justify-end sm:flex-col sm:text-right items-center sm:items-end flex-shrink-0 gap-2">
           <div className="text-base sm:text-lg font-bold text-gray-900">
             €{payout.toFixed(2)}
           </div>
@@ -112,6 +116,21 @@ export function EventInvoiceCard({
             <div className="text-xs text-gray-500">
               Base: €{event.studio.base_rate?.toFixed(2) || '0.00'}
             </div>
+          )}
+          {onSetupSubstitute && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation()
+                onSetupSubstitute(event.id)
+              }}
+              className="text-xs px-2 py-1 h-6"
+              title="Setup substitute teaching - invoice original teacher instead of studio"
+            >
+              <Users className="w-3 h-3 mr-1" />
+              Substitute
+            </Button>
           )}
         </div>
       </CardContent>

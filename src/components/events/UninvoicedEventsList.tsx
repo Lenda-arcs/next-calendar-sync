@@ -8,10 +8,12 @@ import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/
 import { EventInvoiceCard } from './EventInvoiceCard'
 import { HistoricalSyncCTA } from './HistoricalSyncCTA'
 import { UnmatchedEventsSection } from './UnmatchedEventsSection'
+import { ExcludedEventsSection } from './ExcludedEventsSection'
+import { SubstituteEventModal } from './SubstituteEventModal'
 import { useSupabaseQuery } from '@/lib/hooks/useSupabaseQuery'
-import { getUninvoicedEvents, getUnmatchedEvents, calculateTotalPayout, EventWithStudio } from '@/lib/invoice-utils'
+import { getUninvoicedEvents, getUnmatchedEvents, getExcludedEvents, calculateTotalPayout, EventWithStudio, revertEventsToStudioInvoicing } from '@/lib/invoice-utils'
 import { useCalendarFeeds, useCalendarFeedActions } from '@/lib/hooks/useCalendarFeeds'
-import { RefreshCw } from 'lucide-react'
+import { RefreshCw, Building2, User } from 'lucide-react'
 
 interface UninvoicedEventsListProps {
   userId: string
@@ -22,6 +24,8 @@ interface UninvoicedEventsListProps {
 export function UninvoicedEventsList({ userId, onCreateInvoice, onCreateStudio }: UninvoicedEventsListProps) {
   const [selectedEvents, setSelectedEvents] = useState<Record<string, string[]>>({})
   const [isRefreshing, setIsRefreshing] = useState(false)
+  const [substituteEventId, setSubstituteEventId] = useState<string | null>(null)
+  const [substituteEventIds, setSubstituteEventIds] = useState<string[]>([])
 
   // Use the same query key as InvoiceManagement to leverage caching
   const {
@@ -59,6 +63,17 @@ export function UninvoicedEventsList({ userId, onCreateInvoice, onCreateStudio }
   } = useSupabaseQuery({
     queryKey: ['unmatched-events', userId],
     fetcher: () => getUnmatchedEvents(userId),
+    enabled: !!userId
+  })
+
+  // Fetch excluded events
+  const {
+    data: excludedEvents,
+    isLoading: excludedLoading,
+    refetch: refetchExcluded
+  } = useSupabaseQuery({
+    queryKey: ['excluded-events', userId],
+    fetcher: () => getExcludedEvents(userId),
     enabled: !!userId
   })
 
@@ -139,6 +154,54 @@ export function UninvoicedEventsList({ userId, onCreateInvoice, onCreateStudio }
     }
   }
 
+
+
+  const handleBatchSubstitute = (studioId: string) => {
+    const eventIds = selectedEvents[studioId] || []
+    if (eventIds.length > 0) {
+      setSubstituteEventIds(eventIds)
+    }
+  }
+
+  const handleRevertToStudio = async (studioId: string) => {
+    const eventIds = selectedEvents[studioId] || []
+    if (eventIds.length === 0) return
+
+    try {
+      setIsRefreshing(true)
+      await revertEventsToStudioInvoicing(eventIds)
+      
+      // Clear selections and refresh data
+      setSelectedEvents(prev => ({ ...prev, [studioId]: [] }))
+      refetch()
+      refetchUnmatched()
+      refetchExcluded()
+    } catch (error) {
+      console.error('Failed to revert events to studio invoicing:', error)
+    } finally {
+      setIsRefreshing(false)
+    }
+  }
+
+  const handleSubstituteSuccess = () => {
+    setSubstituteEventId(null)
+    setSubstituteEventIds([])
+    // Clear selections for the converted events
+    setSelectedEvents({})
+    // Refetch data to reflect the changes
+    refetch()
+    refetchUnmatched()
+    refetchExcluded()
+  }
+
+  const selectedEvent = substituteEventId 
+    ? uninvoicedEvents?.find(event => event.id === substituteEventId) || null
+    : null
+
+  const selectedEventsForBatch = substituteEventIds.length > 0
+    ? uninvoicedEvents?.filter(event => substituteEventIds.includes(event.id)) || []
+    : []
+
   const getSelectedTotal = (studioId: string): number => {
     if (!eventsByStudio?.[studioId]) return 0
     
@@ -185,6 +248,12 @@ export function UninvoicedEventsList({ userId, onCreateInvoice, onCreateStudio }
     return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long' })
   }
 
+  // Helper function to determine if billing entity is a teacher
+  const isTeacherBillingEntity = (studio: { recipient_type?: string } | null) => {
+    return studio?.recipient_type === 'internal_teacher' || 
+           studio?.recipient_type === 'external_teacher'
+  }
+
   return (
     <div className="space-y-4">
       {/* Historical Sync CTA - Only visible when feeds are connected and no uninvoiced events exist */}
@@ -201,6 +270,14 @@ export function UninvoicedEventsList({ userId, onCreateInvoice, onCreateStudio }
         isLoading={unmatchedLoading}
         onRefresh={refetchUnmatched}
         onCreateStudio={onCreateStudio || (() => {})}
+        userId={userId}
+      />
+
+      {/* Excluded Events Section */}
+      <ExcludedEventsSection
+        excludedEvents={excludedEvents || []}
+        isLoading={excludedLoading}
+        onRefresh={refetchExcluded}
         userId={userId}
       />
 
@@ -251,7 +328,19 @@ export function UninvoicedEventsList({ userId, onCreateInvoice, onCreateStudio }
                       <div className="flex items-center justify-between w-full mr-4 group-hover:text-blue-600 transition-colors">
                         <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 flex-1">
                           <div className="flex items-center gap-2">
-                            <CardTitle className="text-lg group-hover:text-blue-600 transition-colors">{studio.studio_name}</CardTitle>
+                            <div className="flex items-center gap-2">
+                              {isTeacherBillingEntity(studio) ? (
+                                <User className="w-4 h-4 text-purple-600" />
+                              ) : (
+                                <Building2 className="w-4 h-4 text-blue-600" />
+                              )}
+                              <CardTitle className="text-lg group-hover:text-blue-600 transition-colors">{studio.entity_name}</CardTitle>
+                              {isTeacherBillingEntity(studio) && (
+                                <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full">
+                                  Teacher
+                                </span>
+                              )}
+                            </div>
                             <div className="text-xs text-gray-400 group-hover:text-blue-500 transition-colors opacity-0 group-hover:opacity-100 hidden sm:block">
                               Click to expand
                             </div>
@@ -299,7 +388,7 @@ export function UninvoicedEventsList({ userId, onCreateInvoice, onCreateStudio }
                               )}
                             </div>
 
-                            {/* Right side: Total and Create Invoice */}
+                            {/* Right side: Total and Actions */}
                             {someEventsSelected && (
                               <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
                                 <div className="text-center sm:text-right">
@@ -308,28 +397,93 @@ export function UninvoicedEventsList({ userId, onCreateInvoice, onCreateStudio }
                                   </div>
                                   <div className="text-xs text-gray-600">Selected Total</div>
                                 </div>
-                                <Button
-                                  onClick={() => handleCreateInvoice(studioId)}
-                                  disabled={!someEventsSelected}
-                                  className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto"
-                                >
-                                  <span className="sm:hidden">Create Invoice</span>
-                                  <span className="hidden sm:inline">Create Invoice ({selectedEventIds.length})</span>
-                                </Button>
+                                <div className="flex flex-col sm:flex-row gap-2">
+                                  {isTeacherBillingEntity(studio) ? (
+                                    <>
+                                      <Button
+                                        onClick={() => handleCreateInvoice(studioId)}
+                                        disabled={!someEventsSelected}
+                                        className="bg-purple-600 hover:bg-purple-700 w-full sm:w-auto"
+                                      >
+                                        <span className="sm:hidden">Teacher Invoice</span>
+                                        <span className="hidden sm:inline">Teacher Invoice ({selectedEventIds.length})</span>
+                                      </Button>
+                                      <Button
+                                        onClick={() => handleRevertToStudio(studioId)}
+                                        disabled={!someEventsSelected}
+                                        variant="outline"
+                                        className="w-full sm:w-auto"
+                                      >
+                                        <span className="sm:hidden">Revert to Studio</span>
+                                        <span className="hidden sm:inline">Revert to Studio ({selectedEventIds.length})</span>
+                                      </Button>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Button
+                                        onClick={() => handleCreateInvoice(studioId)}
+                                        disabled={!someEventsSelected}
+                                        className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto"
+                                      >
+                                        <span className="sm:hidden">Studio Invoice</span>
+                                        <span className="hidden sm:inline">Studio Invoice ({selectedEventIds.length})</span>
+                                      </Button>
+                                      <Button
+                                        onClick={() => handleBatchSubstitute(studioId)}
+                                        disabled={!someEventsSelected}
+                                        variant="outline"
+                                        className="w-full sm:w-auto"
+                                      >
+                                        <span className="sm:hidden">Change to Teacher</span>
+                                        <span className="hidden sm:inline">Change to Teacher ({selectedEventIds.length})</span>
+                                      </Button>
+                                    </>
+                                  )}
+                                </div>
                               </div>
                             )}
                           </div>
 
-                          {/* Mobile-only: Create Invoice button when no events selected */}
+                          {/* Mobile-only: Action buttons when no events selected */}
                           {!someEventsSelected && (
-                            <div className="sm:hidden">
-                              <Button
-                                onClick={() => handleCreateInvoice(studioId)}
-                                disabled={!someEventsSelected}
-                                className="bg-blue-600 hover:bg-blue-700 w-full opacity-50"
-                              >
-                                Create Invoice (0)
-                              </Button>
+                            <div className="sm:hidden flex flex-col gap-2">
+                              {isTeacherBillingEntity(studio) ? (
+                                <>
+                                  <Button
+                                    onClick={() => handleCreateInvoice(studioId)}
+                                    disabled={!someEventsSelected}
+                                    className="bg-purple-600 hover:bg-purple-700 w-full opacity-50"
+                                  >
+                                    Teacher Invoice (0)
+                                  </Button>
+                                  <Button
+                                    onClick={() => handleRevertToStudio(studioId)}
+                                    disabled={!someEventsSelected}
+                                    variant="outline"
+                                    className="w-full opacity-50"
+                                  >
+                                    Revert to Studio (0)
+                                  </Button>
+                                </>
+                              ) : (
+                                <>
+                                  <Button
+                                    onClick={() => handleCreateInvoice(studioId)}
+                                    disabled={!someEventsSelected}
+                                    className="bg-blue-600 hover:bg-blue-700 w-full opacity-50"
+                                  >
+                                    Studio Invoice (0)
+                                  </Button>
+                                  <Button
+                                    onClick={() => handleBatchSubstitute(studioId)}
+                                    disabled={!someEventsSelected}
+                                    variant="outline"
+                                    className="w-full opacity-50"
+                                  >
+                                    Change to Teacher (0)
+                                  </Button>
+                                </>
+                              )}
                             </div>
                           )}
                         </div>
@@ -378,6 +532,18 @@ export function UninvoicedEventsList({ userId, onCreateInvoice, onCreateStudio }
         )
       }}
     </DataLoader>
+
+    {/* Substitute Event Modal */}
+    <SubstituteEventModal
+      isOpen={!!substituteEventId || substituteEventIds.length > 0}
+      onClose={() => {
+        setSubstituteEventId(null)
+        setSubstituteEventIds([])
+      }}
+      event={selectedEvent}
+      events={selectedEventsForBatch}
+      onSuccess={handleSubstituteSuccess}
+    />
     </div>
   )
 } 

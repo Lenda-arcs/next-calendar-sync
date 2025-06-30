@@ -9,6 +9,116 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      billing_entities: {
+        Row: {
+          address: string | null
+          base_rate: number | null
+          bic: string | null
+          billing_email: string | null
+          created_at: string | null
+          currency: string | null
+          entity_name: string
+          iban: string | null
+          id: string
+          location_match: string[] | null
+          max_discount: number | null
+          notes: string | null
+          online_penalty_per_student: number | null
+          rate_type: string | null
+          recipient_email: string | null
+          recipient_name: string | null
+          recipient_phone: string | null
+          recipient_type: string | null
+          recipient_user_id: string | null
+          student_threshold: number | null
+          studio_penalty_per_student: number | null
+          tax_id: string | null
+          user_id: string
+          vat_id: string | null
+        }
+        Insert: {
+          address?: string | null
+          base_rate?: number | null
+          bic?: string | null
+          billing_email?: string | null
+          created_at?: string | null
+          currency?: string | null
+          entity_name: string
+          iban?: string | null
+          id?: string
+          location_match?: string[] | null
+          max_discount?: number | null
+          notes?: string | null
+          online_penalty_per_student?: number | null
+          rate_type?: string | null
+          recipient_email?: string | null
+          recipient_name?: string | null
+          recipient_phone?: string | null
+          recipient_type?: string | null
+          recipient_user_id?: string | null
+          student_threshold?: number | null
+          studio_penalty_per_student?: number | null
+          tax_id?: string | null
+          user_id: string
+          vat_id?: string | null
+        }
+        Update: {
+          address?: string | null
+          base_rate?: number | null
+          bic?: string | null
+          billing_email?: string | null
+          created_at?: string | null
+          currency?: string | null
+          entity_name?: string
+          iban?: string | null
+          id?: string
+          location_match?: string[] | null
+          max_discount?: number | null
+          notes?: string | null
+          online_penalty_per_student?: number | null
+          rate_type?: string | null
+          recipient_email?: string | null
+          recipient_name?: string | null
+          recipient_phone?: string | null
+          recipient_type?: string | null
+          recipient_user_id?: string | null
+          student_threshold?: number | null
+          studio_penalty_per_student?: number | null
+          tax_id?: string | null
+          user_id?: string
+          vat_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "billing_entities_recipient_user_id_fkey"
+            columns: ["recipient_user_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "billing_entities_recipient_user_id_fkey"
+            columns: ["recipient_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "studios_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "studios_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       calendar_feeds: {
         Row: {
           calendar_name: string | null
@@ -62,6 +172,7 @@ export type Database = {
           id: string
           image_url: string | null
           invoice_id: string | null
+          invoice_type: string | null
           location: string | null
           recurrence_id: string
           start_time: string | null
@@ -69,6 +180,7 @@ export type Database = {
           students_online: number | null
           students_studio: number | null
           studio_id: string | null
+          substitute_notes: string | null
           tags: string[] | null
           title: string | null
           uid: string | null
@@ -86,6 +198,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           invoice_id?: string | null
+          invoice_type?: string | null
           location?: string | null
           recurrence_id?: string
           start_time?: string | null
@@ -93,6 +206,7 @@ export type Database = {
           students_online?: number | null
           students_studio?: number | null
           studio_id?: string | null
+          substitute_notes?: string | null
           tags?: string[] | null
           title?: string | null
           uid?: string | null
@@ -110,6 +224,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           invoice_id?: string | null
+          invoice_type?: string | null
           location?: string | null
           recurrence_id?: string
           start_time?: string | null
@@ -117,6 +232,7 @@ export type Database = {
           students_online?: number | null
           students_studio?: number | null
           studio_id?: string | null
+          substitute_notes?: string | null
           tags?: string[] | null
           title?: string | null
           uid?: string | null
@@ -125,6 +241,13 @@ export type Database = {
           visibility?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "events_billing_entity_id_fkey"
+            columns: ["studio_id"]
+            isOneToOne: false
+            referencedRelation: "billing_entities"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "events_feed_id_fkey"
             columns: ["feed_id"]
@@ -137,13 +260,6 @@ export type Database = {
             columns: ["invoice_id"]
             isOneToOne: false
             referencedRelation: "invoices"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "events_studio_id_fkey"
-            columns: ["studio_id"]
-            isOneToOne: false
-            referencedRelation: "studios"
             referencedColumns: ["id"]
           },
           {
@@ -169,6 +285,7 @@ export type Database = {
           currency: string | null
           id: string
           invoice_number: string | null
+          invoice_type: string | null
           notes: string | null
           paid_at: string | null
           pdf_url: string | null
@@ -185,6 +302,7 @@ export type Database = {
           currency?: string | null
           id?: string
           invoice_number?: string | null
+          invoice_type?: string | null
           notes?: string | null
           paid_at?: string | null
           pdf_url?: string | null
@@ -201,6 +319,7 @@ export type Database = {
           currency?: string | null
           id?: string
           invoice_number?: string | null
+          invoice_type?: string | null
           notes?: string | null
           paid_at?: string | null
           pdf_url?: string | null
@@ -213,10 +332,10 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "invoices_studio_id_fkey"
+            foreignKeyName: "invoices_billing_entity_id_fkey"
             columns: ["studio_id"]
             isOneToOne: false
-            referencedRelation: "studios"
+            referencedRelation: "billing_entities"
             referencedColumns: ["id"]
           },
           {
@@ -291,75 +410,6 @@ export type Database = {
           metadata?: Json | null
         }
         Relationships: []
-      }
-      studios: {
-        Row: {
-          address: string | null
-          base_rate: number | null
-          billing_email: string | null
-          created_at: string | null
-          currency: string | null
-          id: string
-          location_match: string[] | null
-          max_discount: number | null
-          notes: string | null
-          online_penalty_per_student: number | null
-          rate_type: string | null
-          student_threshold: number | null
-          studio_name: string
-          studio_penalty_per_student: number | null
-          user_id: string
-        }
-        Insert: {
-          address?: string | null
-          base_rate?: number | null
-          billing_email?: string | null
-          created_at?: string | null
-          currency?: string | null
-          id?: string
-          location_match?: string[] | null
-          max_discount?: number | null
-          notes?: string | null
-          online_penalty_per_student?: number | null
-          rate_type?: string | null
-          student_threshold?: number | null
-          studio_name: string
-          studio_penalty_per_student?: number | null
-          user_id: string
-        }
-        Update: {
-          address?: string | null
-          base_rate?: number | null
-          billing_email?: string | null
-          created_at?: string | null
-          currency?: string | null
-          id?: string
-          location_match?: string[] | null
-          max_discount?: number | null
-          notes?: string | null
-          online_penalty_per_student?: number | null
-          rate_type?: string | null
-          student_threshold?: number | null
-          studio_name?: string
-          studio_penalty_per_student?: number | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "studios_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "public_profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "studios_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       tag_rules: {
         Row: {

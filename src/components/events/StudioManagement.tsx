@@ -8,7 +8,7 @@ import DataLoader from '@/components/ui/data-loader'
 import { useSupabaseQuery } from '@/lib/hooks/useSupabaseQuery'
 import { useSupabaseMutation } from '@/lib/hooks/useSupabaseMutation'
 import { getUserStudios, getUserEventLocations, deleteStudio } from '@/lib/invoice-utils'
-import { Studio } from '@/lib/types'
+import { BillingEntity } from '@/lib/types'
 import { Trash2, Edit } from 'lucide-react'
 import StudioFormModal from './StudioFormModal'
 
@@ -19,7 +19,7 @@ interface StudioManagementProps {
 export function StudioManagement({ userId }: StudioManagementProps) {
   const [deletingStudio, setDeletingStudio] = useState<string | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [editingStudio, setEditingStudio] = useState<Studio | null>(null)
+  const [editingStudio, setEditingStudio] = useState<BillingEntity | null>(null)
 
   // Load user studios
   const { 
@@ -60,7 +60,7 @@ export function StudioManagement({ userId }: StudioManagementProps) {
     setIsModalOpen(true)
   }
 
-  const handleEditStudio = (studio: Studio) => {
+  const handleEditStudio = (studio: BillingEntity) => {
     setEditingStudio(studio)
     setIsModalOpen(true)
   }
@@ -98,7 +98,7 @@ export function StudioManagement({ userId }: StudioManagementProps) {
           </div>
         }
       >
-        {(studioList: Studio[]) => (
+        {(studioList: BillingEntity[]) => (
           <div className="space-y-6">
             {/* Header with actions */}
             <div className="flex justify-between items-center">

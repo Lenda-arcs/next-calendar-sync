@@ -38,7 +38,7 @@ serve(async (req)=>{
     const shouldSkip = isHistorical ? (end)=>end > nowUTC // skip future events
      : (end)=>end <= nowUTC;
     //TODO: Maybe outsource this to a separate function
-    const { data: studios } = await supabase.from("studios").select("id, location_match").eq("user_id", feed.user_id);
+    const { data: studios } = await supabase.from("billing_entities").select("id, location_match").eq("user_id", feed.user_id);
     const enrichedEvents = [];
     for (const entry of Object.values(parsed)){
       if (entry.type !== "VEVENT") continue;

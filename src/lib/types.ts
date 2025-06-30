@@ -32,10 +32,10 @@ export type TagRule = Tables<'tag_rules'>
 export type TagRuleInsert = TablesInsert<'tag_rules'>
 export type TagRuleUpdate = TablesUpdate<'tag_rules'>
 
-// Studios types
-export type Studio = Tables<'studios'>
-export type StudioInsert = TablesInsert<'studios'>
-export type StudioUpdate = TablesUpdate<'studios'>
+// BillingEntity types
+export type BillingEntity = Tables<'billing_entities'>
+export type BillingEntityInsert = TablesInsert<'billing_entities'>
+export type BillingEntityUpdate = TablesUpdate<'billing_entities'>
 
 // Invoices types
 export type Invoice = Tables<'invoices'>

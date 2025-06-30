@@ -1,0 +1,224 @@
+'use client'
+
+import { useState } from 'react'
+import { Card, CardContent } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { EyeOff, RefreshCw, Eye, RotateCcw, Calendar } from 'lucide-react'
+import { useSupabaseMutation } from '@/lib/hooks/useSupabaseMutation'
+import { UnifiedDialog } from '@/components/ui/unified-dialog'
+import { EventInvoiceCard } from './EventInvoiceCard'
+import { Event } from '@/lib/types'
+import { toggleEventExclusion, matchEventsToStudios } from '@/lib/invoice-utils'
+import { toast } from 'sonner'
+
+interface ExcludedEventsSectionProps {
+  excludedEvents: Event[]
+  isLoading: boolean
+  onRefresh: () => void
+  userId?: string
+}
+
+export function ExcludedEventsSection({ 
+  excludedEvents, 
+  isLoading, 
+  onRefresh,
+  userId
+}: ExcludedEventsSectionProps) {
+  const [showEventsDialog, setShowEventsDialog] = useState(false)
+  const [selectedEvents, setSelectedEvents] = useState<string[]>([])
+  const [isProcessing, setIsProcessing] = useState(false)
+
+  const batchIncludeMutation = useSupabaseMutation({
+    mutationFn: async (supabase, eventIds: string[]) => {
+      // Toggle exclusion for all selected events
+      const results = await Promise.all(
+        eventIds.map(eventId => toggleEventExclusion(eventId))
+      )
+      return results
+    },
+    onSuccess: async (results) => {
+      const includedCount = results.filter(r => !r.excluded).length
+      
+      if (includedCount > 0) {
+        toast.success(`${includedCount} event${includedCount !== 1 ? 's' : ''} included in studio matching`, {
+          description: 'Events are now available for studio billing and will be re-matched.',
+        })
+
+        // Trigger historical sync and re-matching if we have userId
+        if (userId) {
+          setIsProcessing(true)
+          try {
+            // Re-match events to studios
+            await matchEventsToStudios(userId)
+            
+            // Trigger historical sync to ensure all events are properly matched
+            // Note: This would require access to calendar feeds, which we don't have here
+            // The parent component should handle this
+          } catch (error) {
+            console.error('Failed to re-match events:', error)
+          } finally {
+            setIsProcessing(false)
+          }
+        }
+      }
+      
+      // Clear selections and refresh
+      setSelectedEvents([])
+      onRefresh()
+    },
+    onError: (error) => {
+      console.error('Failed to include events:', error)
+      toast.error('Failed to update events', {
+        description: 'There was an error updating the events. Please try again.',
+      })
+      setIsProcessing(false)
+    }
+  })
+
+  // Selection handlers
+  const handleToggleEvent = (eventId: string) => {
+    setSelectedEvents(prev => {
+      const isSelected = prev.includes(eventId)
+      if (isSelected) {
+        return prev.filter(id => id !== eventId)
+      } else {
+        return [...prev, eventId]
+      }
+    })
+  }
+
+  const handleSelectAll = () => {
+    const allEventIds = excludedEvents.map(event => event.id)
+    const allSelected = allEventIds.every(id => selectedEvents.includes(id))
+    
+    setSelectedEvents(allSelected ? [] : allEventIds)
+  }
+
+  const handleBatchInclude = () => {
+    if (selectedEvents.length > 0) {
+      batchIncludeMutation.mutate(selectedEvents)
+    }
+  }
+
+  const someEventsSelected = selectedEvents.length > 0
+  const allEventsSelected = excludedEvents.length > 0 && excludedEvents.every(event => selectedEvents.includes(event.id))
+
+  if (isLoading) return null
+  if (!excludedEvents || excludedEvents.length === 0) return null
+
+  return (
+    <>
+      <Card className="border-orange-200 bg-orange-50/50">
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-orange-100 rounded-full">
+                <EyeOff className="w-4 h-4 text-orange-600" />
+              </div>
+              <div>
+                <h3 className="font-medium text-orange-900">
+                  Excluded Events ({excludedEvents.length})
+                </h3>
+                <p className="text-sm text-orange-700">
+                  Events marked as excluded from studio matching
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={onRefresh}
+                disabled={isLoading || isProcessing}
+                className="border-orange-200 text-orange-700 hover:bg-orange-100"
+              >
+                <RefreshCw className={`mr-2 h-3 w-3 ${isLoading || isProcessing ? 'animate-spin' : ''}`} />
+                Refresh
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => setShowEventsDialog(true)}
+                className="border-orange-200 text-orange-700 hover:bg-orange-100"
+              >
+                <Eye className="mr-2 h-3 w-3" />
+                View All
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <UnifiedDialog
+        open={showEventsDialog}
+        onOpenChange={setShowEventsDialog}
+        title={`Excluded Events (${excludedEvents.length})`}
+        description="These events have been excluded from studio matching. Select events and click 'Include in Matching' to make them available for studio billing again."
+        size="lg"
+        footer={
+          <div className="flex items-center justify-between w-full">
+            <div className="flex items-center gap-3">
+              <Button 
+                onClick={handleSelectAll}
+                variant="outline"
+                size="sm"
+              >
+                {allEventsSelected ? 'Deselect All' : 'Select All'}
+              </Button>
+              {someEventsSelected && (
+                <span className="text-sm text-gray-600">
+                  {selectedEvents.length} of {excludedEvents.length} events selected
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              {someEventsSelected && (
+                <Button
+                  onClick={handleBatchInclude}
+                  disabled={batchIncludeMutation.isLoading || isProcessing}
+                  className="bg-orange-600 hover:bg-orange-700"
+                >
+                  <RotateCcw className="mr-2 h-3 w-3" />
+                  {batchIncludeMutation.isLoading || isProcessing ? 'Including...' : `Include in Matching (${selectedEvents.length})`}
+                </Button>
+              )}
+              <Button 
+                onClick={() => setShowEventsDialog(false)}
+                variant="outline"
+              >
+                Close
+              </Button>
+            </div>
+          </div>
+        }
+      >
+        <div className="space-y-4">
+          {excludedEvents.map((event) => (
+            <div key={event.id} className="border rounded-lg bg-orange-50/30 overflow-hidden">
+              <EventInvoiceCard
+                event={{ ...event, studio: null }}
+                selected={selectedEvents.includes(event.id)}
+                onToggleSelect={handleToggleEvent}
+                showCheckbox={true}
+                variant="compact"
+              />
+              {event.exclude_from_studio_matching && (
+                <div className="px-4 pb-3 flex items-center gap-2 text-xs text-orange-600">
+                  <EyeOff className="w-3 h-3" />
+                  <span>Excluded from studio matching</span>
+                </div>
+              )}
+            </div>
+          ))}
+          
+          {excludedEvents.length === 0 && (
+            <div className="text-center py-8 text-gray-500">
+              <Calendar className="w-8 h-8 mx-auto mb-2 opacity-50" />
+              <p>No excluded events found.</p>
+            </div>
+          )}
+        </div>
+      </UnifiedDialog>
+    </>
+  )
+} 

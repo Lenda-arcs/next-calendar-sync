@@ -10,19 +10,21 @@ import FormMultiSelect from "../ui/form-multi-select";
 import { Textarea } from "../ui/textarea";
 import { useSupabaseMutation } from "../../lib/hooks/useSupabaseMutation";
 import { createStudio, updateStudio, matchEventsToStudios } from "../../lib/invoice-utils";
-import type { Studio, StudioInsert, StudioUpdate } from "../../lib/types";
+import type { BillingEntity, BillingEntityInsert, BillingEntityUpdate } from "../../lib/types";
 
 interface Props {
   user: { id: string; email?: string | null };
   eventLocations?: string[];
-  existingStudio?: Studio | null;
-  onStudioCreated?: (studio: Studio) => void;
-  onStudioUpdated?: (studio: Studio) => void;
+  existingStudio?: BillingEntity | null;
+  onStudioCreated?: (studio: BillingEntity) => void;
+  onStudioUpdated?: (studio: BillingEntity) => void;
   isEditing?: boolean;
   isModal?: boolean;
   onSubmit?: (e: React.FormEvent) => void;
   onLoadingChange?: (isLoading: boolean) => void;
   onFormReady?: (formInstance: { submit: () => void }) => void;
+  entityType?: 'studio' | 'teacher';
+  defaultLocationMatch?: string[];
 }
 
 const StudioForm: React.FC<Props> = ({
@@ -36,10 +38,12 @@ const StudioForm: React.FC<Props> = ({
   onSubmit,
   onLoadingChange,
   onFormReady,
+  entityType = 'studio',
+  defaultLocationMatch = [],
 }) => {
   const [formData, setFormData] = useState({
-    studio_name: existingStudio?.studio_name || "",
-    location_match: existingStudio?.location_match || [],
+    entity_name: existingStudio?.entity_name || "",
+    location_match: existingStudio?.location_match || defaultLocationMatch,
     rate_type: existingStudio?.rate_type || "flat",
     base_rate: existingStudio?.base_rate?.toString() || "",
     billing_email: existingStudio?.billing_email || "",
@@ -50,6 +54,10 @@ const StudioForm: React.FC<Props> = ({
     student_threshold: existingStudio?.student_threshold?.toString() || "",
     online_penalty_per_student: existingStudio?.online_penalty_per_student?.toString() || "",
     studio_penalty_per_student: existingStudio?.studio_penalty_per_student?.toString() || "",
+    // Teacher-specific fields
+    recipient_name: existingStudio?.recipient_name || "",
+    recipient_email: existingStudio?.recipient_email || "",
+    recipient_phone: existingStudio?.recipient_phone || "",
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -59,7 +67,7 @@ const StudioForm: React.FC<Props> = ({
   } | null>(null);
 
   const createMutation = useSupabaseMutation({
-    mutationFn: (supabase, data: StudioInsert) => createStudio(data),
+    mutationFn: (supabase, data: BillingEntityInsert) => createStudio(data),
     onSuccess: async (data) => {
       try {
         // Match events to the new studio
@@ -72,7 +80,7 @@ const StudioForm: React.FC<Props> = ({
         if (!isEditing) {
           // Reset form
           setFormData({
-            studio_name: "",
+            entity_name: "",
             location_match: [],
             rate_type: "flat",
             base_rate: "",
@@ -84,6 +92,9 @@ const StudioForm: React.FC<Props> = ({
             student_threshold: "",
             online_penalty_per_student: "",
             studio_penalty_per_student: "",
+            recipient_name: "",
+            recipient_email: "",
+            recipient_phone: "",
           });
         }
       } catch (error) {
@@ -95,7 +106,7 @@ const StudioForm: React.FC<Props> = ({
   });
 
   const updateMutation = useSupabaseMutation({
-    mutationFn: (supabase, { id, data }: { id: string; data: StudioUpdate }) => updateStudio(id, data),
+    mutationFn: (supabase, { id, data }: { id: string; data: BillingEntityUpdate }) => updateStudio(id, data),
     onSuccess: async (data) => {
       try {
         // Match events to studios after update
@@ -116,12 +127,25 @@ const StudioForm: React.FC<Props> = ({
   const validateForm = useCallback(() => {
     const newErrors: Record<string, string> = {};
 
-    if (!formData.studio_name.trim()) {
-      newErrors.studio_name = "Studio name is required";
+    if (entityType === 'teacher' && !formData.recipient_name.trim()) {
+      newErrors.recipient_name = "Teacher name is required";
+    } else if (entityType === 'studio' && !formData.entity_name.trim()) {
+      newErrors.entity_name = "Studio name is required";
     }
 
+    // Location matching is required for both studios and teachers
     if (!formData.location_match || formData.location_match.length === 0) {
       newErrors.location_match = "At least one location match is required";
+    }
+
+    // Teacher fields validation
+    if (entityType === 'teacher') {
+      if (!formData.recipient_name.trim()) {
+        newErrors.recipient_name = "Display name is required";
+      }
+      if (!formData.recipient_email.trim()) {
+        newErrors.recipient_email = "Email is required";
+      }
     }
 
     if (!formData.base_rate || isNaN(Number(formData.base_rate)) || Number(formData.base_rate) <= 0) {
@@ -159,9 +183,9 @@ const StudioForm: React.FC<Props> = ({
       onLoadingChange?.(true);
       
       if (isEditing && existingStudio) {
-        // Update existing studio
-        const updateData: StudioUpdate = {
-          studio_name: formData.studio_name,
+        // Update existing entity
+        const updateData: BillingEntityUpdate = {
+          entity_name: entityType === 'teacher' ? formData.recipient_name : formData.entity_name,
           location_match: formData.location_match,
           rate_type: formData.rate_type,
           base_rate: formData.base_rate ? Number(formData.base_rate) : null,
@@ -172,14 +196,19 @@ const StudioForm: React.FC<Props> = ({
           billing_email: formData.billing_email || null,
           address: formData.address || null,
           notes: formData.notes || null,
+          recipient_type: entityType === 'teacher' ? 'external_teacher' : 'studio',
+          // Teacher-specific fields
+          recipient_name: entityType === 'teacher' ? formData.recipient_name || null : null,
+          recipient_email: entityType === 'teacher' ? formData.recipient_email || null : null,
+          recipient_phone: entityType === 'teacher' ? formData.recipient_phone || null : null,
         };
 
         await updateMutation.mutateAsync({ id: existingStudio.id, data: updateData });
       } else {
-        // Create new studio
-        const studioData: StudioInsert = {
+        // Create new entity
+        const entityData: BillingEntityInsert = {
           user_id: user.id,
-          studio_name: formData.studio_name,
+          entity_name: entityType === 'teacher' ? formData.recipient_name : formData.entity_name,
           location_match: formData.location_match,
           rate_type: formData.rate_type,
           base_rate: formData.base_rate ? Number(formData.base_rate) : null,
@@ -191,9 +220,14 @@ const StudioForm: React.FC<Props> = ({
           address: formData.address || null,
           notes: formData.notes || null,
           currency: "EUR", // Default currency //TODO: make this dynamic
+          recipient_type: entityType === 'teacher' ? 'external_teacher' : 'studio',
+          // Teacher-specific fields
+          recipient_name: entityType === 'teacher' ? formData.recipient_name || null : null,
+          recipient_email: entityType === 'teacher' ? formData.recipient_email || null : null,
+          recipient_phone: entityType === 'teacher' ? formData.recipient_phone || null : null,
         };
 
-        await createMutation.mutateAsync(studioData);
+        await createMutation.mutateAsync(entityData);
       }
     } catch (error) {
       console.error("Error saving studio:", error);
@@ -291,16 +325,18 @@ const StudioForm: React.FC<Props> = ({
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="studio_name">Studio Name *</Label>
+              <Label htmlFor="entity_name">
+                {entityType === 'teacher' ? 'Teacher Name' : 'Studio Name'} *
+              </Label>
               <Input
-                id="studio_name"
-                value={formData.studio_name}
-                onChange={(e) => handleInputChange("studio_name", e.target.value)}
-                placeholder="Enter studio name"
-                className={errors.studio_name ? "border-red-500" : ""}
+                id="entity_name"
+                value={formData.entity_name}
+                onChange={(e) => handleInputChange("entity_name", e.target.value)}
+                placeholder={entityType === 'teacher' ? 'Enter teacher name' : 'Enter studio name'}
+                className={errors.entity_name ? "border-red-500" : ""}
               />
-              {errors.studio_name && (
-                <p className="text-sm text-red-500 mt-1">{errors.studio_name}</p>
+              {errors.entity_name && (
+                <p className="text-sm text-red-500 mt-1">{errors.entity_name}</p>
               )}
             </div>
 
@@ -316,7 +352,64 @@ const StudioForm: React.FC<Props> = ({
                 required
                 error={errors.location_match}
               />
+              <p className="text-xs text-muted-foreground mt-1">
+                {entityType === 'teacher' 
+                  ? 'Locations where this teacher provides substitute classes'
+                  : 'Events matching these locations will be automatically assigned to this studio'
+                }
+              </p>
             </div>
+
+            {entityType === 'teacher' && (
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="recipient_name">Display Name *</Label>
+                  <Input
+                    id="recipient_name"
+                    value={formData.recipient_name}
+                    onChange={(e) => handleInputChange("recipient_name", e.target.value)}
+                    placeholder="Teacher display name"
+                    className={errors.recipient_name ? "border-red-500" : ""}
+                  />
+                  {errors.recipient_name && (
+                    <p className="text-sm text-red-500 mt-1">{errors.recipient_name}</p>
+                  )}
+                </div>
+
+                <div>
+                  <Label htmlFor="recipient_email">Email *</Label>
+                  <Input
+                    id="recipient_email"
+                    type="email"
+                    value={formData.recipient_email}
+                    onChange={(e) => handleInputChange("recipient_email", e.target.value)}
+                    placeholder="teacher@example.com"
+                    className={errors.recipient_email ? "border-red-500" : ""}
+                  />
+                  {errors.recipient_email && (
+                    <p className="text-sm text-red-500 mt-1">{errors.recipient_email}</p>
+                  )}
+                </div>
+
+                <div>
+                  <Label htmlFor="recipient_phone">Phone</Label>
+                  <Input
+                    id="recipient_phone"
+                    type="tel"
+                    value={formData.recipient_phone}
+                    onChange={(e) => handleInputChange("recipient_phone", e.target.value)}
+                    placeholder="+31 6 12 34 56 78"
+                  />
+                </div>
+
+                <div className="bg-blue-50 p-4 rounded-lg">
+                  <h4 className="text-sm font-medium text-blue-800 mb-2">Teacher Entity</h4>
+                  <p className="text-sm text-blue-700">
+                    Teacher entities track substitute teaching locations and help match the right teacher when converting events from studio to teacher invoicing.
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

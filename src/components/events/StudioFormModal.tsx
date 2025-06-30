@@ -3,18 +3,24 @@
 import React, { useState } from "react";
 import { UnifiedDialog } from "../ui/unified-dialog";
 import { Button } from "../ui/button";
+import { Label } from "../ui/label";
 import StudioForm from "./StudioForm";
-import type { Studio } from "../../lib/types";
+import type { BillingEntity } from "../../lib/types";
+import { Building2, User } from "lucide-react";
 
 interface Props {
   isOpen: boolean;
   onClose: () => void;
   user: { id: string; email?: string | null };
   eventLocations?: string[];
-  existingStudio?: Studio | null;
-  onStudioCreated?: (studio: Studio) => void;
-  onStudioUpdated?: (studio: Studio) => void;
+  existingStudio?: BillingEntity | null;
+  onStudioCreated?: (studio: BillingEntity) => void;
+  onStudioUpdated?: (studio: BillingEntity) => void;
+  defaultEntityType?: 'studio' | 'teacher';
+  defaultLocationMatch?: string[];
 }
+
+type EntityType = 'studio' | 'teacher'
 
 const StudioFormModal: React.FC<Props> = ({
   isOpen,
@@ -23,20 +29,24 @@ const StudioFormModal: React.FC<Props> = ({
   eventLocations = [],
   existingStudio,
   onStudioCreated,
-  onStudioUpdated
+  onStudioUpdated,
+  defaultEntityType = 'studio',
+  defaultLocationMatch
 }) => {
   const isEditing = !!existingStudio;
   const [isLoading, setIsLoading] = useState(false);
   const [formInstance, setFormInstance] = useState<{ submit: () => void } | null>(null);
+  const [selectedEntityType, setSelectedEntityType] = useState<EntityType>(defaultEntityType);
+  const [showEntityTypeSelection, setShowEntityTypeSelection] = useState<boolean>(!isEditing && defaultEntityType === 'studio');
 
-  const handleStudioCreated = (studio: Studio) => {
+  const handleStudioCreated = (studio: BillingEntity) => {
     if (onStudioCreated) {
       onStudioCreated(studio);
     }
     onClose();
   };
 
-  const handleStudioUpdated = (studio: Studio) => {
+  const handleStudioUpdated = (studio: BillingEntity) => {
     if (onStudioUpdated) {
       onStudioUpdated(studio);
     }
@@ -49,8 +59,32 @@ const StudioFormModal: React.FC<Props> = ({
     }
   };
 
-  const footerContent = (
+  const handleEntityTypeSelection = (entityType: EntityType) => {
+    setSelectedEntityType(entityType);
+    setShowEntityTypeSelection(false);
+  };
+
+  const handleBackToSelection = () => {
+    setShowEntityTypeSelection(true);
+  };
+
+  const getTitle = () => {
+    if (isEditing) return "Edit Studio Profile";
+    if (showEntityTypeSelection) return "Create Billing Entity";
+    return selectedEntityType === 'studio' ? "Create Studio Profile" : "Create Teacher Profile";
+  };
+
+  const footerContent = showEntityTypeSelection ? (
+    <Button variant="outline" onClick={onClose}>
+      Cancel
+    </Button>
+  ) : (
     <>
+      {!isEditing && (
+        <Button variant="outline" onClick={handleBackToSelection} disabled={isLoading}>
+          Back
+        </Button>
+      )}
       <Button variant="outline" onClick={onClose} disabled={isLoading}>
         Cancel
       </Button>
@@ -59,7 +93,8 @@ const StudioFormModal: React.FC<Props> = ({
         disabled={isLoading}
         className="min-w-[120px]"
       >
-        {isLoading ? "Saving..." : isEditing ? "Update Studio" : "Create Studio"}
+        {isLoading ? "Saving..." : isEditing ? "Update Profile" : 
+          selectedEntityType === 'studio' ? "Create Studio" : "Create Teacher"}
       </Button>
     </>
   );
@@ -72,10 +107,46 @@ const StudioFormModal: React.FC<Props> = ({
           onClose();
         }
       }}
-      title={isEditing ? "Edit Studio Profile" : "Create Studio Profile"}
+      title={getTitle()}
       size="xl"
       footer={footerContent}
     >
+      {showEntityTypeSelection ? (
+        <div className="space-y-6">
+          <div className="space-y-3">
+            <Label className="text-base font-medium">What type of billing entity would you like to create?</Label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <button
+                type="button"
+                onClick={() => handleEntityTypeSelection('studio')}
+                className="p-6 border-2 rounded-lg text-left transition-colors border-gray-200 hover:border-blue-300 hover:bg-blue-50"
+              >
+                <div className="flex items-center gap-3 mb-3">
+                  <Building2 className="w-6 h-6 text-blue-600" />
+                  <span className="font-semibold text-lg">Studio</span>
+                </div>
+                <p className="text-sm text-gray-600">
+                  Create a studio profile for venue-based billing. Use this for regular classes at studios or fitness centers.
+                </p>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleEntityTypeSelection('teacher')}
+                className="p-6 border-2 rounded-lg text-left transition-colors border-gray-200 hover:border-purple-300 hover:bg-purple-50"
+              >
+                <div className="flex items-center gap-3 mb-3">
+                  <User className="w-6 h-6 text-purple-600" />
+                  <span className="font-semibold text-lg">Teacher</span>
+                </div>
+                <p className="text-sm text-gray-600">
+                  Create a teacher profile for individual teacher billing. Use this for substitute teaching or direct teacher payments.
+                </p>
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : (
         <StudioForm
           user={user}
           eventLocations={eventLocations}
@@ -84,9 +155,12 @@ const StudioFormModal: React.FC<Props> = ({
           onStudioUpdated={handleStudioUpdated}
           isEditing={isEditing}
           isModal={true}
-        onLoadingChange={setIsLoading}
-        onFormReady={setFormInstance}
+          onLoadingChange={setIsLoading}
+          onFormReady={setFormInstance}
+          entityType={selectedEntityType}
+          defaultLocationMatch={defaultLocationMatch}
         />
+      )}
     </UnifiedDialog>
   );
 };
