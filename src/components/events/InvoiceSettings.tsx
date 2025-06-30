@@ -9,7 +9,7 @@ import { useSupabaseQuery } from '@/lib/hooks/useSupabaseQuery'
 import { getUserInvoiceSettings } from '@/lib/invoice-utils'
 import { UserInvoiceSettingsModal } from './UserInvoiceSettingsModal'
 import { UserInvoiceSettings } from '@/lib/types'
-import { StudioManagement } from './StudioManagement'
+import { BillingEntityManagement } from './BillingEntityManagement'
 
 interface InvoiceSettingsProps {
   userId: string
@@ -178,7 +178,7 @@ export function InvoiceSettings({ userId }: InvoiceSettingsProps) {
           </p>
         </CardHeader>
         <CardContent>
-          <StudioManagement userId={userId} />
+                      <BillingEntityManagement userId={userId} />
         </CardContent>
       </Card>
 

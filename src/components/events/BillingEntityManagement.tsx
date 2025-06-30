@@ -10,13 +10,13 @@ import { useSupabaseMutation } from '@/lib/hooks/useSupabaseMutation'
 import { getUserStudios, getUserEventLocations, deleteStudio } from '@/lib/invoice-utils'
 import { BillingEntity } from '@/lib/types'
 import { Trash2, Edit, Building2, User } from 'lucide-react'
-import StudioFormModal from './StudioFormModal'
+import BillingEntityFormModal from './BillingEntityFormModal'
 
-interface StudioManagementProps {
+interface BillingEntityManagementProps {
   userId: string
 }
 
-export function StudioManagement({ userId }: StudioManagementProps) {
+export function BillingEntityManagement({ userId }: BillingEntityManagementProps) {
   const [deletingStudio, setDeletingStudio] = useState<string | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingStudio, setEditingStudio] = useState<BillingEntity | null>(null)
@@ -307,8 +307,8 @@ export function StudioManagement({ userId }: StudioManagementProps) {
         )}
       </DataLoader>
 
-      {/* Studio Form Modal */}
-      <StudioFormModal
+      {/* Billing Entity Form Modal */}
+      <BillingEntityFormModal
         isOpen={isModalOpen}
         onClose={handleModalClose}
         user={{ id: userId }}

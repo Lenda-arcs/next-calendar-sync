@@ -27,7 +27,7 @@ interface Props {
   defaultLocationMatch?: string[];
 }
 
-const StudioForm: React.FC<Props> = ({
+const BillingEntityForm: React.FC<Props> = ({
   user,
   eventLocations = [],
   existingStudio,
@@ -70,7 +70,7 @@ const StudioForm: React.FC<Props> = ({
     mutationFn: (supabase, data: BillingEntityInsert) => createStudio(data),
     onSuccess: async (data) => {
       try {
-        // Match events to the new studio
+        // Match events to the new billing entity
         const matchResults = await matchEventsToStudios(user.id);
         setMatchingResults(matchResults);
         
@@ -109,7 +109,7 @@ const StudioForm: React.FC<Props> = ({
     mutationFn: (supabase, { id, data }: { id: string; data: BillingEntityUpdate }) => updateStudio(id, data),
     onSuccess: async (data) => {
       try {
-        // Match events to studios after update
+        // Match events to billing entities after update
         const matchResults = await matchEventsToStudios(user.id);
         setMatchingResults(matchResults);
         
@@ -600,4 +600,4 @@ const StudioForm: React.FC<Props> = ({
   );
 };
 
-export default StudioForm; 
+export default BillingEntityForm; 

@@ -12,7 +12,7 @@ import { Event } from '@/lib/types'
 import { toast } from 'sonner'
 import { UserIcon, UserCheckIcon, Plus } from 'lucide-react'
 import { Select } from '@/components/ui/select'
-import StudioFormModal from './StudioFormModal'
+import BillingEntityFormModal from './BillingEntityFormModal'
 import type { BillingEntity } from '@/lib/types'
 
 interface SubstituteEventModalProps {
@@ -34,7 +34,7 @@ export function SubstituteEventModal({
 }: SubstituteEventModalProps) {
   const [recipientMode, setRecipientMode] = useState<RecipientMode>('existing')
   const [selectedTeacherId, setSelectedTeacherId] = useState<string>('')
-  const [showStudioFormModal, setShowStudioFormModal] = useState(false)
+  const [showBillingEntityFormModal, setShowBillingEntityFormModal] = useState(false)
   const [formData, setFormData] = useState({
     // Common
     substituteNotes: ''
@@ -145,8 +145,8 @@ export function SubstituteEventModal({
         notes: formData.substituteNotes.trim()
       })
     } else {
-      // New teacher - open StudioFormModal
-      setShowStudioFormModal(true)
+              // New teacher - open BillingEntityFormModal
+        setShowBillingEntityFormModal(true)
       return
     }
   }
@@ -157,7 +157,7 @@ export function SubstituteEventModal({
     })
     setRecipientMode('existing')
     setSelectedTeacherId('')
-    setShowStudioFormModal(false)
+    setShowBillingEntityFormModal(false)
     onClose()
   }
 
@@ -170,7 +170,7 @@ export function SubstituteEventModal({
 
   const handleNewTeacherCreated = async (newTeacher: BillingEntity) => {
     // Close the modal first
-    setShowStudioFormModal(false)
+    setShowBillingEntityFormModal(false)
     
     // Directly use the new teacher entity for the events
     await setupMutation.mutateAsync({
@@ -339,7 +339,7 @@ export function SubstituteEventModal({
             
             <Button
               type="button"
-              onClick={() => setShowStudioFormModal(true)}
+              onClick={() => setShowBillingEntityFormModal(true)}
               className="w-full"
               disabled={setupMutation.isLoading}
             >
@@ -372,10 +372,10 @@ export function SubstituteEventModal({
         )}
       </form>
 
-      {/* StudioFormModal for creating new teacher profiles */}
-      <StudioFormModal
-        isOpen={showStudioFormModal}
-        onClose={() => setShowStudioFormModal(false)}
+      {/* BillingEntityFormModal for creating new teacher profiles */}
+      <BillingEntityFormModal
+        isOpen={showBillingEntityFormModal}
+        onClose={() => setShowBillingEntityFormModal(false)}
         user={{ id: userId ?? '', email: null }}
         defaultEntityType="teacher"
         defaultLocationMatch={originalStudio?.location_match || []}

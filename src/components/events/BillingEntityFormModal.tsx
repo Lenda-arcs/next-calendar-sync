@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { UnifiedDialog } from "../ui/unified-dialog";
 import { Button } from "../ui/button";
 import { Label } from "../ui/label";
-import StudioForm from "./StudioForm";
+import BillingEntityForm from "./BillingEntityForm";
 import type { BillingEntity } from "../../lib/types";
 import { Building2, User } from "lucide-react";
 
@@ -22,7 +22,7 @@ interface Props {
 
 type EntityType = 'studio' | 'teacher'
 
-const StudioFormModal: React.FC<Props> = ({
+const BillingEntityFormModal: React.FC<Props> = ({
   isOpen,
   onClose,
   user,
@@ -155,7 +155,7 @@ const StudioFormModal: React.FC<Props> = ({
           </div>
         </div>
       ) : (
-        <StudioForm
+        <BillingEntityForm
           user={user}
           eventLocations={eventLocations}
           onStudioCreated={handleStudioCreated}
@@ -173,4 +173,4 @@ const StudioFormModal: React.FC<Props> = ({
   );
 };
 
-export default StudioFormModal; 
+export default BillingEntityFormModal; 
