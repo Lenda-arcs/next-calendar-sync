@@ -24,6 +24,7 @@ interface UninvoicedEventsListProps {
 export function UninvoicedEventsList({ userId, onCreateInvoice, onCreateStudio }: UninvoicedEventsListProps) {
   const [selectedEvents, setSelectedEvents] = useState<Record<string, string[]>>({})
   const [isRefreshing, setIsRefreshing] = useState(false)
+  const [revertingStudioId, setRevertingStudioId] = useState<string | null>(null)
   const [substituteEventId, setSubstituteEventId] = useState<string | null>(null)
   const [substituteEventIds, setSubstituteEventIds] = useState<string[]>([])
 
@@ -168,10 +169,22 @@ export function UninvoicedEventsList({ userId, onCreateInvoice, onCreateStudio }
     if (eventIds.length === 0) return
 
     try {
-      setIsRefreshing(true)
-      await revertEventsToStudioInvoicing(eventIds)
+      setRevertingStudioId(studioId)
       
-      // Clear selections and refresh data
+      // Step 1: Revert events to studio invoicing
+      const result = await revertEventsToStudioInvoicing(eventIds)
+      console.log(`Reverted ${result.revertedEvents} events, re-matched ${result.matchedEvents} events to ${result.studios.length} studios`)
+      
+      // Step 2: Trigger sync to ensure events get properly re-matched
+      if (calendarFeeds && calendarFeeds.length > 0) {
+        console.log('Triggering sync to ensure proper re-matching...')
+        const syncPromises = calendarFeeds.map(feed => 
+          syncFeed(feed.id, 'default') // Use default mode for faster sync
+        )
+        await Promise.all(syncPromises)
+      }
+      
+      // Step 3: Clear selections and refresh data
       setSelectedEvents(prev => ({ ...prev, [studioId]: [] }))
       refetch()
       refetchUnmatched()
@@ -179,7 +192,7 @@ export function UninvoicedEventsList({ userId, onCreateInvoice, onCreateStudio }
     } catch (error) {
       console.error('Failed to revert events to studio invoicing:', error)
     } finally {
-      setIsRefreshing(false)
+      setRevertingStudioId(null)
     }
   }
 
@@ -410,12 +423,22 @@ export function UninvoicedEventsList({ userId, onCreateInvoice, onCreateStudio }
                                       </Button>
                                       <Button
                                         onClick={() => handleRevertToStudio(studioId)}
-                                        disabled={!someEventsSelected}
+                                        disabled={!someEventsSelected || revertingStudioId === studioId}
                                         variant="outline"
                                         className="w-full sm:w-auto"
                                       >
-                                        <span className="sm:hidden">Revert to Studio</span>
-                                        <span className="hidden sm:inline">Revert to Studio ({selectedEventIds.length})</span>
+                                        {revertingStudioId === studioId ? (
+                                          <>
+                                            <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                                            <span className="sm:hidden">Reverting...</span>
+                                            <span className="hidden sm:inline">Reverting to Studio...</span>
+                                          </>
+                                        ) : (
+                                          <>
+                                            <span className="sm:hidden">Revert to Studio</span>
+                                            <span className="hidden sm:inline">Revert to Studio ({selectedEventIds.length})</span>
+                                          </>
+                                        )}
                                       </Button>
                                     </>
                                   ) : (
@@ -458,11 +481,18 @@ export function UninvoicedEventsList({ userId, onCreateInvoice, onCreateStudio }
                                   </Button>
                                   <Button
                                     onClick={() => handleRevertToStudio(studioId)}
-                                    disabled={!someEventsSelected}
+                                    disabled={!someEventsSelected || revertingStudioId === studioId}
                                     variant="outline"
                                     className="w-full opacity-50"
                                   >
-                                    Revert to Studio (0)
+                                    {revertingStudioId === studioId ? (
+                                      <>
+                                        <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                                        Reverting...
+                                      </>
+                                    ) : (
+                                      'Revert to Studio (0)'
+                                    )}
                                   </Button>
                                 </>
                               ) : (

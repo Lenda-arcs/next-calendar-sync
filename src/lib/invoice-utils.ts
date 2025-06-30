@@ -531,8 +531,20 @@ export async function matchEventsToStudios(userId: string): Promise<{
 }> {
   const supabase = createClient()
   
-  // Get all user studios
-  const studios = await getUserStudios(userId);
+  // Get only studio-type billing entities (not teacher entities)
+  const { data: allEntities, error: entitiesError } = await supabase
+    .from("billing_entities")
+    .select("*")
+    .eq("user_id", userId)
+    .eq("recipient_type", "studio") // Only match to studio entities
+    .order("entity_name", { ascending: true })
+
+  if (entitiesError) {
+    console.error("Error fetching studio entities:", entitiesError)
+    throw new Error(`Failed to fetch studio entities: ${entitiesError.message}`)
+  }
+
+  const studios = allEntities || [];
   
   let totalMatchedEvents = 0;
   const studioMatches: { studioId: string; studioName: string; matchedCount: number }[] = [];
