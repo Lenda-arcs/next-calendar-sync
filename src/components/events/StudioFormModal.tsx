@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { UnifiedDialog } from "../ui/unified-dialog";
 import { Button } from "../ui/button";
 import { Label } from "../ui/label";
@@ -30,14 +30,22 @@ const StudioFormModal: React.FC<Props> = ({
   existingStudio,
   onStudioCreated,
   onStudioUpdated,
-  defaultEntityType = 'studio',
+  defaultEntityType,
   defaultLocationMatch
 }) => {
   const isEditing = !!existingStudio;
   const [isLoading, setIsLoading] = useState(false);
   const [formInstance, setFormInstance] = useState<{ submit: () => void } | null>(null);
-  const [selectedEntityType, setSelectedEntityType] = useState<EntityType>(defaultEntityType);
-  const [showEntityTypeSelection, setShowEntityTypeSelection] = useState<boolean>(!isEditing && defaultEntityType === 'studio');
+  const [selectedEntityType, setSelectedEntityType] = useState<EntityType>(defaultEntityType || 'studio');
+  const [showEntityTypeSelection, setShowEntityTypeSelection] = useState<boolean>(!isEditing && !defaultEntityType);
+
+  // Reset state when modal opens or props change
+  useEffect(() => {
+    setSelectedEntityType(defaultEntityType || 'studio');
+    setShowEntityTypeSelection(!isEditing && !defaultEntityType);
+    setFormInstance(null);
+    setIsLoading(false);
+  }, [isOpen, defaultEntityType, isEditing]);
 
   const handleStudioCreated = (studio: BillingEntity) => {
     if (onStudioCreated) {
