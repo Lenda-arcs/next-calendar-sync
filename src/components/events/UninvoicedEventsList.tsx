@@ -6,13 +6,14 @@ import { Button } from '@/components/ui/button'
 import DataLoader from '@/components/ui/data-loader'
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion'
 import { EventInvoiceCard } from './EventInvoiceCard'
+import { StudioActionButtons } from './StudioActionButtons'
 import { HistoricalSyncCTA } from './HistoricalSyncCTA'
 import { UnmatchedEventsSection } from './UnmatchedEventsSection'
 import { ExcludedEventsSection } from './ExcludedEventsSection'
 import { SubstituteEventModal } from './SubstituteEventModal'
-import { useSupabaseQuery } from '@/lib/hooks/useSupabaseQuery'
-import { getUninvoicedEvents, getUnmatchedEvents, getExcludedEvents, calculateTotalPayout, EventWithStudio, revertEventsToStudioInvoicing } from '@/lib/invoice-utils'
-import { useCalendarFeeds, useCalendarFeedActions } from '@/lib/hooks/useCalendarFeeds'
+import { calculateTotalPayout, EventWithStudio } from '@/lib/invoice-utils'
+import { useInvoiceEvents, useStudioActions } from '@/lib/hooks'
+import { useCalendarFeeds } from '@/lib/hooks/useCalendarFeeds'
 import { RefreshCw, Building2, User } from 'lucide-react'
 
 interface UninvoicedEventsListProps {
@@ -22,99 +23,28 @@ interface UninvoicedEventsListProps {
 }
 
 export function UninvoicedEventsList({ userId, onCreateInvoice, onCreateStudio }: UninvoicedEventsListProps) {
+  // ==================== STATE MANAGEMENT ====================
   const [selectedEvents, setSelectedEvents] = useState<Record<string, string[]>>({})
-  const [isRefreshing, setIsRefreshing] = useState(false)
-  const [revertingStudioId, setRevertingStudioId] = useState<string | null>(null)
   const [substituteEventId, setSubstituteEventId] = useState<string | null>(null)
   const [substituteEventIds, setSubstituteEventIds] = useState<string[]>([])
 
-  // Use the same query key as InvoiceManagement to leverage caching
+  // ==================== DATA FETCHING ====================
   const {
-    data: uninvoicedEvents,
+    uninvoicedEvents,
+    unmatchedEvents,
+    excludedEvents,
+    eventsByStudio,
     isLoading,
+    isUnmatchedLoading,
+    isExcludedLoading,
     error,
-    refetch
-  } = useSupabaseQuery({
-    queryKey: ['uninvoiced-events', userId],
-    fetcher: () => getUninvoicedEvents(userId),
-    enabled: !!userId
-  })
-
-  const { syncFeed } = useCalendarFeedActions()
-
-  // Group events by studio client-side
-  const eventsByStudio = useMemo(() => {
-    if (!uninvoicedEvents) return null
-    
-    return uninvoicedEvents.reduce((acc, event) => {
-      const studioId = event.studio_id!
-      if (!acc[studioId]) {
-        acc[studioId] = []
-      }
-      acc[studioId].push(event)
-      return acc
-    }, {} as Record<string, EventWithStudio[]>)
-  }, [uninvoicedEvents])
-
-  // Fetch unmatched events (events without studio assignment)
-  const {
-    data: unmatchedEvents,
-    isLoading: unmatchedLoading,
-    refetch: refetchUnmatched
-  } = useSupabaseQuery({
-    queryKey: ['unmatched-events', userId],
-    fetcher: () => getUnmatchedEvents(userId),
-    enabled: !!userId
-  })
-
-  // Fetch excluded events
-  const {
-    data: excludedEvents,
-    isLoading: excludedLoading,
-    refetch: refetchExcluded
-  } = useSupabaseQuery({
-    queryKey: ['excluded-events', userId],
-    fetcher: () => getExcludedEvents(userId),
-    enabled: !!userId
-  })
+    refetchAll
+  } = useInvoiceEvents(userId)
 
   const { data: calendarFeeds, isLoading: feedsLoading } = useCalendarFeeds(userId)
 
-  const hasConnectedFeeds = calendarFeeds && calendarFeeds.length > 0
-  
-  // Check if there are any uninvoiced events (matched or unmatched) //TODO: enable this again
-  // const hasUninvoicedEvents = (eventsByStudio && Object.keys(eventsByStudio).length > 0) || 
-  //                             (unmatchedEvents && unmatchedEvents.length > 0)
-
-  // Enhanced refresh that syncs feeds first, then refetches data
-  const handleRefresh = async () => {
-    if (!calendarFeeds || calendarFeeds.length === 0) {
-      // If no feeds, just refetch data
-      refetch()
-      return
-    }
-
-    setIsRefreshing(true)
-    try {
-      // Sync all calendar feeds in historical mode
-      const syncPromises = calendarFeeds.map(feed => 
-        syncFeed(feed.id, 'historical')
-      )
-      
-      await Promise.all(syncPromises)
-      
-      // Then refetch the data
-      refetch()
-    } catch (error) {
-      console.error('Failed to sync feeds during refresh:', error)
-      // Still refetch data even if sync fails
-      refetch()
-    } finally {
-      setIsRefreshing(false)
-    }
-  }
-
-  const handleToggleEvent = (studioId: string, eventId: string) => {
+  // ==================== SELECTION MANAGEMENT ====================
+  const handleToggleEvent = useCallback((studioId: string, eventId: string) => {
     setSelectedEvents(prev => {
       const studioEvents = prev[studioId] || []
       const isSelected = studioEvents.includes(eventId)
@@ -131,9 +61,9 @@ export function UninvoicedEventsList({ userId, onCreateInvoice, onCreateStudio }
         }
       }
     })
-  }
+  }, [])
 
-  const handleSelectAllStudio = (studioId: string) => {
+  const handleSelectAllStudio = useCallback((studioId: string) => {
     if (!eventsByStudio?.[studioId]) return
     
     const allEventIds = eventsByStudio[studioId].map(event => event.id)
@@ -144,66 +74,36 @@ export function UninvoicedEventsList({ userId, onCreateInvoice, onCreateStudio }
       ...prev,
       [studioId]: allSelected ? [] : allEventIds
     }))
-  }
+  }, [eventsByStudio, selectedEvents])
 
-  const handleCreateInvoice = (studioId: string) => {
-    const eventIds = selectedEvents[studioId] || []
-    if (eventIds.length > 0 && onCreateInvoice) {
-      const studioEvents = eventsByStudio?.[studioId] || []
-      const selectedEventsData = studioEvents.filter(event => eventIds.includes(event.id))
-      onCreateInvoice(studioId, eventIds, selectedEventsData)
-    }
-  }
+  const clearSelections = useCallback(() => {
+    setSelectedEvents({})
+  }, [])
 
-  const handleBatchSubstitute = (studioId: string) => {
-    const eventIds = selectedEvents[studioId] || []
-    if (eventIds.length > 0) {
-      setSubstituteEventIds(eventIds)
-    }
-  }
+  // ==================== STUDIO ACTIONS ====================
+  const {
+    isRefreshing,
+    revertingStudioId,
+    handleRefresh,
+    handleCreateInvoice,
+    handleBatchSubstitute,
+    handleRevertToStudio
+  } = useStudioActions({
+    selectedEvents,
+    eventsByStudio,
+    onCreateInvoice,
+    onRefreshData: refetchAll,
+    onClearSelections: clearSelections,
+    userId
+  })
 
-  const handleRevertToStudio = async (studioId: string) => {
-    const eventIds = selectedEvents[studioId] || []
-    if (eventIds.length === 0) return
-
-    try {
-      setRevertingStudioId(studioId)
-      
-      // Step 1: Revert events to studio invoicing
-      const result = await revertEventsToStudioInvoicing(eventIds)
-      console.log(`Reverted ${result.revertedEvents} events, re-matched ${result.matchedEvents} events to ${result.studios.length} studios`)
-      
-      // Step 2: Trigger sync to ensure events get properly re-matched
-      if (calendarFeeds && calendarFeeds.length > 0) {
-        console.log('Triggering sync to ensure proper re-matching...')
-        const syncPromises = calendarFeeds.map(feed => 
-          syncFeed(feed.id, 'default') // Use default mode for faster sync
-        )
-        await Promise.all(syncPromises)
-      }
-      
-      // Step 3: Clear selections and refresh data
-      setSelectedEvents(prev => ({ ...prev, [studioId]: [] }))
-      refetch()
-      refetchUnmatched()
-      refetchExcluded()
-    } catch (error) {
-      console.error('Failed to revert events to studio invoicing:', error)
-    } finally {
-      setRevertingStudioId(null)
-    }
-  }
-
-  const handleSubstituteSuccess = () => {
+  // ==================== MODAL MANAGEMENT ====================
+  const handleSubstituteSuccess = useCallback(() => {
     setSubstituteEventId(null)
     setSubstituteEventIds([])
-    // Clear selections for the converted events
-    setSelectedEvents({})
-    // Refetch data to reflect the changes
-    refetch()
-    refetchUnmatched()
-    refetchExcluded()
-  }
+    clearSelections()
+    refetchAll()
+  }, [refetchAll, clearSelections])
 
   const selectedEvent = substituteEventId 
     ? uninvoicedEvents?.find(event => event.id === substituteEventId) || null
@@ -213,7 +113,8 @@ export function UninvoicedEventsList({ userId, onCreateInvoice, onCreateStudio }
     ? uninvoicedEvents?.filter(event => substituteEventIds.includes(event.id)) || []
     : []
 
-  // Memoized selected totals for each studio to avoid recalculating on every render
+  // ==================== MEMOIZED CALCULATIONS ====================
+  // Memoized selected totals for each studio
   const selectedTotals = useMemo(() => {
     if (!eventsByStudio) return {}
     
@@ -258,7 +159,8 @@ export function UninvoicedEventsList({ userId, onCreateInvoice, onCreateStudio }
     return selectedTotals[studioId] || 0
   }, [selectedTotals])
 
-  const groupEventsByMonth = (events: EventWithStudio[]) => {
+  // ==================== UTILITY FUNCTIONS ====================
+  const groupEventsByMonth = useCallback((events: EventWithStudio[]) => {
     const grouped: Record<string, EventWithStudio[]> = {}
     
     events.forEach(event => {
@@ -282,35 +184,38 @@ export function UninvoicedEventsList({ userId, onCreateInvoice, onCreateStudio }
     })
 
     return grouped
-  }
+  }, [])
 
-  const getMonthLabel = (monthKey: string) => {
+  const getMonthLabel = useCallback((monthKey: string) => {
     const [year, month] = monthKey.split('-')
     const date = new Date(parseInt(year), parseInt(month) - 1)
     return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long' })
-  }
+  }, [])
 
-  // Helper function to determine if billing entity is a teacher
-  const isTeacherBillingEntity = (studio: { recipient_type: string | null } | null) => {
+  const isTeacherBillingEntity = useCallback((studio: { recipient_type: string | null } | null) => {
     return studio?.recipient_type === 'internal_teacher' || 
            studio?.recipient_type === 'external_teacher'
-  }
+  }, [])
 
+  // ==================== DERIVED STATE ====================
+  const hasConnectedFeeds = calendarFeeds && calendarFeeds.length > 0
+
+  // ==================== RENDER ====================
   return (
     <div className="space-y-4">
-      {/* Historical Sync CTA - Only visible when feeds are connected and no uninvoiced events exist */}
-      {hasConnectedFeeds && !feedsLoading &&  (
+      {/* Historical Sync CTA */}
+      {hasConnectedFeeds && !feedsLoading && (
         <HistoricalSyncCTA 
           calendarFeeds={calendarFeeds}
-          onSyncComplete={refetch}
+          onSyncComplete={refetchAll}
         />
       )}
 
       {/* Unmatched Events Section */}
       <UnmatchedEventsSection
         unmatchedEvents={unmatchedEvents || []}
-        isLoading={unmatchedLoading}
-        onRefresh={refetchUnmatched}
+        isLoading={isUnmatchedLoading}
+        onRefresh={refetchAll}
         onCreateStudio={onCreateStudio || (() => {})}
         userId={userId}
       />
@@ -318,11 +223,12 @@ export function UninvoicedEventsList({ userId, onCreateInvoice, onCreateStudio }
       {/* Excluded Events Section */}
       <ExcludedEventsSection
         excludedEvents={excludedEvents || []}
-        isLoading={excludedLoading}
-        onRefresh={refetchExcluded}
+        isLoading={isExcludedLoading}
+        onRefresh={refetchAll}
         userId={userId}
       />
 
+      {/* Main Events List */}
       <DataLoader
         data={eventsByStudio}
         loading={isLoading}
@@ -346,263 +252,189 @@ export function UninvoicedEventsList({ userId, onCreateInvoice, onCreateStudio }
             </CardContent>
           </Card>
         }
-    >
-      {(data) => {
-        const studios = Object.keys(data)
-        return (
-          <Accordion type="multiple" className="w-full space-y-4">
-            {studios.map(studioId => {
-              const studioEvents = data[studioId] || []
-              const studio = studioEvents[0]?.studio
-              const selectedEventIds = selectedEvents[studioId] || []
-              const allEventsSelected = studioEvents.length > 0 && 
-                studioEvents.every((event) => selectedEventIds.includes(event.id))
-              const someEventsSelected = selectedEventIds.length > 0
-              const totalPayout = studioTotalPayouts[studioId] || 0
-              const selectedTotal = getSelectedTotal(studioId)
+      >
+        {(data) => {
+          const studios = Object.keys(data)
+          return (
+            <Accordion type="multiple" className="w-full space-y-4">
+              {studios.map(studioId => {
+                const studioEvents = data[studioId] || []
+                const studio = studioEvents[0]?.studio
+                const selectedEventIds = selectedEvents[studioId] || []
+                const allEventsSelected = studioEvents.length > 0 && 
+                  studioEvents.every((event) => selectedEventIds.includes(event.id))
+                const someEventsSelected = selectedEventIds.length > 0
+                const totalPayout = studioTotalPayouts[studioId] || 0
+                const selectedTotal = getSelectedTotal(studioId)
+                const isTeacher = isTeacherBillingEntity(studio)
 
-              if (!studio) return null
+                if (!studio) return null
 
-              return (
-                <AccordionItem value={studioId} key={studioId}>
-                  <Card variant="outlined" className="overflow-hidden">
-                    <AccordionTrigger className="px-6 py-4 hover:no-underline cursor-pointer group">
-                      <div className="flex items-center justify-between w-full mr-4 group-hover:text-blue-600 transition-colors">
-                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 flex-1">
-                          <div className="flex items-center gap-2">
+                return (
+                  <AccordionItem value={studioId} key={studioId}>
+                    <Card variant="outlined" className="overflow-hidden">
+                      <AccordionTrigger className="px-6 py-4 hover:no-underline cursor-pointer group">
+                        <div className="flex items-center justify-between w-full mr-4 group-hover:text-blue-600 transition-colors">
+                          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 flex-1">
                             <div className="flex items-center gap-2">
-                              {isTeacherBillingEntity(studio) ? (
-                                <User className="w-4 h-4 text-purple-600" />
-                              ) : (
-                                <Building2 className="w-4 h-4 text-blue-600" />
-                              )}
-                              <CardTitle className="text-lg group-hover:text-blue-600 transition-colors">{studio.entity_name}</CardTitle>
-                              {isTeacherBillingEntity(studio) && (
-                                <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full">
-                                  Teacher
-                                </span>
-                              )}
+                              <div className="flex items-center gap-2">
+                                {isTeacher ? (
+                                  <User className="w-4 h-4 text-purple-600" />
+                                ) : (
+                                  <Building2 className="w-4 h-4 text-blue-600" />
+                                )}
+                                <CardTitle className="text-lg group-hover:text-blue-600 transition-colors">
+                                  {studio.entity_name}
+                                </CardTitle>
+                                {isTeacher && (
+                                  <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full">
+                                    Teacher
+                                  </span>
+                                )}
+                              </div>
+                              <div className="text-xs text-gray-400 group-hover:text-blue-500 transition-colors opacity-0 group-hover:opacity-100 hidden sm:block">
+                                Click to expand
+                              </div>
                             </div>
-                            <div className="text-xs text-gray-400 group-hover:text-blue-500 transition-colors opacity-0 group-hover:opacity-100 hidden sm:block">
-                              Click to expand
+                            <div className="flex items-center gap-3 text-sm">
+                              <span className="text-gray-600">
+                                {studioEvents.length} event{studioEvents.length !== 1 ? 's' : ''}
+                              </span>
+                              <span className="text-gray-500 text-xs">
+                                {studio.rate_type === 'flat' ? 'Flat Rate' : 'Per Student'} • Base: €{studio.base_rate?.toFixed(2) || '0.00'}
+                              </span>
                             </div>
                           </div>
-                          <div className="flex items-center gap-3 text-sm">
-                            <span className="text-gray-600">
-                              {studioEvents.length} event{studioEvents.length !== 1 ? 's' : ''}
-                            </span>
-                            <span className="text-gray-500 text-xs">
-                              {studio.rate_type === 'flat' ? 'Flat Rate' : 'Per Student'} • Base: €{studio.base_rate?.toFixed(2) || '0.00'}
-                            </span>
+                          <div className="text-right flex-shrink-0">
+                            <div className="text-lg font-bold text-gray-900">
+                              €{totalPayout.toFixed(2)}
+                            </div>
+                            <div className="text-xs text-gray-600">
+                              Total
+                            </div>
                           </div>
                         </div>
-                        <div className="text-right flex-shrink-0">
-                          <div className="text-lg font-bold text-gray-900">
-                            €{totalPayout.toFixed(2)}
-                          </div>
-                          <div className="text-xs text-gray-600">
-                            Total
-                          </div>
-                        </div>
-                      </div>
-                    </AccordionTrigger>
+                      </AccordionTrigger>
 
-                    <AccordionContent className="px-0 pb-0 overflow-hidden">
-                      <CardContent className="pt-0 overflow-hidden">
-                        {/* Studio Actions */}
-                        <div className="mb-6 p-4 bg-blue-50/50 rounded-lg space-y-4">
-                          {/* Mobile: Stack vertically, Desktop: Side by side */}
-                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                            {/* Left side: Select controls */}
-                            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                              <Button
-                                onClick={() => handleSelectAllStudio(studioId)}
-                                variant="outline"
-                                size="sm"
-                                className="w-full sm:w-auto"
-                              >
-                                {allEventsSelected ? 'Deselect All' : 'Select All'}
-                              </Button>
-                              {someEventsSelected && (
-                                <div className="text-sm text-gray-600 text-center sm:text-left">
-                                  {selectedEventIds.length} of {studioEvents.length} events selected
-                                </div>
-                              )}
-                            </div>
-
-                            {/* Right side: Total and Actions */}
-                            {someEventsSelected && (
-                              <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
-                                <div className="text-center sm:text-right">
-                                  <div className="text-lg font-bold text-blue-600">
-                                    €{selectedTotal.toFixed(2)}
+                      <AccordionContent className="px-0 pb-0 overflow-hidden">
+                        <CardContent className="pt-0 overflow-hidden">
+                          {/* Studio Actions */}
+                          <div className="mb-6 p-4 bg-blue-50/50 rounded-lg space-y-4">
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                              {/* Left side: Select controls */}
+                              <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                                <Button
+                                  onClick={() => handleSelectAllStudio(studioId)}
+                                  variant="outline"
+                                  size="sm"
+                                  className="w-full sm:w-auto"
+                                >
+                                  {allEventsSelected ? 'Deselect All' : 'Select All'}
+                                </Button>
+                                {someEventsSelected && (
+                                  <div className="text-sm text-gray-600 text-center sm:text-left">
+                                    {selectedEventIds.length} of {studioEvents.length} events selected
                                   </div>
-                                  <div className="text-xs text-gray-600">Selected Total</div>
+                                )}
+                              </div>
+
+                              {/* Right side: Total and Actions */}
+                              {someEventsSelected && (
+                                <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+                                  <div className="text-center sm:text-right">
+                                    <div className="text-lg font-bold text-blue-600">
+                                      €{selectedTotal.toFixed(2)}
+                                    </div>
+                                    <div className="text-xs text-gray-600">Selected Total</div>
+                                  </div>
+                                  
+                                  <StudioActionButtons
+                                    isTeacher={isTeacher}
+                                    selectedCount={selectedEventIds.length}
+                                    hasSelected={someEventsSelected}
+                                    onCreateInvoice={() => handleCreateInvoice(studioId)}
+                                    onBatchSubstitute={isTeacher ? undefined : () => handleBatchSubstitute(studioId, setSubstituteEventIds)}
+                                    onRevertToStudio={isTeacher ? () => handleRevertToStudio(studioId) : undefined}
+                                    isReverting={revertingStudioId === studioId}
+                                    variant="desktop"
+                                  />
                                 </div>
-                                <div className="flex flex-col sm:flex-row gap-2">
-                                  {isTeacherBillingEntity(studio) ? (
-                                    <>
-                                      <Button
-                                        onClick={() => handleCreateInvoice(studioId)}
-                                        disabled={!someEventsSelected}
-                                        className="bg-purple-600 hover:bg-purple-700 w-full sm:w-auto"
-                                      >
-                                        <span className="sm:hidden">Teacher Invoice</span>
-                                        <span className="hidden sm:inline">Teacher Invoice ({selectedEventIds.length})</span>
-                                      </Button>
-                                      <Button
-                                        onClick={() => handleRevertToStudio(studioId)}
-                                        disabled={!someEventsSelected || revertingStudioId === studioId}
-                                        variant="outline"
-                                        className="w-full sm:w-auto"
-                                      >
-                                        {revertingStudioId === studioId ? (
-                                          <>
-                                            <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                                            <span className="sm:hidden">Reverting...</span>
-                                            <span className="hidden sm:inline">Reverting to Studio...</span>
-                                          </>
-                                        ) : (
-                                          <>
-                                            <span className="sm:hidden">Revert to Studio</span>
-                                            <span className="hidden sm:inline">Revert to Studio ({selectedEventIds.length})</span>
-                                          </>
-                                        )}
-                                      </Button>
-                                    </>
-                                  ) : (
-                                    <>
-                                      <Button
-                                        onClick={() => handleCreateInvoice(studioId)}
-                                        disabled={!someEventsSelected}
-                                        className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto"
-                                      >
-                                        <span className="sm:hidden">Studio Invoice</span>
-                                        <span className="hidden sm:inline">Studio Invoice ({selectedEventIds.length})</span>
-                                      </Button>
-                                      <Button
-                                        onClick={() => handleBatchSubstitute(studioId)}
-                                        disabled={!someEventsSelected}
-                                        variant="outline"
-                                        className="w-full sm:w-auto"
-                                      >
-                                        <span className="sm:hidden">Change to Teacher</span>
-                                        <span className="hidden sm:inline">Change to Teacher ({selectedEventIds.length})</span>
-                                      </Button>
-                                    </>
-                                  )}
-                                </div>
+                              )}
+                            </div>
+
+                            {/* Mobile-only: Action buttons when no events selected */}
+                            {!someEventsSelected && (
+                              <div className="sm:hidden">
+                                <StudioActionButtons
+                                  isTeacher={isTeacher}
+                                  selectedCount={0}
+                                  hasSelected={false}
+                                  onCreateInvoice={() => handleCreateInvoice(studioId)}
+                                  onBatchSubstitute={isTeacher ? undefined : () => handleBatchSubstitute(studioId, setSubstituteEventIds)}
+                                  onRevertToStudio={isTeacher ? () => handleRevertToStudio(studioId) : undefined}
+                                  isReverting={revertingStudioId === studioId}
+                                  variant="mobile"
+                                />
                               </div>
                             )}
                           </div>
 
-                          {/* Mobile-only: Action buttons when no events selected */}
-                          {!someEventsSelected && (
-                            <div className="sm:hidden flex flex-col gap-2">
-                              {isTeacherBillingEntity(studio) ? (
-                                <>
-                                  <Button
-                                    onClick={() => handleCreateInvoice(studioId)}
-                                    disabled={!someEventsSelected}
-                                    className="bg-purple-600 hover:bg-purple-700 w-full opacity-50"
-                                  >
-                                    Teacher Invoice (0)
-                                  </Button>
-                                  <Button
-                                    onClick={() => handleRevertToStudio(studioId)}
-                                    disabled={!someEventsSelected || revertingStudioId === studioId}
-                                    variant="outline"
-                                    className="w-full opacity-50"
-                                  >
-                                    {revertingStudioId === studioId ? (
-                                      <>
-                                        <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                                        Reverting...
-                                      </>
-                                    ) : (
-                                      'Revert to Studio (0)'
-                                    )}
-                                  </Button>
-                                </>
-                              ) : (
-                                <>
-                                  <Button
-                                    onClick={() => handleCreateInvoice(studioId)}
-                                    disabled={!someEventsSelected}
-                                    className="bg-blue-600 hover:bg-blue-700 w-full opacity-50"
-                                  >
-                                    Studio Invoice (0)
-                                  </Button>
-                                  <Button
-                                    onClick={() => handleBatchSubstitute(studioId)}
-                                    disabled={!someEventsSelected}
-                                    variant="outline"
-                                    className="w-full opacity-50"
-                                  >
-                                    Change to Teacher (0)
-                                  </Button>
-                                </>
-                              )}
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Events List */}
-                        <div className="space-y-3 overflow-hidden">
-                          {(() => {
-                            const groupedEvents = groupEventsByMonth(studioEvents)
-                            const sortedMonthKeys = Object.keys(groupedEvents).sort()
-                            
-                            return sortedMonthKeys.map(monthKey => (
-                              <div key={monthKey}>
-                                {/* Month Divider */}
-                                <div className="flex items-center gap-3 my-4">
-                                  <div className="flex-1 h-px bg-gray-300"></div>
-                                  <div className="text-sm font-medium text-gray-600 px-3">
-                                    {getMonthLabel(monthKey)}
+                          {/* Events List */}
+                          <div className="space-y-3 overflow-hidden">
+                            {(() => {
+                              const groupedEvents = groupEventsByMonth(studioEvents)
+                              const sortedMonthKeys = Object.keys(groupedEvents).sort()
+                              
+                              return sortedMonthKeys.map(monthKey => (
+                                <div key={monthKey}>
+                                  {/* Month Divider */}
+                                  <div className="flex items-center gap-3 my-4">
+                                    <div className="flex-1 h-px bg-gray-300"></div>
+                                    <div className="text-sm font-medium text-gray-600 px-3">
+                                      {getMonthLabel(monthKey)}
+                                    </div>
+                                    <div className="flex-1 h-px bg-gray-300"></div>
                                   </div>
-                                  <div className="flex-1 h-px bg-gray-300"></div>
+                                  
+                                  {/* Events for this month */}
+                                  <div className="space-y-3 overflow-hidden">
+                                    {groupedEvents[monthKey].map((event) => (
+                                      <EventInvoiceCard
+                                        key={event.id}
+                                        event={event}
+                                        selected={selectedEventIds.includes(event.id)}
+                                        onToggleSelect={(eventId) => handleToggleEvent(studioId, eventId)}
+                                        showCheckbox={true}
+                                        variant="compact"
+                                      />
+                                    ))}
+                                  </div>
                                 </div>
-                                
-                                {/* Events for this month */}
-                                <div className="space-y-3 overflow-hidden">
-                                  {groupedEvents[monthKey].map((event) => (
-                                    <EventInvoiceCard
-                                      key={event.id}
-                                      event={event}
-                                      selected={selectedEventIds.includes(event.id)}
-                                      onToggleSelect={(eventId) => handleToggleEvent(studioId, eventId)}
-                                      showCheckbox={true}
-                                      variant="compact"
-                                    />
-                                  ))}
-                                </div>
-                              </div>
-                            ))
-                          })()}
-                        </div>
-                      </CardContent>
-                    </AccordionContent>
-                  </Card>
-                </AccordionItem>
-              )
-            })}
-          </Accordion>
-        )
-      }}
-    </DataLoader>
+                              ))
+                            })()}
+                          </div>
+                        </CardContent>
+                      </AccordionContent>
+                    </Card>
+                  </AccordionItem>
+                )
+              })}
+            </Accordion>
+          )
+        }}
+      </DataLoader>
 
-    {/* Substitute Event Modal */}
-    <SubstituteEventModal
-      isOpen={!!substituteEventId || substituteEventIds.length > 0}
-      onClose={() => {
-        setSubstituteEventId(null)
-        setSubstituteEventIds([])
-      }}
-      event={selectedEvent}
-      events={selectedEventsForBatch}
-      onSuccess={handleSubstituteSuccess}
-    />
+      {/* Substitute Event Modal */}
+      <SubstituteEventModal
+        isOpen={!!substituteEventId || substituteEventIds.length > 0}
+        onClose={() => {
+          setSubstituteEventId(null)
+          setSubstituteEventIds([])
+        }}
+        event={selectedEvent}
+        events={selectedEventsForBatch}
+        onSuccess={handleSubstituteSuccess}
+      />
     </div>
   )
 } 

@@ -17,6 +17,8 @@ export * from './useTagOperations'
 // New shared hooks
 export * from './useAllTags'
 export * from './useEnhancedEvents'
+export * from './useInvoiceEvents'
+export * from './useStudioActions'
 
 export {
   useSupabaseQuery,
