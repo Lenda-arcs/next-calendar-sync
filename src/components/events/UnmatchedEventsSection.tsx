@@ -211,19 +211,24 @@ export function UnmatchedEventsSection({
               {/* Exclude button */}
               <div className="flex-shrink-0">
                 <Button
-                  variant="outline"
+                  variant="outline" 
                   size="sm"
                   onClick={() => handleExcludeEvent(event.id)}
                   disabled={excludingEventId === event.id}
-                  className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                  className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200 min-w-0 sm:min-w-fit"
                   title="Mark as free event (exclude from studio matching)"
                 >
                   {excludingEventId === event.id ? (
-                    <RefreshCw className="h-4 w-4 animate-spin" />
+                    <>
+                      <RefreshCw className="h-4 w-4 animate-spin" />
+                      <span className="ml-1 hidden sm:inline">Excluding...</span>
+                    </>
                   ) : (
-                    <X className="h-4 w-4" />
+                    <>
+                      <X className="h-4 w-4" />
+                      <span className="ml-1 hidden sm:inline">Free Event</span>
+                    </>
                   )}
-                  <span className="ml-1 hidden sm:inline">Free Event</span>
                 </Button>
               </div>
             </div>

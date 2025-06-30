@@ -110,39 +110,47 @@ export function ExcludedEventsSection({
     <>
       <Card className="border-orange-200 bg-orange-50/50">
         <CardContent className="p-4">
-          <div className="flex items-center justify-between">
+          {/* Mobile-first responsive layout */}
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-0 sm:justify-between">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-orange-100 rounded-full">
+              <div className="p-2 bg-orange-100 rounded-full flex-shrink-0">
                 <EyeOff className="w-4 h-4 text-orange-600" />
               </div>
-              <div>
+              <div className="min-w-0 flex-1">
                 <h3 className="font-medium text-orange-900">
                   Excluded Events ({excludedEvents.length})
                 </h3>
-                <p className="text-sm text-orange-700">
+                <p className="text-sm text-orange-700 hidden sm:block">
                   Events marked as excluded from studio matching
+                </p>
+                <p className="text-xs text-orange-700 sm:hidden">
+                  Excluded from matching
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            
+            {/* Mobile: Stack buttons vertically, Desktop: Horizontal */}
+            <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
               <Button 
                 variant="outline" 
                 size="sm"
                 onClick={onRefresh}
                 disabled={isLoading || isProcessing}
-                className="border-orange-200 text-orange-700 hover:bg-orange-100"
+                className="border-orange-200 text-orange-700 hover:bg-orange-100 w-full sm:w-auto"
               >
                 <RefreshCw className={`mr-2 h-3 w-3 ${isLoading || isProcessing ? 'animate-spin' : ''}`} />
-                Refresh
+                <span className="sm:hidden">Refresh</span>
+                <span className="hidden sm:inline">Refresh</span>
               </Button>
               <Button 
                 variant="outline" 
                 size="sm"
                 onClick={() => setShowEventsDialog(true)}
-                className="border-orange-200 text-orange-700 hover:bg-orange-100"
+                className="border-orange-200 text-orange-700 hover:bg-orange-100 w-full sm:w-auto"
               >
                 <Eye className="mr-2 h-3 w-3" />
-                View All
+                <span className="sm:hidden">View ({excludedEvents.length})</span>
+                <span className="hidden sm:inline">View All</span>
               </Button>
             </div>
           </div>
@@ -156,35 +164,46 @@ export function ExcludedEventsSection({
         description="These events have been excluded from studio matching. Select events and click 'Include in Matching' to make them available for studio billing again."
         size="lg"
         footer={
-          <div className="flex items-center justify-between w-full">
-            <div className="flex items-center gap-3">
+          <div className="flex flex-col gap-3 w-full sm:flex-row sm:items-center sm:justify-between">
+            {/* Top row on mobile, left side on desktop */}
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
               <Button 
                 onClick={handleSelectAll}
                 variant="outline"
                 size="sm"
+                className="w-full sm:w-auto"
               >
                 {allEventsSelected ? 'Deselect All' : 'Select All'}
               </Button>
               {someEventsSelected && (
-                <span className="text-sm text-gray-600">
-                  {selectedEvents.length} of {excludedEvents.length} events selected
+                <span className="text-sm text-gray-600 text-center sm:text-left">
+                  <span className="sm:hidden">{selectedEvents.length}/{excludedEvents.length} selected</span>
+                  <span className="hidden sm:inline">{selectedEvents.length} of {excludedEvents.length} events selected</span>
                 </span>
               )}
             </div>
-            <div className="flex items-center gap-2">
+            
+            {/* Bottom row on mobile, right side on desktop */}
+            <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
               {someEventsSelected && (
                 <Button
                   onClick={handleBatchInclude}
                   disabled={batchIncludeMutation.isLoading || isProcessing}
-                  className="bg-orange-600 hover:bg-orange-700"
+                  className="bg-orange-600 hover:bg-orange-700 w-full sm:w-auto"
                 >
                   <RotateCcw className="mr-2 h-3 w-3" />
-                  {batchIncludeMutation.isLoading || isProcessing ? 'Including...' : `Include in Matching (${selectedEvents.length})`}
+                  <span className="sm:hidden">
+                    {batchIncludeMutation.isLoading || isProcessing ? 'Including...' : `Include (${selectedEvents.length})`}
+                  </span>
+                  <span className="hidden sm:inline">
+                    {batchIncludeMutation.isLoading || isProcessing ? 'Including...' : `Include in Matching (${selectedEvents.length})`}
+                  </span>
                 </Button>
               )}
               <Button 
                 onClick={() => setShowEventsDialog(false)}
                 variant="outline"
+                className="w-full sm:w-auto"
               >
                 Close
               </Button>
@@ -204,7 +223,7 @@ export function ExcludedEventsSection({
               />
               {event.exclude_from_studio_matching && (
                 <div className="px-4 pb-3 flex items-center gap-2 text-xs text-orange-600">
-                  <EyeOff className="w-3 h-3" />
+                  <EyeOff className="w-3 h-3 flex-shrink-0" />
                   <span>Excluded from studio matching</span>
                 </div>
               )}
