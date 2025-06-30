@@ -84,10 +84,10 @@ export function EventInvoiceCard({
     >
       <CardContent className={cn(
         "flex flex-col sm:flex-row sm:items-center gap-3",
-        variant === 'compact' ? "p-3" : "p-4"
+        variant === 'compact' ? "p-2 sm:p-3" : "p-3 sm:p-4"
       )}>
         {/* Mobile: Checkbox and title row */}
-        <div className="flex items-center gap-3 flex-1 min-w-0">
+        <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
           {showCheckbox && (
             <input
               type="checkbox"
@@ -116,20 +116,20 @@ export function EventInvoiceCard({
             
             {/* Location - truncated on mobile, hidden on very small screens */}
             {event.location && (
-              <div className="text-xs text-gray-500 mt-1 truncate max-w-[200px] sm:max-w-none">
+              <div className="text-xs text-gray-500 mt-1 truncate max-w-[180px] sm:max-w-none">
                 {event.location}
               </div>
             )}
             
             {/* Student counts - more compact on mobile */}
-            <div className="flex items-center gap-2 mt-2">
+            <div className="flex items-center gap-1 sm:gap-2 mt-1 sm:mt-2">
               {event.students_studio !== null && (
-                <span className="text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded">
+                <span className="text-xs text-gray-600 bg-gray-100 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded">
                   Studio: {event.students_studio}
                 </span>
               )}
               {event.students_online !== null && event.students_online > 0 && (
-                <span className="text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded">
+                <span className="text-xs text-gray-600 bg-gray-100 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded">
                   Online: {event.students_online}
                 </span>
               )}
@@ -138,7 +138,7 @@ export function EventInvoiceCard({
         </div>
         
         {/* Payout section - right aligned on desktop, separate row on mobile */}
-        <div className="flex justify-between sm:justify-end sm:flex-col sm:text-right items-center sm:items-end flex-shrink-0 gap-2">
+        <div className="flex justify-between sm:justify-end sm:flex-col sm:text-right items-center sm:items-end flex-shrink-0 gap-1 sm:gap-2">
           <div className="text-base sm:text-lg font-bold text-gray-900">
             €{payout.toFixed(2)}
           </div>
@@ -159,7 +159,8 @@ export function EventInvoiceCard({
               title="Setup substitute teaching - invoice original teacher instead of studio"
             >
               <Users className="w-3 h-3 mr-1" />
-              Substitute
+              <span className="hidden sm:inline">Substitute</span>
+              <span className="sm:hidden">Sub</span>
             </Button>
           )}
         </div>

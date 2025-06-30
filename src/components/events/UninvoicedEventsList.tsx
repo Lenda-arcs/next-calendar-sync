@@ -235,17 +235,17 @@ export function UninvoicedEventsList({ userId, onCreateInvoice, onCreateStudio }
         error={error?.message || null}
         empty={
           <Card>
-            <CardContent className="py-12 text-center">
-              <div className="w-12 h-12 mx-auto mb-4 text-gray-300">
+            <CardContent className="py-8 sm:py-12 px-4 sm:px-6 text-center">
+              <div className="w-10 sm:w-12 h-10 sm:h-12 mx-auto mb-3 sm:mb-4 text-gray-300">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
               </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No Uninvoiced Events</h3>
-              <p className="text-sm text-gray-600 mb-4">
+              <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2">No Uninvoiced Events</h3>
+              <p className="text-sm text-gray-600 mb-3 sm:mb-4 max-w-sm mx-auto">
                 All your completed events have been invoiced, or you don&apos;t have any events with assigned studios yet.
               </p>
-              <Button variant="outline" onClick={handleRefresh} disabled={isRefreshing}>
+              <Button variant="outline" onClick={handleRefresh} disabled={isRefreshing} size="sm" className="w-full sm:w-auto">
                 <RefreshCw className={`mr-2 h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
                 {isRefreshing ? 'Syncing & Refreshing...' : 'Refresh'}
               </Button>
@@ -256,7 +256,7 @@ export function UninvoicedEventsList({ userId, onCreateInvoice, onCreateStudio }
         {(data) => {
           const studios = Object.keys(data)
           return (
-            <Accordion type="multiple" className="w-full space-y-4">
+            <Accordion type="multiple" className="w-full space-y-3 sm:space-y-4">
               {studios.map(studioId => {
                 const studioEvents = data[studioId] || []
                 const studio = studioEvents[0]?.studio
@@ -273,40 +273,40 @@ export function UninvoicedEventsList({ userId, onCreateInvoice, onCreateStudio }
                 return (
                   <AccordionItem value={studioId} key={studioId}>
                     <Card variant="outlined" className="overflow-hidden">
-                      <AccordionTrigger className="px-6 py-4 hover:no-underline cursor-pointer group">
-                        <div className="flex items-center justify-between w-full mr-4 group-hover:text-blue-600 transition-colors">
-                          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 flex-1">
-                            <div className="flex items-center gap-2">
-                              <div className="flex items-center gap-2">
+                      <AccordionTrigger className="px-4 sm:px-6 py-3 sm:py-4 hover:no-underline cursor-pointer group">
+                        <div className="flex items-center justify-between w-full mr-2 sm:mr-4 group-hover:text-blue-600 transition-colors">
+                          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 flex-1 min-w-0">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <div className="flex items-center gap-2 min-w-0">
                                 {isTeacher ? (
-                                  <User className="w-4 h-4 text-purple-600" />
+                                  <User className="w-4 h-4 text-purple-600 flex-shrink-0" />
                                 ) : (
-                                  <Building2 className="w-4 h-4 text-blue-600" />
+                                  <Building2 className="w-4 h-4 text-blue-600 flex-shrink-0" />
                                 )}
-                                <CardTitle className="text-lg group-hover:text-blue-600 transition-colors">
+                                <CardTitle className="text-base sm:text-lg group-hover:text-blue-600 transition-colors truncate">
                                   {studio.entity_name}
                                 </CardTitle>
                                 {isTeacher && (
-                                  <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full">
+                                  <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full flex-shrink-0">
                                     Teacher
                                   </span>
                                 )}
                               </div>
-                              <div className="text-xs text-gray-400 group-hover:text-blue-500 transition-colors opacity-0 group-hover:opacity-100 hidden sm:block">
+                              <div className="text-xs text-gray-400 group-hover:text-blue-500 transition-colors opacity-0 group-hover:opacity-100 hidden sm:block flex-shrink-0">
                                 Click to expand
                               </div>
                             </div>
-                            <div className="flex items-center gap-3 text-sm">
-                              <span className="text-gray-600">
+                            <div className="flex items-center gap-2 sm:gap-3 text-sm">
+                              <span className="text-gray-600 text-xs sm:text-sm">
                                 {studioEvents.length} event{studioEvents.length !== 1 ? 's' : ''}
                               </span>
-                              <span className="text-gray-500 text-xs">
+                              <span className="text-gray-500 text-xs hidden sm:block">
                                 {studio.rate_type === 'flat' ? 'Flat Rate' : 'Per Student'} • Base: €{studio.base_rate?.toFixed(2) || '0.00'}
                               </span>
                             </div>
                           </div>
                           <div className="text-right flex-shrink-0">
-                            <div className="text-lg font-bold text-gray-900">
+                            <div className="text-base sm:text-lg font-bold text-gray-900">
                               €{totalPayout.toFixed(2)}
                             </div>
                             <div className="text-xs text-gray-600">
@@ -317,12 +317,12 @@ export function UninvoicedEventsList({ userId, onCreateInvoice, onCreateStudio }
                       </AccordionTrigger>
 
                       <AccordionContent className="px-0 pb-0 overflow-hidden">
-                        <CardContent className="pt-0 overflow-hidden">
+                        <CardContent className="pt-0 px-3 sm:px-6 pb-4 sm:pb-6 overflow-hidden">
                           {/* Studio Actions */}
-                          <div className="mb-6 p-4 bg-blue-50/50 rounded-lg space-y-4">
+                          <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-blue-50/50 rounded-lg space-y-3 sm:space-y-4">
                             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                               {/* Left side: Select controls */}
-                              <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
                                 <Button
                                   onClick={() => handleSelectAllStudio(studioId)}
                                   variant="outline"
@@ -333,7 +333,8 @@ export function UninvoicedEventsList({ userId, onCreateInvoice, onCreateStudio }
                                 </Button>
                                 {someEventsSelected && (
                                   <div className="text-sm text-gray-600 text-center sm:text-left">
-                                    {selectedEventIds.length} of {studioEvents.length} events selected
+                                    <span className="sm:hidden text-xs">{selectedEventIds.length}/{studioEvents.length} selected</span>
+                                    <span className="hidden sm:inline">{selectedEventIds.length} of {studioEvents.length} events selected</span>
                                   </div>
                                 )}
                               </div>
@@ -342,7 +343,7 @@ export function UninvoicedEventsList({ userId, onCreateInvoice, onCreateStudio }
                               {someEventsSelected && (
                                 <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
                                   <div className="text-center sm:text-right">
-                                    <div className="text-lg font-bold text-blue-600">
+                                    <div className="text-base sm:text-lg font-bold text-blue-600">
                                       €{selectedTotal.toFixed(2)}
                                     </div>
                                     <div className="text-xs text-gray-600">Selected Total</div>
@@ -380,7 +381,7 @@ export function UninvoicedEventsList({ userId, onCreateInvoice, onCreateStudio }
                           </div>
 
                           {/* Events List */}
-                          <div className="space-y-3 overflow-hidden">
+                          <div className="space-y-2 sm:space-y-3 overflow-hidden">
                             {(() => {
                               const groupedEvents = groupEventsByMonth(studioEvents)
                               const sortedMonthKeys = Object.keys(groupedEvents).sort()
@@ -388,16 +389,16 @@ export function UninvoicedEventsList({ userId, onCreateInvoice, onCreateStudio }
                               return sortedMonthKeys.map(monthKey => (
                                 <div key={monthKey}>
                                   {/* Month Divider */}
-                                  <div className="flex items-center gap-3 my-4">
+                                  <div className="flex items-center gap-3 my-3 sm:my-4">
                                     <div className="flex-1 h-px bg-gray-300"></div>
-                                    <div className="text-sm font-medium text-gray-600 px-3">
+                                    <div className="text-sm font-medium text-gray-600 px-2 sm:px-3">
                                       {getMonthLabel(monthKey)}
                                     </div>
                                     <div className="flex-1 h-px bg-gray-300"></div>
                                   </div>
                                   
                                   {/* Events for this month */}
-                                  <div className="space-y-3 overflow-hidden">
+                                  <div className="space-y-2 sm:space-y-3 overflow-hidden">
                                     {groupedEvents[monthKey].map((event) => (
                                       <EventInvoiceCard
                                         key={event.id}
