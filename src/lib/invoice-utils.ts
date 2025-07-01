@@ -1020,7 +1020,7 @@ export async function getTeacherBillingEntities(userId: string): Promise<Billing
 
 /**
  * Revert teacher invoice events back to studio invoicing
- * This will re-match the events to studios based on location patterns
+ * FIXED: Now clears substitute_teacher_entity_id while keeping original studio_id for rate calculations
  */
 export async function revertEventsToStudioInvoicing(eventIds: string[]): Promise<{
   revertedEvents: number;
@@ -1033,28 +1033,32 @@ export async function revertEventsToStudioInvoicing(eventIds: string[]): Promise
     return { revertedEvents: 0, matchedEvents: 0, studios: [] }
   }
 
-  // First, get the user_id from one of the events
-  const { data: eventData, error: eventError } = await supabase
+  // Get studio information for the events being reverted
+  const { data: eventsData, error: eventsError } = await supabase
     .from("events")
-    .select("user_id")
+    .select(`
+      id,
+      studio_id,
+      billing_entities!events_billing_entity_id_fkey (
+        id,
+        entity_name
+      )
+    `)
     .in("id", eventIds)
-    .limit(1)
-    .single()
 
-  if (eventError || !eventData || !eventData.user_id) {
-    console.error("Error fetching event data:", eventError)
-    throw new Error("Failed to fetch event data for reverting")
+  if (eventsError) {
+    console.error("Error fetching events data:", eventsError)
+    throw new Error("Failed to fetch events data for reverting")
   }
 
-  const userId = eventData.user_id
-
   // Step 1: Reset the events to studio_invoice type and clear substitute data
+  // FIXED: Keep studio_id unchanged, only clear substitute_teacher_entity_id
   const { error: resetError } = await supabase
     .from("events")
     .update({
       invoice_type: 'studio_invoice',
       substitute_notes: null,
-      studio_id: null, // Clear current studio assignment so they can be re-matched
+      substitute_teacher_entity_id: null, // Clear substitute teacher (NEW LOGIC)
       exclude_from_studio_matching: false // Enable studio matching again
     })
     .in("id", eventIds)
@@ -1064,13 +1068,24 @@ export async function revertEventsToStudioInvoicing(eventIds: string[]): Promise
     throw new Error(`Failed to reset events: ${resetError.message}`)
   }
 
-  // Step 2: Re-match the events to studios based on location patterns
-  const matchResults = await matchEventsToStudios(userId)
+  // Step 2: Prepare studio summary (no re-matching needed since studio_id is preserved)
+  const studioSummary = eventsData.reduce((acc, event) => {
+    if (event.studio_id && event.billing_entities) {
+      const studioId = event.studio_id
+      const studioName = event.billing_entities.entity_name
+      
+      if (!acc[studioId]) {
+        acc[studioId] = { studioId, studioName, matchedCount: 0 }
+      }
+      acc[studioId].matchedCount++
+    }
+    return acc
+  }, {} as Record<string, { studioId: string; studioName: string; matchedCount: number }>)
 
   return {
     revertedEvents: eventIds.length,
-    matchedEvents: matchResults.matchedEvents,
-    studios: matchResults.studios
+    matchedEvents: eventIds.length, // All events remain matched since studio_id is preserved
+    studios: Object.values(studioSummary)
   }
 }
 

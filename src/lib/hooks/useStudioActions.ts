@@ -90,20 +90,11 @@ export function useStudioActions({
     try {
       setRevertingStudioId(studioId)
       
-      // Step 1: Revert events to studio invoicing
+      // Revert events to studio invoicing (no re-matching needed since studio_id is preserved)
       const result = await revertEventsToStudioInvoicing(eventIds)
-      console.log(`Reverted ${result.revertedEvents} events, re-matched ${result.matchedEvents} events to ${result.studios.length} studios`)
+      console.log(`Reverted ${result.revertedEvents} events back to studio invoicing`)
       
-      // Step 2: Trigger sync to ensure events get properly re-matched
-      if (calendarFeeds && calendarFeeds.length > 0) {
-        console.log('Triggering sync to ensure proper re-matching...')
-        const syncPromises = calendarFeeds.map(feed => 
-          syncFeed(feed.id, 'default') // Use default mode for faster sync
-        )
-        await Promise.all(syncPromises)
-      }
-      
-      // Step 3: Clear selections and refresh data
+      // Clear selections and refresh data
       onClearSelections()
       await onRefreshData()
     } catch (error) {
@@ -111,7 +102,7 @@ export function useStudioActions({
     } finally {
       setRevertingStudioId(null)
     }
-  }, [selectedEvents, calendarFeeds, syncFeed, onClearSelections, onRefreshData])
+  }, [selectedEvents, onClearSelections, onRefreshData])
 
   return {
     // State
