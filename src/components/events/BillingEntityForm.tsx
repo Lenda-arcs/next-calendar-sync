@@ -188,7 +188,8 @@ const BillingEntityForm: React.FC<Props> = ({
       }
     }
 
-    if (!formData.base_rate || isNaN(Number(formData.base_rate)) || Number(formData.base_rate) <= 0) {
+    // Rate validation only required for studio entities, not teachers
+    if (entityType === 'studio' && (!formData.base_rate || isNaN(Number(formData.base_rate)) || Number(formData.base_rate) <= 0)) {
       newErrors.base_rate = "Base rate must be a positive number";
     }
 
@@ -248,15 +249,16 @@ const BillingEntityForm: React.FC<Props> = ({
         const updateData: BillingEntityUpdate = {
           entity_name: entityType === 'teacher' ? formData.recipient_name : formData.entity_name,
           location_match: formData.location_match,
-          rate_type: formData.rate_type,
-          base_rate: formData.base_rate ? Number(formData.base_rate) : null,
-          student_threshold: formData.student_threshold ? Number(formData.student_threshold) : null,
-          minimum_student_threshold: formData.minimum_student_threshold ? Number(formData.minimum_student_threshold) : null,
-          bonus_student_threshold: formData.bonus_student_threshold ? Number(formData.bonus_student_threshold) : null,
-          bonus_per_student: formData.bonus_per_student ? Number(formData.bonus_per_student) : null,
-          studio_penalty_per_student: formData.studio_penalty_per_student ? Number(formData.studio_penalty_per_student) : null,
-          online_bonus_per_student: formData.online_bonus_per_student ? Number(formData.online_bonus_per_student) : null,
-          max_discount: formData.max_discount ? Number(formData.max_discount) : null,
+          // Rate fields only for studios, explicitly null for teachers
+          rate_type: entityType === 'studio' ? formData.rate_type : null,
+          base_rate: entityType === 'studio' && formData.base_rate ? Number(formData.base_rate) : null,
+          student_threshold: entityType === 'studio' && formData.student_threshold ? Number(formData.student_threshold) : null,
+          minimum_student_threshold: entityType === 'studio' && formData.minimum_student_threshold ? Number(formData.minimum_student_threshold) : null,
+          bonus_student_threshold: entityType === 'studio' && formData.bonus_student_threshold ? Number(formData.bonus_student_threshold) : null,
+          bonus_per_student: entityType === 'studio' && formData.bonus_per_student ? Number(formData.bonus_per_student) : null,
+          studio_penalty_per_student: entityType === 'studio' && formData.studio_penalty_per_student ? Number(formData.studio_penalty_per_student) : null,
+          online_bonus_per_student: entityType === 'studio' && formData.online_bonus_per_student ? Number(formData.online_bonus_per_student) : null,
+          max_discount: entityType === 'studio' && formData.max_discount ? Number(formData.max_discount) : null,
           billing_email: formData.billing_email || null,
           address: formData.address || null,
           notes: formData.notes || null,
@@ -274,15 +276,16 @@ const BillingEntityForm: React.FC<Props> = ({
           user_id: user.id,
           entity_name: entityType === 'teacher' ? formData.recipient_name : formData.entity_name,
           location_match: formData.location_match,
-          rate_type: formData.rate_type,
-          base_rate: formData.base_rate ? Number(formData.base_rate) : null,
-          student_threshold: formData.student_threshold ? Number(formData.student_threshold) : null,
-          minimum_student_threshold: formData.minimum_student_threshold ? Number(formData.minimum_student_threshold) : null,
-          bonus_student_threshold: formData.bonus_student_threshold ? Number(formData.bonus_student_threshold) : null,
-          bonus_per_student: formData.bonus_per_student ? Number(formData.bonus_per_student) : null,
-          studio_penalty_per_student: formData.studio_penalty_per_student ? Number(formData.studio_penalty_per_student) : null,
-          online_bonus_per_student: formData.online_bonus_per_student ? Number(formData.online_bonus_per_student) : null,
-          max_discount: formData.max_discount ? Number(formData.max_discount) : null,
+          // Rate fields only for studios, explicitly null for teachers
+          rate_type: entityType === 'studio' ? formData.rate_type : null,
+          base_rate: entityType === 'studio' && formData.base_rate ? Number(formData.base_rate) : null,
+          student_threshold: entityType === 'studio' && formData.student_threshold ? Number(formData.student_threshold) : null,
+          minimum_student_threshold: entityType === 'studio' && formData.minimum_student_threshold ? Number(formData.minimum_student_threshold) : null,
+          bonus_student_threshold: entityType === 'studio' && formData.bonus_student_threshold ? Number(formData.bonus_student_threshold) : null,
+          bonus_per_student: entityType === 'studio' && formData.bonus_per_student ? Number(formData.bonus_per_student) : null,
+          studio_penalty_per_student: entityType === 'studio' && formData.studio_penalty_per_student ? Number(formData.studio_penalty_per_student) : null,
+          online_bonus_per_student: entityType === 'studio' && formData.online_bonus_per_student ? Number(formData.online_bonus_per_student) : null,
+          max_discount: entityType === 'studio' && formData.max_discount ? Number(formData.max_discount) : null,
           billing_email: formData.billing_email || null,
           address: formData.address || null,
           notes: formData.notes || null,
@@ -453,171 +456,185 @@ const BillingEntityForm: React.FC<Props> = ({
           </div>
         </div>
 
-        {/* Rate Information */}
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold">Rate Information</h3>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <Label htmlFor="rate_type">Rate Type</Label>
-              <Select
-                options={rateTypeOptions}
-                value={formData.rate_type}
-                onChange={(value) => handleInputChange("rate_type", value)}
-              />
+        {/* Rate Information - Only for Studio entities */}
+        {entityType === 'studio' && (
+          <>
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Rate Information</h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <Label htmlFor="rate_type">Rate Type</Label>
+                  <Select
+                    options={rateTypeOptions}
+                    value={formData.rate_type}
+                    onChange={(value) => handleInputChange("rate_type", value)}
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="base_rate">
+                    Base Rate * {formData.rate_type === "per_student" ? "(per student)" : `(${formData.currency})`}
+                  </Label>
+                  <Input
+                    id="base_rate"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={formData.base_rate}
+                    onChange={(e) => handleInputChange("base_rate", e.target.value)}
+                    placeholder={formData.rate_type === "per_student" ? "e.g., 15.00" : "e.g., 45.00"}
+                    className={errors.base_rate ? "border-red-500" : ""}
+                  />
+                  {errors.base_rate && (
+                    <p className="text-sm text-red-500 mt-1">{errors.base_rate}</p>
+                  )}
+                </div>
+
+                <div>
+                  <Label htmlFor="currency">Currency</Label>
+                  <Select
+                    options={currencyOptions}
+                    value={formData.currency}
+                    onChange={(value) => handleInputChange("currency", value)}
+                  />
+                </div>
+              </div>
             </div>
 
-            <div>
-              <Label htmlFor="base_rate">
-                Base Rate * {formData.rate_type === "per_student" ? "(per student)" : `(${formData.currency})`}
-              </Label>
-              <Input
-                id="base_rate"
-                type="number"
-                step="0.01"
-                min="0"
-                value={formData.base_rate}
-                onChange={(e) => handleInputChange("base_rate", e.target.value)}
-                placeholder={formData.rate_type === "per_student" ? "e.g., 15.00" : "e.g., 45.00"}
-                className={errors.base_rate ? "border-red-500" : ""}
-              />
-              {errors.base_rate && (
-                <p className="text-sm text-red-500 mt-1">{errors.base_rate}</p>
-              )}
-            </div>
+            {/* Enhanced Rate Structure */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Rate Structure & Student Thresholds</h3>
+              
+              {/* Threshold Settings */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="minimum_student_threshold">Minimum Student Threshold</Label>
+                  <Input
+                    id="minimum_student_threshold"
+                    type="number"
+                    min="0"
+                    value={formData.minimum_student_threshold}
+                    onChange={(e) => handleInputChange("minimum_student_threshold", e.target.value)}
+                    placeholder="e.g., 3"
+                    className={errors.minimum_student_threshold ? "border-red-500" : ""}
+                  />
+                  {errors.minimum_student_threshold && (
+                    <p className="text-sm text-red-500 mt-1">{errors.minimum_student_threshold}</p>
+                  )}
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Below this count, penalties may apply or no payment
+                  </p>
+                </div>
 
-            <div>
-              <Label htmlFor="currency">Currency</Label>
-              <Select
-                options={currencyOptions}
-                value={formData.currency}
-                onChange={(value) => handleInputChange("currency", value)}
-              />
-            </div>
-          </div>
-        </div>
+                <div>
+                  <Label htmlFor="bonus_student_threshold">Bonus Student Threshold</Label>
+                  <Input
+                    id="bonus_student_threshold"
+                    type="number"
+                    min="0"
+                    value={formData.bonus_student_threshold}
+                    onChange={(e) => handleInputChange("bonus_student_threshold", e.target.value)}
+                    placeholder="e.g., 15"
+                    className={errors.bonus_student_threshold ? "border-red-500" : ""}
+                  />
+                  {errors.bonus_student_threshold && (
+                    <p className="text-sm text-red-500 mt-1">{errors.bonus_student_threshold}</p>
+                  )}
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Above this count, teacher gets bonus per additional student
+                  </p>
+                </div>
+              </div>
 
-        {/* Enhanced Rate Structure */}
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold">Rate Structure & Student Thresholds</h3>
-          
-          {/* Threshold Settings */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="minimum_student_threshold">Minimum Student Threshold</Label>
-              <Input
-                id="minimum_student_threshold"
-                type="number"
-                min="0"
-                value={formData.minimum_student_threshold}
-                onChange={(e) => handleInputChange("minimum_student_threshold", e.target.value)}
-                placeholder="e.g., 3"
-                className={errors.minimum_student_threshold ? "border-red-500" : ""}
-              />
-              {errors.minimum_student_threshold && (
-                <p className="text-sm text-red-500 mt-1">{errors.minimum_student_threshold}</p>
-              )}
-              <p className="text-xs text-muted-foreground mt-1">
-                Below this count, penalties may apply or no payment
-              </p>
-            </div>
+              {/* Bonus and Penalty Rates */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <Label htmlFor="bonus_per_student">Bonus per Student ({formData.currency})</Label>
+                  <Input
+                    id="bonus_per_student"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={formData.bonus_per_student}
+                    onChange={(e) => handleInputChange("bonus_per_student", e.target.value)}
+                    placeholder="e.g., 3.00"
+                    className={errors.bonus_per_student ? "border-red-500" : ""}
+                  />
+                  {errors.bonus_per_student && (
+                    <p className="text-sm text-red-500 mt-1">{errors.bonus_per_student}</p>
+                  )}
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Amount paid per student above bonus threshold
+                  </p>
+                </div>
 
-            <div>
-              <Label htmlFor="bonus_student_threshold">Bonus Student Threshold</Label>
-              <Input
-                id="bonus_student_threshold"
-                type="number"
-                min="0"
-                value={formData.bonus_student_threshold}
-                onChange={(e) => handleInputChange("bonus_student_threshold", e.target.value)}
-                placeholder="e.g., 15"
-                className={errors.bonus_student_threshold ? "border-red-500" : ""}
-              />
-              {errors.bonus_student_threshold && (
-                <p className="text-sm text-red-500 mt-1">{errors.bonus_student_threshold}</p>
-              )}
-              <p className="text-xs text-muted-foreground mt-1">
-                Above this count, teacher gets bonus per additional student
-              </p>
-            </div>
-          </div>
+                <div>
+                  <Label htmlFor="studio_penalty_per_student">Penalty per Missing Student ({formData.currency})</Label>
+                  <Input
+                    id="studio_penalty_per_student"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={formData.studio_penalty_per_student}
+                    onChange={(e) => handleInputChange("studio_penalty_per_student", e.target.value)}
+                    placeholder="e.g., 5.00"
+                    className={errors.studio_penalty_per_student ? "border-red-500" : ""}
+                  />
+                  {errors.studio_penalty_per_student && (
+                    <p className="text-sm text-red-500 mt-1">{errors.studio_penalty_per_student}</p>
+                  )}
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Penalty for each student below minimum threshold
+                  </p>
+                </div>
 
-          {/* Bonus and Penalty Rates */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <Label htmlFor="bonus_per_student">Bonus per Student ({formData.currency})</Label>
-              <Input
-                id="bonus_per_student"
-                type="number"
-                step="0.01"
-                min="0"
-                value={formData.bonus_per_student}
-                onChange={(e) => handleInputChange("bonus_per_student", e.target.value)}
-                placeholder="e.g., 3.00"
-                className={errors.bonus_per_student ? "border-red-500" : ""}
-              />
-              {errors.bonus_per_student && (
-                <p className="text-sm text-red-500 mt-1">{errors.bonus_per_student}</p>
-              )}
-              <p className="text-xs text-muted-foreground mt-1">
-                Amount paid per student above bonus threshold
-              </p>
-            </div>
+                <div>
+                  <Label htmlFor="online_bonus_per_student">Online Bonus per Student ({formData.currency})</Label>
+                  <Input
+                    id="online_bonus_per_student"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={formData.online_bonus_per_student}
+                    onChange={(e) => handleInputChange("online_bonus_per_student", e.target.value)}
+                    placeholder="e.g., 2.50"
+                    className={errors.online_bonus_per_student ? "border-red-500" : ""}
+                  />
+                  {errors.online_bonus_per_student && (
+                    <p className="text-sm text-red-500 mt-1">{errors.online_bonus_per_student}</p>
+                  )}
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Bonus paid for each online student
+                  </p>
+                </div>
+              </div>
 
-            <div>
-              <Label htmlFor="studio_penalty_per_student">Penalty per Missing Student ({formData.currency})</Label>
-              <Input
-                id="studio_penalty_per_student"
-                type="number"
-                step="0.01"
-                min="0"
-                value={formData.studio_penalty_per_student}
-                onChange={(e) => handleInputChange("studio_penalty_per_student", e.target.value)}
-                placeholder="e.g., 5.00"
-                className={errors.studio_penalty_per_student ? "border-red-500" : ""}
-              />
-              {errors.studio_penalty_per_student && (
-                <p className="text-sm text-red-500 mt-1">{errors.studio_penalty_per_student}</p>
-              )}
-              <p className="text-xs text-muted-foreground mt-1">
-                Penalty for each student below minimum threshold
-              </p>
+              {/* Rate Structure Explanation */}
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <h4 className="text-sm font-medium text-blue-800 mb-2">Rate Structure Example</h4>
+                <p className="text-sm text-blue-700 mb-2">
+                  With Base Rate: €45, Min Threshold: 3, Bonus Threshold: 15, Bonus Rate: €3
+                </p>
+                <ul className="text-xs text-blue-600 space-y-1">
+                  <li>• 2 students: €45 - €5 penalty = €40 (if penalty per missing student is €5)</li>
+                  <li>• 10 students: €45 (base rate, between thresholds)</li>
+                  <li>• 17 students: €45 + (2 × €3) = €51 (base + 2 bonus students)</li>
+                </ul>
+              </div>
             </div>
+          </>
+        )}
 
-            <div>
-              <Label htmlFor="online_bonus_per_student">Online Bonus per Student ({formData.currency})</Label>
-              <Input
-                id="online_bonus_per_student"
-                type="number"
-                step="0.01"
-                min="0"
-                value={formData.online_bonus_per_student}
-                onChange={(e) => handleInputChange("online_bonus_per_student", e.target.value)}
-                placeholder="e.g., 2.50"
-                className={errors.online_bonus_per_student ? "border-red-500" : ""}
-              />
-              {errors.online_bonus_per_student && (
-                <p className="text-sm text-red-500 mt-1">{errors.online_bonus_per_student}</p>
-              )}
-              <p className="text-xs text-muted-foreground mt-1">
-                Bonus paid for each online student
-              </p>
-            </div>
-          </div>
-
-          {/* Rate Structure Explanation */}
-          <div className="bg-blue-50 p-4 rounded-lg">
-            <h4 className="text-sm font-medium text-blue-800 mb-2">Rate Structure Example</h4>
-            <p className="text-sm text-blue-700 mb-2">
-              With Base Rate: €45, Min Threshold: 3, Bonus Threshold: 15, Bonus Rate: €3
+        {/* Teacher-specific explanation when rates are not shown */}
+        {entityType === 'teacher' && (
+          <div className="bg-purple-50 p-4 rounded-lg">
+            <h4 className="text-sm font-medium text-purple-800 mb-2">Teacher Billing Entity</h4>
+            <p className="text-sm text-purple-700">
+              Teacher entities are used only for payment recipient information. Rate calculations are always based on the <strong>original studio&apos;s rates</strong> where the substitute teaching occurs.
             </p>
-            <ul className="text-xs text-blue-600 space-y-1">
-              <li>• 2 students: €45 - €5 penalty = €40 (if penalty per missing student is €5)</li>
-              <li>• 10 students: €45 (base rate, between thresholds)</li>
-              <li>• 17 students: €45 + (2 × €3) = €51 (base + 2 bonus students)</li>
-            </ul>
           </div>
-        </div>
+        )}
 
         {/* Additional Information */}
         <div className="space-y-4">
@@ -635,8 +652,9 @@ const BillingEntityForm: React.FC<Props> = ({
               />
             </div>
 
-            <div>
-              <Label htmlFor="max_discount">Max Discount ({formData.currency})</Label>
+            {entityType === 'studio' && (
+              <div>
+                <Label htmlFor="max_discount">Max Discount ({formData.currency})</Label>
               <Input
                 id="max_discount"
                 type="number"
@@ -647,10 +665,11 @@ const BillingEntityForm: React.FC<Props> = ({
                 placeholder="e.g., 10.00"
                 className={errors.max_discount ? "border-red-500" : ""}
               />
-              {errors.max_discount && (
-                <p className="text-sm text-red-500 mt-1">{errors.max_discount}</p>
-              )}
-            </div>
+                {errors.max_discount && (
+                  <p className="text-sm text-red-500 mt-1">{errors.max_discount}</p>
+                )}
+              </div>
+            )}
           </div>
 
           <div>

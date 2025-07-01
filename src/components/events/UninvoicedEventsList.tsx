@@ -14,11 +14,22 @@ import { UnmatchedEventsSection } from './UnmatchedEventsSection'
 import { ExcludedEventsSection } from './ExcludedEventsSection'
 import { SubstituteEventModal } from './SubstituteEventModal'
 import { calculateTotalPayout, EventWithStudio } from '@/lib/invoice-utils'
+
 import { useInvoiceEvents, useStudioActions } from '@/lib/hooks'
 import { useCalendarFeeds } from '@/lib/hooks/useCalendarFeeds'
 import { RefreshCw, Building2, User, RotateCcw } from 'lucide-react'
 import { toast } from 'sonner'
 import { rematchEvents } from '@/lib/rematch-utils'
+
+// Extended type for events with substitute teacher data
+type ExtendedEventWithStudio = EventWithStudio & { 
+  substitute_teacher?: { 
+    entity_name: string; 
+    recipient_type: string; 
+    rate_type?: string; 
+    base_rate?: number;
+  } 
+}
 
 interface UninvoicedEventsListProps {
   userId: string
@@ -327,16 +338,19 @@ export function UninvoicedEventsList({ userId, onCreateInvoice, onCreateStudio }
             <Accordion type="multiple" className="w-full space-y-3 sm:space-y-4">
               {studios.map(studioId => {
                 const studioEvents = data[studioId] || []
-                const studio = studioEvents[0]?.studio
+                // Get the billing entity to display (substitute teacher if present, otherwise studio)
+                const firstEvent = studioEvents[0] as ExtendedEventWithStudio
+                const displayEntity = firstEvent?.substitute_teacher || firstEvent?.studio
+                
                 const selectedEventIds = selectedEvents[studioId] || []
                 const allEventsSelected = studioEvents.length > 0 && 
                   studioEvents.every((event) => selectedEventIds.includes(event.id))
                 const someEventsSelected = selectedEventIds.length > 0
                 const totalPayout = studioTotalPayouts[studioId] || 0
                 const selectedTotal = getSelectedTotal(studioId)
-                const isTeacher = isTeacherBillingEntity(studio)
+                const isTeacher = isTeacherBillingEntity(displayEntity)
 
-                if (!studio) return null
+                if (!displayEntity) return null
 
                 return (
                   <AccordionItem value={studioId} key={studioId}>
@@ -351,7 +365,7 @@ export function UninvoicedEventsList({ userId, onCreateInvoice, onCreateStudio }
                                 <Building2 className="w-4 h-4 text-blue-600 flex-shrink-0" />
                               )}
                               <CardTitle className="text-base sm:text-lg group-hover:text-blue-600 transition-colors overflow-hidden text-ellipsis whitespace-nowrap min-w-0">
-                                {studio.entity_name}
+                                {displayEntity.entity_name}
                               </CardTitle>
                               {isTeacher && (
                                 <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full flex-shrink-0">
@@ -367,7 +381,7 @@ export function UninvoicedEventsList({ userId, onCreateInvoice, onCreateStudio }
                                 {studioEvents.length} event{studioEvents.length !== 1 ? 's' : ''}
                               </span>
                               <span className="text-gray-500 text-xs hidden sm:block">
-                                {studio.rate_type === 'flat' ? 'Flat Rate' : 'Per Student'} • Base: €{studio.base_rate?.toFixed(2) || '0.00'}
+                                {displayEntity.rate_type === 'flat' ? 'Flat Rate' : 'Per Student'} • Base: €{displayEntity.base_rate?.toFixed(2) || '0.00'}
                               </span>
                             </div>
                           </div>

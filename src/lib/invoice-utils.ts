@@ -2,9 +2,10 @@ import { createClient } from '@/lib/supabase'
 import { Event, Invoice, InvoiceInsert, UserInvoiceSettings, BillingEntity, BillingEntityInsert, BillingEntityUpdate } from '@/lib/types'
 
 // Extended Event interface for substitute teaching  
-export interface ExtendedEvent extends Omit<Event, 'invoice_type' | 'substitute_notes'> {
+export interface ExtendedEvent extends Omit<Event, 'invoice_type' | 'substitute_notes' | 'substitute_teacher_entity_id'> {
   invoice_type: 'studio_invoice' | 'teacher_invoice' | null
   substitute_notes: string | null
+  substitute_teacher_entity_id: string | null
 }
 
 // Event with billing entity relationship
@@ -17,8 +18,15 @@ export interface EventWithStudio extends Event {
   studio: BillingEntity | null
 }
 
+// New interface for events with substitute teacher info
+export interface EventWithSubstituteTeacher extends Event {
+  studio: BillingEntity | null // Rate source (original studio)
+  substitute_teacher: BillingEntity | null // Payment recipient (teacher)
+}
+
 export interface InvoiceWithDetails extends Invoice {
   studio: BillingEntity
+  substitute_teacher?: BillingEntity | null // For substitute invoices
   events: Event[]
   event_count: number
 }
@@ -150,15 +158,17 @@ export function generateRateCalculationExamples(billingEntity: BillingEntity): {
 /**
  * Get uninvoiced events for a user
  * Excludes events marked as excluded from billing entity matching
+ * FIXED: Now studio_id always points to the rate source (original studio)
  */
-export async function getUninvoicedEvents(userId: string): Promise<EventWithStudio[]> {
+export async function getUninvoicedEvents(userId: string): Promise<EventWithSubstituteTeacher[]> {
   const supabase = createClient()
   
   const { data, error } = await supabase
     .from("events")
     .select(`
       *,
-      studio:billing_entities(*)
+      studio:billing_entities!events_billing_entity_id_fkey(*),
+      substitute_teacher:billing_entities!events_substitute_teacher_fkey(*)
     `)
     .eq("user_id", userId)
     .lt("end_time", new Date().toISOString()) // Events that have ended
@@ -172,23 +182,25 @@ export async function getUninvoicedEvents(userId: string): Promise<EventWithStud
     throw new Error(`Failed to fetch uninvoiced events: ${error.message}`)
   }
 
-  return (data || []) as EventWithStudio[]
+  return (data || []) as EventWithSubstituteTeacher[]
 }
 
 /**
  * Get uninvoiced events grouped by billing entity
+ * Groups by substitute teacher when present, otherwise by studio
  */
-export async function getUninvoicedEventsByStudio(userId: string): Promise<Record<string, EventWithStudio[]>> {
+export async function getUninvoicedEventsByStudio(userId: string): Promise<Record<string, EventWithSubstituteTeacher[]>> {
   const events = await getUninvoicedEvents(userId)
   
   return events.reduce((acc, event) => {
-    const studioId = event.studio_id!
-    if (!acc[studioId]) {
-      acc[studioId] = []
+    // Group by substitute teacher if present, otherwise by studio
+    const groupingId = event.substitute_teacher_entity_id || event.studio_id!
+    if (!acc[groupingId]) {
+      acc[groupingId] = []
     }
-    acc[studioId].push(event)
+    acc[groupingId].push(event)
     return acc
-  }, {} as Record<string, EventWithStudio[]>)
+  }, {} as Record<string, EventWithSubstituteTeacher[]>)
 }
 
 /**
@@ -201,7 +213,8 @@ export async function getUserInvoices(userId: string): Promise<InvoiceWithDetail
     .from("invoices")
     .select(`
       *,
-      studio:billing_entities(*),
+      studio:billing_entities!invoices_billing_entity_id_fkey(*),
+      substitute_teacher:billing_entities!invoices_substitute_teacher_fkey(*),
       events(*)
     `)
     .eq("user_id", userId)
@@ -216,6 +229,7 @@ export async function getUserInvoices(userId: string): Promise<InvoiceWithDetail
     ...invoice,
     events: invoice.events || [],
     event_count: invoice.events?.length || 0,
+    substitute_teacher: invoice.substitute_teacher || null,
   }))
 }
 
@@ -270,7 +284,7 @@ export async function getInvoiceById(invoiceId: string): Promise<InvoiceWithDeta
     .from("invoices")
     .select(`
       *,
-      studio:billing_entities(*),
+      studio:billing_entities!invoices_billing_entity_id_fkey(*),
       events(*)
     `)
     .eq("id", invoiceId)
@@ -845,6 +859,7 @@ export async function createTeacherBillingEntity(
 
 /**
  * Set up an event for teacher-to-teacher invoicing using an existing billing entity
+ * FIXED: Now keeps studio_id for rate calculations and uses substitute_teacher_entity_id for payment recipient
  */
 export async function setupSubstituteEventWithExistingEntity(
   eventId: string,
@@ -853,11 +868,12 @@ export async function setupSubstituteEventWithExistingEntity(
 ): Promise<void> {
   const supabase = createClient()
 
-  // Update the event to reference the existing billing entity and mark as teacher invoice
+  // Update the event to track substitute teacher while keeping original studio for rates
   const { error } = await supabase
     .from("events")
     .update({
-      studio_id: billingEntityId, // Reference the existing billing entity
+      // Keep studio_id unchanged - it's used for rate calculations
+      substitute_teacher_entity_id: billingEntityId, // NEW: Track who gets paid
       invoice_type: 'teacher_invoice',
       substitute_notes: substituteNotes || null,
       exclude_from_studio_matching: true // Exclude from automatic studio matching
@@ -873,6 +889,7 @@ export async function setupSubstituteEventWithExistingEntity(
 /**
  * Set up an event for teacher-to-teacher invoicing (substitute scenario)
  * Creates a billing entity for the recipient and links the event to it
+ * FIXED: Now keeps studio_id for rate calculations and uses substitute_teacher_entity_id for payment recipient
  */
 export async function setupSubstituteEvent(
   eventId: string, 
@@ -899,11 +916,12 @@ export async function setupSubstituteEvent(
   // Create or find the billing entity for this recipient
   const billingEntityId = await createTeacherBillingEntity(event.user_id, recipient)
 
-  // Update the event to reference the billing entity and mark as teacher invoice
+  // Update the event to track substitute teacher while keeping original studio for rates
   const { error } = await supabase
     .from("events")
     .update({
-      studio_id: billingEntityId, // Reference the billing entity
+      // Keep studio_id unchanged - it's used for rate calculations
+      substitute_teacher_entity_id: billingEntityId, // NEW: Track who gets paid
       invoice_type: 'teacher_invoice',
       substitute_notes: substituteNotes || null,
       exclude_from_studio_matching: true // Exclude from automatic studio matching

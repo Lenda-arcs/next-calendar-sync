@@ -193,6 +193,7 @@ export type Database = {
           students_studio: number | null
           studio_id: string | null
           substitute_notes: string | null
+          substitute_teacher_entity_id: string | null
           tags: string[] | null
           title: string | null
           uid: string | null
@@ -219,6 +220,7 @@ export type Database = {
           students_studio?: number | null
           studio_id?: string | null
           substitute_notes?: string | null
+          substitute_teacher_entity_id?: string | null
           tags?: string[] | null
           title?: string | null
           uid?: string | null
@@ -245,6 +247,7 @@ export type Database = {
           students_studio?: number | null
           studio_id?: string | null
           substitute_notes?: string | null
+          substitute_teacher_entity_id?: string | null
           tags?: string[] | null
           title?: string | null
           uid?: string | null
@@ -272,6 +275,13 @@ export type Database = {
             columns: ["invoice_id"]
             isOneToOne: false
             referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "events_substitute_teacher_fkey"
+            columns: ["substitute_teacher_entity_id"]
+            isOneToOne: false
+            referencedRelation: "billing_entities"
             referencedColumns: ["id"]
           },
           {
@@ -306,6 +316,7 @@ export type Database = {
           sent_at: string | null
           status: Database["public"]["Enums"]["invoice_status"]
           studio_id: string
+          substitute_teacher_entity_id: string | null
           user_id: string
         }
         Insert: {
@@ -323,6 +334,7 @@ export type Database = {
           sent_at?: string | null
           status?: Database["public"]["Enums"]["invoice_status"]
           studio_id: string
+          substitute_teacher_entity_id?: string | null
           user_id: string
         }
         Update: {
@@ -340,12 +352,20 @@ export type Database = {
           sent_at?: string | null
           status?: Database["public"]["Enums"]["invoice_status"]
           studio_id?: string
+          substitute_teacher_entity_id?: string | null
           user_id?: string
         }
         Relationships: [
           {
             foreignKeyName: "invoices_billing_entity_id_fkey"
             columns: ["studio_id"]
+            isOneToOne: false
+            referencedRelation: "billing_entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_substitute_teacher_fkey"
+            columns: ["substitute_teacher_entity_id"]
             isOneToOne: false
             referencedRelation: "billing_entities"
             referencedColumns: ["id"]

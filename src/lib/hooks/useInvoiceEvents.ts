@@ -1,16 +1,16 @@
 'use client'
 
-import { useMemo } from 'react'
+
 import { useSupabaseQuery } from './useSupabaseQuery'
-import { getUninvoicedEvents, getUnmatchedEvents, getExcludedEvents, EventWithStudio } from '@/lib/invoice-utils'
+import { getUninvoicedEvents, getUninvoicedEventsByStudio, getUnmatchedEvents, getExcludedEvents, EventWithSubstituteTeacher } from '@/lib/invoice-utils'
 import { Event } from '@/lib/types'
 
 interface UseInvoiceEventsResult {
   // Data
-  uninvoicedEvents: EventWithStudio[] | null
+  uninvoicedEvents: EventWithSubstituteTeacher[] | null
   unmatchedEvents: Event[] | null
   excludedEvents: Event[] | null
-  eventsByStudio: Record<string, EventWithStudio[]> | null
+  eventsByStudio: Record<string, EventWithSubstituteTeacher[]> | null
   
   // Loading states
   isLoading: boolean
@@ -66,24 +66,21 @@ export function useInvoiceEvents(userId: string): UseInvoiceEventsResult {
     enabled: !!userId
   })
 
-  // Group uninvoiced events by studio
-  const eventsByStudio = useMemo(() => {
-    if (!uninvoicedEvents) return null
-    
-    return uninvoicedEvents.reduce((acc, event) => {
-      const studioId = event.studio_id!
-      if (!acc[studioId]) {
-        acc[studioId] = []
-      }
-      acc[studioId].push(event)
-      return acc
-    }, {} as Record<string, EventWithStudio[]>)
-  }, [uninvoicedEvents])
+  // Fetch events grouped by studio/teacher (using the updated grouping logic)
+  const {
+    data: eventsByStudio,
+    refetch: refetchEventsByStudio
+  } = useSupabaseQuery({
+    queryKey: ['uninvoiced-events-by-studio', userId],
+    fetcher: () => getUninvoicedEventsByStudio(userId),
+    enabled: !!userId
+  })
 
   // Consolidated refetch function
   const refetchAll = async () => {
     await Promise.all([
       refetchUninvoiced(),
+      refetchEventsByStudio(),
       refetchUnmatched(),
       refetchExcluded()
     ])
