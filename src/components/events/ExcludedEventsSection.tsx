@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { EyeOff, RefreshCw, Eye, RotateCcw, Calendar } from 'lucide-react'
 import { useSupabaseMutation } from '@/lib/hooks/useSupabaseMutation'
@@ -11,6 +10,7 @@ import { Event } from '@/lib/types'
 import { toggleEventExclusion } from '@/lib/invoice-utils'
 import { rematchEvents } from '@/lib/rematch-utils'
 import { toast } from 'sonner'
+import { InfoCardSection, colorSchemes } from './shared'
 
 interface ExcludedEventsSectionProps {
   excludedEvents: Event[]
@@ -118,54 +118,30 @@ export function ExcludedEventsSection({
 
   return (
     <>
-      <Card className="border-orange-200 bg-orange-50/50">
-        <CardContent className="p-4">
-          {/* Mobile-first responsive layout */}
-          <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-0 sm:justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-orange-100 rounded-full flex-shrink-0">
-                <EyeOff className="w-4 h-4 text-orange-600" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <h3 className="font-medium text-orange-900">
-                  Excluded Events ({excludedEvents.length})
-                </h3>
-                <p className="text-sm text-orange-700 hidden sm:block">
-                  Events marked as excluded from studio matching
-                </p>
-                <p className="text-xs text-orange-700 sm:hidden">
-                  Excluded from matching
-                </p>
-              </div>
-            </div>
-            
-            {/* Mobile: Stack buttons vertically, Desktop: Horizontal */}
-            <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={onRefresh}
-                disabled={isLoading || isProcessing}
-                className="border-orange-200 text-orange-700 hover:bg-orange-100 w-full sm:w-auto"
-              >
-                <RefreshCw className={`mr-2 h-3 w-3 ${isLoading || isProcessing ? 'animate-spin' : ''}`} />
-                <span className="sm:hidden">Refresh</span>
-                <span className="hidden sm:inline">Refresh</span>
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => setShowEventsDialog(true)}
-                className="border-orange-200 text-orange-700 hover:bg-orange-100 w-full sm:w-auto"
-              >
-                <Eye className="mr-2 h-3 w-3" />
-                <span className="sm:hidden">View ({excludedEvents.length})</span>
-                <span className="hidden sm:inline">View All</span>
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <InfoCardSection
+        title="Excluded Events"
+        count={excludedEvents.length}
+        description="Events marked as excluded from studio matching"
+        mobileDescription="Excluded from matching"
+        icon={EyeOff}
+        colorScheme={colorSchemes.orange}
+        actions={[
+          {
+            label: 'Refresh',
+            mobileLabel: 'Refresh',
+            icon: RefreshCw,
+            onClick: onRefresh,
+            disabled: isLoading || isProcessing,
+            loading: isLoading || isProcessing
+          },
+          {
+            label: 'View All',
+            mobileLabel: `View (${excludedEvents.length})`,
+            icon: Eye,
+            onClick: () => setShowEventsDialog(true)
+          }
+        ]}
+      />
 
       <UnifiedDialog
         open={showEventsDialog}

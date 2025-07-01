@@ -1,12 +1,11 @@
 'use client'
 
 import { useState } from 'react'
-import { Card, CardContent } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 import { History, RefreshCw } from 'lucide-react'
 import { toast } from 'sonner'
 import { useCalendarFeedActions } from '@/lib/hooks/useCalendarFeeds'
 import { rematchEvents } from '@/lib/rematch-utils'
+import { InfoCardSection, colorSchemes } from './shared'
 
 interface CalendarFeed {
   id: string
@@ -17,9 +16,10 @@ interface HistoricalSyncCTAProps {
   calendarFeeds: CalendarFeed[]
   userId: string
   onSyncComplete?: () => void
+  layout?: 'horizontal' | 'vertical'
 }
 
-export function HistoricalSyncCTA({ calendarFeeds, userId, onSyncComplete }: HistoricalSyncCTAProps) {
+export function HistoricalSyncCTA({ calendarFeeds, userId, onSyncComplete, layout = 'horizontal' }: HistoricalSyncCTAProps) {
   const [isHistoricalSyncing, setIsHistoricalSyncing] = useState(false)
   const { syncFeed } = useCalendarFeedActions()
 
@@ -90,43 +90,26 @@ export function HistoricalSyncCTA({ calendarFeeds, userId, onSyncComplete }: His
   }
 
   return (
-    <Card className="bg-gradient-to-br from-blue-50/80 to-blue-100/40 border-blue-200/80 shadow-sm hover:shadow-md transition-shadow duration-200">
-      <CardContent className="py-5 px-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-              <h4 className="text-sm font-semibold text-blue-900">
-                Missing older events?
-              </h4>
-            </div>
-            <p className="text-xs text-blue-700/90 leading-relaxed">
-              Sync historical events from your connected calendar feeds to find uninvoiced classes from previous months.
-            </p>
-          </div>
-          <div className="flex-shrink-0">
-            <Button 
-              variant="outline" 
-              onClick={handleHistoricalSync}
-              disabled={isHistoricalSyncing}
-              size="sm"
-              className="bg-blue-100 hover:bg-blue-200 text-blue-800 border-blue-300 whitespace-nowrap shadow-sm"
-            >
-              {isHistoricalSyncing ? (
-                <>
-                  <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                  Syncing...
-                </>
-              ) : (
-                <>
-                  <History className="mr-2 h-4 w-4" />
-                  Sync Historical Events
-                </>
-              )}
-            </Button>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+    <InfoCardSection
+      title="Missing older events"
+      count={0}
+      description="Sync historical events from your connected calendar feeds to find uninvoiced classes from previous months."
+      mobileDescription="Sync historical events from calendar feeds"
+      icon={History}
+      colorScheme={colorSchemes.blue}
+      layout={layout}
+      actions={[
+        {
+          label: isHistoricalSyncing ? 'Syncing...' : 'Sync Historical Events',
+          mobileLabel: isHistoricalSyncing ? 'Syncing...' : 'Sync Historical',
+          icon: isHistoricalSyncing ? RefreshCw : History,
+          onClick: handleHistoricalSync,
+          disabled: isHistoricalSyncing,
+          loading: isHistoricalSyncing,
+          variant: 'outline',
+          className: 'shadow-sm'
+        }
+      ]}
+    />
   )
 } 

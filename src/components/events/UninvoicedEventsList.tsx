@@ -9,14 +9,16 @@ import { EventInvoiceCard } from './EventInvoiceCard'
 import { EventDetailsEditModal } from './EventDetailsEditModal'
 import { StudioActionButtons } from './StudioActionButtons'
 import { HistoricalSyncCTA } from './HistoricalSyncCTA'
-import { RematchStudiosButton } from './RematchEventsButton'
+import { InfoCardSection, colorSchemes } from './shared'
 import { UnmatchedEventsSection } from './UnmatchedEventsSection'
 import { ExcludedEventsSection } from './ExcludedEventsSection'
 import { SubstituteEventModal } from './SubstituteEventModal'
 import { calculateTotalPayout, EventWithStudio } from '@/lib/invoice-utils'
 import { useInvoiceEvents, useStudioActions } from '@/lib/hooks'
 import { useCalendarFeeds } from '@/lib/hooks/useCalendarFeeds'
-import { RefreshCw, Building2, User } from 'lucide-react'
+import { RefreshCw, Building2, User, RotateCcw } from 'lucide-react'
+import { toast } from 'sonner'
+import { rematchEvents } from '@/lib/rematch-utils'
 
 interface UninvoicedEventsListProps {
   userId: string
@@ -30,6 +32,7 @@ export function UninvoicedEventsList({ userId, onCreateInvoice, onCreateStudio }
   const [substituteEventId, setSubstituteEventId] = useState<string | null>(null)
   const [substituteEventIds, setSubstituteEventIds] = useState<string[]>([])
   const [editingEventId, setEditingEventId] = useState<string | null>(null)
+  const [isRematchingStudios, setIsRematchingStudios] = useState(false)
 
   // ==================== DATA FETCHING ====================
   const {
@@ -116,6 +119,38 @@ export function UninvoicedEventsList({ userId, onCreateInvoice, onCreateStudio }
   const handleEditEvent = useCallback((eventId: string) => {
     setEditingEventId(eventId)
   }, [])
+
+  // ==================== REMATCH FUNCTIONALITY ====================
+  const handleRematchStudios = useCallback(async () => {
+    try {
+      setIsRematchingStudios(true)
+
+      const rematchResult = await rematchEvents({
+        user_id: userId,
+        rematch_tags: false,
+        rematch_studios: true
+      })
+      
+      toast.success('Studio Matching Updated!', {
+        description: `${rematchResult.updated_count} out of ${rematchResult.total_events_processed} events were matched with studios.`,
+        duration: 4000,
+      })
+
+      // Refresh data after successful rematch
+      refetchAll()
+
+    } catch (err) {
+      console.error('Failed to rematch studios:', err)
+      const errorMessage = err instanceof Error ? err.message : 'Failed to rematch studios'
+      
+      toast.error('Failed to update studio matching', {
+        description: errorMessage,
+        duration: 6000,
+      })
+    } finally {
+      setIsRematchingStudios(false)
+    }
+  }, [userId, refetchAll])
 
   const selectedEvent = substituteEventId 
     ? uninvoicedEvents?.find(event => event.id === substituteEventId) || null
@@ -226,34 +261,29 @@ export function UninvoicedEventsList({ userId, onCreateInvoice, onCreateStudio }
             calendarFeeds={calendarFeeds}
             userId={userId}
             onSyncComplete={refetchAll}
+            layout="vertical"
           />
-          <Card className="bg-gradient-to-br from-purple-50/80 to-purple-100/40 border-purple-200/80 shadow-sm hover:shadow-md transition-shadow duration-200">
-            <CardContent className="py-5 px-6">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                    <h4 className="text-sm font-semibold text-purple-900">
-                      Studio matching issues?
-                    </h4>
-                  </div>
-                  <p className="text-xs text-purple-700/90 leading-relaxed">
-                    Re-apply studio location patterns to existing events to fix assignment problems.
-                  </p>
-                </div>
-                <div className="flex-shrink-0">
-                                  <RematchStudiosButton 
-                  userId={userId}
-                  variant="outline"
-                  size="sm"
-                  className="bg-purple-100 hover:bg-purple-200 text-purple-800 border-purple-300 shadow-sm"
-                >
-                  Fix Studio Matching
-                </RematchStudiosButton>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <InfoCardSection
+            title="Studio matching issues"
+            count={0}
+            description="Re-apply studio location patterns to existing events to fix assignment problems."
+            mobileDescription="Fix studio assignment problems"
+            icon={RotateCcw}
+            colorScheme={colorSchemes.purple}
+            layout="vertical"
+            actions={[
+              {
+                label: isRematchingStudios ? 'Updating...' : 'Fix Studio Matching',
+                mobileLabel: isRematchingStudios ? 'Updating...' : 'Fix Matching',
+                icon: RotateCcw,
+                onClick: handleRematchStudios,
+                disabled: isRematchingStudios,
+                loading: isRematchingStudios,
+                variant: 'outline',
+                className: 'shadow-sm'
+              }
+            ]}
+          />
         </div>
       )}
 
@@ -263,14 +293,6 @@ export function UninvoicedEventsList({ userId, onCreateInvoice, onCreateStudio }
         isLoading={isUnmatchedLoading}
         onRefresh={refetchAll}
         onCreateStudio={onCreateStudio || (() => {})}
-        userId={userId}
-      />
-
-      {/* Excluded Events Section */}
-      <ExcludedEventsSection
-        excludedEvents={excludedEvents || []}
-        isLoading={isExcludedLoading}
-        onRefresh={refetchAll}
         userId={userId}
       />
 
@@ -486,6 +508,14 @@ export function UninvoicedEventsList({ userId, onCreateInvoice, onCreateStudio }
           )
         }}
       </DataLoader>
+
+      {/* Excluded Events Section */}
+      <ExcludedEventsSection
+        excludedEvents={excludedEvents || []}
+        isLoading={isExcludedLoading}
+        onRefresh={refetchAll}
+        userId={userId}
+      />
 
       {/* Substitute Event Modal */}
       <SubstituteEventModal

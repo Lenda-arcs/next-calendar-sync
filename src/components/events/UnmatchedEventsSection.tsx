@@ -1,17 +1,17 @@
 'use client'
 
 import { useState } from 'react'
-import { Card, CardContent } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 import { Building2, RefreshCw, Plus, Eye, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { useCalendarFeeds, useCalendarFeedActions } from '@/lib/hooks/useCalendarFeeds'
 import { useSupabaseMutation } from '@/lib/hooks/useSupabaseMutation'
 import { UnifiedDialog } from '@/components/ui/unified-dialog'
+import { Button } from '@/components/ui/button'
 import { EventCard } from './EventCard'
 import { Event } from '@/lib/types'
 import { markEventAsExcluded } from '@/lib/invoice-utils'
 import { rematchEvents } from '@/lib/rematch-utils'
+import { InfoCardSection, colorSchemes } from './shared'
 
 type UnmatchedEvent = Event
 
@@ -146,81 +146,57 @@ export function UnmatchedEventsSection({
 
   return (
     <>
-      <Card className="bg-orange-50/50 border-orange-200">
-        <CardContent className="py-4">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-2">
-                <Building2 className="h-5 w-5 text-orange-600" />
-                <h4 className="text-sm font-medium text-orange-900">
-                  Unmatched Events ({unmatchedEvents.length})
-                </h4>
-              </div>
-              <p className="text-xs text-orange-700 mb-3">
-                These events don&apos;t have a studio assigned yet. Create studio profiles to automatically match events and generate invoices.
-              </p>
-              
-              {/* Show first few event locations as examples */}
-              <div className="flex flex-wrap gap-1">
-                {Array.from(new Set(
-                  unmatchedEvents
-                    .map(event => event.location)
-                    .filter(Boolean)
-                    .slice(0, 3)
-                )).map((location, index) => (
-                  <span key={index} className="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded">
-                    {location}
-                  </span>
-                ))}
-                {unmatchedEvents.filter(e => e.location).length > 3 && (
-                  <span className="text-xs text-orange-600">
-                    +{unmatchedEvents.filter(e => e.location).length - 3} more locations
-                  </span>
-                )}
-              </div>
-            </div>
-            
-            <div className="flex flex-col sm:flex-row gap-2">
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => setShowEventsDialog(true)}
-                className="bg-orange-100 hover:bg-orange-200 text-orange-800 border-orange-300"
-              >
-                <Eye className="mr-2 h-4 w-4" />
-                View Events
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={handleRefresh}
-                disabled={isLoading || isRefreshing}
-                className="bg-orange-100 hover:bg-orange-200 text-orange-800 border-orange-300"
-              >
-                {(isLoading || isRefreshing) ? (
-                  <>
-                    <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                    {isRefreshing ? 'Syncing...' : 'Refreshing...'}
-                  </>
-                ) : (
-                  <>
-                    <RefreshCw className="mr-2 h-4 w-4" />
-                    Refresh
-                  </>
-                )}
-              </Button>
-              <Button 
-                onClick={onCreateStudio}
-                size="sm"
-                className="bg-orange-600 hover:bg-orange-700 text-white whitespace-nowrap"
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                Create Studio
-              </Button>
-            </div>
+      <InfoCardSection
+        title="Unmatched Events"
+        count={unmatchedEvents.length}
+        description="These events don't have a studio assigned yet. Create studio profiles to automatically match events and generate invoices."
+        mobileDescription="Need studio assignment for billing"
+        icon={Building2}
+        colorScheme={colorSchemes.orange}
+        actions={[
+          {
+            label: 'View Events',
+            mobileLabel: 'View',
+            icon: Eye,
+            onClick: () => setShowEventsDialog(true)
+          },
+          {
+            label: 'Refresh',
+            mobileLabel: isRefreshing ? 'Syncing...' : 'Refresh',
+            icon: RefreshCw,
+            onClick: handleRefresh,
+            disabled: isLoading || isRefreshing,
+            loading: isLoading || isRefreshing
+          },
+          {
+            label: 'Create Studio',
+            mobileLabel: 'Create',
+            icon: Plus,
+            onClick: onCreateStudio,
+            variant: 'default',
+            className: 'bg-orange-600 hover:bg-orange-700 text-white'
+          }
+        ]}
+        additionalContent={
+          <div className="flex flex-wrap gap-1">
+            {Array.from(new Set(
+              unmatchedEvents
+                .map(event => event.location)
+                .filter(Boolean)
+                .slice(0, 3)
+            )).map((location, index) => (
+              <span key={index} className="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded">
+                {location}
+              </span>
+            ))}
+            {unmatchedEvents.filter(e => e.location).length > 3 && (
+              <span className="text-xs text-orange-600">
+                +{unmatchedEvents.filter(e => e.location).length - 3} more locations
+              </span>
+            )}
           </div>
-        </CardContent>
-      </Card>
+        }
+      />
 
       {/* Unmatched Events Dialog */}
       <UnifiedDialog
