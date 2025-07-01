@@ -269,8 +269,8 @@ export function InvoiceManagement({ userId }: InvoiceManagementProps) {
 
         <TabsContent value="settings">
           <TabContent 
-            title="Invoice Settings & Studios"
-            description="Manage your personal billing information and studio configurations."
+            title="Invoice Settings & Billing Profiles"
+            description="Manage your personal billing information and billing entity configurations."
           >
             <InvoiceSettings userId={userId} />
           </TabContent>

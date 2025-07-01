@@ -38,6 +38,7 @@ export {
 
 export { useTagForm } from './useTagForm'
 export { useTagOperations } from './useTagOperations'
+export { useBillingEntityManagement } from './useBillingEntityManagement'
 export { useCalendarSync } from './useCalendarSync'
 export { 
   useCalendarFeeds,
