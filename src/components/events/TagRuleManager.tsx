@@ -5,17 +5,18 @@ import { useSupabaseQuery } from '@/lib/hooks/useSupabaseQuery'
 import { useSupabaseMutation } from '@/lib/hooks/useSupabaseMutation'
 import { useKeywordSuggestions } from '@/lib/hooks/useKeywordSuggestions'
 import { TagRule, Tag } from '@/lib/types'
+import { rematchUserTags } from '@/lib/rematch-utils'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { AlertCircle, CheckCircle } from 'lucide-react'
+import DataLoader from '@/components/ui/data-loader'
+import { TagRulesSkeleton } from '@/components/ui/skeleton'
+import { TagRulesCard } from './TagRulesCard'
 
 // Extended TagRule interface to handle new fields until database types are regenerated
 interface ExtendedTagRule extends TagRule {
   keywords: string[] | null
   location_keywords: string[] | null
 }
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { AlertCircle } from 'lucide-react'
-import DataLoader from '@/components/ui/data-loader'
-import { TagRulesSkeleton } from '@/components/ui/skeleton'
-import { TagRulesCard } from './TagRulesCard'
 
 interface TagRuleState {
   newRule: {
@@ -46,6 +47,8 @@ export const TagRuleManager: React.FC<Props> = ({ userId, availableTags: propTag
   const [state, setState] = useState<TagRuleState>(initialState)
   const [optimisticRules, setOptimisticRules] = useState<ExtendedTagRule[]>([])
   const [deletedRuleIds, setDeletedRuleIds] = useState<Set<string>>(new Set())
+  const [isRematching, setIsRematching] = useState(false)
+  const [rematchResults, setRematchResults] = useState<{ updated_count: number; total_events_processed: number } | null>(null)
 
   // Fetch tag rules for the user
   const { 
@@ -110,7 +113,7 @@ export const TagRuleManager: React.FC<Props> = ({ userId, availableTags: propTag
       if (error) throw error
       return data
     },
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       // Clear form
       setState((prev) => ({
         ...prev,
@@ -122,7 +125,21 @@ export const TagRuleManager: React.FC<Props> = ({ userId, availableTags: propTag
         setOptimisticRules(prev => [...prev, data[0]])
       }
       
-      // No refetch - trust the database operation succeeded
+      // 🚀 AUTOMATICALLY REMATCH TAGS INSTEAD OF REQUIRING FULL SYNC
+      try {
+        setIsRematching(true)
+        const rematchResult = await rematchUserTags(userId)
+        setRematchResults(rematchResult)
+        
+        // Show success message for a few seconds
+        setTimeout(() => {
+          setRematchResults(null)
+        }, 5000)
+      } catch (error) {
+        console.error('Failed to rematch tags after rule creation:', error)
+      } finally {
+        setIsRematching(false)
+      }
     },
     onError: () => {
       // Clear optimistic state on error
@@ -153,7 +170,7 @@ export const TagRuleManager: React.FC<Props> = ({ userId, availableTags: propTag
       if (error) throw error
       return data
     },
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       // Clear editing state
       setState((prev) => ({
         ...prev,
@@ -168,7 +185,21 @@ export const TagRuleManager: React.FC<Props> = ({ userId, availableTags: propTag
         ))
       }
       
-      // No refetch - trust the database operation succeeded
+      // 🚀 AUTOMATICALLY REMATCH TAGS INSTEAD OF REQUIRING FULL SYNC
+      try {
+        setIsRematching(true)
+        const rematchResult = await rematchUserTags(userId)
+        setRematchResults(rematchResult)
+        
+        // Show success message for a few seconds
+        setTimeout(() => {
+          setRematchResults(null)
+        }, 5000)
+      } catch (error) {
+        console.error('Failed to rematch tags after rule update:', error)
+      } finally {
+        setIsRematching(false)
+      }
     },
     onError: () => {
       console.error('Failed to update tag rule')
@@ -187,14 +218,28 @@ export const TagRuleManager: React.FC<Props> = ({ userId, availableTags: propTag
       if (error) throw error
       return data
     },
-    onSuccess: (_, ruleId) => {
+    onSuccess: async (_, ruleId) => {
       // Mark as deleted in optimistic state
       setDeletedRuleIds(prev => new Set([...prev, ruleId]))
       
       // Remove from optimistic additions if it was recently added
       setOptimisticRules(prev => prev.filter(rule => rule.id !== ruleId))
       
-      // No refetch - trust the database operation succeeded
+      // 🚀 AUTOMATICALLY REMATCH TAGS INSTEAD OF REQUIRING FULL SYNC
+      try {
+        setIsRematching(true)
+        const rematchResult = await rematchUserTags(userId)
+        setRematchResults(rematchResult)
+        
+        // Show success message for a few seconds
+        setTimeout(() => {
+          setRematchResults(null)
+        }, 5000)
+      } catch (error) {
+        console.error('Failed to rematch tags after rule deletion:', error)
+      } finally {
+        setIsRematching(false)
+      }
     },
     onError: (_, ruleId) => {
       // Remove from deleted set to restore the rule
@@ -284,12 +329,26 @@ export const TagRuleManager: React.FC<Props> = ({ userId, availableTags: propTag
 
   return (
     <div className="space-y-8">
-      {(creating || (error && !initialLoading)) && (
+      {/* Rematch Results Alert */}
+      {rematchResults && (
+        <Alert>
+          <CheckCircle className="h-4 w-4" />
+          <AlertTitle>Tags Updated Successfully!</AlertTitle>
+          <AlertDescription>
+            {rematchResults.updated_count} out of {rematchResults.total_events_processed} events were re-tagged with your updated rules.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Loading States */}
+      {(creating || updating || isRematching || (error && !initialLoading)) && (
         <Alert variant={error ? "destructive" : "default"}>
           <AlertCircle className="h-4 w-4" />
-          <AlertTitle>{error ? "Error" : "Creating Rule"}</AlertTitle>
+          <AlertTitle>
+            {error ? "Error" : isRematching ? "Updating Event Tags" : creating ? "Creating Rule" : "Updating Rule"}
+          </AlertTitle>
           <AlertDescription>
-            {error ? errorMessage : "Adding new tag rule..."}
+            {error ? errorMessage : isRematching ? "Re-applying tag rules to existing events..." : creating ? "Adding new tag rule..." : "Updating tag rule..."}
           </AlertDescription>
         </Alert>
       )}

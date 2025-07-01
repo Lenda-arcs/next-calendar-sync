@@ -9,7 +9,8 @@ import { Select } from "../ui/select";
 import FormMultiSelect from "../ui/form-multi-select";
 import { Textarea } from "../ui/textarea";
 import { useSupabaseMutation } from "../../lib/hooks/useSupabaseMutation";
-import { createStudio, updateStudio, matchEventsToStudios } from "../../lib/invoice-utils";
+import { createStudio, updateStudio } from "../../lib/invoice-utils";
+import { rematchUserStudios } from "../../lib/rematch-utils";
 import type { BillingEntity, BillingEntityInsert, BillingEntityUpdate } from "../../lib/types";
 
 interface Props {
@@ -75,9 +76,18 @@ const BillingEntityForm: React.FC<Props> = ({
     mutationFn: (supabase, data: BillingEntityInsert) => createStudio(data),
     onSuccess: async (data) => {
       try {
-        // Match events to the new billing entity
-        const matchResults = await matchEventsToStudios(user.id);
-        setMatchingResults(matchResults);
+        // 🚀 USE REMATCH FUNCTION INSTEAD OF HEAVY DATABASE OPERATION
+        const rematchResult = await rematchUserStudios(user.id);
+        
+        // Convert rematch result to legacy format for UI compatibility
+        setMatchingResults({
+          matchedEvents: rematchResult.updated_count,
+          studios: [{
+            studioId: (data as BillingEntity).id,
+            studioName: (data as BillingEntity).entity_name || 'New Studio',
+            matchedCount: rematchResult.updated_count
+          }]
+        });
         
         onLoadingChange?.(false);
         onStudioCreated?.(data as BillingEntity);
@@ -106,7 +116,7 @@ const BillingEntityForm: React.FC<Props> = ({
           });
         }
       } catch (error) {
-        console.error("Error matching events to studios:", error);
+        console.error("Error rematching events to studios:", error);
         onLoadingChange?.(false);
         onStudioCreated?.(data as BillingEntity);
       }
@@ -117,14 +127,23 @@ const BillingEntityForm: React.FC<Props> = ({
     mutationFn: (supabase, { id, data }: { id: string; data: BillingEntityUpdate }) => updateStudio(id, data),
     onSuccess: async (data) => {
       try {
-        // Match events to billing entities after update
-        const matchResults = await matchEventsToStudios(user.id);
-        setMatchingResults(matchResults);
+        // 🚀 USE REMATCH FUNCTION INSTEAD OF HEAVY DATABASE OPERATION
+        const rematchResult = await rematchUserStudios(user.id);
+        
+        // Convert rematch result to legacy format for UI compatibility
+        setMatchingResults({
+          matchedEvents: rematchResult.updated_count,
+          studios: [{
+            studioId: (data as BillingEntity).id,
+            studioName: (data as BillingEntity).entity_name || 'Updated Studio',
+            matchedCount: rematchResult.updated_count
+          }]
+        });
         
         onLoadingChange?.(false);
         onStudioUpdated?.(data as BillingEntity);
       } catch (error) {
-        console.error("Error matching events to studios:", error);
+        console.error("Error rematching events to studios:", error);
         onLoadingChange?.(false);
         onStudioUpdated?.(data as BillingEntity);
       }

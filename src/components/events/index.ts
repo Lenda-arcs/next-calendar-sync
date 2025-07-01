@@ -49,4 +49,12 @@ export { UserInvoiceSettingsForm } from './UserInvoiceSettingsForm'
 export { BillingEntityManagement } from './BillingEntityManagement'
 export { BillingEntityCard } from './BillingEntityCard'
 export { default as BillingEntityForm } from './BillingEntityForm'
-export { default as BillingEntityFormModal } from './BillingEntityFormModal' 
+export { default as BillingEntityFormModal } from './BillingEntityFormModal'
+
+// Rematch utilities
+export { 
+  RematchEventsButton, 
+  RematchTagsButton, 
+  RematchStudiosButton, 
+  RematchAllButton 
+} from './RematchEventsButton' 
