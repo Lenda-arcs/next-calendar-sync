@@ -147,9 +147,14 @@ const BillingEntityFormModal: React.FC<Props> = ({
                   <User className="w-6 h-6 text-purple-600" />
                   <span className="font-semibold text-lg">Teacher</span>
                 </div>
-                <p className="text-sm text-gray-600">
-                  Create a teacher profile for individual teacher billing. Use this for substitute teaching or direct teacher payments.
-                </p>
+                <div className="space-y-2 text-sm text-gray-600">
+                  <p>
+                    Create a teacher profile for substitute teaching and individual teacher billing.
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    <strong>Payment recipient only:</strong> Teacher entities are used only for payment recipient information. Rate calculations are always based on the original studio&apos;s rates where the substitute teaching occurs.
+                  </p>
+                </div>
               </button>
             </div>
           </div>

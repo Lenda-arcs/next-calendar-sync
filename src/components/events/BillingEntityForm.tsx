@@ -445,10 +445,13 @@ const BillingEntityForm: React.FC<Props> = ({
                   />
                 </div>
 
-                <div className="bg-blue-50 p-4 rounded-lg">
-                  <h4 className="text-sm font-medium text-blue-800 mb-2">Teacher Entity</h4>
-                  <p className="text-sm text-blue-700">
+                <div className="bg-purple-50 p-4 rounded-lg">
+                  <h4 className="text-sm font-medium text-purple-800 mb-2">Teacher Entity</h4>
+                  <p className="text-sm text-purple-700 mb-2">
                     Teacher entities track substitute teaching locations and help match the right teacher when converting events from studio to teacher invoicing.
+                  </p>
+                  <p className="text-sm text-purple-700">
+                    <strong>Payment recipient only:</strong> Rate calculations are always based on the original studio&apos;s rates where the substitute teaching occurs.
                   </p>
                 </div>
               </div>
@@ -626,15 +629,7 @@ const BillingEntityForm: React.FC<Props> = ({
           </>
         )}
 
-        {/* Teacher-specific explanation when rates are not shown */}
-        {entityType === 'teacher' && (
-          <div className="bg-purple-50 p-4 rounded-lg">
-            <h4 className="text-sm font-medium text-purple-800 mb-2">Teacher Billing Entity</h4>
-            <p className="text-sm text-purple-700">
-              Teacher entities are used only for payment recipient information. Rate calculations are always based on the <strong>original studio&apos;s rates</strong> where the substitute teaching occurs.
-            </p>
-          </div>
-        )}
+
 
         {/* Additional Information */}
         <div className="space-y-4">
