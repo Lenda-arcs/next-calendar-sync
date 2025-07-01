@@ -106,14 +106,14 @@ export function StudioActionButtons({
           onClick={onBatchSubstitute}
           disabled={isDisabled}
           variant="outline"
-          className={`${isMobile ? 'w-full' : 'w-full sm:w-auto'} ${opacity}`}
+          className={`${isMobile ? 'w-full' : 'w-full sm:w-auto'} ${opacity} whitespace-nowrap`}
         >
           {isMobile ? (
-            `Change to Teacher (${selectedCount})`
+            `To Teacher (${selectedCount})`
           ) : (
             <>
-              <span className="sm:hidden">Change to Teacher</span>
-              <span className="hidden sm:inline">Change to Teacher ({selectedCount})</span>
+              <span className="sm:hidden">To Teacher</span>
+              <span className="hidden sm:inline">To Teacher ({selectedCount})</span>
             </>
           )}
         </Button>
