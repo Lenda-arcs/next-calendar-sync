@@ -71,6 +71,7 @@ export function InvoiceCreationModal({
   // State for PDF generation
   const [createdInvoiceId, setCreatedInvoiceId] = React.useState<string | null>(null)
   const [isGeneratingPDF, setIsGeneratingPDF] = React.useState(false)
+  const [selectedLanguage, setSelectedLanguage] = React.useState<'en' | 'de' | 'es'>('en')
 
   // Reset PDF state when modal opens/closes
   React.useEffect(() => {
@@ -170,7 +171,7 @@ export function InvoiceCreationModal({
     
     setIsGeneratingPDF(true)
     try {
-      const { pdf_url } = await generateInvoicePDF(createdInvoiceId)
+      const { pdf_url } = await generateInvoicePDF(createdInvoiceId, selectedLanguage)
       
       toast('PDF Generated Successfully!', {
         description: 'Your invoice PDF has been created and is ready to view.',
@@ -235,33 +236,55 @@ export function InvoiceCreationModal({
               </p>
             </div>
 
-            <div className="flex justify-center space-x-4">
-              <Button
-                variant="outline"
-                onClick={handleGeneratePDF}
-                disabled={isGeneratingPDF || !createdInvoiceId}
-                className="flex items-center gap-2"
-              >
-                {isGeneratingPDF ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Generating PDF...
-                  </>
-                ) : (
-                  <>
-                    <FileText className="w-4 h-4" />
-                    Generate PDF
-                  </>
-                )}
-              </Button>
-              <Button 
-                onClick={() => {
-                  onClose()
-                  if (onSuccess) onSuccess()
-                }}
-              >
-                View All Invoices
-              </Button>
+            <div className="space-y-4">
+              {/* Language Selection */}
+              <div className="flex justify-center">
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="pdf-language" className="text-sm font-medium">
+                    PDF Language:
+                  </Label>
+                  <select
+                    id="pdf-language"
+                    value={selectedLanguage}
+                    onChange={(e) => setSelectedLanguage(e.target.value as 'en' | 'de' | 'es')}
+                    className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="en">English</option>
+                    <option value="de">Deutsch</option>
+                    <option value="es">Español</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex justify-center space-x-4">
+                <Button
+                  variant="outline"
+                  onClick={handleGeneratePDF}
+                  disabled={isGeneratingPDF || !createdInvoiceId}
+                  className="flex items-center gap-2"
+                >
+                  {isGeneratingPDF ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Generating PDF...
+                    </>
+                  ) : (
+                    <>
+                      <FileText className="w-4 h-4" />
+                      Generate PDF
+                    </>
+                  )}
+                </Button>
+                <Button 
+                  onClick={() => {
+                    onClose()
+                    if (onSuccess) onSuccess()
+                  }}
+                >
+                  View All Invoices
+                </Button>
+              </div>
             </div>
           </div>
         ) : (

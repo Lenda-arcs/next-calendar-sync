@@ -357,11 +357,11 @@ export async function updateInvoiceStatus(
 /**
  * Generate a PDF for an invoice using Supabase Edge Function
  */
-export async function generateInvoicePDF(invoiceId: string): Promise<{ pdf_url: string }> {
+export async function generateInvoicePDF(invoiceId: string, language: 'en' | 'de' | 'es' = 'en'): Promise<{ pdf_url: string }> {
   const supabase = createClient()
   
   const { data, error } = await supabase.functions.invoke('generate-invoice-pdf', {
-    body: { invoiceId }
+    body: { invoiceId, language }
   })
 
   if (error) {

@@ -560,6 +560,7 @@ export type Database = {
           email: string | null
           full_name: string
           iban: string | null
+          kleinunternehmerregelung: boolean | null
           phone: string | null
           tax_id: string | null
           updated_at: string | null
@@ -573,6 +574,7 @@ export type Database = {
           email?: string | null
           full_name: string
           iban?: string | null
+          kleinunternehmerregelung?: boolean | null
           phone?: string | null
           tax_id?: string | null
           updated_at?: string | null
@@ -586,6 +588,7 @@ export type Database = {
           email?: string | null
           full_name?: string
           iban?: string | null
+          kleinunternehmerregelung?: boolean | null
           phone?: string | null
           tax_id?: string | null
           updated_at?: string | null

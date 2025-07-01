@@ -15,7 +15,7 @@ interface InvoiceData {
   notes?: string
   created_at: string
   studio: {
-    studio_name: string
+    entity_name: string
     address?: string
     billing_email?: string
   }
@@ -24,38 +24,159 @@ interface InvoiceData {
     title: string
     start_time: string
     location?: string
+    students_studio?: number
+    students_online?: number
+    studio: {
+      entity_name: string
+      base_rate?: number
+      bonus_per_student?: number
+      online_bonus_per_student?: number
+      studio_penalty_per_student?: number
+      rate_type?: string
+    } | null
   }>
   user: {
     name: string
     email: string
   }
+  user_invoice_settings?: {
+    kleinunternehmerregelung: boolean
+  } | null
 }
 
-function generateInvoicePDF(invoiceData: InvoiceData): Uint8Array {
+type Language = 'en' | 'de' | 'es'
+
+interface Translations {
+  invoice: string
+  invoiceNumber: string
+  date: string
+  period: string
+  billTo: string
+  event: string
+  dateCol: string
+  studio: string
+  students: string
+  rate: string
+  studentLegend: string
+  total: string
+  notes: string
+  vatExemptGerman: string
+  vatExemptEnglish: string
+  untitledEvent: string
+}
+
+const translations: Record<Language, Translations> = {
+  en: {
+    invoice: 'INVOICE',
+    invoiceNumber: 'Invoice #',
+    date: 'Date',
+    period: 'Period',
+    billTo: 'Bill To',
+    event: 'Event',
+    dateCol: 'Date',
+    studio: 'Studio',
+    students: 'Students',
+    rate: 'Rate',
+    studentLegend: '(Studio/Online)',
+    total: 'Total',
+    notes: 'Notes',
+    vatExemptGerman: 'According to § 19 UStG, no VAT is charged.',
+    vatExemptEnglish: '(VAT exempt according to German small business regulation)',
+    untitledEvent: 'Untitled Event'
+  },
+  de: {
+    invoice: 'RECHNUNG',
+    invoiceNumber: 'Rechnung #',
+    date: 'Datum',
+    period: 'Zeitraum',
+    billTo: 'Rechnung an',
+    event: 'Veranstaltung',
+    dateCol: 'Datum',
+    studio: 'Studio',
+    students: 'Teilnehmer',
+    rate: 'Tarif',
+    studentLegend: '(Studio/Online)',
+    total: 'Gesamt',
+    notes: 'Notizen',
+    vatExemptGerman: 'Gemäß § 19 UStG wird keine Umsatzsteuer berechnet.',
+    vatExemptEnglish: '(MwSt.-befreit nach deutschem Kleinunternehmerrecht)',
+    untitledEvent: 'Unbenannte Veranstaltung'
+  },
+  es: {
+    invoice: 'FACTURA',
+    invoiceNumber: 'Factura #',
+    date: 'Fecha',
+    period: 'Período',
+    billTo: 'Facturar a',
+    event: 'Evento',
+    dateCol: 'Fecha',
+    studio: 'Estudio',
+    students: 'Estudiantes',
+    rate: 'Tarifa',
+    studentLegend: '(Estudio/Online)',
+    total: 'Total',
+    notes: 'Notas',
+    vatExemptGerman: 'Según § 19 UStG, no se cobra IVA.',
+    vatExemptEnglish: '(Exento de IVA según la regulación alemana de pequeñas empresas)',
+    untitledEvent: 'Evento sin título'
+  }
+}
+
+// Simple rate calculation function
+function calculateEventRate(event: InvoiceData['events'][0]): number {
+  if (!event.studio) return 0
+  
+  const baseRate = event.studio.base_rate || 0
+  const studioStudents = event.students_studio || 0
+  const onlineStudents = event.students_online || 0
+  
+  // Simple calculation - can be enhanced based on your business logic
+  let rate = baseRate
+  
+  if (event.studio.bonus_per_student && studioStudents > 0) {
+    rate += (event.studio.bonus_per_student * studioStudents)
+  }
+  
+  if (event.studio.online_bonus_per_student && onlineStudents > 0) {
+    rate += (event.studio.online_bonus_per_student * onlineStudents)
+  }
+  
+  return rate
+}
+
+function generateInvoicePDF(invoiceData: InvoiceData, language: Language = 'en'): ArrayBuffer {
+  console.log('Generating PDF with language:', language)
+  
   const doc = new jsPDF()
   const pageWidth = doc.internal.pageSize.width
   let yPosition = 20
+  
+  // Ensure language exists in translations
+  const validLanguage: Language = translations[language] ? language : 'en'
+  const t = translations[validLanguage]
+  
+  console.log('Using translations for:', validLanguage)
 
   // Header
   doc.setFontSize(20)
-  doc.text('INVOICE', pageWidth / 2, yPosition, { align: 'center' })
+  doc.text(t.invoice, pageWidth / 2, yPosition, { align: 'center' })
   yPosition += 20
 
   // Invoice details
   doc.setFontSize(12)
-  doc.text(`Invoice #: ${invoiceData.invoice_number}`, 20, yPosition)
+  doc.text(`${t.invoiceNumber}: ${invoiceData.invoice_number}`, 20, yPosition)
   yPosition += 10
-  doc.text(`Date: ${new Date(invoiceData.created_at).toLocaleDateString()}`, 20, yPosition)
+  doc.text(`${t.date}: ${new Date(invoiceData.created_at).toLocaleDateString()}`, 20, yPosition)
   yPosition += 10
-  doc.text(`Period: ${new Date(invoiceData.period_start).toLocaleDateString()} - ${new Date(invoiceData.period_end).toLocaleDateString()}`, 20, yPosition)
+  doc.text(`${t.period}: ${new Date(invoiceData.period_start).toLocaleDateString()} - ${new Date(invoiceData.period_end).toLocaleDateString()}`, 20, yPosition)
   yPosition += 20
 
   // Studio details
   doc.setFontSize(14)
-  doc.text('Bill To:', 20, yPosition)
+  doc.text(`${t.billTo}:`, 20, yPosition)
   yPosition += 10
   doc.setFontSize(12)
-  doc.text(invoiceData.studio.studio_name, 20, yPosition)
+  doc.text(invoiceData.studio.entity_name, 20, yPosition)
   if (invoiceData.studio.address) {
     yPosition += 8
     doc.text(invoiceData.studio.address, 20, yPosition)
@@ -64,21 +185,48 @@ function generateInvoicePDF(invoiceData: InvoiceData): Uint8Array {
 
   // Events table header
   doc.setFontSize(12)
-  doc.text('Event', 20, yPosition)
-  doc.text('Date', 100, yPosition)
-  doc.text('Location', 140, yPosition)
+  doc.text(t.event, 20, yPosition)
+  doc.text(t.dateCol, 75, yPosition)
+  doc.text(t.studio, 115, yPosition)
+  doc.text(t.students, 150, yPosition)
+  doc.text(t.rate, 180, yPosition)
   yPosition += 10
 
   // Draw line under header
   doc.line(20, yPosition, pageWidth - 20, yPosition)
-  yPosition += 10
+  yPosition += 5
+
+  // Add legend for student count format
+  doc.setFontSize(8)
+  doc.text(t.studentLegend, 150, yPosition)
+  yPosition += 8
 
   // Events list
   doc.setFontSize(10)
   invoiceData.events.forEach(event => {
-    doc.text(event.title || 'Untitled Event', 20, yPosition)
-    doc.text(new Date(event.start_time).toLocaleDateString(), 100, yPosition)
-    doc.text(event.location || 'N/A', 140, yPosition)
+    // Event title
+    doc.text(event.title || t.untitledEvent, 20, yPosition)
+    
+    // Date
+    doc.text(new Date(event.start_time).toLocaleDateString(), 75, yPosition)
+    
+    // Studio name (use event's studio if available, otherwise use invoice studio)
+    const studioName = event.studio?.entity_name || invoiceData.studio.entity_name || 'N/A'
+    doc.text(studioName, 115, yPosition)
+    
+    // Student counts
+    const studioStudents = event.students_studio || 0
+    const onlineStudents = event.students_online || 0
+    const studentText = studioStudents > 0 || onlineStudents > 0 
+      ? `${studioStudents}/${onlineStudents}` 
+      : 'N/A'
+    doc.text(studentText, 150, yPosition)
+    
+    // Rate - calculate based on studio settings and student counts
+    const calculatedRate = calculateEventRate(event)
+    const rateText = calculatedRate > 0 ? `${invoiceData.currency} ${calculatedRate.toFixed(2)}` : 'N/A'
+    doc.text(rateText, 180, yPosition)
+    
     yPosition += 8
   })
 
@@ -86,15 +234,26 @@ function generateInvoicePDF(invoiceData: InvoiceData): Uint8Array {
 
   // Total
   doc.setFontSize(14)
-  doc.text(`Total: ${invoiceData.currency} ${invoiceData.amount_total.toFixed(2)}`, pageWidth - 60, yPosition, { align: 'right' })
+  doc.text(`${t.total}: ${invoiceData.currency} ${invoiceData.amount_total.toFixed(2)}`, pageWidth - 60, yPosition, { align: 'right' })
 
   // Notes
   if (invoiceData.notes) {
     yPosition += 20
     doc.setFontSize(10)
-    doc.text('Notes:', 20, yPosition)
+    doc.text(`${t.notes}:`, 20, yPosition)
     yPosition += 8
     doc.text(invoiceData.notes, 20, yPosition)
+    yPosition += 15
+  }
+
+  // Kleinunternehmerregelung notice (German small business regulation)
+  if (invoiceData.user_invoice_settings?.kleinunternehmerregelung) {
+    yPosition += 15
+    doc.setFontSize(9)
+    doc.setFont('helvetica', 'italic')
+    doc.text(t.vatExemptGerman, 20, yPosition)
+    yPosition += 8
+    doc.text(t.vatExemptEnglish, 20, yPosition)
   }
 
   return doc.output('arraybuffer')
@@ -119,7 +278,10 @@ serve(async (req) => {
     )
 
     // Get request data
-    const { invoiceId } = await req.json()
+    const requestBody = await req.json()
+    const { invoiceId, language } = requestBody
+
+    console.log('Request body:', requestBody)
 
     if (!invoiceId) {
       return new Response(
@@ -128,27 +290,49 @@ serve(async (req) => {
       )
     }
 
+    // Validate language parameter - default to 'en' if not provided or invalid
+    const validLanguages: Language[] = ['en', 'de', 'es']
+    const selectedLanguage: Language = language && validLanguages.includes(language) ? language : 'en'
+    
+    console.log('Selected language:', selectedLanguage)
+
     // Fetch invoice data with related information
     const { data: invoice, error: fetchError } = await supabaseClient
       .from('invoices')
       .select(`
         *,
-        studio:studios(*),
-        events(*),
+        studio:billing_entities!invoices_billing_entity_id_fkey(*),
+        events(
+          *,
+          studio:billing_entities!events_billing_entity_id_fkey(entity_name, base_rate, bonus_per_student, online_bonus_per_student, studio_penalty_per_student, rate_type)
+        ),
         user:users(name, email)
       `)
       .eq('id', invoiceId)
       .single()
 
     if (fetchError || !invoice) {
+      console.error('Invoice fetch error:', fetchError)
       return new Response(
         JSON.stringify({ error: 'Invoice not found' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
-    // Generate PDF
-    const pdfBuffer = generateInvoicePDF(invoice as InvoiceData)
+    // Fetch user invoice settings separately
+    const { data: userSettings } = await supabaseClient
+      .from('user_invoice_settings')
+      .select('kleinunternehmerregelung')
+      .eq('user_id', invoice.user_id)
+      .single()
+
+    // Add user settings to invoice data
+    invoice.user_invoice_settings = userSettings
+
+    // Generate PDF with selected language
+    console.log('About to generate PDF with language:', selectedLanguage)
+    const pdfBuffer = generateInvoicePDF(invoice as InvoiceData, selectedLanguage)
+    console.log('PDF generated successfully')
 
     // Upload PDF to Supabase Storage
     const fileName = `invoice-${invoice.invoice_number}-${Date.now()}.pdf`

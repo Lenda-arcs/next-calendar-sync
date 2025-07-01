@@ -101,9 +101,9 @@ export function InvoiceManagement({ userId }: InvoiceManagementProps) {
     }
   }
 
-  const handleGeneratePDF = async (invoiceId: string) => {
+  const handleGeneratePDF = async (invoiceId: string, language: 'en' | 'de' | 'es' = 'en') => {
     try {
-      const { pdf_url } = await generateInvoicePDF(invoiceId)
+      const { pdf_url } = await generateInvoicePDF(invoiceId, language)
       
       // Refresh invoices list to show updated PDF URL
       refetchInvoices()

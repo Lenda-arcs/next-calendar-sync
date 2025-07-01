@@ -34,7 +34,8 @@ export function UserInvoiceSettingsForm({
     iban: '',
     bic: '',
     tax_id: '',
-    vat_id: ''
+    vat_id: '',
+    kleinunternehmerregelung: false
   })
 
   // Populate form with existing settings
@@ -48,7 +49,8 @@ export function UserInvoiceSettingsForm({
         iban: existingSettings.iban || '',
         bic: existingSettings.bic || '',
         tax_id: existingSettings.tax_id || '',
-        vat_id: existingSettings.vat_id || ''
+        vat_id: existingSettings.vat_id || '',
+        kleinunternehmerregelung: false
       })
     }
   }, [existingSettings])
@@ -104,7 +106,8 @@ export function UserInvoiceSettingsForm({
       iban: formData.iban || null,
       bic: formData.bic || null,
       tax_id: formData.tax_id || null,
-      vat_id: formData.vat_id || null
+      vat_id: formData.vat_id || null,
+      kleinunternehmerregelung: formData.kleinunternehmerregelung
     }
 
     await settingsMutation.mutateAsync(data)
@@ -113,7 +116,7 @@ export function UserInvoiceSettingsForm({
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
       ...prev,
-      [field]: value
+      [field]: field === 'kleinunternehmerregelung' ? value === 'true' : value
     }))
   }
 
@@ -220,6 +223,24 @@ export function UserInvoiceSettingsForm({
             disabled={settingsMutation.isLoading}
           />
         </div>
+
+        <div className="flex items-center space-x-2">
+          <input
+            type="checkbox"
+            id="kleinunternehmerregelung"
+            checked={formData.kleinunternehmerregelung}
+            onChange={(e) => handleInputChange('kleinunternehmerregelung', e.target.checked.toString())}
+            disabled={settingsMutation.isLoading}
+            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+          />
+          <Label htmlFor="kleinunternehmerregelung" className="text-sm">
+            Kleinunternehmerregelung (§19 UStG)
+          </Label>
+        </div>
+        <p className="text-sm text-gray-500 ml-6">
+          Check this if you are exempt from VAT under German small business regulation. 
+          This will add the required legal text to your invoices.
+        </p>
       </div>
 
       {/* Error Display */}

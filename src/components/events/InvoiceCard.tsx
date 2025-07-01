@@ -21,7 +21,7 @@ interface InvoiceCardProps {
   invoice: InvoiceWithDetails
   onEdit?: (invoice: InvoiceWithDetails) => void
   onStatusChange?: (invoiceId: string, newStatus: 'sent' | 'paid' | 'overdue') => void
-  onGeneratePDF?: (invoiceId: string) => void
+  onGeneratePDF?: (invoiceId: string, language?: 'en' | 'de' | 'es') => void
   onViewPDF?: (pdfUrl: string) => void
   onDelete?: (invoiceId: string) => void
 }
@@ -29,7 +29,6 @@ interface InvoiceCardProps {
 export const InvoiceCard: React.FC<InvoiceCardProps> = ({ invoice, onEdit, onStatusChange, onGeneratePDF, onViewPDF, onDelete }) => {
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false)
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false)
-
   const getStatusBadge = (status: string) => {
     const variants = {
       draft: { variant: 'secondary' as const, text: 'Draft', color: 'bg-gray-100 text-gray-800' },
@@ -73,7 +72,7 @@ export const InvoiceCard: React.FC<InvoiceCardProps> = ({ invoice, onEdit, onSta
     
     setIsGeneratingPDF(true)
     try {
-      await onGeneratePDF(invoice.id)
+      await onGeneratePDF(invoice.id, 'en') // Default to English for now, can be made configurable
     } finally {
       setIsGeneratingPDF(false)
     }
