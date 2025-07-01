@@ -15,6 +15,8 @@ export type Database = {
           base_rate: number | null
           bic: string | null
           billing_email: string | null
+          bonus_per_student: number | null
+          bonus_student_threshold: number | null
           created_at: string | null
           currency: string | null
           entity_name: string
@@ -22,6 +24,7 @@ export type Database = {
           id: string
           location_match: string[] | null
           max_discount: number | null
+          minimum_student_threshold: number | null
           notes: string | null
           online_penalty_per_student: number | null
           rate_type: string | null
@@ -41,6 +44,8 @@ export type Database = {
           base_rate?: number | null
           bic?: string | null
           billing_email?: string | null
+          bonus_per_student?: number | null
+          bonus_student_threshold?: number | null
           created_at?: string | null
           currency?: string | null
           entity_name: string
@@ -48,6 +53,7 @@ export type Database = {
           id?: string
           location_match?: string[] | null
           max_discount?: number | null
+          minimum_student_threshold?: number | null
           notes?: string | null
           online_penalty_per_student?: number | null
           rate_type?: string | null
@@ -67,6 +73,8 @@ export type Database = {
           base_rate?: number | null
           bic?: string | null
           billing_email?: string | null
+          bonus_per_student?: number | null
+          bonus_student_threshold?: number | null
           created_at?: string | null
           currency?: string | null
           entity_name?: string
@@ -74,6 +82,7 @@ export type Database = {
           id?: string
           location_match?: string[] | null
           max_discount?: number | null
+          minimum_student_threshold?: number | null
           notes?: string | null
           online_penalty_per_student?: number | null
           rate_type?: string | null

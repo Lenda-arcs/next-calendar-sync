@@ -129,20 +129,40 @@ export function BillingEntityCard({ entity, onEdit, onDelete, isDeleting = false
               />
             )}
 
-            {/* Rate Details */}
-            {(entity.student_threshold || entity.studio_penalty_per_student || entity.online_penalty_per_student) && (
+            {/* Enhanced Rate Structure */}
+            {(entity.minimum_student_threshold || entity.bonus_student_threshold || entity.bonus_per_student || 
+              entity.studio_penalty_per_student || entity.online_penalty_per_student || entity.student_threshold) && (
               <InfoItem 
-                label="Rate Details" 
+                label="Rate Structure" 
                 value={
                   <div className="text-xs sm:text-sm text-gray-600 space-y-1">
-                    {entity.student_threshold && (
-                      <div>Student threshold: {entity.student_threshold}</div>
+                    {/* New enhanced thresholds */}
+                    {entity.minimum_student_threshold && (
+                      <div>Min. students: {entity.minimum_student_threshold}</div>
                     )}
+                    {entity.bonus_student_threshold && (
+                      <div>Bonus threshold: {entity.bonus_student_threshold} students</div>
+                    )}
+                    {entity.bonus_per_student && (
+                      <div>Bonus rate: €{entity.bonus_per_student.toFixed(2)}/student</div>
+                    )}
+                    
+                    {/* Penalties */}
                     {entity.studio_penalty_per_student && (
-                      <div>Studio penalty: €{entity.studio_penalty_per_student}</div>
+                      <div>Missing student penalty: €{entity.studio_penalty_per_student.toFixed(2)}</div>
                     )}
                     {entity.online_penalty_per_student && (
-                      <div>Online penalty: €{entity.online_penalty_per_student}</div>
+                      <div>Online penalty: €{entity.online_penalty_per_student.toFixed(2)}/student</div>
+                    )}
+                    
+                    {/* Legacy threshold for backwards compatibility */}
+                    {entity.student_threshold && !entity.minimum_student_threshold && (
+                      <div>Student threshold (legacy): {entity.student_threshold}</div>
+                    )}
+                    
+                    {/* Max discount limit */}
+                    {entity.max_discount && (
+                      <div>Max discount: €{entity.max_discount.toFixed(2)}</div>
                     )}
                   </div>
                 }

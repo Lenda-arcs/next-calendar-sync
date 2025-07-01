@@ -37,32 +37,54 @@ export function generateInvoiceNumber(userPrefix: string = "INV"): string {
 
 /**
  * Calculate payout for a single event based on billing entity rules
+ * Enhanced calculation supports minimum thresholds, bonus thresholds, and per-student bonuses
  */
 export function calculateEventPayout(event: Event, billingEntity: BillingEntity): number {
   if (!billingEntity.base_rate) return 0
 
-  let payout = billingEntity.base_rate
+  const totalStudents = (event.students_studio || 0) + (event.students_online || 0)
+  let payout = 0
 
+  // Handle per-student rate type
   if (billingEntity.rate_type === "per_student") {
-    // For per-student rates, we might apply different logic
-    // For now, just use base rate as minimum
-    return payout
+    // For per-student rates, multiply base rate by total students
+    payout = billingEntity.base_rate * totalStudents
+    
+    // Apply online penalty if configured
+    if (billingEntity.online_penalty_per_student && event.students_online) {
+      payout -= event.students_online * billingEntity.online_penalty_per_student
+    }
+    
+    return Math.max(payout, 0)
   }
 
-  // Apply penalties if configured
-  if (billingEntity.studio_penalty_per_student && event.students_studio !== null) {
-    const threshold = billingEntity.student_threshold || 0
-    if (event.students_studio < threshold) {
-      const missingStudents = threshold - event.students_studio
+  // Handle flat rate with advanced threshold system
+  payout = billingEntity.base_rate
+
+  // Check minimum student threshold (use new field, fallback to legacy field)
+  const minimumThreshold = billingEntity.minimum_student_threshold ?? billingEntity.student_threshold ?? 0
+  
+  if (minimumThreshold > 0 && totalStudents < minimumThreshold) {
+    // Below minimum threshold - apply penalties
+    if (billingEntity.studio_penalty_per_student) {
+      const missingStudents = minimumThreshold - totalStudents
       payout -= missingStudents * billingEntity.studio_penalty_per_student
     }
   }
 
+  // Check bonus student threshold and add bonus payments
+  if (billingEntity.bonus_student_threshold && billingEntity.bonus_per_student && 
+      totalStudents > billingEntity.bonus_student_threshold) {
+    const bonusStudents = totalStudents - billingEntity.bonus_student_threshold
+    payout += bonusStudents * billingEntity.bonus_per_student
+  }
+
+  // Apply online penalty
   if (billingEntity.online_penalty_per_student && event.students_online) {
     payout -= event.students_online * billingEntity.online_penalty_per_student
   }
 
-  // Apply maximum discount limit
+  // Apply maximum discount limit to prevent excessive penalties
   if (billingEntity.max_discount) {
     const minimumPayout = billingEntity.base_rate - billingEntity.max_discount
     payout = Math.max(payout, minimumPayout)
@@ -76,6 +98,53 @@ export function calculateEventPayout(event: Event, billingEntity: BillingEntity)
  */
 export function calculateTotalPayout(events: Event[], billingEntity: BillingEntity): number {
   return events.reduce((total, event) => total + calculateEventPayout(event, billingEntity), 0)
+}
+
+/**
+ * Generate rate calculation examples for display purposes
+ */
+export function generateRateCalculationExamples(billingEntity: BillingEntity): {
+  belowMinimum?: string;
+  betweenThresholds?: string;
+  aboveBonus?: string;
+} {
+  if (!billingEntity.base_rate) return {}
+  
+  const examples: { belowMinimum?: string; betweenThresholds?: string; aboveBonus?: string } = {}
+  const currency = billingEntity.currency || 'EUR'
+  const symbol = currency === 'EUR' ? '€' : currency === 'USD' ? '$' : currency === 'GBP' ? '£' : currency
+  
+  const minimumThreshold = billingEntity.minimum_student_threshold ?? billingEntity.student_threshold ?? 0
+  const bonusThreshold = billingEntity.bonus_student_threshold
+  const baseRate = billingEntity.base_rate
+  const penaltyPerStudent = billingEntity.studio_penalty_per_student || 0
+  const bonusPerStudent = billingEntity.bonus_per_student || 0
+  
+  // Below minimum threshold example
+  if (minimumThreshold > 0 && penaltyPerStudent > 0) {
+    const exampleStudents = Math.max(1, minimumThreshold - 1)
+    const missingStudents = minimumThreshold - exampleStudents
+    const penalty = missingStudents * penaltyPerStudent
+    const finalPayout = Math.max(0, baseRate - penalty)
+    examples.belowMinimum = `${exampleStudents} students: ${symbol}${baseRate} - ${symbol}${penalty} penalty = ${symbol}${finalPayout.toFixed(2)}`
+  }
+  
+  // Between thresholds example (if applicable)
+  if (minimumThreshold > 0 || bonusThreshold) {
+    const exampleStudents = bonusThreshold ? Math.max(minimumThreshold + 1, bonusThreshold - 2) : minimumThreshold + 2
+    examples.betweenThresholds = `${exampleStudents} students: ${symbol}${baseRate.toFixed(2)} (base rate)`
+  }
+  
+  // Above bonus threshold example
+  if (bonusThreshold && bonusPerStudent > 0) {
+    const exampleStudents = bonusThreshold + 2
+    const bonusStudents = exampleStudents - bonusThreshold
+    const bonusAmount = bonusStudents * bonusPerStudent
+    const finalPayout = baseRate + bonusAmount
+    examples.aboveBonus = `${exampleStudents} students: ${symbol}${baseRate} + (${bonusStudents} × ${symbol}${bonusPerStudent}) = ${symbol}${finalPayout.toFixed(2)}`
+  }
+  
+  return examples
 }
 
 /**
