@@ -7,11 +7,22 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
 import { useSupabaseMutation } from '@/lib/hooks/useSupabaseMutation'
-import { updateEventStudentCounts, calculateEventPayout, EventWithStudio } from '@/lib/invoice-utils'
+import { updateEventStudentCounts, calculateEventPayout, markEventAsExcluded, EventWithStudio } from '@/lib/invoice-utils'
 import { Event } from '@/lib/types'
 import { toast } from 'sonner'
-import { Users, Calendar, MapPin, Clock, Calculator } from 'lucide-react'
+import { Users, Calendar, MapPin, Clock, Calculator, X } from 'lucide-react'
 
 interface EventDetailsEditModalProps {
   isOpen: boolean
@@ -29,6 +40,7 @@ export function EventDetailsEditModal({
   const [studentsStudio, setStudentsStudio] = useState<string>('')
   const [studentsOnline, setStudentsOnline] = useState<string>('')
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [showExcludeDialog, setShowExcludeDialog] = useState(false)
 
   // Reset form when event changes
   useEffect(() => {
@@ -50,6 +62,23 @@ export function EventDetailsEditModal({
     onError: (error) => {
       console.error('Failed to update event:', error)
       toast.error('Failed to update event details', {
+        description: 'Please try again.',
+      })
+    }
+  })
+
+  const excludeMutation = useSupabaseMutation({
+    mutationFn: (supabase, data: { eventId: string }) =>
+      markEventAsExcluded(data.eventId, true),
+    onSuccess: () => {
+      toast.success('Event excluded from invoicing')
+      onClose()
+      // Optionally refresh the parent list
+      onSuccess?.(event as Event)
+    },
+    onError: (error) => {
+      console.error('Failed to exclude event:', error)
+      toast.error('Failed to exclude event', {
         description: 'Please try again.',
       })
     }
@@ -83,6 +112,15 @@ export function EventDetailsEditModal({
       studentsStudio: studentsStudioValue,
       studentsOnline: studentsOnlineValue
     })
+  }
+
+  const handleExcludeEvent = async () => {
+    if (!event) return
+    
+    await excludeMutation.mutateAsync({
+      eventId: event.id
+    })
+    setShowExcludeDialog(false)
   }
 
   // Calculate payout with current values
@@ -130,19 +168,55 @@ export function EventDetailsEditModal({
 
   const footer = (
     <>
-      <Button
-        variant="outline"
-        onClick={onClose}
-        disabled={updateMutation.isLoading}
-      >
-        Cancel
-      </Button>
-      <Button
-        onClick={handleSubmit}
-        disabled={updateMutation.isLoading}
-      >
-        {updateMutation.isLoading ? 'Saving...' : 'Save Changes'}
-      </Button>
+      <div className="flex-1">
+        <AlertDialog open={showExcludeDialog} onOpenChange={setShowExcludeDialog}>
+          <AlertDialogTrigger asChild>
+            <Button
+              variant="destructive"
+              disabled={updateMutation.isLoading || excludeMutation.isLoading}
+              className="gap-2"
+            >
+              <X className="w-4 h-4" />
+              {excludeMutation.isLoading ? 'Excluding...' : 'Exclude from Invoice'}
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Exclude Event from Invoice</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to exclude this event from invoicing? This action will remove it from your invoice calculations and it won&apos;t be billed.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={excludeMutation.isLoading}>
+                Cancel
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleExcludeEvent}
+                disabled={excludeMutation.isLoading}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {excludeMutation.isLoading ? 'Excluding...' : 'Exclude Event'}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
+      <div className="flex gap-2">
+        <Button
+          variant="outline"
+          onClick={onClose}
+          disabled={updateMutation.isLoading || excludeMutation.isLoading}
+        >
+          Cancel
+        </Button>
+        <Button
+          onClick={handleSubmit}
+          disabled={updateMutation.isLoading || excludeMutation.isLoading}
+        >
+          {updateMutation.isLoading ? 'Saving...' : 'Save Changes'}
+        </Button>
+      </div>
     </>
   )
 
