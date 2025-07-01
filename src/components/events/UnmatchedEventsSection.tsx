@@ -4,12 +4,14 @@ import { useState } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Building2, RefreshCw, Plus, Eye, X } from 'lucide-react'
+import { toast } from 'sonner'
 import { useCalendarFeeds, useCalendarFeedActions } from '@/lib/hooks/useCalendarFeeds'
 import { useSupabaseMutation } from '@/lib/hooks/useSupabaseMutation'
 import { UnifiedDialog } from '@/components/ui/unified-dialog'
 import { EventCard } from './EventCard'
 import { Event } from '@/lib/types'
 import { markEventAsExcluded } from '@/lib/invoice-utils'
+import { rematchEvents } from '@/lib/rematch-utils'
 
 type UnmatchedEvent = Event
 
@@ -38,11 +40,19 @@ export function UnmatchedEventsSection({
   const excludeEventMutation = useSupabaseMutation({
     mutationFn: (supabase, eventId: string) => markEventAsExcluded(eventId, true),
     onSuccess: () => {
+      toast.success('Event Marked as Free', {
+        description: 'The event has been excluded from studio matching and invoicing.',
+        duration: 4000,
+      })
       onRefresh() // Refresh the list to remove the excluded event
       setExcludingEventId(null)
     },
     onError: (error) => {
       console.error('Error excluding event:', error)
+      toast.error('Failed to Mark Event as Free', {
+        description: 'Unable to exclude the event. Please try again.',
+        duration: 5000,
+      })
       setExcludingEventId(null)
     }
   })
@@ -77,17 +87,52 @@ export function UnmatchedEventsSection({
 
     setIsRefreshing(true)
     try {
-      // Sync all calendar feeds in historical mode
+      // 🚀 STEP 1: Sync all calendar feeds in historical mode
       const syncPromises = calendarFeeds.map(feed => 
         syncFeed(feed.id, 'historical')
       )
       
-      await Promise.all(syncPromises)
+      const syncResults = await Promise.all(syncPromises)
       
-      // Then call the original refresh function
+      // Calculate total events synced
+      const totalEventsSynced = syncResults.reduce((total, result) => total + result.count, 0)
+      const successfulSyncs = syncResults.filter(result => result.success).length
+      
+      // 🚀 STEP 2: Rematch events to ensure proper tagging and studio assignment
+      let rematchResult = null
+      try {
+        rematchResult = await rematchEvents({
+          user_id: userId,
+          rematch_tags: true,
+          rematch_studios: true
+        })
+      } catch (rematchError) {
+        console.warn('Sync succeeded but rematch failed:', rematchError)
+      }
+
+      // 🎉 Show success notification
+      if (totalEventsSynced > 0) {
+        toast.success('Refresh Complete!', {
+          description: `${totalEventsSynced} event${totalEventsSynced !== 1 ? 's' : ''} synced. ${
+            rematchResult ? `${rematchResult.updated_count} event${rematchResult.updated_count !== 1 ? 's' : ''} were matched with studios.` : ''
+          }`.trim(),
+          duration: 5000,
+        })
+      } else if (successfulSyncs > 0) {
+        toast('Refresh Complete', {
+          description: 'No new events found. Calendar feeds were checked successfully.',
+          duration: 3000,
+        })
+      }
+      
+      // Then call the original refresh function to update UI
       onRefresh()
     } catch (error) {
       console.error('Failed to sync feeds during refresh:', error)
+      toast.error('Refresh Failed', {
+        description: 'Unable to sync calendar feeds. Please try again.',
+        duration: 5000,
+      })
       // Still call refresh even if sync fails
       onRefresh()
     } finally {

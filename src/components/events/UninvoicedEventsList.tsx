@@ -222,6 +222,7 @@ export function UninvoicedEventsList({ userId, onCreateInvoice, onCreateStudio }
       {hasConnectedFeeds && !feedsLoading && (
         <HistoricalSyncCTA 
           calendarFeeds={calendarFeeds}
+          userId={userId}
           onSyncComplete={refetchAll}
         />
       )}

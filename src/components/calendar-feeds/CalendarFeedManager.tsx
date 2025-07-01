@@ -19,15 +19,17 @@ import {
 } from 'lucide-react'
 import { formatDate, type CalendarFeed } from '@/lib/calendar-feeds'
 import { useCalendarFeedActions } from '@/lib/hooks/useCalendarFeeds'
+import { RematchEventsButton } from '@/components/events/RematchEventsButton'
 import Link from 'next/link'
 
 interface CalendarFeedManagerProps {
   feeds: CalendarFeed[]
   isLoading?: boolean
   onRefetch?: () => void
+  userId?: string
 }
 
-export function CalendarFeedManager({ feeds, isLoading, onRefetch }: CalendarFeedManagerProps) {
+export function CalendarFeedManager({ feeds, isLoading, onRefetch, userId }: CalendarFeedManagerProps) {
   const [actionFeedId, setActionFeedId] = useState<string | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
   const [optimisticFeeds, setOptimisticFeeds] = useState<CalendarFeed[]>(feeds)
@@ -182,6 +184,7 @@ export function CalendarFeedManager({ feeds, isLoading, onRefetch }: CalendarFee
                   isProcessing={isProcessing(feed.id)}
                   isRecentlySynced={recentlySynced.has(feed.id)}
                   syncResult={syncResults.get(feed.id)}
+                  userId={userId}
                   onSync={() => handleSync(feed.id)}
                   onDelete={() => setConfirmDelete(feed.id)}
                 />
@@ -229,6 +232,7 @@ interface CalendarFeedCardProps {
   isProcessing: boolean
   isRecentlySynced?: boolean
   syncResult?: { success: boolean; count: number }
+  userId?: string
   onSync: () => void
   onDelete: () => void
 }
@@ -238,6 +242,7 @@ function CalendarFeedCard({
   isProcessing, 
   isRecentlySynced, 
   syncResult, 
+  userId,
   onSync, 
   onDelete 
 }: CalendarFeedCardProps) {
@@ -296,36 +301,54 @@ function CalendarFeedCard({
           </div>
 
           {/* Action Buttons */}
-          <div className="flex gap-3">
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={onSync}
-              disabled={isProcessing}
-              className="flex-1"
-            >
-              {isProcessing ? (
-                <>
-                  <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                  Syncing...
-                </>
-              ) : (
-                <>
-                  <RefreshCw className="mr-2 h-4 w-4" />
-                  Sync Now
-                </>
-              )}
-            </Button>
-            
-            <Button 
-              variant="destructive" 
-              size="sm"
-              onClick={onDelete}
-              disabled={isProcessing}
-            >
-              <Trash2 className="mr-2 h-4 w-4" />
-              Remove
-            </Button>
+          <div className="space-y-3">
+            {/* Primary Actions */}
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={onSync}
+                disabled={isProcessing}
+                className="flex-1"
+              >
+                {isProcessing ? (
+                  <>
+                    <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                    Syncing...
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="mr-2 h-4 w-4" />
+                    Full Sync
+                  </>
+                )}
+              </Button>
+              
+              <Button 
+                variant="destructive" 
+                size="sm"
+                onClick={onDelete}
+                disabled={isProcessing}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Remove
+              </Button>
+            </div>
+
+            {/* Quick Rematch */}
+            {userId && (
+              <div className="flex gap-2">
+                                 <RematchEventsButton
+                   userId={userId}
+                   feedId={feed.id}
+                   variant="outline"
+                   size="sm"
+                 >
+                   Fix Matching Only
+                 </RematchEventsButton>
+                <span className="text-xs text-muted-foreground self-center">~1-3s</span>
+              </div>
+            )}
           </div>
         </div>
       </CardContent>

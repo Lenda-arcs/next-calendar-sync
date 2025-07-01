@@ -3,8 +3,9 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { TagBadge } from '@/components/ui/tag-badge'
-import { Settings, Plus, ArrowLeftRight, RefreshCw } from 'lucide-react'
+import { Settings, Plus, ArrowLeftRight, RefreshCw, Zap } from 'lucide-react'
 import { Tag as TagType } from '@/lib/types'
+import { RematchTagsButton, RematchStudiosButton, RematchAllButton } from './RematchEventsButton'
 
 export type VisibilityFilter = 'all' | 'public' | 'private'
 export type TimeFilter = 'future' | 'all'
@@ -25,6 +26,7 @@ interface EventsControlPanelProps {
   pendingChangesCount: number
   isSyncing: boolean
   isLoading: boolean
+  userId?: string
   onTimeFilterChange: (filter: TimeFilter) => void
   onVisibilityFilterChange: (filter: VisibilityFilter) => void
   onCreateTag: () => void
@@ -42,6 +44,7 @@ export default function EventsControlPanel({
   pendingChangesCount,
   isSyncing,
   isLoading,
+  userId,
   onTimeFilterChange,
   onVisibilityFilterChange,
   onCreateTag,
@@ -116,6 +119,8 @@ export default function EventsControlPanel({
               </p>
             </div>
           )}
+          
+          {/* Quick Actions Row */}
           <div className="flex flex-wrap gap-2 mb-4">
             <Button 
               variant="outline" 
@@ -124,15 +129,6 @@ export default function EventsControlPanel({
             >
               <Plus className="h-4 w-4 mr-2" />
               Create New Tag
-            </Button>
-            <Button 
-              onClick={onSyncFeeds}
-              disabled={isLoading || isSyncing}
-              variant="default"
-              size="sm"
-            >
-              <ArrowLeftRight className={`h-4 w-4 mr-2 ${isSyncing ? 'animate-pulse' : ''}`} />
-              {isSyncing ? 'Syncing...' : 'Sync Feeds'}
             </Button>
             <Button 
               onClick={onRefresh}
@@ -144,10 +140,61 @@ export default function EventsControlPanel({
               Refresh
             </Button>
           </div>
+
+          {/* Sync & Rematch Actions */}
+          <div className="space-y-3">
+            {/* Heavy Sync Operation */}
+            <div className="flex flex-wrap gap-2">
+              <Button 
+                onClick={onSyncFeeds}
+                disabled={isLoading || isSyncing}
+                variant="default"
+                size="sm"
+              >
+                <ArrowLeftRight className={`h-4 w-4 mr-2 ${isSyncing ? 'animate-pulse' : ''}`} />
+                {isSyncing ? 'Syncing...' : 'Full Calendar Sync'}
+              </Button>
+              <span className="text-xs text-muted-foreground self-center">
+                Downloads fresh calendar data (~15-30s)
+              </span>
+            </div>
+            
+            {/* Fast Rematch Operations */}
+            {userId && (
+              <>
+                <div className="border-t pt-3">
+                  <p className="text-sm font-medium text-muted-foreground mb-2 flex items-center gap-1">
+                    <Zap className="h-3 w-3" />
+                    Quick Fix Matching (~1-3s)
+                  </p>
+                                     <div className="flex flex-wrap gap-2">
+                     <RematchTagsButton 
+                       userId={userId}
+                       variant="outline" 
+                       size="sm"
+                     />
+                     <RematchStudiosButton 
+                       userId={userId}
+                       variant="outline" 
+                       size="sm"
+                     />
+                     <RematchAllButton 
+                       userId={userId}
+                       variant="outline" 
+                       size="sm"
+                     />
+                   </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Apply latest tag rules and studio patterns to existing events
+                  </p>
+                </div>
+              </>
+            )}
+          </div>
           
           {/* Available Tags */}
           {(userTags?.length || globalTags?.length) && (
-            <div>
+            <div className="pt-4 border-t">
               <p className="text-sm text-muted-foreground mb-2">Available Tags:</p>
               <div className="flex flex-wrap gap-2">
                 {userTags?.map(tag => (

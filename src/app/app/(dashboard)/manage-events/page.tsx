@@ -406,6 +406,7 @@ export default function ManageEventsPage() {
               pendingChangesCount={pendingChanges.size}
               isSyncing={isSyncing}
               isLoading={false}
+              userId={userId}
               onTimeFilterChange={setTimeFilter}
               onVisibilityFilterChange={setVisibilityFilter}
               onCreateTag={() => setIsCreateTagFormOpen(true)}

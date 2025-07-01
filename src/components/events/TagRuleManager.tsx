@@ -7,7 +7,8 @@ import { useKeywordSuggestions } from '@/lib/hooks/useKeywordSuggestions'
 import { TagRule, Tag } from '@/lib/types'
 import { rematchUserTags } from '@/lib/rematch-utils'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { AlertCircle, CheckCircle } from 'lucide-react'
+import { AlertCircle } from 'lucide-react'
+import { toast } from 'sonner'
 import DataLoader from '@/components/ui/data-loader'
 import { TagRulesSkeleton } from '@/components/ui/skeleton'
 import { TagRulesCard } from './TagRulesCard'
@@ -47,8 +48,6 @@ export const TagRuleManager: React.FC<Props> = ({ userId, availableTags: propTag
   const [state, setState] = useState<TagRuleState>(initialState)
   const [optimisticRules, setOptimisticRules] = useState<ExtendedTagRule[]>([])
   const [deletedRuleIds, setDeletedRuleIds] = useState<Set<string>>(new Set())
-  const [isRematching, setIsRematching] = useState(false)
-  const [rematchResults, setRematchResults] = useState<{ updated_count: number; total_events_processed: number } | null>(null)
 
   // Fetch tag rules for the user
   const { 
@@ -127,18 +126,19 @@ export const TagRuleManager: React.FC<Props> = ({ userId, availableTags: propTag
       
       // 🚀 AUTOMATICALLY REMATCH TAGS INSTEAD OF REQUIRING FULL SYNC
       try {
-        setIsRematching(true)
         const rematchResult = await rematchUserTags(userId)
-        setRematchResults(rematchResult)
         
-        // Show success message for a few seconds
-        setTimeout(() => {
-          setRematchResults(null)
-        }, 5000)
+        // Show success toast
+        toast.success('Tag Rule Created!', {
+          description: `${rematchResult.updated_count} out of ${rematchResult.total_events_processed} events were re-tagged with your new rule.`,
+          duration: 4000,
+        })
       } catch (error) {
         console.error('Failed to rematch tags after rule creation:', error)
-      } finally {
-        setIsRematching(false)
+        toast.error('Failed to apply new tag rule', {
+          description: 'The rule was created but could not be applied to existing events.',
+          duration: 5000,
+        })
       }
     },
     onError: () => {
@@ -187,18 +187,19 @@ export const TagRuleManager: React.FC<Props> = ({ userId, availableTags: propTag
       
       // 🚀 AUTOMATICALLY REMATCH TAGS INSTEAD OF REQUIRING FULL SYNC
       try {
-        setIsRematching(true)
         const rematchResult = await rematchUserTags(userId)
-        setRematchResults(rematchResult)
         
-        // Show success message for a few seconds
-        setTimeout(() => {
-          setRematchResults(null)
-        }, 5000)
+        // Show success toast
+        toast.success('Tag Rule Updated!', {
+          description: `${rematchResult.updated_count} out of ${rematchResult.total_events_processed} events were re-tagged with your updated rule.`,
+          duration: 4000,
+        })
       } catch (error) {
         console.error('Failed to rematch tags after rule update:', error)
-      } finally {
-        setIsRematching(false)
+        toast.error('Failed to apply updated tag rule', {
+          description: 'The rule was updated but could not be applied to existing events.',
+          duration: 5000,
+        })
       }
     },
     onError: () => {
@@ -227,18 +228,19 @@ export const TagRuleManager: React.FC<Props> = ({ userId, availableTags: propTag
       
       // 🚀 AUTOMATICALLY REMATCH TAGS INSTEAD OF REQUIRING FULL SYNC
       try {
-        setIsRematching(true)
         const rematchResult = await rematchUserTags(userId)
-        setRematchResults(rematchResult)
         
-        // Show success message for a few seconds
-        setTimeout(() => {
-          setRematchResults(null)
-        }, 5000)
+        // Show success toast
+        toast.success('Tag Rule Deleted!', {
+          description: `${rematchResult.updated_count} out of ${rematchResult.total_events_processed} events were re-tagged after removing the rule.`,
+          duration: 4000,
+        })
       } catch (error) {
         console.error('Failed to rematch tags after rule deletion:', error)
-      } finally {
-        setIsRematching(false)
+        toast.error('Failed to apply tag changes', {
+          description: 'The rule was deleted but changes could not be applied to existing events.',
+          duration: 5000,
+        })
       }
     },
     onError: (_, ruleId) => {
@@ -329,26 +331,15 @@ export const TagRuleManager: React.FC<Props> = ({ userId, availableTags: propTag
 
   return (
     <div className="space-y-8">
-      {/* Rematch Results Alert */}
-      {rematchResults && (
-        <Alert>
-          <CheckCircle className="h-4 w-4" />
-          <AlertTitle>Tags Updated Successfully!</AlertTitle>
-          <AlertDescription>
-            {rematchResults.updated_count} out of {rematchResults.total_events_processed} events were re-tagged with your updated rules.
-          </AlertDescription>
-        </Alert>
-      )}
-
       {/* Loading States */}
-      {(creating || updating || isRematching || (error && !initialLoading)) && (
+      {(creating || updating || (error && !initialLoading)) && (
         <Alert variant={error ? "destructive" : "default"}>
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>
-            {error ? "Error" : isRematching ? "Updating Event Tags" : creating ? "Creating Rule" : "Updating Rule"}
+            {error ? "Error" : creating ? "Creating Rule" : "Updating Rule"}
           </AlertTitle>
           <AlertDescription>
-            {error ? errorMessage : isRematching ? "Re-applying tag rules to existing events..." : creating ? "Adding new tag rule..." : "Updating tag rule..."}
+            {error ? errorMessage : creating ? "Adding new tag rule..." : "Updating tag rule..."}
           </AlertDescription>
         </Alert>
       )}

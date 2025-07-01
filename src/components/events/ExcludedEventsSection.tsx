@@ -8,7 +8,8 @@ import { useSupabaseMutation } from '@/lib/hooks/useSupabaseMutation'
 import { UnifiedDialog } from '@/components/ui/unified-dialog'
 import { EventInvoiceCard } from './EventInvoiceCard'
 import { Event } from '@/lib/types'
-import { toggleEventExclusion, matchEventsToStudios } from '@/lib/invoice-utils'
+import { toggleEventExclusion } from '@/lib/invoice-utils'
+import { rematchEvents } from '@/lib/rematch-utils'
 import { toast } from 'sonner'
 
 interface ExcludedEventsSectionProps {
@@ -44,18 +45,27 @@ export function ExcludedEventsSection({
           description: 'Events are now available for studio billing and will be re-matched.',
         })
 
-        // Trigger historical sync and re-matching if we have userId
+        // 🚀 Use efficient rematch instead of heavy database operation
         if (userId) {
           setIsProcessing(true)
           try {
-            // Re-match events to studios
-            await matchEventsToStudios(userId)
+            // Use new rematch functionality for faster studio matching
+            const rematchResult = await rematchEvents({
+              user_id: userId,
+              rematch_studios: true,
+              rematch_tags: true
+            })
             
-            // Trigger historical sync to ensure all events are properly matched
-            // Note: This would require access to calendar feeds, which we don't have here
-            // The parent component should handle this
+            toast.success('Events Re-matched!', {
+              description: `${rematchResult.updated_count} out of ${rematchResult.total_events_processed} events were matched with studios and tags.`,
+              duration: 4000,
+            })
           } catch (error) {
             console.error('Failed to re-match events:', error)
+            toast.error('Re-matching Failed', {
+              description: 'Unable to re-match events with studios. The events were included but may need manual matching.',
+              duration: 5000,
+            })
           } finally {
             setIsProcessing(false)
           }
