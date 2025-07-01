@@ -1,67 +1,15 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-// Inline helper functions (copied from sync-feed to avoid import issues)
-function getCorsHeaders(origin: string | null) {
-  return {
-    "Access-Control-Allow-Origin": origin || "*",
-    "Access-Control-Allow-Headers": "*",
-    "Access-Control-Allow-Methods": "POST, OPTIONS"
-  };
-}
-
-function matchTags(content: string, location: string, rules: any[], tagMap: Record<string, string>) {
-  try {
-    const auto_tag_ids = rules.filter((r) => {
-      // Check if any keyword in the rule matches the content
-      const keywordMatch = r.keywords && Array.isArray(r.keywords) && r.keywords.some((keyword: string) => 
-        content.includes(keyword.toLowerCase())
-      );
-      
-      // Check if any location keyword matches the location
-      const locationMatch = r.location_keywords && Array.isArray(r.location_keywords) && location && r.location_keywords.some((keyword: string) => 
-        location.toLowerCase().includes(keyword.toLowerCase())
-      );
-      
-      // For backward compatibility, check single keyword field
-      const legacyMatch = r.keyword && content.includes(r.keyword.toLowerCase());
-      
-      return keywordMatch || locationMatch || legacyMatch;
-    }).map((r) => r.tag_id);
-    
-    return auto_tag_ids.map((id) => tagMap[id]).filter(Boolean);
-  } catch (error) {
-    console.error("Error in matchTags:", error);
-    return [];
-  }
-}
-
-function matchStudioId(location: string, studios: any[]) {
-  try {
-    if (!location || !studios) return null;
-    const lowerLoc = location.toLowerCase();
-    const match = studios.find((s) => {
-      if (!s.location_match || !Array.isArray(s.location_match)) return false;
-      return s.location_match.some((pattern: string) => lowerLoc.includes(pattern.toLowerCase()));
-    });
-    return match?.id || null;
-  } catch (error) {
-    console.error("Error in matchStudioId:", error);
-    return null;
-  }
-}
+import { createSupabaseAdminClient } from "../_shared/supabaseClient.ts";
+import { createCorsResponse, createOptionsResponse } from "../_shared/cors.ts";
+import { matchTags, matchStudioId } from "../_shared/matching.ts";
 
 serve(async (req) => {
   console.log("rematch-events function called");
   
   const origin = req.headers.get("origin");
-  const corsHeaders = getCorsHeaders(origin);
   
   if (req.method === "OPTIONS") {
-    return new Response(null, {
-      status: 204,
-      headers: corsHeaders
-    });
+    return createOptionsResponse(origin);
   }
 
   try {
@@ -81,30 +29,13 @@ serve(async (req) => {
 
     if (!user_id) {
       console.log("Missing user_id");
-      return new Response(JSON.stringify({
+      return createCorsResponse({
         error: "user_id is required"
-      }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" }
-      });
+      }, 400, origin);
     }
 
-    console.log("Creating Supabase client");
-    const supabaseUrl = Deno.env.get("SUPABASE_URL");
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    
-    if (!supabaseUrl || !supabaseKey) {
-      console.error("Missing Supabase environment variables");
-      return new Response(JSON.stringify({
-        error: "Server configuration error",
-        details: `URL: ${!!supabaseUrl}, Key: ${!!supabaseKey}`
-      }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" }
-      });
-    }
-    
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    console.log("Creating Supabase admin client");
+    const supabase = createSupabaseAdminClient();
 
     // Step 1: Build and execute events query
     console.log("Step 1: Building events query");
@@ -128,28 +59,22 @@ serve(async (req) => {
     
     if (eventsError) {
       console.error("Events query error:", eventsError);
-      return new Response(JSON.stringify({
+      return createCorsResponse({
         error: "Failed to fetch events",
         details: eventsError.message,
         code: eventsError.code
-      }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" }
-      });
+      }, 500, origin);
     }
     
     console.log(`Found ${events?.length || 0} events to process`);
 
     if (!events || events.length === 0) {
-      return new Response(JSON.stringify({
+      return createCorsResponse({
         success: true,
         message: "No events found to rematch",
         total_events_processed: 0,
         updated_count: 0
-      }), {
-        status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" }
-      });
+      }, 200, origin);
     }
 
     // Step 2: Fetch tag data if needed
@@ -171,24 +96,18 @@ serve(async (req) => {
 
         if (rulesResult.error) {
           console.error("Tag rules query error:", rulesResult.error);
-          return new Response(JSON.stringify({
+          return createCorsResponse({
             error: "Failed to fetch tag rules",
             details: rulesResult.error.message
-          }), {
-            status: 500,
-            headers: { ...corsHeaders, "Content-Type": "application/json" }
-          });
+          }, 500, origin);
         }
 
         if (tagsResult.error) {
           console.error("Tags query error:", tagsResult.error);
-          return new Response(JSON.stringify({
+          return createCorsResponse({
             error: "Failed to fetch tags",
             details: tagsResult.error.message
-          }), {
-            status: 500,
-            headers: { ...corsHeaders, "Content-Type": "application/json" }
-          });
+          }, 500, origin);
         }
 
         tagRules = rulesResult.data || [];
@@ -196,13 +115,10 @@ serve(async (req) => {
         console.log(`Found ${tagRules.length} tag rules and ${Object.keys(tagMap).length} tags`);
       } catch (tagError) {
         console.error("Error fetching tag data:", tagError);
-        return new Response(JSON.stringify({
+        return createCorsResponse({
           error: "Failed to fetch tag data",
           details: tagError.message
-        }), {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" }
-        });
+        }, 500, origin);
       }
     }
 
@@ -219,26 +135,20 @@ serve(async (req) => {
 
         if (studiosError) {
           console.error("Studios query error:", studiosError);
-          return new Response(JSON.stringify({
+          return createCorsResponse({
             error: "Failed to fetch studios",
             details: studiosError.message
-          }), {
-            status: 500,
-            headers: { ...corsHeaders, "Content-Type": "application/json" }
-          });
+          }, 500, origin);
         }
 
         studios = studiosData || [];
         console.log(`Found ${studios.length} studios`);
       } catch (studioError) {
         console.error("Error fetching studio data:", studioError);
-        return new Response(JSON.stringify({
+        return createCorsResponse({
           error: "Failed to fetch studio data",
           details: studioError.message
-        }), {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" }
-        });
+        }, 500, origin);
       }
     }
 
@@ -314,51 +224,39 @@ serve(async (req) => {
             const updateErrors = updateResults.filter(result => result.error);
             if (updateErrors.length > 0) {
               console.error("Batch update errors:", updateErrors);
-              return new Response(JSON.stringify({
+              return createCorsResponse({
                 error: "Failed to update some events",
                 details: updateErrors.map(err => err.error?.message).join(", "),
                 batch: Math.floor(i/batch_size) + 1
-              }), {
-                status: 500,
-                headers: { ...corsHeaders, "Content-Type": "application/json" }
-              });
+              }, 500, origin);
             }
 
             updatedEvents.push(...batchUpdates.map(update => update.id));
           } catch (batchError) {
             console.error("Error updating batch:", batchError);
-            return new Response(JSON.stringify({
+            return createCorsResponse({
               error: "Failed to update batch",
               details: batchError.message
-            }), {
-              status: 500,
-              headers: { ...corsHeaders, "Content-Type": "application/json" }
-            });
+            }, 500, origin);
           }
         }
       }
     } catch (processingError) {
       console.error("Error processing events:", processingError);
-      return new Response(JSON.stringify({
+      return createCorsResponse({
         error: "Failed to process events",
         details: processingError.message
-      }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" }
-      });
+      }, 500, origin);
     }
 
     console.log(`Rematch completed: ${updatedEvents.length}/${totalEvents} events updated`);
 
-    return new Response(JSON.stringify({
+    return createCorsResponse({
       success: true,
       total_events_processed: totalEvents,
       updated_count: updatedEvents.length,
       message: `Successfully rematched ${updatedEvents.length} out of ${totalEvents} events`
-    }), {
-      status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" }
-    });
+    }, 200, origin);
 
   } catch (error) {
     console.error("Function error:", error);
@@ -368,13 +266,10 @@ serve(async (req) => {
       name: error?.name
     });
     
-    return new Response(JSON.stringify({
+    return createCorsResponse({
       error: "Function execution failed",
       message: error?.message || "Unknown error",
       details: error?.stack || error?.toString() || "No additional details"
-    }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" }
-    });
+    }, 500, origin);
   }
 }); 

@@ -1,15 +1,4 @@
-//TODO: enable for production use only for new domain
-const allowedOrigins = [
-  "http://localhost:4321",
-  "https://[REPLACE-SOMEDOMAIN].com"
-];
-function getCorsHeaders(origin) {
-  return {
-    "Access-Control-Allow-Origin": origin,
-    "Access-Control-Allow-Headers": "*",
-    "Access-Control-Allow-Methods": "POST, OPTIONS"
-  };
-}
+// getCorsHeaders moved to _shared/cors.ts
 function generateRecurrenceInstances(entry, windowDays = 90, startFromDate) {
   if (!entry.rrule) return [
     {
@@ -116,26 +105,7 @@ function ensureUTCString(dateInput) {
   // Fallback: try to create a Date from it
   return new Date(dateInput).toISOString();
 }
-function matchTags(content, location, rules, tagMap) {
-  const auto_tag_ids = rules.filter((r) => {
-    // Check if any keyword in the rule matches the content
-    const keywordMatch = r.keywords && r.keywords.some(keyword => 
-      content.includes(keyword.toLowerCase())
-    );
-    
-    // Check if any location keyword matches the location
-    const locationMatch = r.location_keywords && location && r.location_keywords.some(keyword => 
-      location.toLowerCase().includes(keyword.toLowerCase())
-    );
-    
-    // For backward compatibility, check single keyword field
-    const legacyMatch = r.keyword && content.includes(r.keyword.toLowerCase());
-    
-    return keywordMatch || locationMatch || legacyMatch;
-  }).map((r) => r.tag_id);
-  
-  return auto_tag_ids.map((id) => tagMap[id]).filter(Boolean);
-}
+// matchTags moved to _shared/matching.ts
 async function fetchExistingEvents(supabase, userId, feedId, windowStart, windowEnd) {
   return await supabase.from("events").select("id, uid, recurrence_id, start_time").eq("user_id", userId).eq("feed_id", feedId).gte("start_time", windowStart.toISOString()).lte("start_time", windowEnd.toISOString());
 }
@@ -147,4 +117,4 @@ async function deleteStaleEvents(supabase, enrichedEvents, existingEvents) {
     await supabase.from("events").delete().in("id", staleIds); // or: update visibility = 'hidden'
   }
 }
-export { getCorsHeaders, matchTags, generateRecurrenceInstances, extractCalendarName, ensureUTCString, fetchExistingEvents, deleteStaleEvents };
+export { generateRecurrenceInstances, extractCalendarName, ensureUTCString, fetchExistingEvents, deleteStaleEvents };

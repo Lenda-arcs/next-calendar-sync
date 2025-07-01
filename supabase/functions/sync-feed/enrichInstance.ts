@@ -11,12 +11,4 @@ export function extractStudentCounts(description, isHistorical = false) {
     studentsOnline: matchOnlineCount ? parseInt(matchOnlineCount[1], 10) : null
   };
 }
-export function matchStudioId(location, studios) {
-  if (!location || !studios) return null;
-  const lowerLoc = location.toLowerCase();
-  const match = studios.find((s) => {
-    if (!s.location_match || !Array.isArray(s.location_match)) return false;
-    return s.location_match.some(pattern => lowerLoc.includes(pattern.toLowerCase()));
-  });
-  return match?.id || null;
-}
+// matchStudioId moved to _shared/matching.ts
