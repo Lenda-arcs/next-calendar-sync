@@ -33,6 +33,7 @@ export { default as FloatingActionButtons } from './FloatingActionButtons'
 
 // Invoice management components
 export { EventInvoiceCard } from './EventInvoiceCard'
+export { EventDetailsEditModal } from './EventDetailsEditModal'
 export { UninvoicedEventsList } from './UninvoicedEventsList'
 export { ExcludedEventsSection } from './ExcludedEventsSection'
 export { SubstituteEventModal } from './SubstituteEventModal'

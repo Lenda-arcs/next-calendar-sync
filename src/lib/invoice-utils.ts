@@ -50,9 +50,9 @@ export function calculateEventPayout(event: Event, billingEntity: BillingEntity)
     // For per-student rates, multiply base rate by total students
     payout = billingEntity.base_rate * totalStudents
     
-    // Apply online penalty if configured
-    if (billingEntity.online_penalty_per_student && event.students_online) {
-      payout -= event.students_online * billingEntity.online_penalty_per_student
+    // Apply online bonus if configured
+    if (billingEntity.online_bonus_per_student && event.students_online) {
+      payout += event.students_online * billingEntity.online_bonus_per_student
     }
     
     return Math.max(payout, 0)
@@ -79,9 +79,9 @@ export function calculateEventPayout(event: Event, billingEntity: BillingEntity)
     payout += bonusStudents * billingEntity.bonus_per_student
   }
 
-  // Apply online penalty
-  if (billingEntity.online_penalty_per_student && event.students_online) {
-    payout -= event.students_online * billingEntity.online_penalty_per_student
+  // Apply online bonus
+  if (billingEntity.online_bonus_per_student && event.students_online) {
+    payout += event.students_online * billingEntity.online_bonus_per_student
   }
 
   // Apply maximum discount limit to prevent excessive penalties
@@ -1054,4 +1054,58 @@ export async function revertEventsToStudioInvoicing(eventIds: string[]): Promise
     matchedEvents: matchResults.matchedEvents,
     studios: matchResults.studios
   }
+}
+
+/**
+ * Update event student counts
+ */
+export async function updateEventStudentCounts(
+  eventId: string, 
+  studentsStudio: number | null, 
+  studentsOnline: number | null
+): Promise<Event> {
+  const supabase = createClient()
+  
+  const { data, error } = await supabase
+    .from("events")
+    .update({ 
+      students_studio: studentsStudio,
+      students_online: studentsOnline,
+      updated_at: new Date().toISOString()
+    })
+    .eq("id", eventId)
+    .select()
+    .single()
+
+  if (error) {
+    console.error("Error updating event student counts:", error)
+    throw new Error(`Failed to update event student counts: ${error.message}`)
+  }
+
+  return data
+}
+
+/**
+ * Bulk update student counts for multiple events
+ */
+export async function bulkUpdateEventStudentCounts(
+  updates: Array<{ eventId: string; studentsStudio: number | null; studentsOnline: number | null }>
+): Promise<Event[]> {
+  const updatedEvents: Event[] = []
+  
+  for (const update of updates) {
+    try {
+      const updatedEvent = await updateEventStudentCounts(
+        update.eventId, 
+        update.studentsStudio, 
+        update.studentsOnline
+      )
+      updatedEvents.push(updatedEvent)
+    } catch (error) {
+      console.error(`Failed to update event ${update.eventId}:`, error)
+      throw error
+    }
+  }
+  
+  return updatedEvents
 } 

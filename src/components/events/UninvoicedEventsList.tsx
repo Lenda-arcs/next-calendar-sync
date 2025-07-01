@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import DataLoader from '@/components/ui/data-loader'
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion'
 import { EventInvoiceCard } from './EventInvoiceCard'
+import { EventDetailsEditModal } from './EventDetailsEditModal'
 import { StudioActionButtons } from './StudioActionButtons'
 import { HistoricalSyncCTA } from './HistoricalSyncCTA'
 import { UnmatchedEventsSection } from './UnmatchedEventsSection'
@@ -27,6 +28,7 @@ export function UninvoicedEventsList({ userId, onCreateInvoice, onCreateStudio }
   const [selectedEvents, setSelectedEvents] = useState<Record<string, string[]>>({})
   const [substituteEventId, setSubstituteEventId] = useState<string | null>(null)
   const [substituteEventIds, setSubstituteEventIds] = useState<string[]>([])
+  const [editingEventId, setEditingEventId] = useState<string | null>(null)
 
   // ==================== DATA FETCHING ====================
   const {
@@ -105,8 +107,21 @@ export function UninvoicedEventsList({ userId, onCreateInvoice, onCreateStudio }
     refetchAll()
   }, [refetchAll, clearSelections])
 
+  const handleEditEventSuccess = useCallback(() => {
+    setEditingEventId(null)
+    refetchAll() // Refresh data to show updated student counts and payouts
+  }, [refetchAll])
+
+  const handleEditEvent = useCallback((eventId: string) => {
+    setEditingEventId(eventId)
+  }, [])
+
   const selectedEvent = substituteEventId 
     ? uninvoicedEvents?.find(event => event.id === substituteEventId) || null
+    : null
+
+  const editingEvent = editingEventId
+    ? uninvoicedEvents?.find(event => event.id === editingEventId) || null
     : null
 
   const selectedEventsForBatch = substituteEventIds.length > 0
@@ -422,6 +437,7 @@ export function UninvoicedEventsList({ userId, onCreateInvoice, onCreateStudio }
                                         onToggleSelect={(eventId) => handleToggleEvent(studioId, eventId)}
                                         showCheckbox={true}
                                         variant="compact"
+                                        onEditEvent={handleEditEvent}
                                       />
                                     ))}
                                   </div>
@@ -450,6 +466,14 @@ export function UninvoicedEventsList({ userId, onCreateInvoice, onCreateStudio }
         event={selectedEvent}
         events={selectedEventsForBatch}
         onSuccess={handleSubstituteSuccess}
+      />
+
+      {/* Event Details Edit Modal */}
+      <EventDetailsEditModal
+        isOpen={!!editingEventId}
+        onClose={() => setEditingEventId(null)}
+        event={editingEvent}
+        onSuccess={handleEditEventSuccess}
       />
     </div>
   )

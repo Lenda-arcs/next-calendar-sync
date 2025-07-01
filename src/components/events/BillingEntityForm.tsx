@@ -57,7 +57,7 @@ const BillingEntityForm: React.FC<Props> = ({
     minimum_student_threshold: existingStudio?.minimum_student_threshold?.toString() || "",
     bonus_student_threshold: existingStudio?.bonus_student_threshold?.toString() || "",
     bonus_per_student: existingStudio?.bonus_per_student?.toString() || "",
-    online_penalty_per_student: existingStudio?.online_penalty_per_student?.toString() || "",
+    online_bonus_per_student: existingStudio?.online_bonus_per_student?.toString() || "",
     studio_penalty_per_student: existingStudio?.studio_penalty_per_student?.toString() || "",
     // Teacher-specific fields
     recipient_name: existingStudio?.recipient_name || "",
@@ -98,7 +98,7 @@ const BillingEntityForm: React.FC<Props> = ({
             minimum_student_threshold: "",
             bonus_student_threshold: "",
             bonus_per_student: "",
-            online_penalty_per_student: "",
+            online_bonus_per_student: "",
             studio_penalty_per_student: "",
             recipient_name: "",
             recipient_email: "",
@@ -189,8 +189,8 @@ const BillingEntityForm: React.FC<Props> = ({
       }
     }
 
-    if (formData.online_penalty_per_student && (isNaN(Number(formData.online_penalty_per_student)) || Number(formData.online_penalty_per_student) < 0)) {
-      newErrors.online_penalty_per_student = "Online penalty must be a positive number or zero";
+    if (formData.online_bonus_per_student && (isNaN(Number(formData.online_bonus_per_student)) || Number(formData.online_bonus_per_student) < 0)) {
+      newErrors.online_bonus_per_student = "Online bonus must be a positive number or zero";
     }
 
     if (formData.studio_penalty_per_student && (isNaN(Number(formData.studio_penalty_per_student)) || Number(formData.studio_penalty_per_student) < 0)) {
@@ -223,7 +223,7 @@ const BillingEntityForm: React.FC<Props> = ({
           bonus_student_threshold: formData.bonus_student_threshold ? Number(formData.bonus_student_threshold) : null,
           bonus_per_student: formData.bonus_per_student ? Number(formData.bonus_per_student) : null,
           studio_penalty_per_student: formData.studio_penalty_per_student ? Number(formData.studio_penalty_per_student) : null,
-          online_penalty_per_student: formData.online_penalty_per_student ? Number(formData.online_penalty_per_student) : null,
+          online_bonus_per_student: formData.online_bonus_per_student ? Number(formData.online_bonus_per_student) : null,
           max_discount: formData.max_discount ? Number(formData.max_discount) : null,
           billing_email: formData.billing_email || null,
           address: formData.address || null,
@@ -249,7 +249,7 @@ const BillingEntityForm: React.FC<Props> = ({
           bonus_student_threshold: formData.bonus_student_threshold ? Number(formData.bonus_student_threshold) : null,
           bonus_per_student: formData.bonus_per_student ? Number(formData.bonus_per_student) : null,
           studio_penalty_per_student: formData.studio_penalty_per_student ? Number(formData.studio_penalty_per_student) : null,
-          online_penalty_per_student: formData.online_penalty_per_student ? Number(formData.online_penalty_per_student) : null,
+          online_bonus_per_student: formData.online_bonus_per_student ? Number(formData.online_bonus_per_student) : null,
           max_discount: formData.max_discount ? Number(formData.max_discount) : null,
           billing_email: formData.billing_email || null,
           address: formData.address || null,
@@ -581,22 +581,22 @@ const BillingEntityForm: React.FC<Props> = ({
             </div>
 
             <div>
-              <Label htmlFor="online_penalty_per_student">Online Penalty per Student ({formData.currency})</Label>
+              <Label htmlFor="online_bonus_per_student">Online Bonus per Student ({formData.currency})</Label>
               <Input
-                id="online_penalty_per_student"
+                id="online_bonus_per_student"
                 type="number"
                 step="0.01"
                 min="0"
-                value={formData.online_penalty_per_student}
-                onChange={(e) => handleInputChange("online_penalty_per_student", e.target.value)}
+                value={formData.online_bonus_per_student}
+                onChange={(e) => handleInputChange("online_bonus_per_student", e.target.value)}
                 placeholder="e.g., 2.50"
-                className={errors.online_penalty_per_student ? "border-red-500" : ""}
+                className={errors.online_bonus_per_student ? "border-red-500" : ""}
               />
-              {errors.online_penalty_per_student && (
-                <p className="text-sm text-red-500 mt-1">{errors.online_penalty_per_student}</p>
+              {errors.online_bonus_per_student && (
+                <p className="text-sm text-red-500 mt-1">{errors.online_bonus_per_student}</p>
               )}
               <p className="text-xs text-muted-foreground mt-1">
-                Penalty for each online student
+                Bonus paid for each online student
               </p>
             </div>
           </div>

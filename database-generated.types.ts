@@ -26,6 +26,7 @@ export type Database = {
           max_discount: number | null
           minimum_student_threshold: number | null
           notes: string | null
+          online_bonus_per_student: number | null
           online_penalty_per_student: number | null
           rate_type: string | null
           recipient_email: string | null
@@ -55,6 +56,7 @@ export type Database = {
           max_discount?: number | null
           minimum_student_threshold?: number | null
           notes?: string | null
+          online_bonus_per_student?: number | null
           online_penalty_per_student?: number | null
           rate_type?: string | null
           recipient_email?: string | null
@@ -84,6 +86,7 @@ export type Database = {
           max_discount?: number | null
           minimum_student_threshold?: number | null
           notes?: string | null
+          online_bonus_per_student?: number | null
           online_penalty_per_student?: number | null
           rate_type?: string | null
           recipient_email?: string | null

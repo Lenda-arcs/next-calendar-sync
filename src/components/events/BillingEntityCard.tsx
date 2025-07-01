@@ -131,7 +131,7 @@ export function BillingEntityCard({ entity, onEdit, onDelete, isDeleting = false
 
             {/* Enhanced Rate Structure */}
             {(entity.minimum_student_threshold || entity.bonus_student_threshold || entity.bonus_per_student || 
-              entity.studio_penalty_per_student || entity.online_penalty_per_student || entity.student_threshold) && (
+              entity.studio_penalty_per_student || entity.online_bonus_per_student || entity.student_threshold) && (
               <InfoItem 
                 label="Rate Structure" 
                 value={
@@ -151,9 +151,9 @@ export function BillingEntityCard({ entity, onEdit, onDelete, isDeleting = false
                     {entity.studio_penalty_per_student && (
                       <div>Missing student penalty: €{entity.studio_penalty_per_student.toFixed(2)}</div>
                     )}
-                    {entity.online_penalty_per_student && (
-                      <div>Online penalty: €{entity.online_penalty_per_student.toFixed(2)}/student</div>
-                    )}
+                                    {entity.online_bonus_per_student && (
+                  <div>Online bonus: €{entity.online_bonus_per_student.toFixed(2)}/student</div>
+                )}
                     
                     {/* Legacy threshold for backwards compatibility */}
                     {entity.student_threshold && !entity.minimum_student_threshold && (

@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button'
 import { Event, BillingEntity } from '@/lib/types'
 
 import { cn } from '@/lib/utils'
-import { Users } from 'lucide-react'
+import { Users, Edit3 } from 'lucide-react'
+import { calculateEventPayout } from '@/lib/invoice-utils'
 
 interface EventInvoiceCardProps {
   event: Event & { studio: BillingEntity | null }
@@ -15,6 +16,7 @@ interface EventInvoiceCardProps {
   showCheckbox?: boolean
   variant?: 'default' | 'compact'
   onSetupSubstitute?: (eventId: string) => void
+  onEditEvent?: (eventId: string) => void
 }
 
 export function EventInvoiceCard({
@@ -23,7 +25,8 @@ export function EventInvoiceCard({
   onToggleSelect,
   showCheckbox = true,
   variant = 'default',
-  onSetupSubstitute
+  onSetupSubstitute,
+  onEditEvent
 }: EventInvoiceCardProps) {
   const formatDate = (dateString: string | null) => {
     if (!dateString) return ""
@@ -39,37 +42,11 @@ export function EventInvoiceCard({
     })
   }
 
-  // Memoized payout calculation - only recalculates when relevant properties change
+  // Memoized payout calculation using enhanced algorithm
   const payout = useMemo(() => {
-    if (!event.studio || !event.studio.base_rate) return 0
-    
-    let calculatedPayout = event.studio.base_rate
-    
-    // Apply penalties if configured
-    if (event.studio.studio_penalty_per_student && event.students_studio !== null && event.studio.student_threshold) {
-      const threshold = event.studio.student_threshold
-      if (event.students_studio < threshold) {
-        const missingStudents = threshold - event.students_studio
-        calculatedPayout -= missingStudents * event.studio.studio_penalty_per_student
-      }
-    }
-    
-    if (event.studio.online_penalty_per_student && event.students_online) {
-      calculatedPayout -= event.students_online * event.studio.online_penalty_per_student
-    }
-    
-    // Apply maximum discount limit
-    if (event.studio.max_discount) {
-      const minimumPayout = event.studio.base_rate - event.studio.max_discount
-      calculatedPayout = Math.max(calculatedPayout, minimumPayout)
-    }
-    
-    return Math.max(calculatedPayout, 0)
-  }, [
-    event.studio,
-    event.students_studio,
-    event.students_online
-  ])
+    if (!event.studio) return 0
+    return calculateEventPayout(event, event.studio)
+  }, [event, event.studio])
 
   return (
     <Card 
@@ -147,22 +124,42 @@ export function EventInvoiceCard({
               Base: €{event.studio.base_rate?.toFixed(2) || '0.00'}
             </div>
           )}
-          {onSetupSubstitute && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={(e) => {
-                e.stopPropagation()
-                onSetupSubstitute(event.id)
-              }}
-              className="text-xs px-2 py-1 h-6"
-              title="Setup substitute teaching - invoice original teacher instead of studio"
-            >
-              <Users className="w-3 h-3 mr-1" />
-              <span className="hidden sm:inline">Substitute</span>
-              <span className="sm:hidden">Sub</span>
-            </Button>
-          )}
+          
+          {/* Action buttons */}
+          <div className="flex items-center gap-1 sm:gap-2">
+            {onEditEvent && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onEditEvent(event.id)
+                }}
+                className="text-xs px-2 py-1 h-6"
+                title="Edit student counts and payout details"
+              >
+                <Edit3 className="w-3 h-3 sm:mr-1" />
+                <span className="hidden sm:inline">Edit</span>
+              </Button>
+            )}
+            
+            {onSetupSubstitute && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onSetupSubstitute(event.id)
+                }}
+                className="text-xs px-2 py-1 h-6"
+                title="Setup substitute teaching - invoice original teacher instead of studio"
+              >
+                <Users className="w-3 h-3 sm:mr-1" />
+                <span className="hidden sm:inline">Substitute</span>
+                <span className="sm:hidden">Sub</span>
+              </Button>
+            )}
+          </div>
         </div>
       </CardContent>
     </Card>
