@@ -19,6 +19,9 @@ export interface RematchEventsResult {
 /**
  * Re-match existing events with studios and tags without re-fetching calendar data
  * This is much faster than a full sync when you only need to update matching logic
+ * 
+ * Important: Studio rematch only affects events assigned to actual studios,
+ * preserving manual teacher billing assignments made via SubstituteEventModal
  */
 export async function rematchEvents(params: RematchEventsParams): Promise<RematchEventsResult> {
   const supabase = createBrowserClient(
@@ -45,6 +48,7 @@ export async function rematchEvents(params: RematchEventsParams): Promise<Rematc
 
 /**
  * Rematch tags for all events of a user (after tag rule changes)
+ * Note: This only updates tags and preserves manual studio/teacher billing settings
  */
 export async function rematchUserTags(userId: string): Promise<RematchEventsResult> {
   return rematchEvents({
@@ -55,7 +59,8 @@ export async function rematchUserTags(userId: string): Promise<RematchEventsResu
 }
 
 /**
- * Rematch studios for all events of a user (after studio/billing entity changes)
+ * Rematch studios for all events of a user (after studio location pattern changes)
+ * Note: This only matches to actual studios, preserving manual teacher billing settings
  */
 export async function rematchUserStudios(userId: string): Promise<RematchEventsResult> {
   return rematchEvents({

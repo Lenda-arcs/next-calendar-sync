@@ -4,8 +4,6 @@ import { createCorsResponse, createOptionsResponse } from "../_shared/cors.ts";
 import { matchTags, matchStudioId } from "../_shared/matching.ts";
 
 serve(async (req) => {
-  console.log("rematch-events function called");
-  
   const origin = req.headers.get("origin");
   
   if (req.method === "OPTIONS") {
@@ -14,7 +12,6 @@ serve(async (req) => {
 
   try {
     const body = await req.json();
-    console.log("Request body:", body);
     
     const { 
       user_id, 
@@ -25,48 +22,37 @@ serve(async (req) => {
       batch_size = 100 
     } = body;
 
-    console.log("Parsed parameters:", { user_id, feed_id, event_ids, rematch_tags, rematch_studios, batch_size });
-
     if (!user_id) {
-      console.log("Missing user_id");
       return createCorsResponse({
         error: "user_id is required"
       }, 400, origin);
     }
 
-    console.log("Creating Supabase admin client");
     const supabase = createSupabaseAdminClient();
 
     // Step 1: Build and execute events query
-    console.log("Step 1: Building events query");
     let eventsQuery = supabase
       .from("events")
-      .select("id, title, description, location, tags, studio_id")
+      .select("id, title, description, location, tags, studio_id, invoice_type, substitute_notes")
       .eq("user_id", user_id);
 
     if (feed_id) {
-      console.log("Adding feed_id filter:", feed_id);
       eventsQuery = eventsQuery.eq("feed_id", feed_id);
     }
 
     if (event_ids && event_ids.length > 0) {
-      console.log("Adding event_ids filter:", event_ids.length, "events");
       eventsQuery = eventsQuery.in("id", event_ids);
     }
 
-    console.log("Executing events query...");
     const { data: events, error: eventsError } = await eventsQuery;
     
     if (eventsError) {
-      console.error("Events query error:", eventsError);
       return createCorsResponse({
         error: "Failed to fetch events",
         details: eventsError.message,
         code: eventsError.code
       }, 500, origin);
     }
-    
-    console.log(`Found ${events?.length || 0} events to process`);
 
     if (!events || events.length === 0) {
       return createCorsResponse({
@@ -83,7 +69,6 @@ serve(async (req) => {
 
     if (rematch_tags) {
       try {
-        console.log("Step 2: Fetching tag rules and tags...");
         const [rulesResult, tagsResult] = await Promise.all([
           supabase
             .from("tag_rules")
@@ -95,7 +80,6 @@ serve(async (req) => {
         ]);
 
         if (rulesResult.error) {
-          console.error("Tag rules query error:", rulesResult.error);
           return createCorsResponse({
             error: "Failed to fetch tag rules",
             details: rulesResult.error.message
@@ -103,7 +87,6 @@ serve(async (req) => {
         }
 
         if (tagsResult.error) {
-          console.error("Tags query error:", tagsResult.error);
           return createCorsResponse({
             error: "Failed to fetch tags",
             details: tagsResult.error.message
@@ -112,9 +95,7 @@ serve(async (req) => {
 
         tagRules = rulesResult.data || [];
         tagMap = Object.fromEntries((tagsResult.data || []).map(t => [t.id, t.slug]));
-        console.log(`Found ${tagRules.length} tag rules and ${Object.keys(tagMap).length} tags`);
       } catch (tagError) {
-        console.error("Error fetching tag data:", tagError);
         return createCorsResponse({
           error: "Failed to fetch tag data",
           details: tagError.message
@@ -122,38 +103,41 @@ serve(async (req) => {
       }
     }
 
-    // Step 3: Fetch studio data if needed
+    // Step 3: Fetch studio data and teacher IDs if needed
     let studios: any[] = [];
+    let teacherEntityIds: Set<string> = new Set();
 
     if (rematch_studios) {
       try {
-        console.log("Step 3: Fetching studio data...");
-        const { data: studiosData, error: studiosError } = await supabase
+        const { data: billingEntities, error: entitiesError } = await supabase
           .from("billing_entities")
-          .select("id, location_match")
+          .select("id, location_match, recipient_type")
           .eq("user_id", user_id);
 
-        if (studiosError) {
-          console.error("Studios query error:", studiosError);
+        if (entitiesError) {
           return createCorsResponse({
-            error: "Failed to fetch studios",
-            details: studiosError.message
+            error: "Failed to fetch billing entities",
+            details: entitiesError.message
           }, 500, origin);
         }
 
-        studios = studiosData || [];
-        console.log(`Found ${studios.length} studios`);
+        // Separate studios from teachers
+        studios = (billingEntities || []).filter(entity => entity.recipient_type === "studio");
+        teacherEntityIds = new Set(
+          (billingEntities || [])
+            .filter(entity => entity.recipient_type === "internal_teacher" || entity.recipient_type === "external_teacher")
+            .map(entity => entity.id)
+        );
+        
       } catch (studioError) {
-        console.error("Error fetching studio data:", studioError);
         return createCorsResponse({
-          error: "Failed to fetch studio data",
+          error: "Failed to fetch billing entity data",
           details: studioError.message
         }, 500, origin);
       }
     }
 
     // Step 4: Process events
-    console.log("Step 4: Processing events...");
     const updatedEvents = [];
     const totalEvents = events.length;
     
@@ -178,22 +162,32 @@ serve(async (req) => {
                 hasUpdates = true;
               }
             } catch (tagMatchError) {
-              console.error("Error matching tags for event:", event.id, tagMatchError);
+              // Skip tag matching error
             }
           }
 
-          // Rematch studio if requested
+          // Rematch studio if requested, but preserve manual teacher assignments
           if (rematch_studios && studios.length > 0) {
             try {
-              const newStudioId = matchStudioId(event.location || "", studios);
-              
-              // Only update if studio changed
-              if (newStudioId !== event.studio_id) {
-                updates.studio_id = newStudioId;
-                hasUpdates = true;
+              // Skip studio rematch for events manually assigned to teachers
+              const isManualTeacherAssignment = 
+                event.invoice_type === 'teacher_invoice' || 
+                (event.studio_id && teacherEntityIds.has(event.studio_id)) ||
+                (event.substitute_notes && event.substitute_notes.trim().length > 0);
+
+              if (isManualTeacherAssignment) {
+                // Skip rematch for manually assigned teacher events
+              } else {
+                const newStudioId = matchStudioId(event.location || "", studios);
+                
+                // Only update if studio changed
+                if (newStudioId !== event.studio_id) {
+                  updates.studio_id = newStudioId;
+                  hasUpdates = true;
+                }
               }
             } catch (studioMatchError) {
-              console.error("Error matching studio for event:", event.id, studioMatchError);
+              // Skip studio matching error
             }
           }
 
