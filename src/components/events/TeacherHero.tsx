@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
+import Image from 'next/image'
 import { PublicProfile } from '@/lib/types'
 import { Button } from '@/components/ui/button'
 
@@ -66,10 +67,11 @@ const TeacherHero: React.FC<TeacherHeroProps> = ({
           <div className="flex-shrink-0">
             <div className="w-16 h-16 rounded-full border-2 border-white/40 bg-white/50 flex items-center justify-center text-xl overflow-hidden shadow-lg">
               {profile?.profile_image_url ? (
-                <img
+                <Image
                   src={profile.profile_image_url}
                   alt={`${profile.name || "User"}'s profile picture`}
-                  className="w-full h-full object-cover"
+                  fill
+                  className="object-cover"
                 />
               ) : profile?.name ? (
                 <span className="text-gray-700 font-semibold">
@@ -143,10 +145,11 @@ const TeacherHero: React.FC<TeacherHeroProps> = ({
           <div className="flex-shrink-0">
             <div className="w-32 h-32 md:w-40 md:h-40 lg:w-48 lg:h-48 rounded-full border-2 border-white/40 bg-white/50 flex items-center justify-center text-4xl md:text-5xl lg:text-6xl overflow-hidden shadow-lg">
               {profile?.profile_image_url ? (
-                <img
+                <Image
                   src={profile.profile_image_url}
                   alt={`${profile.name || "User"}'s profile picture`}
-                  className="w-full h-full object-cover"
+                  fill
+                  className="object-cover"
                 />
               ) : profile?.name ? (
                 <span className="text-gray-700 font-semibold">

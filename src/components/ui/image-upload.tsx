@@ -2,6 +2,7 @@
 
 import type { ChangeEvent } from "react";
 import React, { useCallback, useRef, useState } from "react";
+import Image from 'next/image';
 import ReactCrop, {
   centerCrop,
   type Crop,
@@ -159,10 +160,11 @@ const ExistingImagesStep: React.FC<ExistingImagesStepProps> = ({
                     aspectRatio: aspectRatio ? `${aspectRatio}` : '16 / 9'
                   }}
                 >
-                  <img
+                  <Image
                     src={image.url}
                     alt={image.name}
-                    className="w-full h-full object-cover"
+                    fill
+                    className="object-cover"
                   />
                   
                   {/* Select overlay */}
@@ -232,6 +234,7 @@ const CropImageStep: React.FC<CropImageStepProps> = ({
             aspect={aspectRatio}
             className="max-w-full"
           >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               ref={imgRef}
               src={imgSrc}
@@ -557,10 +560,11 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
           onClick={handleClick}
         >
           {previewUrl ? (
-            <img
+            <Image
               src={previewUrl}
               alt="Image preview"
-              className="w-full h-full object-cover"
+              fill
+              className="object-cover"
             />
           ) : (
             <div className="w-full h-full bg-white/50 border border-white/40 flex items-center justify-center">

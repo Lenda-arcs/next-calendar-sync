@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import TagList from '@/components/events/TagList'
 import { Mail, Globe, Instagram, Clock } from 'lucide-react'
@@ -48,10 +49,11 @@ export default function TeacherHeroContent({ teacherProfile, isAnimating, isExpa
                 ${isExpanding ? 'animate-morph-in-reverse' : ''}
               `}>
                 {teacherProfile?.profile_image_url ? (
-                  <img
+                  <Image
                     src={teacherProfile.profile_image_url}
                     alt={`${teacherProfile.name || "User"}'s profile picture`}
-                    className="w-full h-full object-cover"
+                    fill
+                    className="object-cover"
                   />
                 ) : teacherProfile?.name ? (
                   <span className="text-gray-700 font-semibold">
@@ -173,10 +175,11 @@ export default function TeacherHeroContent({ teacherProfile, isAnimating, isExpa
               ${isExpanding ? 'animate-morph-out-fast' : ''}
             `}>
               {teacherProfile?.profile_image_url ? (
-                <img
+                <Image
                   src={teacherProfile.profile_image_url}
                   alt={`${teacherProfile.name || "User"}'s profile picture`}
-                  className="w-full h-full object-cover"
+                  fill
+                  className="object-cover"
                 />
               ) : teacherProfile?.name ? (
                 <span className="text-gray-700 font-semibold">

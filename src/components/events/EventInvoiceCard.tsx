@@ -46,7 +46,7 @@ export function EventInvoiceCard({
   const payout = useMemo(() => {
     if (!event.studio) return 0
     return calculateEventPayout(event, event.studio)
-  }, [event, event.studio])
+  }, [event])
 
   return (
     <Card 

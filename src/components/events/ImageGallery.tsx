@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
+import Image from 'next/image'
 import { cn } from '@/lib/utils'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import placeholderImage from '@/assets/placeholder_blur.png'
@@ -42,11 +43,12 @@ export function ImageGallery({ images, title, className }: ImageGalleryProps) {
 
   return (
     <div className={cn("relative w-full h-full group", className)}>
-      <img
+      <Image
         src={displayImage}
         alt={isPlaceholder ? 'Event placeholder image' : title}
+        fill
         className={cn(
-          "w-full h-full object-cover rounded-lg",
+          "object-cover rounded-lg",
           isPlaceholder && "opacity-80"
         )}
         onError={() => {

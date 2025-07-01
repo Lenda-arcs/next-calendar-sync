@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { LogoutButton } from '@/components/auth'
 import { LoadingNavLink } from '@/components/ui'
 import { Home, User, X } from 'lucide-react'
@@ -101,10 +102,11 @@ export default function DynamicNavbar({
                 ${shouldShowJumpingCTA ? 'animate-jump' : ''}
               `}>
                 {teacherProfile?.profile_image_url ? (
-                  <img
+                  <Image
                     src={teacherProfile.profile_image_url}
                     alt={`${teacherProfile.name || "Teacher"}'s profile picture`}
-                    className="w-full h-full object-cover"
+                    fill
+                    className="object-cover"
                   />
                 ) : (
                   <User className="h-4 w-4 text-gray-600" />
