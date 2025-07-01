@@ -90,36 +90,41 @@ export function HistoricalSyncCTA({ calendarFeeds, userId, onSyncComplete }: His
   }
 
   return (
-    <Card className="bg-blue-50/50 border-blue-200">
-      <CardContent className="py-4">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <div className="flex-1">
-            <h4 className="text-sm font-medium text-blue-900 mb-1">
-              Missing older events?
-            </h4>
-            <p className="text-xs text-blue-700">
+    <Card className="bg-gradient-to-br from-blue-50/80 to-blue-100/40 border-blue-200/80 shadow-sm hover:shadow-md transition-shadow duration-200">
+      <CardContent className="py-5 px-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+              <h4 className="text-sm font-semibold text-blue-900">
+                Missing older events?
+              </h4>
+            </div>
+            <p className="text-xs text-blue-700/90 leading-relaxed">
               Sync historical events from your connected calendar feeds to find uninvoiced classes from previous months.
             </p>
           </div>
-          <Button 
-            variant="outline" 
-            onClick={handleHistoricalSync}
-            disabled={isHistoricalSyncing}
-            size="sm"
-            className="bg-blue-100 hover:bg-blue-200 text-blue-800 border-blue-300 whitespace-nowrap"
-          >
-            {isHistoricalSyncing ? (
-              <>
-                <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                Syncing...
-              </>
-            ) : (
-              <>
-                <History className="mr-2 h-4 w-4" />
-                Sync Historical Events
-              </>
-            )}
-          </Button>
+          <div className="flex-shrink-0">
+            <Button 
+              variant="outline" 
+              onClick={handleHistoricalSync}
+              disabled={isHistoricalSyncing}
+              size="sm"
+              className="bg-blue-100 hover:bg-blue-200 text-blue-800 border-blue-300 whitespace-nowrap shadow-sm"
+            >
+              {isHistoricalSyncing ? (
+                <>
+                  <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                  Syncing...
+                </>
+              ) : (
+                <>
+                  <History className="mr-2 h-4 w-4" />
+                  Sync Historical Events
+                </>
+              )}
+            </Button>
+          </div>
         </div>
       </CardContent>
     </Card>

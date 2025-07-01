@@ -179,8 +179,8 @@ export function InvoiceManagement({ userId }: InvoiceManagementProps) {
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="uninvoiced" className="flex items-center gap-1 sm:gap-2">
             <Receipt className="w-4 h-4 flex-shrink-0" />
-            <span className="hidden sm:inline">Uninvoiced Events</span>
-            <span className="sm:hidden">Events</span>
+            <span className="hidden sm:inline">Billing & Events</span>
+            <span className="sm:hidden">Billing</span>
             {totalUninvoicedEvents > 0 && (
               <Badge variant="secondary" className="ml-1 sm:ml-2 text-xs">
                 {totalUninvoicedEvents}
@@ -206,8 +206,8 @@ export function InvoiceManagement({ userId }: InvoiceManagementProps) {
 
         <TabsContent value="uninvoiced">
           <TabContent 
-            title="Uninvoiced Events"
-            description="Select events by studio to create invoices. Events must have assigned studios to appear here."
+            title="Billing & Events"
+            description="Manage uninvoiced events grouped by studio, sync historical data, and fix matching issues. Create invoices for completed classes."
           >
             <UninvoicedEventsList 
               userId={userId} 

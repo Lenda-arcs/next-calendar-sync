@@ -4,6 +4,7 @@ import React, { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { RefreshCw } from 'lucide-react'
 import { toast } from 'sonner'
+import { cn } from '@/lib/utils'
 import { rematchEvents, RematchEventsParams } from '@/lib/rematch-utils'
 
 interface RematchEventsButtonProps {
@@ -14,6 +15,7 @@ interface RematchEventsButtonProps {
   rematchStudios?: boolean
   variant?: 'default' | 'outline' | 'secondary' | 'ghost'
   size?: 'sm' | 'default' | 'lg'
+  className?: string
   children?: React.ReactNode
 }
 
@@ -25,6 +27,7 @@ export function RematchEventsButton({
   rematchStudios = true,
   variant = 'outline',
   size = 'sm',
+  className,
   children
 }: RematchEventsButtonProps) {
   const [isRematching, setIsRematching] = useState(false)
@@ -82,7 +85,7 @@ export function RematchEventsButton({
       size={size}
       onClick={handleRematch}
       disabled={isRematching}
-      className="whitespace-nowrap"
+      className={cn("whitespace-nowrap", className)}
     >
       <RefreshCw className={`mr-2 h-4 w-4 ${isRematching ? 'animate-spin' : ''}`} />
       {getButtonText()}

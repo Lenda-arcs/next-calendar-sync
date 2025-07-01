@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { TagBadge } from '@/components/ui/tag-badge'
 import { Settings, Plus, ArrowLeftRight, RefreshCw, Zap } from 'lucide-react'
 import { Tag as TagType } from '@/lib/types'
-import { RematchTagsButton, RematchStudiosButton, RematchAllButton } from './RematchEventsButton'
+import { RematchTagsButton } from './RematchEventsButton'
 
 export type VisibilityFilter = 'all' | 'public' | 'private'
 export type TimeFilter = 'future' | 'all'
@@ -141,56 +141,34 @@ export default function EventsControlPanel({
             </Button>
           </div>
 
-          {/* Sync & Rematch Actions */}
-          <div className="space-y-3">
-            {/* Heavy Sync Operation */}
-            <div className="flex flex-wrap gap-2">
-              <Button 
-                onClick={onSyncFeeds}
-                disabled={isLoading || isSyncing}
-                variant="default"
-                size="sm"
-              >
-                <ArrowLeftRight className={`h-4 w-4 mr-2 ${isSyncing ? 'animate-pulse' : ''}`} />
-                {isSyncing ? 'Syncing...' : 'Full Calendar Sync'}
-              </Button>
-              <span className="text-xs text-muted-foreground self-center">
-                Downloads fresh calendar data (~15-30s)
-              </span>
+          {/* Quick Fix Actions */}
+          {userId && (
+            <div className="border-t pt-3">
+              <p className="text-sm font-medium text-muted-foreground mb-2 flex items-center gap-1">
+                <Zap className="h-3 w-3" />
+                Quick Actions (~1-3s)
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <RematchTagsButton 
+                  userId={userId}
+                  variant="outline" 
+                  size="sm"
+                />
+                <Button 
+                  onClick={onSyncFeeds}
+                  disabled={isLoading || isSyncing}
+                  variant="outline"
+                  size="sm"
+                >
+                  <ArrowLeftRight className={`h-4 w-4 mr-2 ${isSyncing ? 'animate-pulse' : ''}`} />
+                  {isSyncing ? 'Syncing...' : 'Full Calendar Sync'}
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Fix event tags or download fresh calendar data (~15-30s for sync)
+              </p>
             </div>
-            
-            {/* Fast Rematch Operations */}
-            {userId && (
-              <>
-                <div className="border-t pt-3">
-                  <p className="text-sm font-medium text-muted-foreground mb-2 flex items-center gap-1">
-                    <Zap className="h-3 w-3" />
-                    Quick Fix Matching (~1-3s)
-                  </p>
-                                     <div className="flex flex-wrap gap-2">
-                     <RematchTagsButton 
-                       userId={userId}
-                       variant="outline" 
-                       size="sm"
-                     />
-                     <RematchStudiosButton 
-                       userId={userId}
-                       variant="outline" 
-                       size="sm"
-                     />
-                     <RematchAllButton 
-                       userId={userId}
-                       variant="outline" 
-                       size="sm"
-                     />
-                   </div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Apply latest tag rules and studio patterns to existing events
-                  </p>
-                </div>
-              </>
-            )}
-          </div>
+          )}
           
           {/* Available Tags */}
           {(userTags?.length || globalTags?.length) && (

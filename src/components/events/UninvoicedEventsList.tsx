@@ -9,6 +9,7 @@ import { EventInvoiceCard } from './EventInvoiceCard'
 import { EventDetailsEditModal } from './EventDetailsEditModal'
 import { StudioActionButtons } from './StudioActionButtons'
 import { HistoricalSyncCTA } from './HistoricalSyncCTA'
+import { RematchStudiosButton } from './RematchEventsButton'
 import { UnmatchedEventsSection } from './UnmatchedEventsSection'
 import { ExcludedEventsSection } from './ExcludedEventsSection'
 import { SubstituteEventModal } from './SubstituteEventModal'
@@ -218,13 +219,42 @@ export function UninvoicedEventsList({ userId, onCreateInvoice, onCreateStudio }
   // ==================== RENDER ====================
   return (
     <div className="space-y-4">
-      {/* Historical Sync CTA */}
+      {/* Data & Matching Actions */}
       {hasConnectedFeeds && !feedsLoading && (
-        <HistoricalSyncCTA 
-          calendarFeeds={calendarFeeds}
-          userId={userId}
-          onSyncComplete={refetchAll}
-        />
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+          <HistoricalSyncCTA 
+            calendarFeeds={calendarFeeds}
+            userId={userId}
+            onSyncComplete={refetchAll}
+          />
+          <Card className="bg-gradient-to-br from-purple-50/80 to-purple-100/40 border-purple-200/80 shadow-sm hover:shadow-md transition-shadow duration-200">
+            <CardContent className="py-5 px-6">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                    <h4 className="text-sm font-semibold text-purple-900">
+                      Studio matching issues?
+                    </h4>
+                  </div>
+                  <p className="text-xs text-purple-700/90 leading-relaxed">
+                    Re-apply studio location patterns to existing events to fix assignment problems.
+                  </p>
+                </div>
+                <div className="flex-shrink-0">
+                                  <RematchStudiosButton 
+                  userId={userId}
+                  variant="outline"
+                  size="sm"
+                  className="bg-purple-100 hover:bg-purple-200 text-purple-800 border-purple-300 shadow-sm"
+                >
+                  Fix Studio Matching
+                </RematchStudiosButton>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       )}
 
       {/* Unmatched Events Section */}
