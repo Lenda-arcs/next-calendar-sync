@@ -22,12 +22,12 @@ export function BillingEntityCard({ entity, onEdit, onDelete, isDeleting = false
   
   return (
     <Card className={`h-full ${isTeacher ? 'border-purple-200' : 'border-blue-200'}`}>
-      <CardHeader className="pb-3 sm:pb-6">
-        <div className="space-y-3 sm:space-y-0">
-          {/* Title row */}
-          <div className="flex justify-between items-start gap-3">
-            <div className="flex items-center gap-2 min-w-0 flex-1">
-              <CardTitle className="text-base sm:text-lg min-w-0 truncate">
+      <CardHeader className="pb-2 sm:pb-6 px-3 sm:px-6 pt-3 sm:pt-6">
+        <div className="space-y-2 sm:space-y-0">
+          {/* Title row - more compact on mobile */}
+          <div className="flex justify-between items-start gap-2 sm:gap-3">
+            <div className="flex items-center gap-1 sm:gap-2 min-w-0 flex-1">
+              <CardTitle className="text-sm sm:text-lg min-w-0 truncate">
                 {entity.entity_name}
               </CardTitle>
               {isTeacher && (
@@ -36,32 +36,33 @@ export function BillingEntityCard({ entity, onEdit, onDelete, isDeleting = false
                 </Badge>
               )}
             </div>
+            {/* Compact action buttons */}
             <div className="flex space-x-1 flex-shrink-0">
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => onEdit(entity)}
-                className="h-8 w-8 p-0"
+                className="h-7 w-7 sm:h-9 sm:w-9 p-0 touch-manipulation"
               >
-                <Edit className="h-4 w-4" />
+                <Edit className="h-3 w-3 sm:h-4 sm:w-4" />
               </Button>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => onDelete(entity)}
                 disabled={isDeleting}
-                className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
+                className="h-7 w-7 sm:h-9 sm:w-9 p-0 text-red-600 hover:text-red-700 touch-manipulation"
               >
                 {isDeleting ? (
                   <span className="text-xs">...</span>
                 ) : (
-                  <Trash2 className="h-4 w-4" />
+                  <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
                 )}
               </Button>
             </div>
           </div>
           
-          {/* Location matches */}
+          {/* Location matches - more compact */}
           <div className="text-xs sm:text-sm text-gray-600">
             <span className="font-medium">Matches:</span>{' '}
             {entity.location_match && entity.location_match.length > 0 
@@ -77,21 +78,22 @@ export function BillingEntityCard({ entity, onEdit, onDelete, isDeleting = false
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-3 sm:space-y-4 pt-3 sm:pt-6">
+      <CardContent className="space-y-2 sm:space-y-4 pt-0 sm:pt-6 px-3 sm:px-6 pb-3 sm:pb-6">
         {/* Teacher-specific fields */}
         {isTeacher && (
-          <div className="space-y-3">
+          <div className="space-y-2 sm:space-y-3">
             {recipientInfo?.email && (
               <InfoItem 
                 label="Email" 
                 value={recipientInfo.email}
-                valueClassName="font-mono break-all"
+                valueClassName="font-mono break-all text-xs sm:text-sm"
               />
             )}
             {recipientInfo?.phone && (
               <InfoItem 
                 label="Phone" 
                 value={recipientInfo.phone}
+                valueClassName="text-xs sm:text-sm"
               />
             )}
           </div>
@@ -99,9 +101,9 @@ export function BillingEntityCard({ entity, onEdit, onDelete, isDeleting = false
 
         {/* Studio-specific fields */}
         {!isTeacher && rateConfig && (
-          <div className="space-y-3 sm:space-y-4">
-            {/* Rate Information */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+          <div className="space-y-2 sm:space-y-4">
+            {/* Rate Information - stack on mobile */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
               <InfoItem 
                 label="Rate Type" 
                 value={
@@ -109,7 +111,7 @@ export function BillingEntityCard({ entity, onEdit, onDelete, isDeleting = false
                   rateConfig.type === "per_student" ? "Per Student" :
                   rateConfig.type === "tiered" ? "Tiered Rates" : "Unknown"
                 }
-                valueClassName="font-medium"
+                valueClassName="font-medium text-xs sm:text-sm"
               />
               <InfoItem 
                 label="Base Rate" 
@@ -118,7 +120,7 @@ export function BillingEntityCard({ entity, onEdit, onDelete, isDeleting = false
                   rateConfig.type === 'per_student' ? rateConfig.rate_per_student?.toFixed(2) || "0.00" :
                   "Tiered"
                 }`}
-                valueClassName="font-semibold"
+                valueClassName="font-semibold text-xs sm:text-sm"
               />
             </div>
 
@@ -127,7 +129,7 @@ export function BillingEntityCard({ entity, onEdit, onDelete, isDeleting = false
               <InfoItem 
                 label="Billing Email" 
                 value={recipientInfo.email}
-                valueClassName="font-mono break-all"
+                valueClassName="font-mono break-all text-xs sm:text-sm"
               />
             )}
 
@@ -135,16 +137,16 @@ export function BillingEntityCard({ entity, onEdit, onDelete, isDeleting = false
               <InfoItem 
                 label="Address" 
                 value={recipientInfo.address}
-                valueClassName="break-words"
+                valueClassName="break-words text-xs sm:text-sm"
               />
             )}
 
-            {/* Enhanced Rate Structure */}
+            {/* Enhanced Rate Structure - more compact */}
             {rateConfig && (
               <InfoItem 
                 label="Rate Structure" 
                 value={
-                  <div className="text-xs sm:text-sm text-gray-600 space-y-1">
+                  <div className="text-xs sm:text-sm text-gray-600 space-y-0.5 sm:space-y-1">
                     {/* Flat rate structure */}
                     {rateConfig.type === 'flat' && (
                       <>
@@ -168,8 +170,9 @@ export function BillingEntityCard({ entity, onEdit, onDelete, isDeleting = false
                       <>
                         <div className="font-medium">Rate Tiers:</div>
                         {rateConfig.tiers.map((tier, index) => (
-                          <div key={index}>
-                            {tier.min}{tier.max ? `-${tier.max}` : '+'} students: €{tier.rate.toFixed(2)}
+                          <div key={index} className="flex justify-between">
+                            <span>{tier.min}{tier.max ? `-${tier.max}` : '+'} students:</span>
+                            <span className="font-medium">€{tier.rate.toFixed(2)}</span>
                           </div>
                         ))}
                       </>
