@@ -180,7 +180,7 @@ const PublicEventList: React.FC<PublicEventListProps> = ({
       case 'full':
         return 'grid grid-cols-1 md:grid-cols-2 gap-8'
       case 'minimal':
-        return 'grid grid-cols-1 md:grid-cols-4 gap-4'
+        return 'grid grid-cols-1 md:grid-cols-3 gap-4'
       case 'compact':
       default:
         return 'grid grid-cols-1 md:grid-cols-3 gap-6'
