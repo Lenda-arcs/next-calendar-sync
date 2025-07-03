@@ -288,7 +288,8 @@ const PublicEventList: React.FC<PublicEventListProps> = ({
             <div className={getGridClasses()}>
               {flattenedEvents.map(({ event, dayLabel, isFirstOfDay }, index) => {
                 const eventKey = `desktop-${index}`
-                const currentVariant = expandedCards[eventKey] || variant
+                // For the first 3 events, force "full" variant (open state)
+                const currentVariant = index < 3 ? 'full' : (expandedCards[eventKey] || variant)
                 return (
                   <div key={eventKey} className="flex flex-col relative">
                     {isFirstOfDay && <DateBadge label={dayLabel} />}
