@@ -14,6 +14,7 @@ import { UnmatchedEventsSection } from './UnmatchedEventsSection'
 import { ExcludedEventsSection } from './ExcludedEventsSection'
 import { SubstituteEventModal } from './SubstituteEventModal'
 import { calculateTotalPayout, EventWithStudio } from '@/lib/invoice-utils'
+import { BillingEntity, RateConfig } from '@/lib/types'
 
 import { useInvoiceEvents, useStudioActions } from '@/lib/hooks'
 import { useCalendarFeeds } from '@/lib/hooks/useCalendarFeeds'
@@ -23,12 +24,7 @@ import { rematchEvents } from '@/lib/rematch-utils'
 
 // Extended type for events with substitute teacher data
 type ExtendedEventWithStudio = EventWithStudio & { 
-  substitute_teacher?: { 
-    entity_name: string; 
-    recipient_type: string; 
-    rate_type?: string; 
-    base_rate?: number;
-  } 
+  substitute_teacher?: BillingEntity
 }
 
 interface UninvoicedEventsListProps {
@@ -254,9 +250,8 @@ export function UninvoicedEventsList({ userId, onCreateInvoice, onCreateStudio }
     return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long' })
   }, [])
 
-  const isTeacherBillingEntity = useCallback((studio: { recipient_type: string | null } | null) => {
-    return studio?.recipient_type === 'internal_teacher' || 
-           studio?.recipient_type === 'external_teacher'
+  const isTeacherBillingEntity = useCallback((entity: BillingEntity | null) => {
+    return entity?.entity_type === 'teacher'
   }, [])
 
   // ==================== DERIVED STATE ====================
@@ -381,7 +376,20 @@ export function UninvoicedEventsList({ userId, onCreateInvoice, onCreateStudio }
                                 {studioEvents.length} event{studioEvents.length !== 1 ? 's' : ''}
                               </span>
                               <span className="text-gray-500 text-xs hidden sm:block">
-                                {displayEntity.rate_type === 'flat' ? 'Flat Rate' : 'Per Student'} • Base: €{displayEntity.base_rate?.toFixed(2) || '0.00'}
+                                {(() => {
+                                  const rateConfig = displayEntity.rate_config as RateConfig | null
+                                  if (!rateConfig) return 'No rate config'
+                                  
+                                  const rateTypeDisplay = rateConfig.type === 'flat' ? 'Flat Rate' : 
+                                                         rateConfig.type === 'per_student' ? 'Per Student' :
+                                                         rateConfig.type === 'tiered' ? 'Tiered Rates' : 'Unknown'
+                                  
+                                  const baseRateDisplay = rateConfig.type === 'flat' ? rateConfig.base_rate?.toFixed(2) :
+                                                         rateConfig.type === 'per_student' ? rateConfig.rate_per_student?.toFixed(2) :
+                                                         'Variable'
+                                  
+                                  return `${rateTypeDisplay} • Base: €${baseRateDisplay || '0.00'}`
+                                })()}
                               </span>
                             </div>
                           </div>

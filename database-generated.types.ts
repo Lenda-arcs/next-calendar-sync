@@ -11,119 +11,57 @@ export type Database = {
     Tables: {
       billing_entities: {
         Row: {
-          address: string | null
-          base_rate: number | null
-          bic: string | null
-          billing_email: string | null
-          bonus_per_student: number | null
-          bonus_student_threshold: number | null
+          banking_info: Json | null
           created_at: string | null
           currency: string | null
           entity_name: string
-          iban: string | null
+          entity_type: string
           id: string
           location_match: string[] | null
-          max_discount: number | null
-          minimum_student_threshold: number | null
           notes: string | null
-          online_bonus_per_student: number | null
-          online_penalty_per_student: number | null
-          rate_type: string | null
-          recipient_email: string | null
-          recipient_name: string | null
-          recipient_phone: string | null
-          recipient_type: string | null
-          recipient_user_id: string | null
-          student_threshold: number | null
-          studio_penalty_per_student: number | null
-          tax_id: string | null
+          rate_config: Json | null
+          recipient_info: Json | null
+          updated_at: string | null
           user_id: string
-          vat_id: string | null
         }
         Insert: {
-          address?: string | null
-          base_rate?: number | null
-          bic?: string | null
-          billing_email?: string | null
-          bonus_per_student?: number | null
-          bonus_student_threshold?: number | null
+          banking_info?: Json | null
           created_at?: string | null
           currency?: string | null
           entity_name: string
-          iban?: string | null
+          entity_type?: string
           id?: string
           location_match?: string[] | null
-          max_discount?: number | null
-          minimum_student_threshold?: number | null
           notes?: string | null
-          online_bonus_per_student?: number | null
-          online_penalty_per_student?: number | null
-          rate_type?: string | null
-          recipient_email?: string | null
-          recipient_name?: string | null
-          recipient_phone?: string | null
-          recipient_type?: string | null
-          recipient_user_id?: string | null
-          student_threshold?: number | null
-          studio_penalty_per_student?: number | null
-          tax_id?: string | null
+          rate_config?: Json | null
+          recipient_info?: Json | null
+          updated_at?: string | null
           user_id: string
-          vat_id?: string | null
         }
         Update: {
-          address?: string | null
-          base_rate?: number | null
-          bic?: string | null
-          billing_email?: string | null
-          bonus_per_student?: number | null
-          bonus_student_threshold?: number | null
+          banking_info?: Json | null
           created_at?: string | null
           currency?: string | null
           entity_name?: string
-          iban?: string | null
+          entity_type?: string
           id?: string
           location_match?: string[] | null
-          max_discount?: number | null
-          minimum_student_threshold?: number | null
           notes?: string | null
-          online_bonus_per_student?: number | null
-          online_penalty_per_student?: number | null
-          rate_type?: string | null
-          recipient_email?: string | null
-          recipient_name?: string | null
-          recipient_phone?: string | null
-          recipient_type?: string | null
-          recipient_user_id?: string | null
-          student_threshold?: number | null
-          studio_penalty_per_student?: number | null
-          tax_id?: string | null
+          rate_config?: Json | null
+          recipient_info?: Json | null
+          updated_at?: string | null
           user_id?: string
-          vat_id?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "billing_entities_recipient_user_id_fkey"
-            columns: ["recipient_user_id"]
-            isOneToOne: false
-            referencedRelation: "public_profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "billing_entities_recipient_user_id_fkey"
-            columns: ["recipient_user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "studios_user_id_fkey"
+            foreignKeyName: "billing_entities_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "public_profiles"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "studios_user_id_fkey"
+            foreignKeyName: "billing_entities_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "users"
@@ -257,13 +195,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "events_billing_entity_id_fkey"
-            columns: ["studio_id"]
-            isOneToOne: false
-            referencedRelation: "billing_entities"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "events_feed_id_fkey"
             columns: ["feed_id"]
             isOneToOne: false
@@ -275,13 +206,6 @@ export type Database = {
             columns: ["invoice_id"]
             isOneToOne: false
             referencedRelation: "invoices"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "events_substitute_teacher_fkey"
-            columns: ["substitute_teacher_entity_id"]
-            isOneToOne: false
-            referencedRelation: "billing_entities"
             referencedColumns: ["id"]
           },
           {
@@ -357,14 +281,14 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "invoices_billing_entity_id_fkey"
+            foreignKeyName: "invoices_studio_id_fkey"
             columns: ["studio_id"]
             isOneToOne: false
             referencedRelation: "billing_entities"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "invoices_substitute_teacher_fkey"
+            foreignKeyName: "invoices_substitute_teacher_entity_id_fkey"
             columns: ["substitute_teacher_entity_id"]
             isOneToOne: false
             referencedRelation: "billing_entities"

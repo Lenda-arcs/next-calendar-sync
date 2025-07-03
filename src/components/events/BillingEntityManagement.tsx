@@ -136,7 +136,7 @@ export function BillingEntityManagement({ userId }: BillingEntityManagementProps
         user={{ id: userId }}
         eventLocations={eventLocations || []}
         existingStudio={editingEntity}
-        defaultEntityType={editingEntity ? (editingEntity.recipient_type === 'studio' ? 'studio' : 'teacher') : undefined}
+        defaultEntityType={editingEntity ? editingEntity.entity_type : undefined}
         onStudioCreated={handleModalSuccess}
         onStudioUpdated={handleModalSuccess}
       />

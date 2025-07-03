@@ -7,24 +7,78 @@ import { InvoiceData } from './types.ts'
 export async function fetchInvoiceData(invoiceId: string): Promise<InvoiceData> {
   const supabase = createSupabaseAdminClient()
   
-  // Fetch invoice data with related information
+  // First fetch the invoice
   const { data: invoice, error: fetchError } = await supabase
     .from('invoices')
-    .select(`
-      *,
-      studio:billing_entities!invoices_billing_entity_id_fkey(*),
-      events(
-        *,
-        studio:billing_entities!events_billing_entity_id_fkey(entity_name, base_rate, bonus_per_student, online_bonus_per_student, studio_penalty_per_student, rate_type)
-      ),
-      user:users(name, email)
-    `)
+    .select('*')
     .eq('id', invoiceId)
     .single()
 
   if (fetchError || !invoice) {
     console.error('Invoice fetch error:', fetchError)
     throw new Error(`Invoice not found: ${fetchError?.message || 'Unknown error'}`)
+  }
+
+  // Fetch billing entity (studio/teacher) for this invoice
+  const { data: billingEntity, error: entityError } = await supabase
+    .from('billing_entities')
+    .select('*')
+    .eq('id', invoice.billing_entity_id)
+    .single()
+
+  if (entityError || !billingEntity) {
+    console.error('Billing entity fetch error:', entityError)
+    throw new Error(`Billing entity not found: ${entityError?.message || 'Unknown error'}`)
+  }
+
+  // Fetch events for this invoice
+  const { data: events, error: eventsError } = await supabase
+    .from('events')
+    .select('*')
+    .eq('invoice_id', invoice.id)
+
+  if (eventsError) {
+    console.error('Events fetch error:', eventsError)
+    throw new Error(`Events not found: ${eventsError?.message || 'Unknown error'}`)
+  }
+
+  // For each event, get its billing entity (studio) to calculate rates
+  const eventsWithStudio = await Promise.all((events || []).map(async (event) => {
+    if (event.billing_entity_id) {
+      const { data: eventBillingEntity } = await supabase
+        .from('billing_entities')
+        .select('entity_name, rate_config')
+        .eq('id', event.billing_entity_id)
+        .single()
+      
+      // Extract rate config from JSON field
+      const rateConfig = eventBillingEntity?.rate_config ? JSON.parse(JSON.stringify(eventBillingEntity.rate_config)) : null;
+      
+      return {
+        ...event,
+        studio: eventBillingEntity ? {
+          entity_name: eventBillingEntity.entity_name,
+          base_rate: rateConfig?.base_rate || 0,
+          bonus_per_student: rateConfig?.bonus_per_student || 0,
+          online_bonus_per_student: rateConfig?.online_bonus_per_student || 0,
+          studio_penalty_per_student: rateConfig?.studio_penalty_per_student || 0,
+          rate_type: rateConfig?.rate_type || 'flat'
+        } : null
+      }
+    }
+    return { ...event, studio: null }
+  }))
+
+  // Fetch user information
+  const { data: user, error: userError } = await supabase
+    .from('users')
+    .select('name, email')
+    .eq('id', invoice.user_id)
+    .single()
+
+  if (userError || !user) {
+    console.error('User fetch error:', userError)
+    throw new Error(`User not found: ${userError?.message || 'Unknown error'}`)
   }
 
   // Fetch user invoice settings separately
@@ -34,10 +88,16 @@ export async function fetchInvoiceData(invoiceId: string): Promise<InvoiceData> 
     .eq('user_id', invoice.user_id)
     .single()
 
-  // Add user settings to invoice data
-  invoice.user_invoice_settings = userSettings
+  // Combine all data
+  const invoiceData = {
+    ...invoice,
+    studio: billingEntity,
+    events: eventsWithStudio,
+    user: user,
+    user_invoice_settings: userSettings
+  }
 
-  return invoice as InvoiceData
+  return invoiceData as InvoiceData
 }
 
 /**

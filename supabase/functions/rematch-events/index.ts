@@ -111,7 +111,7 @@ serve(async (req) => {
       try {
         const { data: billingEntities, error: entitiesError } = await supabase
           .from("billing_entities")
-          .select("id, location_match, recipient_type")
+          .select("id, location_match, entity_type")
           .eq("user_id", user_id);
 
         if (entitiesError) {
@@ -121,11 +121,11 @@ serve(async (req) => {
           }, 500, origin);
         }
 
-        // Separate studios from teachers
-        studios = (billingEntities || []).filter(entity => entity.recipient_type === "studio");
+        // Separate studios from teachers using the new entity_type field
+        studios = (billingEntities || []).filter(entity => entity.entity_type === "studio");
         teacherEntityIds = new Set(
           (billingEntities || [])
-            .filter(entity => entity.recipient_type === "internal_teacher" || entity.recipient_type === "external_teacher")
+            .filter(entity => entity.entity_type === "teacher")
             .map(entity => entity.id)
         );
         

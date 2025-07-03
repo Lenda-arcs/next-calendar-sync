@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { InfoItem } from '@/components/ui/info-section'
-import { BillingEntity } from '@/lib/types'
+import { BillingEntity, RateConfig, RecipientInfo } from '@/lib/types'
 import { Trash2, Edit } from 'lucide-react'
 
 interface BillingEntityCardProps {
@@ -16,7 +16,9 @@ interface BillingEntityCardProps {
 }
 
 export function BillingEntityCard({ entity, onEdit, onDelete, isDeleting = false }: BillingEntityCardProps) {
-  const isTeacher = entity.recipient_type === 'internal_teacher' || entity.recipient_type === 'external_teacher'
+  const isTeacher = entity.entity_type === 'teacher'
+  const rateConfig = entity.rate_config as RateConfig | null
+  const recipientInfo = entity.recipient_info as RecipientInfo | null
   
   return (
     <Card className={`h-full ${isTeacher ? 'border-purple-200' : 'border-blue-200'}`}>
@@ -79,95 +81,118 @@ export function BillingEntityCard({ entity, onEdit, onDelete, isDeleting = false
         {/* Teacher-specific fields */}
         {isTeacher && (
           <div className="space-y-3">
-            {entity.recipient_email && (
+            {recipientInfo?.email && (
               <InfoItem 
                 label="Email" 
-                value={entity.recipient_email}
+                value={recipientInfo.email}
                 valueClassName="font-mono break-all"
               />
             )}
-            {entity.recipient_phone && (
+            {recipientInfo?.phone && (
               <InfoItem 
                 label="Phone" 
-                value={entity.recipient_phone}
+                value={recipientInfo.phone}
               />
             )}
           </div>
         )}
 
         {/* Studio-specific fields */}
-        {!isTeacher && (
+        {!isTeacher && rateConfig && (
           <div className="space-y-3 sm:space-y-4">
             {/* Rate Information */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <InfoItem 
                 label="Rate Type" 
-                value={entity.rate_type === "flat" ? "Flat Rate" : "Per Student"}
+                value={
+                  rateConfig.type === "flat" ? "Flat Rate" : 
+                  rateConfig.type === "per_student" ? "Per Student" :
+                  rateConfig.type === "tiered" ? "Tiered Rates" : "Unknown"
+                }
                 valueClassName="font-medium"
               />
               <InfoItem 
                 label="Base Rate" 
-                value={`€${entity.base_rate?.toFixed(2) || "0.00"}`}
+                value={`€${
+                  rateConfig.type === 'flat' ? rateConfig.base_rate?.toFixed(2) || "0.00" :
+                  rateConfig.type === 'per_student' ? rateConfig.rate_per_student?.toFixed(2) || "0.00" :
+                  "Tiered"
+                }`}
                 valueClassName="font-semibold"
               />
             </div>
 
             {/* Contact Information */}
-            {entity.billing_email && (
+            {recipientInfo?.email && (
               <InfoItem 
                 label="Billing Email" 
-                value={entity.billing_email}
+                value={recipientInfo.email}
                 valueClassName="font-mono break-all"
               />
             )}
 
-            {entity.address && (
+            {recipientInfo?.address && (
               <InfoItem 
                 label="Address" 
-                value={entity.address}
+                value={recipientInfo.address}
                 valueClassName="break-words"
               />
             )}
 
             {/* Enhanced Rate Structure */}
-            {(entity.minimum_student_threshold || entity.bonus_student_threshold || entity.bonus_per_student || 
-              entity.studio_penalty_per_student || entity.online_bonus_per_student || entity.student_threshold) && (
+            {rateConfig && (
               <InfoItem 
                 label="Rate Structure" 
                 value={
                   <div className="text-xs sm:text-sm text-gray-600 space-y-1">
-                    {/* New enhanced thresholds */}
-                    {entity.minimum_student_threshold && (
-                      <div>Min. students: {entity.minimum_student_threshold}</div>
-                    )}
-                    {entity.bonus_student_threshold && (
-                      <div>Bonus threshold: {entity.bonus_student_threshold} students</div>
-                    )}
-                    {entity.bonus_per_student && (
-                      <div>Bonus rate: €{entity.bonus_per_student.toFixed(2)}/student</div>
-                    )}
-                    
-                    {/* Penalties */}
-                    {entity.studio_penalty_per_student && (
-                      <div>Missing student penalty: €{entity.studio_penalty_per_student.toFixed(2)}</div>
-                    )}
-                                    {entity.online_bonus_per_student && (
-                  <div>Online bonus: €{entity.online_bonus_per_student.toFixed(2)}/student</div>
-                )}
-                    
-                    {/* Legacy threshold for backwards compatibility */}
-                    {entity.student_threshold && !entity.minimum_student_threshold && (
-                      <div>Student threshold (legacy): {entity.student_threshold}</div>
+                    {/* Flat rate structure */}
+                    {rateConfig.type === 'flat' && (
+                      <>
+                        {rateConfig.minimum_threshold && (
+                          <div>Min. students: {rateConfig.minimum_threshold}</div>
+                        )}
+                        {rateConfig.bonus_threshold && (
+                          <div>Bonus threshold: {rateConfig.bonus_threshold} students</div>
+                        )}
+                        {rateConfig.bonus_per_student && (
+                          <div>Bonus rate: €{rateConfig.bonus_per_student.toFixed(2)}/student</div>
+                        )}
+                        {rateConfig.max_discount && (
+                          <div>Max discount: €{rateConfig.max_discount.toFixed(2)}</div>
+                        )}
+                      </>
                     )}
                     
-                    {/* Max discount limit */}
-                    {entity.max_discount && (
-                      <div>Max discount: €{entity.max_discount.toFixed(2)}</div>
+                    {/* Tiered rate structure */}
+                    {rateConfig.type === 'tiered' && rateConfig.tiers && (
+                      <>
+                        <div className="font-medium">Rate Tiers:</div>
+                        {rateConfig.tiers.map((tier, index) => (
+                          <div key={index}>
+                            {tier.min}{tier.max ? `-${tier.max}` : '+'} students: €{tier.rate.toFixed(2)}
+                          </div>
+                        ))}
+                      </>
+                    )}
+                    
+                    {/* Online bonus (applies to all rate types) */}
+                    {rateConfig.online_bonus_per_student && (
+                      <div>
+                        Online bonus: €{rateConfig.online_bonus_per_student.toFixed(2)}/student
+                        {rateConfig.online_bonus_ceiling && ` (max ${rateConfig.online_bonus_ceiling})`}
+                      </div>
                     )}
                   </div>
                 }
               />
             )}
+          </div>
+        )}
+
+        {/* No rate config for teachers */}
+        {!isTeacher && !rateConfig && (
+          <div className="text-xs text-gray-500 italic">
+            No rate configuration set
           </div>
         )}
       </CardContent>

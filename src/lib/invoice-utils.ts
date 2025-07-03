@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase'
-import { Event, Invoice, InvoiceInsert, UserInvoiceSettings, BillingEntity, BillingEntityInsert, BillingEntityUpdate } from '@/lib/types'
+import { Event, Invoice, InvoiceInsert, UserInvoiceSettings, BillingEntity, BillingEntityInsert, BillingEntityUpdate, RateConfig, RateConfigFlat, RateConfigPerStudent, RateConfigTiered, RecipientInfo, BankingInfo } from '@/lib/types'
 
 // Extended Event interface for substitute teaching  
 export interface ExtendedEvent extends Omit<Event, 'invoice_type' | 'substitute_notes' | 'substitute_teacher_entity_id'> {
@@ -43,63 +43,131 @@ export function generateInvoiceNumber(userPrefix: string = "INV"): string {
   return `${userPrefix}-${year}${month}-${timestamp}`
 }
 
+// Note: RateTier interface is now defined in types.ts as part of RateConfigTiered
+
 /**
  * Calculate payout for a single event based on billing entity rules
- * Enhanced calculation supports minimum thresholds, bonus thresholds, and per-student bonuses
+ * Enhanced calculation supports:
+ * - Tiered rate system (different rates for different student count ranges)
+ * - Online student ceiling (limit bonuses for online students)
+ * - Flat rate with thresholds
+ * - Per-student rates
+ * 
+ * Note: Teachers don't have their own rate configs, they use the studio's rates
  */
 export function calculateEventPayout(event: Event, billingEntity: BillingEntity): number {
-  if (!billingEntity.base_rate) return 0
-
-  const totalStudents = (event.students_studio || 0) + (event.students_online || 0)
-  let payout = 0
-
-  // Handle per-student rate type
-  if (billingEntity.rate_type === "per_student") {
-    // For per-student rates, multiply base rate by total students
-    payout = billingEntity.base_rate * totalStudents
-    
-    // Apply online bonus if configured
-    if (billingEntity.online_bonus_per_student && event.students_online) {
-      payout += event.students_online * billingEntity.online_bonus_per_student
-    }
-    
-    return Math.max(payout, 0)
-  }
-
-  // Handle flat rate with advanced threshold system
-  payout = billingEntity.base_rate
-
-  // Check minimum student threshold (use new field, fallback to legacy field)
-  const minimumThreshold = billingEntity.minimum_student_threshold ?? billingEntity.student_threshold ?? 0
+  const studioStudents = event.students_studio || 0
+  const onlineStudents = event.students_online || 0
   
-  if (minimumThreshold > 0 && totalStudents < minimumThreshold) {
-    // Below minimum threshold - apply penalties
-    if (billingEntity.studio_penalty_per_student) {
-      const missingStudents = minimumThreshold - totalStudents
-      payout -= missingStudents * billingEntity.studio_penalty_per_student
-    }
+  // Properly cast the JSON rate_config field to RateConfig type
+  const rateConfig = billingEntity.rate_config as RateConfig | null
+  
+  if (!rateConfig) {
+    // Teachers don't have rate configs, this should use the studio's rates
+    // This function should be called with the studio entity for rate calculations
+    return 0
+  }
+  
+  switch (rateConfig.type) {
+    case 'tiered':
+      return calculateTieredRatePayout(studioStudents, onlineStudents, rateConfig)
+    case 'per_student':
+      return calculatePerStudentRatePayout(studioStudents, onlineStudents, rateConfig)
+    case 'flat':
+    default:
+      return calculateFlatRatePayout(studioStudents, onlineStudents, rateConfig)
+  }
+}
+
+/**
+ * Calculate payout using tiered rate system
+ */
+function calculateTieredRatePayout(studioStudents: number, onlineStudents: number, rateConfig: RateConfigTiered): number {
+  const totalStudents = studioStudents + onlineStudents
+  
+  // Find the appropriate tier for the student count
+  const tier = rateConfig.tiers.find(tier => {
+    return totalStudents >= tier.min && 
+           (tier.max === null || totalStudents <= tier.max)
+  })
+  
+  if (!tier) {
+    // No matching tier found, return 0
+    return 0
+  }
+  
+  let payout = tier.rate
+  
+  // Apply online bonus with ceiling if configured
+  if (rateConfig.online_bonus_per_student && onlineStudents > 0) {
+    const eligibleOnlineStudents = rateConfig.online_bonus_ceiling 
+      ? Math.min(onlineStudents, rateConfig.online_bonus_ceiling)
+      : onlineStudents
+    
+    payout += eligibleOnlineStudents * rateConfig.online_bonus_per_student
+  }
+  
+  return Math.max(payout, 0)
+}
+
+/**
+ * Calculate payout using per-student rate system
+ */
+function calculatePerStudentRatePayout(studioStudents: number, onlineStudents: number, rateConfig: RateConfigPerStudent): number {
+  const totalStudents = studioStudents + onlineStudents
+  let payout = totalStudents * rateConfig.rate_per_student
+  
+  // Apply online bonus with ceiling if configured
+  if (rateConfig.online_bonus_per_student && onlineStudents > 0) {
+    const eligibleOnlineStudents = rateConfig.online_bonus_ceiling 
+      ? Math.min(onlineStudents, rateConfig.online_bonus_ceiling)
+      : onlineStudents
+    
+    payout += eligibleOnlineStudents * rateConfig.online_bonus_per_student
+  }
+  
+  return Math.max(payout, 0)
+}
+
+/**
+ * Calculate payout using flat rate system with thresholds
+ */
+function calculateFlatRatePayout(studioStudents: number, onlineStudents: number, rateConfig: RateConfigFlat): number {
+  const totalStudents = studioStudents + onlineStudents
+  let payout = rateConfig.base_rate
+  
+  // Check minimum student threshold
+  if (rateConfig.minimum_threshold && totalStudents < rateConfig.minimum_threshold) {
+    // Below minimum threshold - in the new system we don't apply penalties, just use base rate
+    // Could add penalty logic here if needed in the future
   }
 
   // Check bonus student threshold and add bonus payments
-  if (billingEntity.bonus_student_threshold && billingEntity.bonus_per_student && 
-      totalStudents > billingEntity.bonus_student_threshold) {
-    const bonusStudents = totalStudents - billingEntity.bonus_student_threshold
-    payout += bonusStudents * billingEntity.bonus_per_student
+  if (rateConfig.bonus_threshold && rateConfig.bonus_per_student && 
+      totalStudents > rateConfig.bonus_threshold) {
+    const bonusStudents = totalStudents - rateConfig.bonus_threshold
+    payout += bonusStudents * rateConfig.bonus_per_student
   }
 
-  // Apply online bonus
-  if (billingEntity.online_bonus_per_student && event.students_online) {
-    payout += event.students_online * billingEntity.online_bonus_per_student
+  // Apply online bonus with ceiling
+  if (rateConfig.online_bonus_per_student && onlineStudents > 0) {
+    const eligibleOnlineStudents = rateConfig.online_bonus_ceiling 
+      ? Math.min(onlineStudents, rateConfig.online_bonus_ceiling)
+      : onlineStudents
+    
+    payout += eligibleOnlineStudents * rateConfig.online_bonus_per_student
   }
 
   // Apply maximum discount limit to prevent excessive penalties
-  if (billingEntity.max_discount) {
-    const minimumPayout = billingEntity.base_rate - billingEntity.max_discount
+  if (rateConfig.max_discount) {
+    const minimumPayout = rateConfig.base_rate - rateConfig.max_discount
     payout = Math.max(payout, minimumPayout)
   }
 
-  return Math.max(payout, 0) // Never negative
+  return Math.max(payout, 0)
 }
+
+
 
 /**
  * Calculate total payout for multiple events
@@ -110,37 +178,152 @@ export function calculateTotalPayout(events: Event[], billingEntity: BillingEnti
 
 /**
  * Generate rate calculation examples for display purposes
+ * Supports tiered rates, per-student rates, and flat rates with thresholds
  */
 export function generateRateCalculationExamples(billingEntity: BillingEntity): {
   belowMinimum?: string;
   betweenThresholds?: string;
   aboveBonus?: string;
+  tieredExamples?: string[];
 } {
-  if (!billingEntity.base_rate) return {}
-  
-  const examples: { belowMinimum?: string; betweenThresholds?: string; aboveBonus?: string } = {}
   const currency = billingEntity.currency || 'EUR'
   const symbol = currency === 'EUR' ? '€' : currency === 'USD' ? '$' : currency === 'GBP' ? '£' : currency
+  const rateConfig = billingEntity.rate_config as RateConfig
   
-  const minimumThreshold = billingEntity.minimum_student_threshold ?? billingEntity.student_threshold ?? 0
-  const bonusThreshold = billingEntity.bonus_student_threshold
-  const baseRate = billingEntity.base_rate
-  const penaltyPerStudent = billingEntity.studio_penalty_per_student || 0
-  const bonusPerStudent = billingEntity.bonus_per_student || 0
+  if (!rateConfig) {
+    return {}
+  }
+  
+  switch (rateConfig.type) {
+    case 'tiered':
+      return generateTieredRateExamples(rateConfig, symbol)
+    case 'per_student':
+      return generatePerStudentRateExamples(rateConfig, symbol)
+    case 'flat':
+    default:
+      return generateFlatRateExamples(rateConfig, symbol)
+  }
+}
+
+/**
+ * Generate examples for tiered rate system
+ */
+function generateTieredRateExamples(rateConfig: RateConfigTiered, symbol: string): {
+  tieredExamples: string[];
+} {
+  const tieredExamples: string[] = []
+  
+  rateConfig.tiers.forEach((tier) => {
+    const exampleStudents = tier.min + Math.floor((tier.max ? tier.max - tier.min : 2) / 2)
+    let exampleText = `${exampleStudents} students: ${symbol}${tier.rate.toFixed(2)}`
+    
+    // Add online bonus example if configured
+    if (rateConfig.online_bonus_per_student) {
+      const onlineStudents = Math.min(2, exampleStudents) // Example with 2 online students
+      const eligibleOnlineStudents = rateConfig.online_bonus_ceiling 
+        ? Math.min(onlineStudents, rateConfig.online_bonus_ceiling)
+        : onlineStudents
+      
+      if (eligibleOnlineStudents > 0) {
+        const onlineBonus = eligibleOnlineStudents * rateConfig.online_bonus_per_student
+        const totalPayout = tier.rate + onlineBonus
+        exampleText += ` + ${symbol}${onlineBonus.toFixed(2)} online bonus = ${symbol}${totalPayout.toFixed(2)}`
+      }
+    }
+    
+    // Add tier range description
+    const rangeText = tier.max 
+      ? `(${tier.min}-${tier.max} students)`
+      : `(${tier.min}+ students)`
+    exampleText += ` ${rangeText}`
+    
+    tieredExamples.push(exampleText)
+  })
+  
+  return { tieredExamples }
+}
+
+/**
+ * Generate examples for per-student rate system
+ */
+function generatePerStudentRateExamples(rateConfig: RateConfigPerStudent, symbol: string): {
+  belowMinimum?: string;
+  betweenThresholds?: string;
+  aboveBonus?: string;
+} {
+  let exampleText = `${symbol}${rateConfig.rate_per_student.toFixed(2)} per student`
+  
+  if (rateConfig.online_bonus_per_student) {
+    exampleText += ` + ${symbol}${rateConfig.online_bonus_per_student.toFixed(2)} online bonus`
+    if (rateConfig.online_bonus_ceiling) {
+      exampleText += ` (max ${rateConfig.online_bonus_ceiling} students)`
+    }
+  }
+  
+  return {
+    betweenThresholds: `Example: 10 students = ${symbol}${(rateConfig.rate_per_student * 10).toFixed(2)} ${exampleText}`
+  }
+}
+
+/**
+ * Generate examples for flat rate system
+ */
+function generateFlatRateExamples(rateConfig: RateConfigFlat, symbol: string): {
+  belowMinimum?: string;
+  betweenThresholds?: string;
+  aboveBonus?: string;
+} {
+  const examples: { belowMinimum?: string; betweenThresholds?: string; aboveBonus?: string } = {}
+  
+  const minimumThreshold = rateConfig.minimum_threshold || 0
+  const bonusThreshold = rateConfig.bonus_threshold
+  const baseRate = rateConfig.base_rate
+  const bonusPerStudent = rateConfig.bonus_per_student || 0
   
   // Below minimum threshold example
-  if (minimumThreshold > 0 && penaltyPerStudent > 0) {
+  if (minimumThreshold > 0) {
     const exampleStudents = Math.max(1, minimumThreshold - 1)
-    const missingStudents = minimumThreshold - exampleStudents
-    const penalty = missingStudents * penaltyPerStudent
-    const finalPayout = Math.max(0, baseRate - penalty)
-    examples.belowMinimum = `${exampleStudents} students: ${symbol}${baseRate} - ${symbol}${penalty} penalty = ${symbol}${finalPayout.toFixed(2)}`
+    let finalPayout = baseRate
+    
+    // Add online bonus example
+    let exampleText = `${exampleStudents} students: ${symbol}${baseRate.toFixed(2)} (base rate)`
+    
+    if (rateConfig.online_bonus_per_student && exampleStudents > 0) {
+      const onlineStudents = Math.min(1, exampleStudents)
+      const eligibleOnlineStudents = rateConfig.online_bonus_ceiling 
+        ? Math.min(onlineStudents, rateConfig.online_bonus_ceiling)
+        : onlineStudents
+      
+      if (eligibleOnlineStudents > 0) {
+        const onlineBonus = eligibleOnlineStudents * rateConfig.online_bonus_per_student
+        finalPayout += onlineBonus
+        exampleText += ` + ${symbol}${onlineBonus.toFixed(2)} online = ${symbol}${finalPayout.toFixed(2)}`
+      }
+    }
+    
+    examples.belowMinimum = exampleText
   }
   
   // Between thresholds example (if applicable)
   if (minimumThreshold > 0 || bonusThreshold) {
     const exampleStudents = bonusThreshold ? Math.max(minimumThreshold + 1, bonusThreshold - 2) : minimumThreshold + 2
-    examples.betweenThresholds = `${exampleStudents} students: ${symbol}${baseRate.toFixed(2)} (base rate)`
+    let exampleText = `${exampleStudents} students: ${symbol}${baseRate.toFixed(2)} (base rate)`
+    
+    // Add online bonus example
+    if (rateConfig.online_bonus_per_student) {
+      const onlineStudents = Math.min(2, exampleStudents)
+      const eligibleOnlineStudents = rateConfig.online_bonus_ceiling 
+        ? Math.min(onlineStudents, rateConfig.online_bonus_ceiling)
+        : onlineStudents
+      
+      if (eligibleOnlineStudents > 0) {
+        const onlineBonus = eligibleOnlineStudents * rateConfig.online_bonus_per_student
+        const totalPayout = baseRate + onlineBonus
+        exampleText += ` + ${symbol}${onlineBonus.toFixed(2)} online = ${symbol}${totalPayout.toFixed(2)}`
+      }
+    }
+    
+    examples.betweenThresholds = exampleText
   }
   
   // Above bonus threshold example
@@ -148,8 +331,24 @@ export function generateRateCalculationExamples(billingEntity: BillingEntity): {
     const exampleStudents = bonusThreshold + 2
     const bonusStudents = exampleStudents - bonusThreshold
     const bonusAmount = bonusStudents * bonusPerStudent
-    const finalPayout = baseRate + bonusAmount
-    examples.aboveBonus = `${exampleStudents} students: ${symbol}${baseRate} + (${bonusStudents} × ${symbol}${bonusPerStudent}) = ${symbol}${finalPayout.toFixed(2)}`
+    let finalPayout = baseRate + bonusAmount
+    let exampleText = `${exampleStudents} students: ${symbol}${baseRate} + (${bonusStudents} × ${symbol}${bonusPerStudent}) = ${symbol}${finalPayout.toFixed(2)}`
+    
+    // Add online bonus example
+    if (rateConfig.online_bonus_per_student) {
+      const onlineStudents = Math.min(2, exampleStudents)
+      const eligibleOnlineStudents = rateConfig.online_bonus_ceiling 
+        ? Math.min(onlineStudents, rateConfig.online_bonus_ceiling)
+        : onlineStudents
+      
+      if (eligibleOnlineStudents > 0) {
+        const onlineBonus = eligibleOnlineStudents * rateConfig.online_bonus_per_student
+        finalPayout += onlineBonus
+        exampleText += ` + ${symbol}${onlineBonus.toFixed(2)} online = ${symbol}${finalPayout.toFixed(2)}`
+      }
+    }
+    
+    examples.aboveBonus = exampleText
   }
   
   return examples
@@ -163,17 +362,14 @@ export function generateRateCalculationExamples(billingEntity: BillingEntity): {
 export async function getUninvoicedEvents(userId: string): Promise<EventWithSubstituteTeacher[]> {
   const supabase = createClient()
   
-  const { data, error } = await supabase
+  // First get the events
+  const { data: eventsData, error } = await supabase
     .from("events")
-    .select(`
-      *,
-      studio:billing_entities!events_billing_entity_id_fkey(*),
-      substitute_teacher:billing_entities!events_substitute_teacher_fkey(*)
-    `)
+    .select("*")
     .eq("user_id", userId)
     .lt("end_time", new Date().toISOString()) // Events that have ended
     .is("invoice_id", null) // Not yet invoiced
-    .not("studio_id", "is", null) // Has billing entity assigned (studio OR teacher)
+    .not("studio_id", "is", null) // Has billing entity assigned
     .or("exclude_from_studio_matching.eq.false,invoice_type.eq.teacher_invoice") // Studio events OR teacher invoice events
     .order("end_time", { ascending: false })
 
@@ -182,7 +378,45 @@ export async function getUninvoicedEvents(userId: string): Promise<EventWithSubs
     throw new Error(`Failed to fetch uninvoiced events: ${error.message}`)
   }
 
-  return (data || []) as EventWithSubstituteTeacher[]
+  if (!eventsData || eventsData.length === 0) {
+    return []
+  }
+
+  // Get all unique studio IDs and substitute teacher entity IDs
+  const studioIds = new Set<string>()
+  const substituteTeacherIds = new Set<string>()
+  
+  eventsData.forEach(event => {
+    if (event.studio_id) studioIds.add(event.studio_id)
+    if (event.substitute_teacher_entity_id) substituteTeacherIds.add(event.substitute_teacher_entity_id)
+  })
+
+  // Fetch all needed billing entities in one query
+  const allEntityIds = [...studioIds, ...substituteTeacherIds]
+  const { data: entitiesData, error: entitiesError } = await supabase
+    .from("billing_entities")
+    .select("*")
+    .in("id", allEntityIds)
+
+  if (entitiesError) {
+    console.error("Error fetching billing entities:", entitiesError)
+    throw new Error(`Failed to fetch billing entities: ${entitiesError.message}`)
+  }
+
+  // Create a map for quick lookup
+  const entitiesMap = new Map<string, BillingEntity>()
+  entitiesData?.forEach(entity => {
+    entitiesMap.set(entity.id, entity as BillingEntity)
+  })
+
+  // Combine events with their billing entities
+  const data = eventsData.map(event => ({
+    ...event,
+    studio: event.studio_id ? entitiesMap.get(event.studio_id) || null : null,
+    substitute_teacher: event.substitute_teacher_entity_id ? entitiesMap.get(event.substitute_teacher_entity_id) || null : null,
+  }))
+
+  return data as EventWithSubstituteTeacher[]
 }
 
 /**
@@ -209,27 +443,56 @@ export async function getUninvoicedEventsByStudio(userId: string): Promise<Recor
 export async function getUserInvoices(userId: string): Promise<InvoiceWithDetails[]> {
   const supabase = createClient()
   
-  const { data, error } = await supabase
+  // First get invoices
+  const { data: invoices, error: invoiceError } = await supabase
     .from("invoices")
-    .select(`
-      *,
-      studio:billing_entities!invoices_billing_entity_id_fkey(*),
-      substitute_teacher:billing_entities!invoices_substitute_teacher_fkey(*),
-      events(*)
-    `)
+    .select("*, events(*)")
     .eq("user_id", userId)
     .order("created_at", { ascending: false })
 
-  if (error) {
-    console.error("Error fetching user invoices:", error)
-    throw new Error(`Failed to fetch invoices: ${error.message}`)
+  if (invoiceError) {
+    console.error("Error fetching user invoices:", invoiceError)
+    throw new Error(`Failed to fetch invoices: ${invoiceError.message}`)
   }
 
-  return (data || []).map(invoice => ({
+  if (!invoices || invoices.length === 0) {
+    return []
+  }
+
+  // Get all unique billing entity IDs
+  const studioIds = new Set<string>()
+  const substituteTeacherIds = new Set<string>()
+  
+  invoices.forEach(invoice => {
+    if (invoice.studio_id) studioIds.add(invoice.studio_id)
+    if (invoice.substitute_teacher_entity_id) substituteTeacherIds.add(invoice.substitute_teacher_entity_id)
+  })
+
+  // Fetch all needed billing entities
+  const allEntityIds = [...studioIds, ...substituteTeacherIds]
+  const { data: entities, error: entitiesError } = await supabase
+    .from("billing_entities")
+    .select("*")
+    .in("id", allEntityIds)
+
+  if (entitiesError) {
+    console.error("Error fetching billing entities:", entitiesError)
+    throw new Error(`Failed to fetch billing entities: ${entitiesError.message}`)
+  }
+
+  // Create lookup map
+  const entitiesMap = new Map<string, BillingEntity>()
+  entities?.forEach(entity => {
+    entitiesMap.set(entity.id, entity as BillingEntity)
+  })
+
+  // Combine data
+  return invoices.map(invoice => ({
     ...invoice,
+    studio: invoice.studio_id ? entitiesMap.get(invoice.studio_id)! : {} as BillingEntity,
+    substitute_teacher: invoice.substitute_teacher_entity_id ? entitiesMap.get(invoice.substitute_teacher_entity_id) || null : null,
     events: invoice.events || [],
     event_count: invoice.events?.length || 0,
-    substitute_teacher: invoice.substitute_teacher || null,
   }))
 }
 
@@ -284,7 +547,8 @@ export async function getInvoiceById(invoiceId: string): Promise<InvoiceWithDeta
     .from("invoices")
     .select(`
       *,
-      studio:billing_entities!invoices_billing_entity_id_fkey(*),
+      studio:billing_entities!invoices_studio_id_fkey(*),
+      substitute_teacher:billing_entities!invoices_substitute_teacher_entity_id_fkey(*),
       events(*)
     `)
     .eq("id", invoiceId)
@@ -298,6 +562,8 @@ export async function getInvoiceById(invoiceId: string): Promise<InvoiceWithDeta
 
   return {
     ...data,
+    studio: data.studio as BillingEntity,
+    substitute_teacher: data.substitute_teacher as BillingEntity | null,
     events: data.events || [],
     event_count: data.events?.length || 0,
   }
@@ -504,7 +770,7 @@ export async function getUserStudios(userId: string): Promise<BillingEntity[]> {
     throw new Error(`Failed to fetch billing entities: ${error.message}`)
   }
 
-  return data || []
+  return (data || []) as BillingEntity[]
 }
 
 /**
@@ -538,9 +804,17 @@ export async function getUnmatchedEvents(userId: string): Promise<Event[]> {
 export async function createStudio(entityData: BillingEntityInsert): Promise<BillingEntity> {
   const supabase = createClient()
   
+  // Convert TypeScript objects to JSON for database insertion
+  const dbData = {
+    ...entityData,
+    rate_config: entityData.rate_config ? JSON.parse(JSON.stringify(entityData.rate_config)) : null,
+    recipient_info: entityData.recipient_info ? JSON.parse(JSON.stringify(entityData.recipient_info)) : null,
+    banking_info: entityData.banking_info ? JSON.parse(JSON.stringify(entityData.banking_info)) : null,
+  }
+  
   const { data, error } = await supabase
     .from("billing_entities")
-    .insert(entityData)
+    .insert(dbData)
     .select()
     .single()
 
@@ -549,7 +823,7 @@ export async function createStudio(entityData: BillingEntityInsert): Promise<Bil
     throw new Error(`Failed to create billing entity: ${error.message}`)
   }
 
-  return data
+  return data as BillingEntity
 }
 
 /**
@@ -558,9 +832,17 @@ export async function createStudio(entityData: BillingEntityInsert): Promise<Bil
 export async function updateStudio(entityId: string, entityData: BillingEntityUpdate): Promise<BillingEntity> {
   const supabase = createClient()
   
+  // Convert TypeScript objects to JSON for database update
+  const dbData = {
+    ...entityData,
+    rate_config: entityData.rate_config ? JSON.parse(JSON.stringify(entityData.rate_config)) : null,
+    recipient_info: entityData.recipient_info ? JSON.parse(JSON.stringify(entityData.recipient_info)) : null,
+    banking_info: entityData.banking_info ? JSON.parse(JSON.stringify(entityData.banking_info)) : null,
+  }
+  
   const { data, error } = await supabase
     .from("billing_entities")
-    .update(entityData)
+    .update(dbData)
     .eq("id", entityId)
     .select()
     .single()
@@ -570,7 +852,7 @@ export async function updateStudio(entityId: string, entityData: BillingEntityUp
     throw new Error(`Failed to update billing entity: ${error.message}`)
   }
 
-  return data
+  return data as BillingEntity
 }
 
 /**
@@ -604,7 +886,7 @@ export async function matchEventsToStudios(userId: string): Promise<{
     .from("billing_entities")
     .select("*")
     .eq("user_id", userId)
-    .eq("recipient_type", "studio") // Only match to studio entities
+    .eq("entity_type", "studio") // Only match to studio entities
     .order("entity_name", { ascending: true })
 
   if (entitiesError) {
@@ -792,25 +1074,32 @@ export async function createTeacherBillingEntity(
   }
   
   // First, check if a billing entity already exists for this recipient
-  let existingEntityQuery = supabase
+  // We'll search based on the recipient info JSON structure
+  const { data: existingEntities, error: searchError } = await supabase
     .from("billing_entities")
-    .select("id")
+    .select("id, recipient_info")
     .eq("user_id", userId)
-    .eq("recipient_type", recipient.type === 'internal' ? 'internal_teacher' : 'external_teacher')
+    .eq("entity_type", "teacher")
 
-  if (recipient.type === 'internal') {
-    existingEntityQuery = existingEntityQuery.eq("recipient_user_id", recipient.userId)
-  } else {
-    existingEntityQuery = existingEntityQuery
-      .eq("recipient_name", recipient.name)
-      .eq("recipient_email", recipient.email)
+  if (searchError) {
+    console.error("Error searching for existing teacher entity:", searchError)
   }
 
-  const { data: existingEntity, error: searchError } = await existingEntityQuery.single()
-
-  // If we found an existing entity, return its ID
-  if (!searchError && existingEntity) {
-    return existingEntity.id
+  // Look for existing entity based on recipient info
+  if (existingEntities) {
+    for (const entity of existingEntities) {
+      if (entity.recipient_info && typeof entity.recipient_info === 'object') {
+        const info = entity.recipient_info as Record<string, unknown>
+        if (info.type === 'internal_teacher' && recipient.type === 'internal' && 
+            info.internal_user_id === recipient.userId) {
+          return entity.id
+        }
+        if (info.type === 'external_teacher' && recipient.type === 'external' && 
+            info.name === recipient.name && info.email === recipient.email) {
+          return entity.id
+        }
+      }
+    }
   }
 
   // No existing entity found, create a new one
@@ -818,30 +1107,31 @@ export async function createTeacherBillingEntity(
     ? `Teacher (Internal: ${recipient.userId})`
     : `Teacher: ${recipient.name}`
 
-  const insertData: BillingEntityInsert = {
-    user_id: userId,
-    entity_name: entityName,
-    recipient_type: recipient.type === 'internal' ? 'internal_teacher' : 'external_teacher',
-    notes: `Substitute teacher recipient - ${recipient.type}`
+  const recipientInfo: RecipientInfo = {
+    type: recipient.type === 'internal' ? 'internal_teacher' : 'external_teacher',
+    name: recipient.type === 'internal' ? `Internal Teacher: ${recipient.userId}` : recipient.name,
+    email: recipient.type === 'external' ? recipient.email : undefined,
+    phone: recipient.type === 'external' ? recipient.phone : undefined,
+    address: recipient.type === 'external' ? recipient.address : undefined,
+    internal_user_id: recipient.type === 'internal' ? recipient.userId : undefined,
   }
 
-  if (recipient.type === 'internal') {
-    insertData.recipient_user_id = recipient.userId
-  } else {
-    // External teacher details
-    insertData.recipient_name = recipient.name
-    insertData.recipient_email = recipient.email
-    insertData.billing_email = recipient.email
-    insertData.address = recipient.address || null
-    insertData.recipient_phone = recipient.phone || null
-    
-    // Tax information
-    if (recipient.taxInfo) {
-      insertData.tax_id = recipient.taxInfo.taxId || null
-      insertData.vat_id = recipient.taxInfo.vatId || null
-      insertData.iban = recipient.taxInfo.iban || null
-      insertData.bic = recipient.taxInfo.bic || null
-    }
+  const bankingInfo: BankingInfo | null = recipient.type === 'external' && recipient.taxInfo ? {
+    iban: recipient.taxInfo.iban,
+    bic: recipient.taxInfo.bic,
+    tax_id: recipient.taxInfo.taxId,
+    vat_id: recipient.taxInfo.vatId,
+  } : null
+
+  // Convert objects to JSON format for database insertion
+  const insertData = {
+    user_id: userId,
+    entity_name: entityName,
+    entity_type: 'teacher',
+    rate_config: null, // Teachers don't have their own rate configs
+    recipient_info: JSON.parse(JSON.stringify(recipientInfo)),
+    banking_info: bankingInfo ? JSON.parse(JSON.stringify(bankingInfo)) : null,
+    notes: `Substitute teacher recipient - ${recipient.type}`
   }
 
   const { data: newEntity, error: createError } = await supabase
@@ -938,8 +1228,9 @@ export async function setupSubstituteEvent(
  * Get the display name for a billing entity
  */
 export function getBillingEntityDisplayName(entity: BillingEntity): string {
-  if (entity.recipient_name) {
-    return entity.recipient_name
+  const recipientInfo = entity.recipient_info as RecipientInfo
+  if (recipientInfo?.name) {
+    return recipientInfo.name
   }
   return entity.entity_name
 }
@@ -948,7 +1239,8 @@ export function getBillingEntityDisplayName(entity: BillingEntity): string {
  * Get the email for a billing entity
  */
 export function getBillingEntityEmail(entity: BillingEntity): string | null {
-  return entity.recipient_email || entity.billing_email || null
+  const recipientInfo = entity.recipient_info as RecipientInfo
+  return recipientInfo?.email || null
 }
 
 /**
@@ -1007,7 +1299,7 @@ export async function getTeacherBillingEntities(userId: string): Promise<Billing
     .from("billing_entities")
     .select("*")
     .eq("user_id", userId)
-    .in("recipient_type", ["internal_teacher", "external_teacher"])
+    .eq("entity_type", "teacher")
     .order("entity_name")
 
   if (error) {
@@ -1015,7 +1307,7 @@ export async function getTeacherBillingEntities(userId: string): Promise<Billing
     throw new Error(`Failed to fetch teacher billing entities: ${error.message}`)
   }
 
-  return data || []
+  return (data || []).map(entity => entity as BillingEntity)
 }
 
 /**
@@ -1036,19 +1328,24 @@ export async function revertEventsToStudioInvoicing(eventIds: string[]): Promise
   // Get studio information for the events being reverted
   const { data: eventsData, error: eventsError } = await supabase
     .from("events")
-    .select(`
-      id,
-      studio_id,
-      billing_entities!events_billing_entity_id_fkey (
-        id,
-        entity_name
-      )
-    `)
+    .select("id, studio_id")
     .in("id", eventIds)
 
   if (eventsError) {
     console.error("Error fetching events data:", eventsError)
     throw new Error("Failed to fetch events data for reverting")
+  }
+
+  // Get studio information separately
+  const studioIds = [...new Set(eventsData.map(event => event.studio_id).filter((id): id is string => id !== null))]
+  const { data: studiosData, error: studiosError } = await supabase
+    .from("billing_entities")
+    .select("id, entity_name")
+    .in("id", studioIds)
+
+  if (studiosError) {
+    console.error("Error fetching studios data:", studiosError)
+    throw new Error("Failed to fetch studios data for reverting")
   }
 
   // Step 1: Reset the events to studio_invoice type and clear substitute data
@@ -1069,10 +1366,11 @@ export async function revertEventsToStudioInvoicing(eventIds: string[]): Promise
   }
 
   // Step 2: Prepare studio summary (no re-matching needed since studio_id is preserved)
+  const studiosMap = new Map(studiosData?.map(studio => [studio.id, studio.entity_name]) || [])
   const studioSummary = eventsData.reduce((acc, event) => {
-    if (event.studio_id && event.billing_entities) {
+    if (event.studio_id && studiosMap.has(event.studio_id)) {
       const studioId = event.studio_id
-      const studioName = event.billing_entities.entity_name
+      const studioName = studiosMap.get(studioId)!
       
       if (!acc[studioId]) {
         acc[studioId] = { studioId, studioName, matchedCount: 0 }

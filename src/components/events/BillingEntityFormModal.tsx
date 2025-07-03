@@ -36,16 +36,20 @@ const BillingEntityFormModal: React.FC<Props> = ({
   const isEditing = !!existingStudio;
   const [isLoading, setIsLoading] = useState(false);
   const [formInstance, setFormInstance] = useState<{ submit: () => void } | null>(null);
-  const [selectedEntityType, setSelectedEntityType] = useState<EntityType>(defaultEntityType || 'studio');
+  const [selectedEntityType, setSelectedEntityType] = useState<EntityType>(
+    defaultEntityType || (existingStudio?.entity_type as EntityType) || 'studio'
+  );
   const [showEntityTypeSelection, setShowEntityTypeSelection] = useState<boolean>(!isEditing && !defaultEntityType);
 
   // Reset state when modal opens or props change
   useEffect(() => {
-    setSelectedEntityType(defaultEntityType || 'studio');
+    setSelectedEntityType(
+      defaultEntityType || (existingStudio?.entity_type as EntityType) || 'studio'
+    );
     setShowEntityTypeSelection(!isEditing && !defaultEntityType);
     setFormInstance(null);
     setIsLoading(false);
-  }, [isOpen, defaultEntityType, isEditing]);
+  }, [isOpen, defaultEntityType, isEditing, existingStudio?.entity_type]);
 
   const handleStudioCreated = (studio: BillingEntity) => {
     if (onStudioCreated) {
@@ -77,7 +81,10 @@ const BillingEntityFormModal: React.FC<Props> = ({
   };
 
   const getTitle = () => {
-    if (isEditing) return "Edit Studio Profile";
+    if (isEditing) {
+      const currentEntityType = existingStudio?.entity_type === 'teacher' ? 'Teacher' : 'Studio';
+      return `Edit ${currentEntityType} Profile`;
+    }
     if (showEntityTypeSelection) return "Create Billing Entity";
     return selectedEntityType === 'studio' ? "Create Studio Profile" : "Create Teacher Profile";
   };

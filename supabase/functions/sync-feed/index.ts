@@ -63,7 +63,8 @@ serve(async (req) => {
     const { data: studios } = await supabase
       .from("billing_entities")
       .select("id, location_match")
-      .eq("user_id", feed.user_id);
+      .eq("user_id", feed.user_id)
+      .eq("entity_type", "studio"); // Only fetch studio entities for location matching
     
     const enrichedEvents = [];
     

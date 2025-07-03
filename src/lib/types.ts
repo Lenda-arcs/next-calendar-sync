@@ -1,55 +1,291 @@
-import { Tables, TablesInsert, TablesUpdate, Enums } from '../../database-generated.types'
+import { Database } from '../../database-generated.types'
 import { EventTag } from './event-types'
 
-// User types
-export type User = Tables<'users'>
-export type UserInsert = TablesInsert<'users'>
-export type UserUpdate = TablesUpdate<'users'>
+// Base database types
+export type Event = Database['public']['Tables']['events']['Row']
+export type EventInsert = Database['public']['Tables']['events']['Insert']
+export type EventUpdate = Database['public']['Tables']['events']['Update']
+
+export type Invoice = Database['public']['Tables']['invoices']['Row']
+export type InvoiceInsert = Database['public']['Tables']['invoices']['Insert']
+export type InvoiceUpdate = Database['public']['Tables']['invoices']['Update']
+
+export type UserInvoiceSettings = Database['public']['Tables']['user_invoice_settings']['Row']
+export type UserInvoiceSettingsInsert = Database['public']['Tables']['user_invoice_settings']['Insert']
+export type UserInvoiceSettingsUpdate = Database['public']['Tables']['user_invoice_settings']['Update']
+
+export type Tag = Database['public']['Tables']['tags']['Row']
+export type TagInsert = Database['public']['Tables']['tags']['Insert']
+export type TagUpdate = Database['public']['Tables']['tags']['Update']
+
+export type TagRule = Database['public']['Tables']['tag_rules']['Row']
+export type TagRuleInsert = Database['public']['Tables']['tag_rules']['Insert']
+export type TagRuleUpdate = Database['public']['Tables']['tag_rules']['Update']
+
+export type CalendarFeed = Database['public']['Tables']['calendar_feeds']['Row']
+export type CalendarFeedInsert = Database['public']['Tables']['calendar_feeds']['Insert']
+export type CalendarFeedUpdate = Database['public']['Tables']['calendar_feeds']['Update']
+
+export type User = Database['public']['Tables']['users']['Row']
+export type UserInsert = Database['public']['Tables']['users']['Insert']
+export type UserUpdate = Database['public']['Tables']['users']['Update']
+
+// New Studios table types (once migration is run)
+export interface Studio {
+  id: string
+  name: string
+  slug: string | null
+  description: string | null
+  location_patterns: string[] | null
+  address: string | null
+  contact_info: StudioContactInfo | null
+  default_rate_config: RateConfig | null
+  public_profile_enabled: boolean | null
+  website_url: string | null
+  instagram_url: string | null
+  profile_images: string[] | null
+  business_hours: StudioBusinessHours | null
+  amenities: string[] | null
+  created_by_user_id: string
+  verified: boolean | null
+  featured: boolean | null
+  created_at: string | null
+  updated_at: string | null
+}
+
+export interface StudioInsert {
+  id?: string
+  name: string
+  slug?: string | null
+  description?: string | null
+  location_patterns?: string[] | null
+  address?: string | null
+  contact_info?: StudioContactInfo | null
+  default_rate_config?: RateConfig | null
+  public_profile_enabled?: boolean | null
+  website_url?: string | null
+  instagram_url?: string | null
+  profile_images?: string[] | null
+  business_hours?: StudioBusinessHours | null
+  amenities?: string[] | null
+  created_by_user_id: string
+  verified?: boolean | null
+  featured?: boolean | null
+  created_at?: string | null
+  updated_at?: string | null
+}
+
+export interface StudioUpdate {
+  id?: string
+  name?: string
+  slug?: string | null
+  description?: string | null
+  location_patterns?: string[] | null
+  address?: string | null
+  contact_info?: StudioContactInfo | null
+  default_rate_config?: RateConfig | null
+  public_profile_enabled?: boolean | null
+  website_url?: string | null
+  instagram_url?: string | null
+  profile_images?: string[] | null
+  business_hours?: StudioBusinessHours | null
+  amenities?: string[] | null
+  created_by_user_id?: string
+  verified?: boolean | null
+  featured?: boolean | null
+  created_at?: string | null
+  updated_at?: string | null
+}
+
+// Studio-specific JSON types
+export interface StudioContactInfo {
+  email?: string
+  phone?: string
+  website?: string
+}
+
+export interface StudioBusinessHours {
+  monday?: string
+  tuesday?: string
+  wednesday?: string
+  thursday?: string
+  friday?: string
+  saturday?: string
+  sunday?: string
+}
+
+// JSON structure types for billing entities
+export interface RateConfigFlat {
+  type: 'flat'
+  base_rate: number
+  minimum_threshold?: number
+  bonus_threshold?: number
+  bonus_per_student?: number
+  online_bonus_per_student?: number
+  online_bonus_ceiling?: number
+  max_discount?: number
+}
+
+export interface RateConfigPerStudent {
+  type: 'per_student'
+  rate_per_student: number
+  online_bonus_per_student?: number
+  online_bonus_ceiling?: number
+}
+
+export interface RateConfigTiered {
+  type: 'tiered'
+  tiers: Array<{
+    min: number
+    max: number | null
+    rate: number
+  }>
+  online_bonus_per_student?: number
+  online_bonus_ceiling?: number
+}
+
+export type RateConfig = RateConfigFlat | RateConfigPerStudent | RateConfigTiered
+
+export interface RecipientInfo {
+  type: 'studio' | 'internal_teacher' | 'external_teacher'
+  name: string
+  email?: string
+  phone?: string
+  address?: string
+  internal_user_id?: string // for internal teachers
+}
+
+export interface BankingInfo {
+  iban?: string
+  bic?: string
+  tax_id?: string
+  vat_id?: string
+}
+
+// Enhanced BillingEntity types - now supports studio references
+export interface BillingEntity extends Omit<Database['public']['Tables']['billing_entities']['Row'], 'entity_type' | 'rate_config' | 'recipient_info' | 'banking_info'> {
+  entity_type: 'studio' | 'teacher'
+  studio_id?: string | null // NEW: Reference to Studios table
+  rate_config: RateConfig | null // null for teachers who use studio rates
+  custom_rate_override?: RateConfig | null // NEW: Teacher's custom rates that override studio defaults
+  recipient_info: RecipientInfo | null
+  banking_info: BankingInfo | null
+  individual_billing_email?: string | null // NEW: Teacher's personal billing email
+}
+
+export interface BillingEntityInsert extends Omit<Database['public']['Tables']['billing_entities']['Insert'], 'entity_type' | 'rate_config' | 'recipient_info' | 'banking_info'> {
+  entity_type?: 'studio' | 'teacher'
+  studio_id?: string | null
+  rate_config?: RateConfig | null
+  custom_rate_override?: RateConfig | null
+  recipient_info?: RecipientInfo | null
+  banking_info?: BankingInfo | null
+  individual_billing_email?: string | null
+}
+
+export interface BillingEntityUpdate extends Omit<Database['public']['Tables']['billing_entities']['Update'], 'entity_type' | 'rate_config' | 'recipient_info' | 'banking_info'> {
+  entity_type?: 'studio' | 'teacher'
+  studio_id?: string | null
+  rate_config?: RateConfig | null
+  custom_rate_override?: RateConfig | null
+  recipient_info?: RecipientInfo | null
+  banking_info?: BankingInfo | null
+  individual_billing_email?: string | null
+}
+
+// Enhanced types with studio relationships
+export interface BillingEntityWithStudio extends BillingEntity {
+  studio: Studio | null
+}
+
+export interface StudioWithTeachers extends Studio {
+  teachers: BillingEntity[]
+  total_teachers: number
+}
+
+export interface StudioWithUpcomingEvents extends Studio {
+  upcoming_events: Event[]
+  total_upcoming_events: number
+}
+
+// Event-related types
+export interface EnhancedEvent extends Event {
+  tag_library_tags?: Tag[]
+  tag_rules_tags?: Tag[]
+  matched_tag_rules?: TagRule[]
+}
+
+export interface EventWithStudio extends Event {
+  studio: BillingEntity | null
+}
+
+export interface EventWithSubstituteTeacher extends Event {
+  studio: BillingEntity | null
+  substitute_teacher: BillingEntity | null
+}
+
+export interface InvoiceWithDetails extends Invoice {
+  studio: BillingEntity
+  substitute_teacher?: BillingEntity | null
+  events: Event[]
+  event_count: number
+}
+
+// Studio management types
+export interface StudioDashboard {
+  studio: Studio
+  teachers: BillingEntity[]
+  upcoming_events: Event[]
+  revenue_summary: {
+    current_month: number
+    previous_month: number
+    total_classes: number
+  }
+  substitute_requests: Array<{
+    event: Event
+    original_teacher: BillingEntity
+    requested_substitutes: BillingEntity[]
+  }>
+}
+
+// Teacher onboarding flow types
+export interface TeacherOnboardingFlow {
+  step: 'choose_setup' | 'select_studio' | 'create_studio' | 'configure_rates' | 'billing_info' | 'complete'
+  setup_type: 'join_studio' | 'create_studio' | 'independent' | null
+  selected_studio?: Studio | null
+  custom_rates?: RateConfig | null
+  billing_info?: {
+    recipient_info: RecipientInfo
+    banking_info: BankingInfo
+    individual_billing_email: string
+  }
+}
+
+// Export status types
+export interface ExportPreferences {
+  includeLocation: boolean
+  includeDescription: boolean
+  includeBookingUrl: boolean
+  includeStudentCounts: boolean
+  format: 'minimal' | 'detailed'
+}
+
+export interface ExportResult {
+  success: boolean
+  downloadUrl?: string
+  fileName?: string
+  error?: string
+}
 
 // Public profiles types (for public teacher pages)
-export type PublicProfile = Tables<'public_profiles'>
-
-// Events types
-export type Event = Tables<'events'>
-export type EventInsert = TablesInsert<'events'>
-export type EventUpdate = TablesUpdate<'events'>
+export type PublicProfile = Database['public']['Views']['public_profiles']['Row']
 
 // Public events types (for public schedule pages)
-export type PublicEvent = Tables<'public_events'>
-
-// Calendar feeds types
-export type CalendarFeed = Tables<'calendar_feeds'>
-export type CalendarFeedInsert = TablesInsert<'calendar_feeds'>
-export type CalendarFeedUpdate = TablesUpdate<'calendar_feeds'>
-
-// Tags types
-export type Tag = Tables<'tags'>
-export type TagInsert = TablesInsert<'tags'>
-export type TagUpdate = TablesUpdate<'tags'>
-
-// Tag rules types
-export type TagRule = Tables<'tag_rules'>
-export type TagRuleInsert = TablesInsert<'tag_rules'>
-export type TagRuleUpdate = TablesUpdate<'tag_rules'>
-
-// BillingEntity types
-export type BillingEntity = Tables<'billing_entities'>
-export type BillingEntityInsert = TablesInsert<'billing_entities'>
-export type BillingEntityUpdate = TablesUpdate<'billing_entities'>
-
-// Invoices types
-export type Invoice = Tables<'invoices'>
-export type InvoiceInsert = TablesInsert<'invoices'>
-export type InvoiceUpdate = TablesUpdate<'invoices'>
-
-// User invoice settings types
-export type UserInvoiceSettings = Tables<'user_invoice_settings'>
-export type UserInvoiceSettingsInsert = TablesInsert<'user_invoice_settings'>
-export type UserInvoiceSettingsUpdate = TablesUpdate<'user_invoice_settings'>
+export type PublicEvent = Database['public']['Views']['public_events']['Row']
 
 // Enums
-export type UserRole = Enums<'user_role'>
-export type EventDisplayVariant = Enums<'event_display_variant'>
+export type UserRole = Database['public']['Enums']['user_role']
+export type EventDisplayVariant = Database['public']['Enums']['event_display_variant']
 
 // Example events for landing page - formatted for EventCard component
 export const exampleEvents: Array<{

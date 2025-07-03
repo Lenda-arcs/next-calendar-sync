@@ -50,10 +50,8 @@ export function useBillingEntityManagement({ userId }: UseBillingEntityManagemen
   })
 
   // Computed values
-  const studioEntities = (entities?.filter(e => e.recipient_type === 'studio') as BillingEntity[]) || []
-  const teacherEntities = (entities?.filter(e => 
-    e.recipient_type === 'internal_teacher' || e.recipient_type === 'external_teacher'
-  ) as BillingEntity[]) || []
+  const studioEntities = (entities?.filter(e => e.entity_type === 'studio') as BillingEntity[]) || []
+  const teacherEntities = (entities?.filter(e => e.entity_type === 'teacher') as BillingEntity[]) || []
 
   // Action handlers
   const handleCreate = () => {
