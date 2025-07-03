@@ -13,7 +13,7 @@ import { toast } from 'sonner'
 import { UserIcon, UserCheckIcon, Plus } from 'lucide-react'
 import { Select } from '@/components/ui/select'
 import BillingEntityFormModal from './BillingEntityFormModal'
-import type { BillingEntity } from '@/lib/types'
+import type { BillingEntity, RecipientInfo } from '@/lib/types'
 
 interface SubstituteEventModalProps {
   isOpen: boolean
@@ -185,25 +185,18 @@ export function SubstituteEventModal({
 
   // Filter and prepare teacher options for the select with location info
   const teacherOptions = teacherEntities?.map(entity => {
-    const name = entity.recipient_name || entity.entity_name
-    const locations = entity.location_match?.join(', ') || 'No locations'
-    const hasMatchingLocation = originalStudio?.location_match?.some(studioLoc => 
-      entity.location_match?.includes(studioLoc)
-    ) || false
+    const recipientInfo = entity.recipient_info as RecipientInfo | null
+    const name = recipientInfo?.name || entity.entity_name
     
     return {
       value: entity.id,
-      label: `${name} (${locations})${hasMatchingLocation ? ' ✓' : ''}`,
+      label: name,
       count: undefined,
-      isPreferred: hasMatchingLocation
+      isPreferred: false
     }
   })
-  // Sort to show matching location teachers first
-  .sort((a, b) => {
-    if (a.isPreferred && !b.isPreferred) return -1
-    if (!a.isPreferred && b.isPreferred) return 1
-    return 0
-  }) || []
+  // Sort alphabetically
+  .sort((a, b) => a.label.localeCompare(b.label)) || []
 
   const footer = (
     <div className="flex justify-end space-x-3">

@@ -3,7 +3,7 @@
 import React, { useMemo } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Event, BillingEntity } from '@/lib/types'
+import { Event, BillingEntity, RateConfig } from '@/lib/types'
 
 import { cn } from '@/lib/utils'
 import { Users, Edit3 } from 'lucide-react'
@@ -121,7 +121,21 @@ export function EventInvoiceCard({
           </div>
           {event.studio && (
             <div className="text-xs text-gray-500">
-              Base: €{event.studio.base_rate?.toFixed(2) || '0.00'}
+              {(() => {
+                const rateConfig = event.studio.rate_config as RateConfig | null
+                if (!rateConfig) return 'No rate config'
+                
+                switch (rateConfig.type) {
+                  case 'flat':
+                    return `Base: €${rateConfig.base_rate?.toFixed(2) || '0.00'}`
+                  case 'per_student':
+                    return `Rate: €${rateConfig.rate_per_student?.toFixed(2) || '0.00'}/student`
+                  case 'tiered':
+                    return 'Tiered rates'
+                  default:
+                    return 'Custom rate'
+                }
+              })()}
             </div>
           )}
           

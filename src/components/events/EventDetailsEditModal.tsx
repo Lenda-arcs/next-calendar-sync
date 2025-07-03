@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import { useSupabaseMutation } from '@/lib/hooks/useSupabaseMutation'
 import { updateEventStudentCounts, calculateEventPayout, markEventAsExcluded, EventWithStudio } from '@/lib/invoice-utils'
-import { Event } from '@/lib/types'
+import { Event, RateConfig } from '@/lib/types'
 import { toast } from 'sonner'
 import { Users, Calendar, MapPin, Clock, Calculator, X } from 'lucide-react'
 
@@ -271,12 +271,39 @@ export function EventDetailsEditModal({
                   <div>
                     <div className="font-medium text-blue-900">{event.studio.entity_name}</div>
                     <div className="text-sm text-blue-700">
-                      Base Rate: €{event.studio.base_rate?.toFixed(2) || '0.00'} 
-                      {event.studio.rate_type === 'per_student' && ' per student'}
+                      {(() => {
+                        const rateConfig = event.studio.rate_config as RateConfig | null
+                        if (!rateConfig) return 'No rate configuration'
+                        
+                        switch (rateConfig.type) {
+                          case 'flat':
+                            return `Base Rate: €${rateConfig.base_rate?.toFixed(2) || '0.00'}`
+                          case 'per_student':
+                            return `Rate: €${rateConfig.rate_per_student?.toFixed(2) || '0.00'} per student`
+                          case 'tiered':
+                            return 'Tiered rate structure'
+                          default:
+                            return 'Custom rate structure'
+                        }
+                      })()}
                     </div>
                   </div>
                   <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-200">
-                    {event.studio.rate_type === 'flat' ? 'Flat Rate' : 'Per Student'}
+                    {(() => {
+                      const rateConfig = event.studio.rate_config as RateConfig | null
+                      if (!rateConfig) return 'No Config'
+                      
+                      switch (rateConfig.type) {
+                        case 'flat':
+                          return 'Flat Rate'
+                        case 'per_student':
+                          return 'Per Student'
+                        case 'tiered':
+                          return 'Tiered'
+                        default:
+                          return 'Custom'
+                      }
+                    })()}
                   </Badge>
                 </div>
               </div>
@@ -387,21 +414,56 @@ export function EventDetailsEditModal({
             {event.studio && (
               <div className="mt-4 text-xs text-gray-600 space-y-1">
                 <div>Rate calculation based on studio settings:</div>
-                <ul className="space-y-1 ml-2">
-                  <li>• Base rate: €{event.studio.base_rate?.toFixed(2) || '0.00'}</li>
-                  {event.studio.minimum_student_threshold && (
-                    <li>• Minimum threshold: {event.studio.minimum_student_threshold} students</li>
-                  )}
-                  {event.studio.bonus_student_threshold && (
-                    <li>• Bonus threshold: {event.studio.bonus_student_threshold} students</li>
-                  )}
-                  {event.studio.bonus_per_student && (
-                    <li>• Bonus per student: €{event.studio.bonus_per_student.toFixed(2)}</li>
-                  )}
-                                  {event.studio.online_bonus_per_student && (
-                  <li>• Online bonus: €{event.studio.online_bonus_per_student.toFixed(2)} per student</li>
-                )}
-                </ul>
+                {(() => {
+                  const rateConfig = event.studio.rate_config as RateConfig | null
+                  if (!rateConfig) return <div className="ml-2 text-gray-500">No rate configuration available</div>
+                  
+                  switch (rateConfig.type) {
+                    case 'flat':
+                      return (
+                        <ul className="space-y-1 ml-2">
+                          <li>• Base rate: €{rateConfig.base_rate?.toFixed(2) || '0.00'}</li>
+                          {rateConfig.minimum_threshold && (
+                            <li>• Minimum threshold: {rateConfig.minimum_threshold} students</li>
+                          )}
+                          {rateConfig.bonus_threshold && (
+                            <li>• Bonus threshold: {rateConfig.bonus_threshold} students</li>
+                          )}
+                          {rateConfig.bonus_per_student && (
+                            <li>• Bonus per student: €{rateConfig.bonus_per_student.toFixed(2)}</li>
+                          )}
+                          {rateConfig.online_bonus_per_student && (
+                            <li>• Online bonus: €{rateConfig.online_bonus_per_student.toFixed(2)} per student</li>
+                          )}
+                        </ul>
+                      )
+                    case 'per_student':
+                      return (
+                        <ul className="space-y-1 ml-2">
+                          <li>• Rate per student: €{rateConfig.rate_per_student?.toFixed(2) || '0.00'}</li>
+                          {rateConfig.online_bonus_per_student && (
+                            <li>• Online bonus: €{rateConfig.online_bonus_per_student.toFixed(2)} per student</li>
+                          )}
+                        </ul>
+                      )
+                    case 'tiered':
+                      return (
+                        <ul className="space-y-1 ml-2">
+                          <li>• Tiered rate structure:</li>
+                          {rateConfig.tiers.map((tier, index) => (
+                            <li key={index} className="ml-4">
+                              • {tier.min}{tier.max ? `-${tier.max}` : '+'} students: €{tier.rate.toFixed(2)}
+                            </li>
+                          ))}
+                          {rateConfig.online_bonus_per_student && (
+                            <li>• Online bonus: €{rateConfig.online_bonus_per_student.toFixed(2)} per student</li>
+                          )}
+                        </ul>
+                      )
+                    default:
+                      return <div className="ml-2 text-gray-500">Custom rate structure</div>
+                  }
+                })()}
               </div>
             )}
           </CardContent>
