@@ -23,9 +23,6 @@ export { ColorPicker } from './ColorPicker'
 export { TagManagement } from './TagManagement'
 export { default as TagList } from './TagList'
 
-// Teacher components
-export { default as TeacherHero } from './TeacherHero'
-
 // Manage events page components
 export { default as EventsControlPanel } from './EventsControlPanel'
 export { default as EventsEmptyState } from './EventsEmptyState'

@@ -1,8 +1,8 @@
 'use client'
 
-import Image from 'next/image'
 import { LogoutButton } from '@/components/auth'
 import { LoadingNavLink } from '@/components/ui'
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { Home, User, X } from 'lucide-react'
 import { PublicProfile } from '@/lib/types'
 import TeacherHeroContent from './TeacherHeroContent'
@@ -94,23 +94,20 @@ export default function DynamicNavbar({
               `}
             >
               <div className={`
-                w-8 h-8 rounded-full border border-white/40 bg-white/50 
-                flex items-center justify-center overflow-hidden shadow-sm
                 transition-all duration-500 ease-in-out
                 ${isAnimating ? 'md:animate-morph-in' : ''}
                 ${isExpanding ? 'md:animate-morph-out-reverse' : ''}
                 ${shouldShowJumpingCTA ? 'animate-jump' : ''}
               `}>
-                {teacherProfile?.profile_image_url ? (
-                  <Image
-                    src={teacherProfile.profile_image_url}
+                <Avatar className="w-8 h-8 border border-white/40 bg-white/50 shadow-sm">
+                  <AvatarImage
+                    src={teacherProfile?.profile_image_url || undefined}
                     alt={`${teacherProfile.name || "Teacher"}'s profile picture`}
-                    fill
-                    className="object-cover"
                   />
-                ) : (
-                  <User className="h-4 w-4 text-gray-600" />
-                )}
+                  <AvatarFallback className="bg-white/50">
+                    <User className="h-4 w-4 text-gray-600" />
+                  </AvatarFallback>
+                </Avatar>
               </div>
               <span className={`
                 text-xs font-medium text-gray-900 

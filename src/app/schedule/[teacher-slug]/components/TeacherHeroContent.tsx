@@ -1,7 +1,7 @@
 'use client'
 
-import Image from 'next/image'
 import { Button } from '@/components/ui/button'
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import TagList from '@/components/events/TagList'
 import { Mail, Globe, Instagram, Clock } from 'lucide-react'
 import { PublicProfile } from '@/lib/types'
@@ -42,26 +42,19 @@ export default function TeacherHeroContent({ teacherProfile, isAnimating, isExpa
           <div className="flex items-center gap-4">
             <div className="flex-shrink-0">
               <div className={`
-                w-16 h-16 rounded-full border-2 border-white/40 bg-white/50 
-                flex items-center justify-center text-xl overflow-hidden shadow-lg
                 transition-all duration-500 ease-in-out
                 ${isAnimating ? 'animate-morph-out' : ''}
                 ${isExpanding ? 'animate-morph-in-reverse' : ''}
               `}>
-                {teacherProfile?.profile_image_url ? (
-                  <Image
-                    src={teacherProfile.profile_image_url}
+                <Avatar className="w-16 h-16 border-2 border-white/40 bg-white/50 shadow-lg">
+                  <AvatarImage
+                    src={teacherProfile?.profile_image_url || undefined}
                     alt={`${teacherProfile.name || "User"}'s profile picture`}
-                    fill
-                    className="object-cover"
                   />
-                ) : teacherProfile?.name ? (
-                  <span className="text-gray-700 font-semibold">
-                    {teacherProfile.name.charAt(0).toUpperCase()}
-                  </span>
-                ) : (
-                  <span className="text-gray-500 text-sm">?</span>
-                )}
+                  <AvatarFallback className="text-xl text-gray-700 font-semibold">
+                    {teacherProfile?.name ? teacherProfile.name.charAt(0).toUpperCase() : '?'}
+                  </AvatarFallback>
+                </Avatar>
               </div>
             </div>
             <div className="flex-1 min-w-0">
@@ -168,26 +161,19 @@ export default function TeacherHeroContent({ teacherProfile, isAnimating, isExpa
           {/* Profile Image */}
           <div className="flex-shrink-0">
             <div className={`
-              w-24 h-24 lg:w-32 lg:h-32 rounded-full border-2 border-white/40 bg-white/50 
-              flex items-center justify-center text-2xl lg:text-3xl overflow-hidden shadow-lg
               transition-all duration-500 ease-in-out
               ${isAnimating && !isExpanding ? 'animate-morph-out' : ''}
               ${isExpanding ? 'animate-morph-out-fast' : ''}
             `}>
-              {teacherProfile?.profile_image_url ? (
-                <Image
-                  src={teacherProfile.profile_image_url}
+              <Avatar className="w-24 h-24 lg:w-32 lg:h-32 border-2 border-white/40 bg-white/50 shadow-lg">
+                <AvatarImage
+                  src={teacherProfile?.profile_image_url || undefined}
                   alt={`${teacherProfile.name || "User"}'s profile picture`}
-                  fill
-                  className="object-cover"
                 />
-              ) : teacherProfile?.name ? (
-                <span className="text-gray-700 font-semibold">
-                  {teacherProfile.name.charAt(0).toUpperCase()}
-                </span>
-              ) : (
-                <span className="text-gray-500">?</span>
-              )}
+                <AvatarFallback className="text-2xl lg:text-3xl text-gray-700 font-semibold">
+                  {teacherProfile?.name ? teacherProfile.name.charAt(0).toUpperCase() : '?'}
+                </AvatarFallback>
+              </Avatar>
             </div>
           </div>
 
