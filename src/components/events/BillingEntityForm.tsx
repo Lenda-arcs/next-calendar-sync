@@ -75,10 +75,10 @@ function extractFormDataFromEntity(entity: BillingEntity | null | undefined, def
             currency: "EUR",
             max_discount: "",
             student_threshold: "",
-      minimum_student_threshold: "",
-      bonus_student_threshold: "",
-      bonus_per_student: "",
-      online_bonus_per_student: "",
+            minimum_student_threshold: "",
+            bonus_student_threshold: "",
+            bonus_per_student: "",
+            online_bonus_per_student: "",
       online_bonus_ceiling: "",
       rate_tiers: "",
       separate_online_studio_calculation: false,
@@ -387,14 +387,14 @@ const useBillingEntityForm = (props: Props) => {
         // Reset form if not editing
         if (!props.isEditing) {
           setFormData(extractFormDataFromEntity(null, defaultLocationMatch));
-        }
-      } catch (error) {
+      }
+    } catch (error) {
         console.error("Error rematching events:", error);
         toast.error('Failed to apply matching', {
           description: `The ${entityType} was created but changes could not be applied to existing events.`,
           duration: 5000,
         });
-        onLoadingChange?.(false);
+      onLoadingChange?.(false);
         onStudioCreated?.(data as BillingEntity);
       }
     },
@@ -557,14 +557,14 @@ const TeacherForm: React.FC<{
             <h4 className="text-sm font-medium text-purple-800 mb-2">Teacher Entity</h4>
             <p className="text-sm text-purple-700">
               Track substitute teaching locations and help match the right teacher when converting events from studio to teacher invoicing.
-            </p>
-          </div>
+                  </p>
+                </div>
           <div>
             <h4 className="text-sm font-medium text-purple-800 mb-2">Payment Recipient Only</h4>
             <p className="text-sm text-purple-700">
               Rate calculations are always based on the <strong>original studio&apos;s rates</strong> where the substitute teaching occurs.
                   </p>
-                </div>
+              </div>
               </div>
       </div>
     </div>
@@ -702,9 +702,9 @@ const StudioForm: React.FC<{
           </div>
         </div>
 
-      {/* Enhanced Rate Structure */}
+        {/* Enhanced Rate Structure */}
         <div className="space-y-4">
-        <h3 className="text-lg font-semibold">Rate Structure & Student Thresholds</h3>
+          <h3 className="text-lg font-semibold">Rate Structure & Student Thresholds</h3>
           
         {formData.rate_type !== 'tiered' && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -839,7 +839,7 @@ const StudioForm: React.FC<{
               </p>
             </div>
           )}
-        </div>
+          </div>
 
         {formData.rate_type === 'tiered' && (
           <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
@@ -944,11 +944,11 @@ const StudioForm: React.FC<{
           </div>
         )}
 
-        <div className="bg-blue-50 p-4 rounded-lg">
+          <div className="bg-blue-50 p-4 rounded-lg">
           <h4 className="text-sm font-medium text-blue-800 mb-2">Rate Structure</h4>
           {formData.rate_type === 'tiered' ? (
             <div>
-              <p className="text-sm text-blue-700 mb-2">
+            <p className="text-sm text-blue-700 mb-2">
                 <strong>Tiered Rate System:</strong> Different rates apply based on student count tiers defined in the JSON configuration above.
               </p>
               <p className="text-xs text-blue-600">
@@ -968,12 +968,12 @@ const StudioForm: React.FC<{
             <div>
               <p className="text-sm text-blue-700 mb-2">
                 <strong>Flat Rate with Thresholds:</strong> Base rate with bonuses/penalties based on student count
-              </p>
-              <ul className="text-xs text-blue-600 space-y-1">
+            </p>
+            <ul className="text-xs text-blue-600 space-y-1">
                 <li>• Below minimum: Base rate (no penalties in current system)</li>
                 <li>• Between thresholds: Base rate</li>
                 <li>• Above bonus threshold: Base rate + bonus per additional student</li>
-              </ul>
+            </ul>
             </div>
           )}
           {formData.online_bonus_per_student && (

@@ -1,6 +1,13 @@
 import { createSupabaseAdminClient } from '../_shared/supabaseClient.ts'
 import { InvoiceData } from './types.ts'
 
+// Type for studio data from database
+interface StudioData {
+  id: string
+  entity_name: string
+  rate_config: unknown
+}
+
 /**
  * Fetch invoice data with all related information needed for PDF generation
  */
@@ -19,11 +26,11 @@ export async function fetchInvoiceData(invoiceId: string): Promise<InvoiceData> 
     throw new Error(`Invoice not found: ${fetchError?.message || 'Unknown error'}`)
   }
 
-  // Fetch billing entity (studio/teacher) for this invoice
+  // Fetch billing entity (studio) for this invoice using studio_id
   const { data: billingEntity, error: entityError } = await supabase
     .from('billing_entities')
     .select('*')
-    .eq('id', invoice.billing_entity_id)
+    .eq('id', invoice.studio_id)
     .single()
 
   if (entityError || !billingEntity) {
@@ -42,32 +49,35 @@ export async function fetchInvoiceData(invoiceId: string): Promise<InvoiceData> 
     throw new Error(`Events not found: ${eventsError?.message || 'Unknown error'}`)
   }
 
-  // For each event, get its billing entity (studio) to calculate rates
-  const eventsWithStudio = await Promise.all((events || []).map(async (event) => {
-    if (event.billing_entity_id) {
-      const { data: eventBillingEntity } = await supabase
-        .from('billing_entities')
-        .select('entity_name, rate_config')
-        .eq('id', event.billing_entity_id)
-        .single()
-      
-      // Extract rate config from JSON field
-      const rateConfig = eventBillingEntity?.rate_config ? JSON.parse(JSON.stringify(eventBillingEntity.rate_config)) : null;
-      
-      return {
-        ...event,
-        studio: eventBillingEntity ? {
-          entity_name: eventBillingEntity.entity_name,
-          base_rate: rateConfig?.base_rate || 0,
-          bonus_per_student: rateConfig?.bonus_per_student || 0,
-          online_bonus_per_student: rateConfig?.online_bonus_per_student || 0,
-          studio_penalty_per_student: rateConfig?.studio_penalty_per_student || 0,
-          rate_type: rateConfig?.rate_type || 'flat'
-        } : null
-      }
+  // Get unique studio IDs from events for rate calculations
+  const studioIds = [...new Set(events?.map(event => event.studio_id).filter((id): id is string => id !== null) || [])]
+  
+  // Fetch all studios needed for rate calculations
+  const { data: studios, error: studiosError } = await supabase
+    .from('billing_entities')
+    .select('id, entity_name, rate_config')
+    .in('id', studioIds)
+
+  if (studiosError) {
+    console.error('Studios fetch error:', studiosError)
+    throw new Error(`Studios not found: ${studiosError?.message || 'Unknown error'}`)
+  }
+
+  // Create studio lookup map
+  const studioMap = new Map((studios as StudioData[])?.map(studio => [studio.id, studio]) || [])
+
+  // For each event, attach its studio for rate calculations
+  const eventsWithStudio = (events || []).map(event => {
+    const studio = event.studio_id ? studioMap.get(event.studio_id) : null
+    
+    return {
+      ...event,
+      studio: studio ? {
+        entity_name: studio.entity_name,
+        rate_config: studio.rate_config // Pass the full rate_config object
+      } : null
     }
-    return { ...event, studio: null }
-  }))
+  })
 
   // Fetch user information
   const { data: user, error: userError } = await supabase
@@ -84,7 +94,7 @@ export async function fetchInvoiceData(invoiceId: string): Promise<InvoiceData> 
   // Fetch user invoice settings separately
   const { data: userSettings } = await supabase
     .from('user_invoice_settings')
-    .select('kleinunternehmerregelung')
+    .select('kleinunternehmerregelung, pdf_template_config, template_theme')
     .eq('user_id', invoice.user_id)
     .single()
 

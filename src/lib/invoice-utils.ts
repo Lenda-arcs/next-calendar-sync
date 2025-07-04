@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase'
-import { Event, Invoice, InvoiceInsert, UserInvoiceSettings, BillingEntity, BillingEntityInsert, BillingEntityUpdate, RateConfig, RateConfigFlat, RateConfigPerStudent, RateConfigTiered, RecipientInfo, BankingInfo } from '@/lib/types'
+import { Event, Invoice, InvoiceInsert, UserInvoiceSettings, BillingEntity, BillingEntityInsert, BillingEntityUpdate, RateConfig, RateConfigFlat, RateConfigPerStudent, RateConfigTiered, RecipientInfo, BankingInfo, PDFTemplateConfig, PDFTemplateTheme } from '@/lib/types'
 
 // Extended Event interface for substitute teaching  
 export interface ExtendedEvent extends Omit<Event, 'invoice_type' | 'substitute_notes' | 'substitute_teacher_entity_id'> {
@@ -637,6 +637,39 @@ export async function generateInvoicePDF(invoiceId: string, language: 'en' | 'de
 
   if (!data.success) {
     throw new Error(data.error || 'Failed to generate PDF')
+  }
+
+  return { pdf_url: data.pdf_url }
+}
+
+/**
+ * Generate a PDF preview with custom template configuration
+ */
+export async function generatePDFPreview(
+  templateConfig: PDFTemplateConfig | null,
+  templateTheme: PDFTemplateTheme,
+  userSettings?: { kleinunternehmerregelung: boolean } | null,
+  language: 'en' | 'de' | 'es' = 'en'
+): Promise<{ pdf_url: string }> {
+  const supabase = createClient()
+  
+  const { data, error } = await supabase.functions.invoke('generate-invoice-pdf', {
+    body: { 
+      isPreview: true,
+      templateConfig,
+      templateTheme,
+      userSettings,
+      language 
+    }
+  })
+
+  if (error) {
+    console.error('Error generating PDF preview:', error)
+    throw new Error(`Failed to generate PDF preview: ${error.message}`)
+  }
+
+  if (!data.success) {
+    throw new Error(data.error || 'Failed to generate PDF preview')
   }
 
   return { pdf_url: data.pdf_url }

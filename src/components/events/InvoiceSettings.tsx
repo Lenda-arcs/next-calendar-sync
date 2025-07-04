@@ -7,10 +7,15 @@ import { Badge } from '@/components/ui/badge'
 import DataLoader from '@/components/ui/data-loader'
 import { InfoSection, InfoItem, InfoGrid } from '@/components/ui/info-section'
 import { useSupabaseQuery } from '@/lib/hooks/useSupabaseQuery'
-import { getUserInvoiceSettings } from '@/lib/invoice-utils'
+import { getUserInvoiceSettings, generatePDFPreview } from '@/lib/invoice-utils'
+import { useSupabaseMutation } from '@/lib/hooks/useSupabaseMutation'
+import { useEffect } from 'react'
+import { toast } from 'sonner'
 import { UserInvoiceSettingsModal } from './UserInvoiceSettingsModal'
-import { UserInvoiceSettings } from '@/lib/types'
+import { UserInvoiceSettings, PDFTemplateConfig, PDFTemplateTheme } from '@/lib/types'
 import { BillingEntityManagement } from './BillingEntityManagement'
+import { PDFTemplateCustomization } from './PDFTemplateCustomizationSimple'
+import { Loader2 } from 'lucide-react'
 
 interface InvoiceSettingsProps {
   userId: string
@@ -18,6 +23,10 @@ interface InvoiceSettingsProps {
 
 export function InvoiceSettings({ userId }: InvoiceSettingsProps) {
   const [showSettingsModal, setShowSettingsModal] = useState(false)
+  const [showPdfCustomModal, setShowPdfCustomModal] = useState(false)
+  const [pdfConfig, setPdfConfig] = useState<PDFTemplateConfig | null>(null)
+  const [pdfTheme, setPdfTheme] = useState<PDFTemplateTheme>('professional')
+  const [isPreviewLoading, setIsPreviewLoading] = useState(false)
 
   // Load user invoice settings
   const { 
@@ -35,6 +44,120 @@ export function InvoiceSettings({ userId }: InvoiceSettingsProps) {
     refetchSettings()
     setShowSettingsModal(false)
   }
+
+  // Initialize PDF config from user settings
+  useEffect(() => {
+    if (userSettings) {
+      // Check if the settings have PDF template fields (after migration)
+      const settings = userSettings as UserInvoiceSettings & {
+        pdf_template_config?: PDFTemplateConfig | null
+        template_theme?: PDFTemplateTheme
+      }
+      if (settings.pdf_template_config) {
+        setPdfConfig(settings.pdf_template_config)
+      }
+      if (settings.template_theme) {
+        setPdfTheme(settings.template_theme)
+      }
+    }
+  }, [userSettings])
+
+  // Mutation for updating PDF template settings
+  const pdfTemplateMutation = useSupabaseMutation({
+    mutationFn: async (supabase, data: { pdf_template_config: PDFTemplateConfig | null; template_theme: PDFTemplateTheme }) => {
+      const { data: result, error } = await supabase
+        .from('user_invoice_settings')
+        .update(data)
+        .eq('user_id', userId)
+        .select()
+        .single()
+      
+      if (error) throw error
+      return result
+    },
+    onSuccess: () => {
+      toast.success('PDF template settings saved successfully')
+      refetchSettings()
+    },
+    onError: (error) => {
+      toast.error(`Failed to save PDF template settings: ${error.message}`)
+    }
+  })
+
+  const handleSavePdfTemplate = async (config: PDFTemplateConfig, theme: PDFTemplateTheme) => {
+    // Save the actual current state from the modal, not parent state
+    await pdfTemplateMutation.mutateAsync({
+      pdf_template_config: config,
+      template_theme: theme
+    })
+    // Update parent state after successful save
+    setPdfConfig(config)
+    setPdfTheme(theme)
+    // Close modal after successful save
+    setShowPdfCustomModal(false)
+  }
+
+  const handlePreviewCurrentTemplate = async () => {
+    setIsPreviewLoading(true)
+    try {
+      if (!pdfConfig && pdfTheme === 'professional') {
+        toast.info('No custom template configuration to preview. Try selecting a different theme or adding custom settings.')
+        return
+      }
+
+      const { pdf_url } = await generatePDFPreview(
+        pdfConfig,
+        pdfTheme,
+        userSettings ? { kleinunternehmerregelung: userSettings.kleinunternehmerregelung || false } : null,
+        'en' // Default to English for preview
+      )
+      
+      // Convert data URI to blob URL for better browser compatibility
+      if (pdf_url.startsWith('data:application/pdf;base64,')) {
+        try {
+          // Extract base64 data
+          const base64Data = pdf_url.split(',')[1]
+          
+          // Convert base64 to byte array
+          const byteCharacters = atob(base64Data)
+          const byteNumbers = new Array(byteCharacters.length)
+          for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i)
+          }
+          const byteArray = new Uint8Array(byteNumbers)
+          
+          // Create blob and URL
+          const blob = new Blob([byteArray], { type: 'application/pdf' })
+          const blobUrl = URL.createObjectURL(blob)
+          
+          // Open PDF in new tab
+          const newWindow = window.open(blobUrl, '_blank')
+          
+          // Clean up blob URL after a delay (when PDF is likely loaded)
+          if (newWindow) {
+            setTimeout(() => {
+              URL.revokeObjectURL(blobUrl)
+            }, 1000)
+          }
+        } catch (blobError) {
+          console.warn('Failed to create blob URL, falling back to data URI:', blobError)
+          window.open(pdf_url, '_blank')
+        }
+      } else {
+        // For regular URLs, open directly
+        window.open(pdf_url, '_blank')
+      }
+      
+      toast.success('PDF preview generated successfully!')
+    } catch (error) {
+      console.error('Failed to generate PDF preview:', error)
+      toast.error(`Failed to generate PDF preview: ${error instanceof Error ? error.message : 'Please try again.'}`)
+    } finally {
+      setIsPreviewLoading(false)
+    }
+  }
+
+
 
   return (
     <div className="space-y-8">
@@ -191,6 +314,59 @@ export function InvoiceSettings({ userId }: InvoiceSettingsProps) {
         </CardContent>
       </Card>
 
+      {/* PDF Template Customization Section */}
+      <Card className="backdrop-blur-md border border-white/40">
+        <CardHeader>
+          <div className="space-y-4">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
+              <div className="flex-1 min-w-0">
+                <CardTitle className="text-lg sm:text-xl text-gray-900">
+                  PDF Template Customization
+                </CardTitle>
+                <p className="text-sm sm:text-base text-gray-600 mt-1">
+                  Customize the appearance of your invoice PDFs with logos, colors, and layout options
+                </p>
+              </div>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-6 sm:py-8 px-4">
+            <div className="text-gray-600 mb-4 sm:mb-6">
+              <p className="text-base sm:text-lg mb-2 font-medium">
+                Current Theme: <span className="capitalize font-semibold text-gray-900">{pdfTheme}</span>
+              </p>
+              <p className="text-sm sm:text-base mb-4 sm:mb-6 text-gray-500">
+                {pdfConfig ? 'Custom template configuration active' : 'Using default template settings'}
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <Button 
+                  onClick={() => setShowPdfCustomModal(true)}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  Open Template Editor
+                </Button>
+                <Button 
+                  variant="outline"
+                  onClick={handlePreviewCurrentTemplate}
+                  disabled={pdfTemplateMutation.isLoading || isPreviewLoading}
+                  className="flex items-center gap-2"
+                >
+                  {isPreviewLoading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                      Generating...
+                    </>
+                  ) : (
+                    'Preview Current Template'
+                  )}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* User Invoice Settings Modal */}
       <UserInvoiceSettingsModal
         isOpen={showSettingsModal}
@@ -198,6 +374,19 @@ export function InvoiceSettings({ userId }: InvoiceSettingsProps) {
         userId={userId}
         existingSettings={userSettings}
         onSettingsUpdated={handleSettingsUpdated}
+      />
+
+      {/* PDF Template Customization Modal */}
+      <PDFTemplateCustomization
+        isOpen={showPdfCustomModal}
+        onClose={() => setShowPdfCustomModal(false)}
+        userId={userId}
+        currentConfig={pdfConfig}
+        currentTheme={pdfTheme}
+        onConfigChange={setPdfConfig}
+        onThemeChange={setPdfTheme}
+        onSave={handleSavePdfTemplate}
+        isLoading={pdfTemplateMutation.isLoading}
       />
     </div>
   )

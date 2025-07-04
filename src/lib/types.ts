@@ -162,6 +162,51 @@ export interface BankingInfo {
   vat_id?: string
 }
 
+// PDF Template Customization types
+export interface PDFTemplateConfig {
+  template_type: 'default' | 'modern' | 'minimal' | 'letterhead' | 'custom'
+  logo_url?: string | null
+  logo_size: 'small' | 'medium' | 'large'
+  logo_position: 'top-left' | 'top-center' | 'top-right' | 'header-left' | 'header-center' | 'header-right'
+  header_color: string // hex color code
+  accent_color: string // hex color code
+  font_family: 'helvetica' | 'times' | 'courier' | 'arial' | 'custom'
+  font_size: 'small' | 'normal' | 'large'
+  show_company_address: boolean
+  show_invoice_notes: boolean
+  footer_text?: string | null
+  date_format: 'locale' | 'us' | 'eu' | 'iso' | 'custom'
+  currency_position: 'before' | 'after' | 'symbol'
+  table_style: 'default' | 'minimal' | 'bordered' | 'striped' | 'modern'
+  page_margins: 'narrow' | 'normal' | 'wide' | 'custom'
+  letterhead_text?: string | null
+  custom_css?: string | null
+  // Advanced layout options
+  show_logo: boolean
+  show_company_info: boolean
+  show_payment_terms: boolean
+  show_tax_info: boolean
+  page_orientation: 'portrait' | 'landscape'
+  page_size: 'a4' | 'letter' | 'legal' | 'a3'
+  // Color scheme
+  background_color?: string | null
+  text_color?: string | null
+  border_color?: string | null
+  // Typography
+  header_font_size?: number | null
+  body_font_size?: number | null
+  line_height?: number | null
+}
+
+export type PDFTemplateTheme = 'professional' | 'modern' | 'minimal' | 'creative' | 'custom'
+
+// Enhanced UserInvoiceSettings with PDF template support
+export interface UserInvoiceSettingsWithPDFTemplate extends UserInvoiceSettings {
+  pdf_template_config: PDFTemplateConfig | null
+  custom_template_html: string | null
+  template_theme: PDFTemplateTheme
+}
+
 // Enhanced BillingEntity types - now supports studio references
 export interface BillingEntity extends Omit<Database['public']['Tables']['billing_entities']['Row'], 'entity_type' | 'rate_config' | 'recipient_info' | 'banking_info'> {
   entity_type: 'studio' | 'teacher'
