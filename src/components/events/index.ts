@@ -55,4 +55,11 @@ export {
   RematchTagsButton, 
   RematchStudiosButton, 
   RematchAllButton 
-} from './RematchEventsButton' 
+} from './RematchEventsButton'
+
+// Studio management components
+export { StudioManagement } from './StudioManagement'
+export { StudioForm } from './StudioForm'
+export { StudioList } from './StudioList'
+export { StudioTeacherRequests } from './StudioTeacherRequests'
+export { StudioRequestDialog } from './StudioRequestDialog' 

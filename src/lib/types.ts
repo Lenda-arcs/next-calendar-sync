@@ -1,4 +1,4 @@
-import { Database } from '../../database-generated.types'
+import { Database, Json } from '../../database-generated.types'
 import { EventTag } from './event-types'
 
 // Base database types
@@ -31,20 +31,20 @@ export type UserInsert = Database['public']['Tables']['users']['Insert']
 export type UserUpdate = Database['public']['Tables']['users']['Update']
 
 // New Studios table types (once migration is run)
-export interface Studio {
+export type Studio = {
   id: string
   name: string
   slug: string | null
   description: string | null
   location_patterns: string[] | null
   address: string | null
-  contact_info: StudioContactInfo | null
-  default_rate_config: RateConfig | null
+  contact_info: Json | null
+  default_rate_config: Json | null
   public_profile_enabled: boolean | null
   website_url: string | null
   instagram_url: string | null
   profile_images: string[] | null
-  business_hours: StudioBusinessHours | null
+  business_hours: Json | null
   amenities: string[] | null
   created_by_user_id: string
   verified: boolean | null
@@ -53,48 +53,35 @@ export interface Studio {
   updated_at: string | null
 }
 
-export interface StudioInsert {
+export type StudioInsert = Omit<Studio, 'id' | 'created_at' | 'updated_at'> & {
   id?: string
-  name: string
-  slug?: string | null
-  description?: string | null
-  location_patterns?: string[] | null
-  address?: string | null
-  contact_info?: StudioContactInfo | null
-  default_rate_config?: RateConfig | null
-  public_profile_enabled?: boolean | null
-  website_url?: string | null
-  instagram_url?: string | null
-  profile_images?: string[] | null
-  business_hours?: StudioBusinessHours | null
-  amenities?: string[] | null
-  created_by_user_id: string
-  verified?: boolean | null
-  featured?: boolean | null
   created_at?: string | null
   updated_at?: string | null
 }
 
-export interface StudioUpdate {
-  id?: string
-  name?: string
-  slug?: string | null
-  description?: string | null
-  location_patterns?: string[] | null
-  address?: string | null
-  contact_info?: StudioContactInfo | null
-  default_rate_config?: RateConfig | null
-  public_profile_enabled?: boolean | null
-  website_url?: string | null
-  instagram_url?: string | null
-  profile_images?: string[] | null
-  business_hours?: StudioBusinessHours | null
-  amenities?: string[] | null
-  created_by_user_id?: string
-  verified?: boolean | null
-  featured?: boolean | null
-  created_at?: string | null
-  updated_at?: string | null
+export type StudioUpdate = Partial<StudioInsert>
+
+export type StudioWithStats = Studio & {
+  teacher_count?: number
+  event_count?: number
+  billing_entities?: BillingEntity[]
+}
+
+// Studio-Teacher relationship types
+export type StudioTeacherRequest = {
+  id: string
+  studio_id: string
+  teacher_id: string
+  message: string | null
+  status: 'pending' | 'approved' | 'rejected'
+  created_at: string
+  updated_at: string
+  studio?: Studio
+  teacher?: {
+    id: string
+    name: string | null
+    email: string | null
+  }
 }
 
 // Studio-specific JSON types
