@@ -22,26 +22,26 @@ const THEME_OPTIONS = [
   { value: 'minimal', label: 'Minimal', description: 'Light gray tones, small fonts, compact narrow layout' },
   { value: 'creative', label: 'Creative', description: 'Purple headers & accents, large fonts, modern styling' },
   { value: 'custom', label: 'Custom', description: 'Full control over all colors, fonts, and layout options' }
-] as const
+]
 
 const FONT_FAMILY_OPTIONS = [
   { value: 'helvetica', label: 'Helvetica' },
   { value: 'times', label: 'Times' },
   { value: 'courier', label: 'Courier' },
   { value: 'arial', label: 'Arial' }
-] as const
+]
 
 const FONT_SIZE_OPTIONS = [
   { value: 'small', label: 'Small' },
   { value: 'normal', label: 'Normal' },
   { value: 'large', label: 'Large' }
-] as const
+]
 
 const LOGO_SIZE_OPTIONS = [
   { value: 'small', label: 'Small' },
   { value: 'medium', label: 'Medium' },
   { value: 'large', label: 'Large' }
-] as const
+]
 
 const LOGO_POSITION_OPTIONS = [
   { value: 'top-left', label: 'Top Left' },
@@ -50,18 +50,18 @@ const LOGO_POSITION_OPTIONS = [
   { value: 'header-left', label: 'Header Left' },
   { value: 'header-center', label: 'Header Center' },
   { value: 'header-right', label: 'Header Right' }
-] as const
+]
 
 const PAGE_ORIENTATION_OPTIONS = [
   { value: 'portrait', label: 'Portrait' },
   { value: 'landscape', label: 'Landscape' }
-] as const
+]
 
 const PAGE_SIZE_OPTIONS = [
   { value: 'a4', label: 'A4' },
   { value: 'letter', label: 'Letter' },
   { value: 'legal', label: 'Legal' }
-] as const
+]
 
 interface PDFTemplateCustomizationProps {
   isOpen: boolean
@@ -175,7 +175,7 @@ const LogoUploadSection: React.FC<{
             <Label className="text-sm font-medium">Logo Position</Label>
             <Select
               value={config.logo_position || 'top-left'}
-              onChange={(value) => onConfigChange({ logo_position: value as any })}
+              onChange={(value) => onConfigChange({ logo_position: value as 'top-left' | 'top-center' | 'top-right' | 'header-left' | 'header-center' | 'header-right' })}
               options={LOGO_POSITION_OPTIONS}
             />
           </div>
@@ -272,7 +272,7 @@ const TypographySettings: React.FC<{
         <Label className="text-sm font-medium">Font Family</Label>
         <Select
           value={config.font_family || 'helvetica'}
-          onChange={(value) => onConfigChange({ font_family: value as any })}
+          onChange={(value) => onConfigChange({ font_family: value as 'helvetica' | 'times' | 'courier' | 'arial' | 'custom' })}
           options={FONT_FAMILY_OPTIONS}
         />
       </div>
@@ -280,7 +280,7 @@ const TypographySettings: React.FC<{
         <Label className="text-sm font-medium">Font Size</Label>
         <Select
           value={config.font_size || 'normal'}
-          onChange={(value) => onConfigChange({ font_size: value as any })}
+          onChange={(value) => onConfigChange({ font_size: value as 'small' | 'normal' | 'large' })}
           options={FONT_SIZE_OPTIONS}
         />
       </div>
@@ -300,7 +300,7 @@ const PageSettings: React.FC<{
         <Label className="text-sm font-medium">Page Orientation</Label>
         <Select
           value={config.page_orientation || 'portrait'}
-          onChange={(value) => onConfigChange({ page_orientation: value as any })}
+          onChange={(value) => onConfigChange({ page_orientation: value as 'portrait' | 'landscape' })}
           options={PAGE_ORIENTATION_OPTIONS}
         />
       </div>
@@ -308,7 +308,7 @@ const PageSettings: React.FC<{
         <Label className="text-sm font-medium">Page Size</Label>
         <Select
           value={config.page_size || 'a4'}
-          onChange={(value) => onConfigChange({ page_size: value as any })}
+          onChange={(value) => onConfigChange({ page_size: value as 'a4' | 'letter' | 'legal' | 'a3' })}
           options={PAGE_SIZE_OPTIONS}
         />
       </div>
