@@ -265,7 +265,9 @@ const PublicEventList: React.FC<PublicEventListProps> = ({
                     <div className="grid grid-cols-1 gap-6">
                       {dayEvents.map((event, index) => {
                         const eventKey = `mobile-${dateKey}-${index}`
-                        const currentVariant = expandedCards[eventKey] || variant
+                        // For the first event of the first day, force "compact" variant
+                        const isFirstEvent = groupedEvents.indexOf(groupedEvents.find(g => g.date === dateKey)!) === 0 && index === 0
+                        const currentVariant = isFirstEvent ? 'compact' : (expandedCards[eventKey] || variant)
                         return (
                           <div key={eventKey} className="flex flex-col transition-all duration-300 ease-in-out">
                             <EventCard
