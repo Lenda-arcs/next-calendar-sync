@@ -78,30 +78,6 @@ export function getEventImageUrl(
  * Converts an Event or PublicEvent to EventCard props
  */
 export function convertEventToCardProps(
-  event: Event,
-  availableTags: Tag[]
-): {
-  id: string
-  title: string
-  dateTime: string
-  location: string | null
-  imageQuery: string
-  tags: EventTag[]
-  isPublic: boolean
-}
-export function convertEventToCardProps(
-  event: PublicEvent,
-  availableTags: Tag[]
-): {
-  id: string
-  title: string
-  dateTime: string
-  location: string | null
-  imageQuery: string
-  tags: EventTag[]
-  isPublic: boolean
-}
-export function convertEventToCardProps(
   event: Event | PublicEvent,
   availableTags: Tag[]
 ): {
@@ -116,7 +92,7 @@ export function convertEventToCardProps(
   // Process tags - check if event has custom_tags field (Event type) or just tags (PublicEvent type)
   let matchedTags: EventTag[]
   
-  if ('custom_tags' in event) {
+  if ('custom_tags' in event && event.custom_tags !== undefined) {
     // This is an Event type with both tags and custom_tags
     matchedTags = processAllEventTags(event.tags, event.custom_tags, availableTags)
   } else {
@@ -127,7 +103,7 @@ export function convertEventToCardProps(
   // Get image URL (or empty string for placeholder)
   const imageUrl = getEventImageUrl(event, matchedTags)
 
-  // Format date and time
+  // Format date and time - ensure we have valid date values
   const dateTime = formatEventDateTime(event.start_time, event.end_time)
 
   // Determine if public - PublicEvent is always public, Event has visibility field
@@ -135,13 +111,16 @@ export function convertEventToCardProps(
     ? event.visibility === 'public'
     : true // PublicEvent from public_events view is always public
 
-  return {
+  // Ensure we have valid required fields
+  const safeEvent = {
     id: event.id || 'unknown',
     title: event.title || 'Untitled Event',
     dateTime,
-    location: event.location,
+    location: event.location || null,
     imageQuery: imageUrl, // This will be empty string if no image, triggering placeholder
     tags: matchedTags,
     isPublic,
   }
+
+  return safeEvent
 } 

@@ -88,7 +88,7 @@ export const strictRateLimiter = new RateLimiter({
 })
 
 // Utility to get client identifier
-export function getClientIdentifier(request: Request): string {
+export function getClientIdentifier(request: Request | { headers: Headers }): string {
   // Try to get real IP from headers (for production behind proxy)
   const forwardedFor = request.headers.get('x-forwarded-for')
   const realIp = request.headers.get('x-real-ip')
