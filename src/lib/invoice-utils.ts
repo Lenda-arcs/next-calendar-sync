@@ -843,6 +843,7 @@ export async function createStudio(entityData: BillingEntityInsert): Promise<Bil
     rate_config: entityData.rate_config ? JSON.parse(JSON.stringify(entityData.rate_config)) : null,
     recipient_info: entityData.recipient_info ? JSON.parse(JSON.stringify(entityData.recipient_info)) : null,
     banking_info: entityData.banking_info ? JSON.parse(JSON.stringify(entityData.banking_info)) : null,
+    custom_rate_override: entityData.custom_rate_override ? JSON.parse(JSON.stringify(entityData.custom_rate_override)) : null,
   }
   
   const { data, error } = await supabase
@@ -871,6 +872,7 @@ export async function updateStudio(entityId: string, entityData: BillingEntityUp
     rate_config: entityData.rate_config ? JSON.parse(JSON.stringify(entityData.rate_config)) : null,
     recipient_info: entityData.recipient_info ? JSON.parse(JSON.stringify(entityData.recipient_info)) : null,
     banking_info: entityData.banking_info ? JSON.parse(JSON.stringify(entityData.banking_info)) : null,
+    custom_rate_override: entityData.custom_rate_override ? JSON.parse(JSON.stringify(entityData.custom_rate_override)) : null,
   }
   
   const { data, error } = await supabase

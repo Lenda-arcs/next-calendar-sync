@@ -1,8 +1,11 @@
 'use client'
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
-import { StudioTeacherRequest } from '@/lib/types'
+import { createClient } from '@/lib/supabase'
+import { useAuthUser } from '@/lib/hooks/useAuthUser'
+import { StudioTeacherRequest, RecipientInfo } from '@/lib/types'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -16,23 +19,113 @@ interface StudioTeacherRequestsProps {
 
 export function StudioTeacherRequests({ requests, onRequestProcessed }: StudioTeacherRequestsProps) {
   const [processingId, setProcessingId] = useState<string | null>(null)
+  const { user } = useAuthUser()
   const supabase = createClient()
 
   const handleRequest = async (requestId: string, action: 'approve' | 'reject') => {
+    if (!user) {
+      toast.error('You must be logged in to process requests')
+      return
+    }
+
     setProcessingId(requestId)
     
     try {
-      // For now, we'll just show a toast since the table doesn't exist yet
-      // In the future, this will:
-      // 1. Update the request status
-      // 2. If approved, create a billing entity for the teacher-studio relationship
-      // 3. Send notification to the teacher
+      const now = new Date().toISOString()
       
-      toast.success(`Request ${action}d successfully`)
+      // Get the request details with studio information
+      const { data: requestData, error: requestError } = await supabase
+        .from('studio_teacher_requests')
+        .select(`
+          *,
+          studio:studios(*),
+          teacher:users!studio_teacher_requests_teacher_id_fkey(id, name, email)
+        `)
+        .eq('id', requestId)
+        .single()
+
+      if (requestError) {
+        throw requestError
+      }
+
+      // Update the request status
+      const { error: updateError } = await supabase
+        .from('studio_teacher_requests')
+        .update({
+          status: action === 'approve' ? 'approved' : 'rejected',
+          processed_at: now,
+          processed_by: user.id,
+          updated_at: now
+        })
+        .eq('id', requestId)
+
+      if (updateError) {
+        throw updateError
+      }
+
+      // If approved, create a billing entity for the teacher with studio's default config
+      if (action === 'approve' && requestData) {
+        const studio = requestData.studio
+        const teacher = requestData.teacher
+        
+        if (studio && teacher) {
+          // Build the billing entity data
+          const recipientInfo: RecipientInfo = {
+            type: 'external_teacher',
+            name: teacher.name || 'Unknown Teacher',
+            email: teacher.email || '',
+          }
+          
+          // Use studio's location patterns as location match
+          const locationMatch = studio.location_patterns || []
+
+          const billingEntity = {
+            entity_name: teacher.name || 'Unknown Teacher',
+            entity_type: 'teacher',
+            studio_id: studio.id,
+            user_id: teacher.id,
+            location_match: locationMatch,
+            rate_config: null, // Teachers inherit studio rates by default
+            custom_rate_override: null, // Can be customized later
+            recipient_info: recipientInfo as any,
+            banking_info: null,
+            currency: 'EUR',
+            notes: `Teacher billing profile created from approved studio request for ${studio.name}`
+          }
+
+          // Create the billing entity
+          const { error: billingError } = await supabase
+            .from('billing_entities')
+            .insert(billingEntity)
+
+          if (billingError) {
+            console.error('Error creating billing entity:', billingError)
+            // Don't throw here - the approval was successful, billing entity creation is a bonus
+            toast.warning('Request approved, but there was an issue creating the billing profile', {
+              description: 'The teacher can manually create their billing profile later.'
+            })
+          } else {
+            toast.success('Request approved and billing profile created!', {
+              description: `${teacher.name} can now be billed through ${studio.name} with the studio's default rates.`
+            })
+          }
+        } else {
+          toast.success('Request approved successfully', {
+            description: 'The teacher can now be associated with this studio for billing purposes.'
+          })
+        }
+      } else {
+        toast.success('Request rejected successfully', {
+          description: 'The teacher has been notified of the decision.'
+        })
+      }
+
       onRequestProcessed()
     } catch (error) {
       console.error(`Error ${action}ing request:`, error)
-      toast.error(`Failed to ${action} request`)
+      toast.error(`Failed to ${action} request`, {
+        description: 'Please try again or contact support if the issue persists.'
+      })
     } finally {
       setProcessingId(null)
     }

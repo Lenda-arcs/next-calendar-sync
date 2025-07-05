@@ -8,6 +8,7 @@ import { CalendarFeedsProfileSection } from '@/components/calendar-feeds'
 import { getUserCalendarFeeds } from '@/lib/calendar-feeds'
 import { PATHS } from '@/lib/paths'
 import { Calendar } from 'lucide-react'
+import { TeacherStudioRequest } from './components/TeacherStudioRequest'
 
 export default async function DashboardPage() {
   const supabase = await createServerClient()
@@ -181,6 +182,12 @@ export default async function DashboardPage() {
                  </LoadingButtonLink>
                </CardContent>
              </Card>
+
+             {/* Teacher Studio Request */}
+             <TeacherStudioRequest userId={userId} />
+
+             {/* Calendar Integration */}
+             <CalendarFeedsProfileSection feeds={feeds} />
  
              {/* Profile Setup (if no public URL) */}
              {!hasCustomUrl && (
@@ -203,11 +210,6 @@ export default async function DashboardPage() {
                 </CardContent>
               </Card>
             )}
-          </div>
-          
-          {/* Calendar Integration */}
-          <div className="mt-6">
-            <CalendarFeedsProfileSection feeds={feeds} />
           </div>
         </PageSection>
       </Container>

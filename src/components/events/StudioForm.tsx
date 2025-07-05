@@ -1,25 +1,36 @@
 'use client'
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { useState, useEffect } from 'react'
-import { createClient } from '@/lib/supabase/client'
-import { Studio, StudioInsert, StudioUpdate } from '@/lib/types'
+import { createClient } from '@/lib/supabase'
+import { Studio, StudioInsert } from '@/lib/types'
+
+// Types for tiered rate management
+interface RateTier {
+  min: number | ''
+  max: number | null | ''
+  rate: number | ''
+}
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Checkbox } from '@/components/ui/checkbox'
+import { Checkbox } from '@/components/ui'
 import { Badge } from '@/components/ui/badge'
-import { X, Plus, MapPin, Globe, Instagram, Mail, Phone } from 'lucide-react'
+import { Select } from '@/components/ui/select'
+import { UnifiedDialog } from '@/components/ui/unified-dialog'
+import { X, Plus, MapPin, Globe, Instagram, Mail, Phone, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 
 interface StudioFormProps {
   studio?: Studio | null
   onSave: () => void
   onCancel: () => void
+  isOpen?: boolean
 }
 
-export function StudioForm({ studio, onSave, onCancel }: StudioFormProps) {
+export function StudioForm({ studio, onSave, onCancel, isOpen = true }: StudioFormProps) {
   const [formData, setFormData] = useState<StudioInsert>({
     name: '',
     slug: '',
@@ -47,6 +58,10 @@ export function StudioForm({ studio, onSave, onCancel }: StudioFormProps) {
     featured: false
   })
 
+  // State for rate configuration
+  const [rateType, setRateType] = useState<'flat' | 'per_student' | 'tiered'>('flat')
+  const [rateTiers, setRateTiers] = useState<RateTier[]>([{ min: '', max: '', rate: '' }])
+
   const [locationPattern, setLocationPattern] = useState('')
   const [amenity, setAmenity] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -56,6 +71,22 @@ export function StudioForm({ studio, onSave, onCancel }: StudioFormProps) {
   useEffect(() => {
     if (studio) {
       setFormData(studio)
+      
+      // Initialize rate type and tiers from existing data
+      const rateConfig = studio.default_rate_config as Record<string, unknown>
+      if (rateConfig?.type) {
+        setRateType(rateConfig.type as 'flat' | 'per_student' | 'tiered')
+        
+        // Initialize rate tiers if tiered type
+        if (rateConfig.type === 'tiered' && rateConfig.tiers) {
+          const tiers = rateConfig.tiers as Array<Record<string, unknown>>
+          setRateTiers(tiers.map((tier) => ({
+            min: tier.min as number | '',
+            max: tier.max as number | null | '',
+            rate: tier.rate as number | ''
+          })))
+        }
+      }
     }
   }, [studio])
 
@@ -67,28 +98,35 @@ export function StudioForm({ studio, onSave, onCancel }: StudioFormProps) {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('No authenticated user')
 
-      const submitData: StudioInsert = {
+      const baseData = {
         ...formData,
-        created_by_user_id: user.id,
         slug: formData.slug || formData.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
         contact_info: {
-          email: (formData.contact_info as any)?.email || '',
-          phone: (formData.contact_info as any)?.phone || '',
+          email: (formData.contact_info as Record<string, unknown>)?.email as string || '',
+          phone: (formData.contact_info as Record<string, unknown>)?.phone as string || '',
           website: formData.website_url || ''
         }
       }
 
       if (studio) {
-        // Update existing studio
+        // Update existing studio - exclude fields that shouldn't be updated
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { id, created_at, updated_at, created_by_user_id, ...updateData } = baseData
+        
         const { error } = await supabase
           .from('studios')
-          .update(submitData)
+          .update(updateData)
           .eq('id', studio.id)
 
         if (error) throw error
         toast.success('Studio updated successfully')
       } else {
-        // Create new studio
+        // Create new studio - include created_by_user_id
+        const submitData: StudioInsert = {
+          ...baseData,
+          created_by_user_id: user.id
+        }
+
         const { error } = await supabase
           .from('studios')
           .insert([submitData])
@@ -151,28 +189,92 @@ export function StudioForm({ studio, onSave, onCancel }: StudioFormProps) {
   }
 
   const updateRateConfig = (field: string, value: any) => {
-    setFormData(prev => ({
-      ...prev,
-      default_rate_config: {
-        ...((prev.default_rate_config as any) || {}),
-        [field]: value
+    setFormData(prev => {
+      let newRateConfig = { ...((prev.default_rate_config as any) || {}) }
+      
+      // Handle rate type changes
+      if (field === 'type') {
+        newRateConfig = {
+          type: value,
+          // Keep common fields
+          online_bonus_per_student: newRateConfig.online_bonus_per_student,
+          online_bonus_ceiling: newRateConfig.online_bonus_ceiling,
+        }
+        
+        // Add type-specific default values
+        if (value === 'flat') {
+          newRateConfig.base_rate = newRateConfig.base_rate || 45
+          newRateConfig.minimum_threshold = newRateConfig.minimum_threshold || 3
+          newRateConfig.bonus_threshold = newRateConfig.bonus_threshold || 15
+          newRateConfig.bonus_per_student = newRateConfig.bonus_per_student || 3
+        } else if (value === 'per_student') {
+          newRateConfig.rate_per_student = newRateConfig.rate_per_student || 15
+        } else if (value === 'tiered') {
+          // Tiers will be handled separately through rateTiers state
+          newRateConfig.tiers = []
+        }
+      } else {
+        newRateConfig[field] = value
       }
-    }))
+      
+      return {
+        ...prev,
+        default_rate_config: newRateConfig
+      }
+    })
   }
 
+  // Update rate config when rate tiers change for tiered rates
+  useEffect(() => {
+    if (rateType === 'tiered') {
+      const validTiers = rateTiers
+        .filter(tier => tier.min !== '' && tier.rate !== '')
+        .map(tier => ({
+          min: Number(tier.min),
+          max: tier.max === '' || tier.max === null ? null : Number(tier.max),
+          rate: Number(tier.rate)
+        }))
+      
+      updateRateConfig('tiers', validTiers)
+    }
+  }, [rateTiers, rateType])
+
+  const handleFormSubmit = () => {
+    const form = document.getElementById('studio-form') as HTMLFormElement
+    if (form) {
+      form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }))
+    }
+  }
+
+  const footerContent = (
+    <>
+      <Button variant="outline" onClick={onCancel} disabled={isSubmitting}>
+        Cancel
+      </Button>
+      <Button 
+        onClick={handleFormSubmit}
+        disabled={isSubmitting}
+        className="min-w-[120px]"
+      >
+        {isSubmitting ? 'Saving...' : (studio ? 'Update Studio' : 'Create Studio')}
+      </Button>
+    </>
+  )
+
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            {studio ? 'Edit Studio' : 'Create New Studio'}
-            <Button variant="ghost" size="sm" onClick={onCancel}>
-              <X className="w-4 h-4" />
-            </Button>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
+    <UnifiedDialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open) {
+          onCancel()
+        }
+      }}
+      title={studio ? 'Edit Studio' : 'Create New Studio'}
+      description="Configure studio details, location matching, and default rates for teachers."
+      size="xl"
+      footer={footerContent}
+    >
+      <form id="studio-form" onSubmit={handleSubmit} className="space-y-6">
             {/* Basic Information */}
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">Basic Information</h3>
@@ -321,45 +423,273 @@ export function StudioForm({ studio, onSave, onCancel }: StudioFormProps) {
                 These rates will be used as defaults for new teachers joining this studio
               </p>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Rate Type Selection */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <Label htmlFor="base_rate">Base Rate (€)</Label>
+                  <Label htmlFor="rate_type">Rate Type</Label>
+                  <Select
+                    options={[
+                      { value: "flat", label: "Flat Rate" },
+                      { value: "per_student", label: "Per Student" },
+                      { value: "tiered", label: "Tiered Rates" },
+                    ]}
+                    value={rateType}
+                    onChange={(value) => {
+                      setRateType(value as 'flat' | 'per_student' | 'tiered')
+                      updateRateConfig('type', value)
+                    }}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="base_rate">
+                    Base Rate (€) {rateType === "per_student" ? "(per student)" : rateType === "tiered" ? "(disabled for tiered)" : ""}
+                  </Label>
                   <Input
                     id="base_rate"
                     type="number"
                     step="0.01"
-                    value={(formData.default_rate_config as any)?.base_rate || 45}
-                    onChange={(e) => updateRateConfig('base_rate', parseFloat(e.target.value))}
+                    min="0"
+                    value={rateType === 'flat' ? (formData.default_rate_config as any)?.base_rate || 45 : 
+                           rateType === 'per_student' ? (formData.default_rate_config as any)?.rate_per_student || 15 : ''}
+                    onChange={(e) => {
+                      const field = rateType === 'per_student' ? 'rate_per_student' : 'base_rate'
+                      updateRateConfig(field, parseFloat(e.target.value))
+                    }}
+                    disabled={rateType === 'tiered'}
+                    placeholder={rateType === "per_student" ? "e.g., 15.00" : "e.g., 45.00"}
                   />
                 </div>
                 <div>
-                  <Label htmlFor="minimum_threshold">Minimum Students</Label>
-                  <Input
-                    id="minimum_threshold"
-                    type="number"
-                    value={(formData.default_rate_config as any)?.minimum_threshold || 3}
-                    onChange={(e) => updateRateConfig('minimum_threshold', parseInt(e.target.value))}
+                  <Label htmlFor="currency">Currency</Label>
+                  <Select
+                    options={[
+                      { value: "EUR", label: "EUR (€)" },
+                      { value: "USD", label: "USD ($)" },
+                      { value: "GBP", label: "GBP (£)" },
+                    ]}
+                    value="EUR"
+                    onChange={() => {}} // Currency can be handled later
                   />
                 </div>
-                <div>
-                  <Label htmlFor="bonus_threshold">Bonus Threshold</Label>
-                  <Input
-                    id="bonus_threshold"
-                    type="number"
-                    value={(formData.default_rate_config as any)?.bonus_threshold || 15}
-                    onChange={(e) => updateRateConfig('bonus_threshold', parseInt(e.target.value))}
-                  />
+              </div>
+
+              {/* Thresholds and Bonuses for Flat Rate */}
+              {rateType === 'flat' && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="minimum_threshold">Minimum Student Threshold</Label>
+                    <Input
+                      id="minimum_threshold"
+                      type="number"
+                      min="0"
+                      value={(formData.default_rate_config as any)?.minimum_threshold || 3}
+                      onChange={(e) => updateRateConfig('minimum_threshold', parseInt(e.target.value))}
+                      placeholder="e.g., 3"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Below this count, reduced payments may apply
+                    </p>
+                  </div>
+                  <div>
+                    <Label htmlFor="bonus_threshold">Bonus Student Threshold</Label>
+                    <Input
+                      id="bonus_threshold"
+                      type="number"
+                      min="0"
+                      value={(formData.default_rate_config as any)?.bonus_threshold || 15}
+                      onChange={(e) => updateRateConfig('bonus_threshold', parseInt(e.target.value))}
+                      placeholder="e.g., 15"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Above this count, teacher gets bonus per additional student
+                    </p>
+                  </div>
+                  <div>
+                    <Label htmlFor="bonus_per_student">Bonus per Student (€)</Label>
+                    <Input
+                      id="bonus_per_student"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={(formData.default_rate_config as any)?.bonus_per_student || 3}
+                      onChange={(e) => updateRateConfig('bonus_per_student', parseFloat(e.target.value))}
+                      placeholder="e.g., 3.00"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Amount paid per student above bonus threshold
+                    </p>
+                  </div>
+                  <div>
+                    <Label htmlFor="max_discount">Max Discount (€)</Label>
+                    <Input
+                      id="max_discount"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={(formData.default_rate_config as any)?.max_discount || ''}
+                      onChange={(e) => updateRateConfig('max_discount', parseFloat(e.target.value))}
+                      placeholder="e.g., 10.00"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Maximum discount that can be applied
+                    </p>
+                  </div>
                 </div>
+              )}
+
+              {/* Online Bonuses (applies to all rate types) */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="bonus_per_student">Bonus per Student (€)</Label>
+                  <Label htmlFor="online_bonus_per_student">Online Bonus per Student (€)</Label>
                   <Input
-                    id="bonus_per_student"
+                    id="online_bonus_per_student"
                     type="number"
                     step="0.01"
-                    value={(formData.default_rate_config as any)?.bonus_per_student || 3}
-                    onChange={(e) => updateRateConfig('bonus_per_student', parseFloat(e.target.value))}
+                    min="0"
+                    value={(formData.default_rate_config as any)?.online_bonus_per_student || 2.5}
+                    onChange={(e) => updateRateConfig('online_bonus_per_student', parseFloat(e.target.value))}
+                    placeholder="e.g., 2.50"
                   />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Bonus paid for each online student
+                  </p>
                 </div>
+                <div>
+                  <Label htmlFor="online_bonus_ceiling">Online Bonus Ceiling</Label>
+                  <Input
+                    id="online_bonus_ceiling"
+                    type="number"
+                    min="0"
+                    value={(formData.default_rate_config as any)?.online_bonus_ceiling || 5}
+                    onChange={(e) => updateRateConfig('online_bonus_ceiling', parseInt(e.target.value))}
+                    placeholder="e.g., 5"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Maximum number of online students that receive bonuses
+                  </p>
+                </div>
+              </div>
+
+              {/* Tiered Rates Section */}
+              {rateType === 'tiered' && (
+                <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-sm font-medium">Rate Tiers</h4>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setRateTiers(prev => [...prev, { min: '', max: '', rate: '' }])}
+                      className="flex items-center gap-1"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Add Tier
+                    </Button>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    {rateTiers.map((tier, index) => (
+                      <div key={index} className="grid grid-cols-1 md:grid-cols-4 gap-2 items-end">
+                        <div>
+                          <Label>Min Students</Label>
+                          <Input
+                            type="number"
+                            min="0"
+                            value={tier.min}
+                            onChange={(e) => {
+                              const newTiers = [...rateTiers]
+                              newTiers[index].min = e.target.value === '' ? '' : Number(e.target.value)
+                              setRateTiers(newTiers)
+                            }}
+                            placeholder="e.g., 3"
+                          />
+                        </div>
+                        <div>
+                          <Label>Max Students (optional)</Label>
+                          <Input
+                            type="number"
+                            min="0"
+                            value={tier.max || ''}
+                            onChange={(e) => {
+                              const newTiers = [...rateTiers]
+                              newTiers[index].max = e.target.value === '' ? null : Number(e.target.value)
+                              setRateTiers(newTiers)
+                            }}
+                            placeholder="e.g., 10"
+                          />
+                        </div>
+                        <div>
+                          <Label>Rate (€)</Label>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            value={tier.rate}
+                            onChange={(e) => {
+                              const newTiers = [...rateTiers]
+                              newTiers[index].rate = e.target.value === '' ? '' : Number(e.target.value)
+                              setRateTiers(newTiers)
+                            }}
+                            placeholder="e.g., 45.00"
+                          />
+                        </div>
+                        <div>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setRateTiers(prev => prev.filter((_, i) => i !== index))}
+                            disabled={rateTiers.length === 1}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  <div className="bg-yellow-50 p-3 rounded border-l-4 border-yellow-400">
+                    <p className="text-sm text-yellow-800">
+                      <strong>Note:</strong> When tiered rates are enabled, the base rate and threshold settings above are ignored. 
+                      The system will use the tier rates based on total student count.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Rate Structure Explanation */}
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <h4 className="text-sm font-medium text-blue-800 mb-2">Rate Structure</h4>
+                {rateType === 'tiered' ? (
+                  <div>
+                    <p className="text-sm text-blue-700 mb-2">
+                      <strong>Tiered Rate System:</strong> Different rates apply based on student count tiers defined above.
+                    </p>
+                    <p className="text-xs text-blue-600">
+                      Example: 3-9 students: €40, 10-15 students: €50, 16+ students: €55
+                    </p>
+                  </div>
+                ) : rateType === 'per_student' ? (
+                  <div>
+                    <p className="text-sm text-blue-700 mb-2">
+                      <strong>Per-Student Rate:</strong> Total payment = Base rate × Number of students
+                    </p>
+                    <p className="text-xs text-blue-600">
+                      Example: €5 per student × 10 students = €50 total
+                    </p>
+                  </div>
+                ) : (
+                  <div>
+                    <p className="text-sm text-blue-700 mb-2">
+                      <strong>Flat Rate with Thresholds:</strong> Base rate with bonuses/penalties based on student count
+                    </p>
+                    <ul className="text-xs text-blue-600 space-y-1">
+                      <li>• Below minimum: Base rate (no penalties in current system)</li>
+                      <li>• Between thresholds: Base rate</li>
+                      <li>• Above bonus threshold: Base rate + bonus per additional student</li>
+                    </ul>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -426,18 +756,7 @@ export function StudioForm({ studio, onSave, onCancel }: StudioFormProps) {
               </div>
             </div>
 
-            {/* Submit Buttons */}
-            <div className="flex justify-end gap-2 pt-4">
-              <Button type="button" variant="outline" onClick={onCancel}>
-                Cancel
-              </Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? 'Saving...' : (studio ? 'Update Studio' : 'Create Studio')}
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
-    </div>
+        </form>
+    </UnifiedDialog>
   )
 }

@@ -14,13 +14,16 @@ export type Database = {
           banking_info: Json | null
           created_at: string | null
           currency: string | null
+          custom_rate_override: Json | null
           entity_name: string
           entity_type: string
           id: string
+          individual_billing_email: string | null
           location_match: string[] | null
           notes: string | null
           rate_config: Json | null
           recipient_info: Json | null
+          studio_id: string | null
           updated_at: string | null
           user_id: string
         }
@@ -28,13 +31,16 @@ export type Database = {
           banking_info?: Json | null
           created_at?: string | null
           currency?: string | null
+          custom_rate_override?: Json | null
           entity_name: string
           entity_type?: string
           id?: string
+          individual_billing_email?: string | null
           location_match?: string[] | null
           notes?: string | null
           rate_config?: Json | null
           recipient_info?: Json | null
+          studio_id?: string | null
           updated_at?: string | null
           user_id: string
         }
@@ -42,17 +48,27 @@ export type Database = {
           banking_info?: Json | null
           created_at?: string | null
           currency?: string | null
+          custom_rate_override?: Json | null
           entity_name?: string
           entity_type?: string
           id?: string
+          individual_billing_email?: string | null
           location_match?: string[] | null
           notes?: string | null
           rate_config?: Json | null
           recipient_info?: Json | null
+          studio_id?: string | null
           updated_at?: string | null
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "billing_entities_studio_id_fkey"
+            columns: ["studio_id"]
+            isOneToOne: false
+            referencedRelation: "studios"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "billing_entities_user_id_fkey"
             columns: ["user_id"]
@@ -367,6 +383,162 @@ export type Database = {
         }
         Relationships: []
       }
+      studio_teacher_requests: {
+        Row: {
+          admin_response: string | null
+          created_at: string | null
+          id: string
+          message: string | null
+          processed_at: string | null
+          processed_by: string | null
+          status: string | null
+          studio_id: string
+          teacher_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          admin_response?: string | null
+          created_at?: string | null
+          id?: string
+          message?: string | null
+          processed_at?: string | null
+          processed_by?: string | null
+          status?: string | null
+          studio_id: string
+          teacher_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          admin_response?: string | null
+          created_at?: string | null
+          id?: string
+          message?: string | null
+          processed_at?: string | null
+          processed_by?: string | null
+          status?: string | null
+          studio_id?: string
+          teacher_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "studio_teacher_requests_processed_by_fkey"
+            columns: ["processed_by"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "studio_teacher_requests_processed_by_fkey"
+            columns: ["processed_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "studio_teacher_requests_studio_id_fkey"
+            columns: ["studio_id"]
+            isOneToOne: false
+            referencedRelation: "studios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "studio_teacher_requests_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "studio_teacher_requests_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      studios: {
+        Row: {
+          address: string | null
+          amenities: string[] | null
+          business_hours: Json | null
+          contact_info: Json | null
+          created_at: string | null
+          created_by_user_id: string
+          default_rate_config: Json | null
+          description: string | null
+          featured: boolean | null
+          id: string
+          instagram_url: string | null
+          location_patterns: string[] | null
+          name: string
+          profile_images: string[] | null
+          public_profile_enabled: boolean | null
+          slug: string | null
+          updated_at: string | null
+          verified: boolean | null
+          website_url: string | null
+        }
+        Insert: {
+          address?: string | null
+          amenities?: string[] | null
+          business_hours?: Json | null
+          contact_info?: Json | null
+          created_at?: string | null
+          created_by_user_id: string
+          default_rate_config?: Json | null
+          description?: string | null
+          featured?: boolean | null
+          id?: string
+          instagram_url?: string | null
+          location_patterns?: string[] | null
+          name: string
+          profile_images?: string[] | null
+          public_profile_enabled?: boolean | null
+          slug?: string | null
+          updated_at?: string | null
+          verified?: boolean | null
+          website_url?: string | null
+        }
+        Update: {
+          address?: string | null
+          amenities?: string[] | null
+          business_hours?: Json | null
+          contact_info?: Json | null
+          created_at?: string | null
+          created_by_user_id?: string
+          default_rate_config?: Json | null
+          description?: string | null
+          featured?: boolean | null
+          id?: string
+          instagram_url?: string | null
+          location_patterns?: string[] | null
+          name?: string
+          profile_images?: string[] | null
+          public_profile_enabled?: boolean | null
+          slug?: string | null
+          updated_at?: string | null
+          verified?: boolean | null
+          website_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "studios_created_by_user_id_fkey"
+            columns: ["created_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "studios_created_by_user_id_fkey"
+            columns: ["created_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tag_rules: {
         Row: {
           id: string
@@ -481,12 +653,15 @@ export type Database = {
           address: string | null
           bic: string | null
           created_at: string | null
+          custom_template_html: string | null
           email: string | null
           full_name: string
           iban: string | null
           kleinunternehmerregelung: boolean | null
+          pdf_template_config: Json | null
           phone: string | null
           tax_id: string | null
+          template_theme: string | null
           updated_at: string | null
           user_id: string
           vat_id: string | null
@@ -495,12 +670,15 @@ export type Database = {
           address?: string | null
           bic?: string | null
           created_at?: string | null
+          custom_template_html?: string | null
           email?: string | null
           full_name: string
           iban?: string | null
           kleinunternehmerregelung?: boolean | null
+          pdf_template_config?: Json | null
           phone?: string | null
           tax_id?: string | null
+          template_theme?: string | null
           updated_at?: string | null
           user_id: string
           vat_id?: string | null
@@ -509,12 +687,15 @@ export type Database = {
           address?: string | null
           bic?: string | null
           created_at?: string | null
+          custom_template_html?: string | null
           email?: string | null
           full_name?: string
           iban?: string | null
           kleinunternehmerregelung?: boolean | null
+          pdf_template_config?: Json | null
           phone?: string | null
           tax_id?: string | null
+          template_theme?: string | null
           updated_at?: string | null
           user_id?: string
           vat_id?: string | null

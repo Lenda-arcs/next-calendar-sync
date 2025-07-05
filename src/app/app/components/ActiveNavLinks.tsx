@@ -1,7 +1,7 @@
 'use client'
 
 import { LoadingNavLink } from '@/components/ui'
-import { Calendar, Home, User, Tags, Receipt, LucideIcon } from 'lucide-react'
+import { Calendar, Home, User, Tags, Receipt, Building, LucideIcon } from 'lucide-react'
 
 interface NavigationItem {
   name: string
@@ -19,7 +19,8 @@ const iconMap: Record<string, LucideIcon> = {
   Calendar,
   Tags,
   Receipt,
-  User
+  User,
+  Building
 }
 
 export function ActiveNavLinks({ navigation }: ActiveNavLinksProps) {

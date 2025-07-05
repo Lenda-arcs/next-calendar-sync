@@ -1,7 +1,7 @@
 'use client'
 
 import { LoadingNavLink, Popover, PopoverTrigger, PopoverContent } from '@/components/ui'
-import { Menu, Calendar, Home, User, Tags, Receipt, LucideIcon } from 'lucide-react'
+import { Menu, Calendar, Home, User, Tags, Receipt, Building, LucideIcon } from 'lucide-react'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { useState, useEffect } from 'react'
@@ -22,7 +22,8 @@ const iconMap: Record<string, LucideIcon> = {
   Calendar,
   Tags,
   Receipt,
-  User
+  User,
+  Building
 }
 
 export function MobileNavMenu({ navigation }: MobileNavMenuProps) {

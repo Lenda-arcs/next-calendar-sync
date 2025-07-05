@@ -1,8 +1,16 @@
 'use client'
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { useState, useEffect } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import { createClient } from '@/lib/supabase'
 import { Studio } from '@/lib/types'
+
+interface StudioContactInfo {
+  email?: string
+  phone?: string
+  website?: string
+}
 import { useSupabaseQuery } from '@/lib/hooks/useSupabaseQuery'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -11,7 +19,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Search, MapPin, Mail, Phone, Globe, Instagram, Send, X } from 'lucide-react'
+import { Search, MapPin, Mail, Globe, Instagram, Send, X } from 'lucide-react'
 import { toast } from 'sonner'
 
 interface StudioRequestDialogProps {
@@ -30,33 +38,29 @@ export function StudioRequestDialog({ isOpen, onClose, userId }: StudioRequestDi
   // Fetch available studios
   const { data: studios, isLoading } = useSupabaseQuery({
     queryKey: ['available-studios', userId],
-    queryFn: async () => {
-      const { data, error } = await supabase
+    fetcher: async (supabase) => {
+      const { data: studiosData, error: studiosError } = await supabase
         .from('studios')
         .select('*')
         .eq('verified', true)
         .order('name')
 
-      if (error) throw error
+      if (studiosError) throw studiosError
 
-      // Filter out studios where user already has a request or billing entity
-      const { data: existingRequests } = await supabase
+      // Fetch existing requests for this user
+      const { data: existingRequests, error: requestsError } = await supabase
         .from('studio_teacher_requests')
-        .select('studio_id')
+        .select('studio_id, status')
         .eq('teacher_id', userId)
+        .in('status', ['pending', 'approved'])
 
-      const { data: existingBillingEntities } = await supabase
-        .from('billing_entities')
-        .select('studio_id')
-        .eq('user_id', userId)
-        .not('studio_id', 'is', null)
+      if (requestsError) throw requestsError
 
-      const excludedStudioIds = new Set([
-        ...(existingRequests?.map(r => r.studio_id) || []),
-        ...(existingBillingEntities?.map(b => b.studio_id) || [])
-      ])
-
-      return data?.filter(studio => !excludedStudioIds.has(studio.id)) || []
+      // Filter out studios where user already has a pending or approved request
+      const existingStudioIds = new Set(existingRequests?.map((req: { studio_id: string; status: string }) => req.studio_id) || [])
+      const availableStudios = studiosData?.filter((studio: Studio) => !existingStudioIds.has(studio.id)) || []
+      
+      return availableStudios
     },
     enabled: isOpen
   })
@@ -70,10 +74,10 @@ export function StudioRequestDialog({ isOpen, onClose, userId }: StudioRequestDi
     }
   }, [isOpen])
 
-  const filteredStudios = studios?.filter(studio =>
+  const filteredStudios = studios?.filter((studio: Studio) =>
     studio.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     studio.address?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    studio.location_patterns?.some(pattern => 
+    studio.location_patterns?.some((pattern: string) => 
       pattern.toLowerCase().includes(searchTerm.toLowerCase())
     )
   ) || []
@@ -83,6 +87,26 @@ export function StudioRequestDialog({ isOpen, onClose, userId }: StudioRequestDi
 
     setIsSubmitting(true)
     try {
+      // Check if there's already a pending or approved request for this studio
+      const { data: existingRequest, error: checkError } = await supabase
+        .from('studio_teacher_requests')
+        .select('id, status')
+        .eq('studio_id', selectedStudio.id)
+        .eq('teacher_id', userId)
+        .in('status', ['pending', 'approved'])
+        .maybeSingle()
+
+      if (checkError) throw checkError
+
+      if (existingRequest) {
+        if (existingRequest.status === 'pending') {
+          toast.error('You already have a pending request for this studio')
+        } else {
+          toast.error('You are already approved for this studio')
+        }
+        return
+      }
+
       const { error } = await supabase
         .from('studio_teacher_requests')
         .insert([{
@@ -147,7 +171,7 @@ export function StudioRequestDialog({ isOpen, onClose, userId }: StudioRequestDi
                     )}
                   </div>
                 ) : (
-                  filteredStudios.map((studio) => (
+                  filteredStudios.map((studio: Studio) => (
                     <Card 
                       key={studio.id}
                       className="cursor-pointer hover:shadow-md transition-shadow"
@@ -187,7 +211,7 @@ export function StudioRequestDialog({ isOpen, onClose, userId }: StudioRequestDi
                         
                         {studio.location_patterns && studio.location_patterns.length > 0 && (
                           <div className="flex flex-wrap gap-1 mb-2">
-                            {studio.location_patterns.slice(0, 3).map((pattern, index) => (
+                            {studio.location_patterns.slice(0, 3).map((pattern: string, index: number) => (
                               <Badge key={index} variant="outline" className="text-xs">
                                 {pattern}
                               </Badge>
@@ -201,7 +225,7 @@ export function StudioRequestDialog({ isOpen, onClose, userId }: StudioRequestDi
                         )}
 
                         <div className="flex items-center gap-4 text-sm text-gray-500">
-                          {studio.contact_info && (studio.contact_info as any).email && (
+                          {studio.contact_info && (studio.contact_info as StudioContactInfo).email && (
                             <div className="flex items-center gap-1">
                               <Mail className="w-3 h-3" />
                               Contact available

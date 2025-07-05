@@ -188,14 +188,14 @@ export interface PDFTemplateConfig {
 export type PDFTemplateTheme = 'professional' | 'modern' | 'minimal' | 'creative' | 'custom'
 
 // Enhanced UserInvoiceSettings with PDF template support
-export interface UserInvoiceSettingsWithPDFTemplate extends UserInvoiceSettings {
+export interface UserInvoiceSettingsWithPDFTemplate extends Omit<UserInvoiceSettings, 'pdf_template_config' | 'custom_template_html' | 'template_theme'> {
   pdf_template_config: PDFTemplateConfig | null
   custom_template_html: string | null
   template_theme: PDFTemplateTheme
 }
 
 // Enhanced BillingEntity types - now supports studio references
-export interface BillingEntity extends Omit<Database['public']['Tables']['billing_entities']['Row'], 'entity_type' | 'rate_config' | 'recipient_info' | 'banking_info'> {
+export interface BillingEntity extends Omit<Database['public']['Tables']['billing_entities']['Row'], 'entity_type' | 'rate_config' | 'recipient_info' | 'banking_info' | 'custom_rate_override' | 'individual_billing_email' | 'studio_id'> {
   entity_type: 'studio' | 'teacher'
   studio_id?: string | null // NEW: Reference to Studios table
   rate_config: RateConfig | null // null for teachers who use studio rates
@@ -205,7 +205,7 @@ export interface BillingEntity extends Omit<Database['public']['Tables']['billin
   individual_billing_email?: string | null // NEW: Teacher's personal billing email
 }
 
-export interface BillingEntityInsert extends Omit<Database['public']['Tables']['billing_entities']['Insert'], 'entity_type' | 'rate_config' | 'recipient_info' | 'banking_info'> {
+export interface BillingEntityInsert extends Omit<Database['public']['Tables']['billing_entities']['Insert'], 'entity_type' | 'rate_config' | 'recipient_info' | 'banking_info' | 'custom_rate_override' | 'individual_billing_email' | 'studio_id'> {
   entity_type?: 'studio' | 'teacher'
   studio_id?: string | null
   rate_config?: RateConfig | null
@@ -215,7 +215,7 @@ export interface BillingEntityInsert extends Omit<Database['public']['Tables']['
   individual_billing_email?: string | null
 }
 
-export interface BillingEntityUpdate extends Omit<Database['public']['Tables']['billing_entities']['Update'], 'entity_type' | 'rate_config' | 'recipient_info' | 'banking_info'> {
+export interface BillingEntityUpdate extends Omit<Database['public']['Tables']['billing_entities']['Update'], 'entity_type' | 'rate_config' | 'recipient_info' | 'banking_info' | 'custom_rate_override' | 'individual_billing_email' | 'studio_id'> {
   entity_type?: 'studio' | 'teacher'
   studio_id?: string | null
   rate_config?: RateConfig | null

@@ -1,10 +1,10 @@
 import { Suspense } from 'react'
 import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { createServerClient } from '@/lib/supabase-server'
 import { StudioManagement } from '@/components/events'
 
 export default async function StudiosPage() {
-  const supabase = createClient()
+  const supabase = await createServerClient()
   
   const { data: { user } } = await supabase.auth.getUser()
   
