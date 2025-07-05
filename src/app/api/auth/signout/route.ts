@@ -30,7 +30,18 @@ export async function POST(request: Request) {
     }
   )
 
-  await supabase.auth.signOut()
+  try {
+    const { error } = await supabase.auth.signOut()
+    
+    if (error) {
+      console.error('Error signing out:', error)
+      // Still proceed with redirect to prevent user from being stuck
+      // but log the error for debugging
+    }
+  } catch (error) {
+    console.error('Unexpected error during signout:', error)
+    // Continue with redirect even if signout fails
+  }
 
   return NextResponse.redirect(`${requestUrl.origin}/`, {
     status: 301,
