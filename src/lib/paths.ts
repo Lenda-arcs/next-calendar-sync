@@ -25,6 +25,7 @@ export const PATHS = {
     MANAGE_EVENTS: '/app/manage-events',
     MANAGE_TAGS: '/app/manage-tags',
     MANAGE_INVOICES: '/app/manage-invoices',
+    STUDIOS: '/app/studios',
   },
 
   // Dynamic routes

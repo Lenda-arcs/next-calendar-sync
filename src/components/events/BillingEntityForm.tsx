@@ -10,6 +10,7 @@ import FormMultiSelect from "../ui/form-multi-select";
 import { Textarea } from "../ui/textarea";
 import { toast } from 'sonner'
 import { useSupabaseMutation } from "../../lib/hooks/useSupabaseMutation";
+import { useTeacherStudioRelationships, getBestStudioSuggestion, extractBillingDefaultsFromStudio } from "../../lib/hooks/useTeacherStudioRelationships";
 import { createStudio, updateStudio } from "../../lib/invoice-utils";
 import { rematchUserStudios } from "../../lib/rematch-utils";
 import type { BillingEntity, BillingEntityInsert, BillingEntityUpdate, RateConfig, RecipientInfo, BankingInfo } from "../../lib/types";
@@ -138,8 +139,23 @@ function extractRateTiersFromEntity(entity: BillingEntity | null | undefined): R
 const useBillingEntityForm = (props: Props) => {
   const { user, existingStudio, onStudioCreated, onStudioUpdated, onLoadingChange, entityType = 'studio', defaultLocationMatch = [] } = props;
 
+  // Fetch teacher-studio relationships if this is a teacher entity
+  const { data: teacherRelationships } = useTeacherStudioRelationships({
+    teacherId: entityType === 'teacher' ? user.id : null,
+    enabled: entityType === 'teacher' && !existingStudio
+  })
+
+  // Get the best studio suggestion for pre-populating the form
+  const bestStudioSuggestion = getBestStudioSuggestion(teacherRelationships || [])
+  const studioDefaults = extractBillingDefaultsFromStudio(bestStudioSuggestion)
+
+  // Use studio defaults if available, otherwise use the provided defaults
+  const effectiveLocationMatch = studioDefaults.defaultLocationMatch.length > 0 
+    ? studioDefaults.defaultLocationMatch 
+    : defaultLocationMatch
+
   const [formData, setFormData] = useState<FormData>(() => 
-    extractFormDataFromEntity(existingStudio, defaultLocationMatch)
+    extractFormDataFromEntity(existingStudio, effectiveLocationMatch)
   );
 
   // State for managing tiered rates
@@ -447,6 +463,7 @@ const useBillingEntityForm = (props: Props) => {
     addRateTier,
     removeRateTier,
     updateRateTier,
+    studioDefaults,
   };
 };
 
@@ -457,9 +474,24 @@ const TeacherForm: React.FC<{
   eventLocations: string[];
   onInputChange: (field: string, value: string) => void;
   onLocationChange: (values: string[]) => void;
-}> = ({ formData, errors, eventLocations, onInputChange, onLocationChange }) => (
+  studioDefaults?: {
+    suggestedStudioName: string | null;
+    defaultLocationMatch: string[];
+  } | null;
+}> = ({ formData, errors, eventLocations, onInputChange, onLocationChange, studioDefaults }) => (
         <div className="space-y-4">
           <h3 className="text-lg font-semibold">Basic Information</h3>
+          
+          {/* Studio defaults notification */}
+          {studioDefaults?.suggestedStudioName && studioDefaults.defaultLocationMatch.length > 0 && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <h4 className="text-sm font-medium text-blue-800 mb-2">Studio Configuration Applied</h4>
+              <p className="text-sm text-blue-700">
+                This form has been pre-populated with default settings from <strong>{studioDefaults.suggestedStudioName}</strong> 
+                based on your approved teacher request. You can modify these settings as needed.
+              </p>
+            </div>
+          )}
           
     <div className="space-y-4">
       {/* Row 1: Teacher Name and Location Match */}
@@ -1068,6 +1100,7 @@ const BillingEntityForm: React.FC<Props> = (props) => {
     addRateTier,
     removeRateTier,
     updateRateTier,
+    studioDefaults,
   } = useBillingEntityForm(props);
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
@@ -1128,6 +1161,7 @@ const BillingEntityForm: React.FC<Props> = (props) => {
           eventLocations={eventLocations}
           onInputChange={handleInputChange}
           onLocationChange={handleLocationChange}
+          studioDefaults={studioDefaults}
         />
       ) : (
         <StudioForm

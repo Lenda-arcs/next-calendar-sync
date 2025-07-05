@@ -2,13 +2,12 @@
 
 import { useState } from 'react'
 import { useSupabaseQuery } from '@/lib/hooks/useSupabaseQuery'
-import { createClient } from '@/lib/supabase/client'
 import { Studio, StudioWithStats } from '@/lib/types'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Plus, Settings, Users, MapPin, Star, Shield } from 'lucide-react'
+import { Plus, Users, MapPin, Star, Shield } from 'lucide-react'
 import { StudioForm } from './StudioForm'
 import { StudioList } from './StudioList'
 import { StudioTeacherRequests } from './StudioTeacherRequests'
@@ -18,35 +17,17 @@ interface StudioManagementProps {
   userRole: 'admin' | 'moderator' | 'user'
 }
 
-export function StudioManagement({ userId, userRole }: StudioManagementProps) {
+export function StudioManagement({ userRole }: StudioManagementProps) {
   const [activeTab, setActiveTab] = useState('studios')
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [editingStudio, setEditingStudio] = useState<Studio | null>(null)
-  const supabase = createClient()
 
-  // Only admins and moderators can access studio management
-  if (userRole !== 'admin' && userRole !== 'moderator') {
-    return (
-      <div className="p-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Shield className="w-5 h-5" />
-              Access Restricted
-            </CardTitle>
-            <CardDescription>
-              Only administrators can manage studios.
-            </CardDescription>
-          </CardHeader>
-        </Card>
-      </div>
-    )
-  }
+  const hasAccess = userRole === 'admin' || userRole === 'moderator'
 
   // Fetch studios with stats
   const { data: studios, isLoading, refetch } = useSupabaseQuery({
     queryKey: ['studios-with-stats'],
-    queryFn: async () => {
+    fetcher: async (supabase) => {
       const { data, error } = await supabase
         .from('studios')
         .select(`
@@ -67,32 +48,70 @@ export function StudioManagement({ userId, userRole }: StudioManagementProps) {
       if (error) throw error
 
       // Transform data to include stats
-      const studiosWithStats: StudioWithStats[] = data?.map(studio => ({
+      const studiosWithStats: StudioWithStats[] = data?.map((studio: Record<string, unknown>) => ({
         ...studio,
-        teacher_count: studio.billing_entities?.length || 0,
-        billing_entities: studio.billing_entities || []
+        teacher_count: (studio.billing_entities as unknown[])?.length || 0,
+        billing_entities: (studio.billing_entities as unknown[]) || []
       })) || []
 
       return studiosWithStats
-    }
+    },
+    enabled: hasAccess
   })
 
   // Fetch pending teacher requests
   const { data: pendingRequests } = useSupabaseQuery({
     queryKey: ['studio-teacher-requests', 'pending'],
-    queryFn: async () => {
-      // For now, return empty array since we haven't created the table yet
-      return []
-    }
+    fetcher: async (supabase) => {
+      const { data, error } = await supabase
+        .from('studio_teacher_requests')
+        .select(`
+          *,
+          studio:studios(id, name, slug),
+          teacher:users!studio_teacher_requests_teacher_id_fkey(id, name, email)
+        `)
+        .or('status.eq.pending,status.is.null')
+        .order('created_at', { ascending: false })
+
+      if (error) {
+        console.error('Error fetching teacher requests:', error)
+        return []
+      }
+
+      return data || []
+    },
+    enabled: hasAccess
   })
+
+  // Only admins and moderators can access studio management
+  if (!hasAccess) {
+    return (
+      <div className="p-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Shield className="w-5 h-5" />
+              Access Restricted
+            </CardTitle>
+            <CardDescription>
+              Only administrators can manage studios.
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      </div>
+    )
+  }
 
   const handleCreateStudio = () => {
     setEditingStudio(null)
     setShowCreateForm(true)
   }
 
-  const handleEditStudio = (studio: Studio) => {
-    setEditingStudio(studio)
+  const handleEditStudio = (studio: StudioWithStats) => {
+    // Clean the studio data to remove joined/computed fields that shouldn't be sent back
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { teacher_count, event_count, billing_entities, ...cleanStudio } = studio
+    setEditingStudio(cleanStudio)
     setShowCreateForm(true)
   }
 
@@ -206,13 +225,12 @@ export function StudioManagement({ userId, userRole }: StudioManagementProps) {
       </Tabs>
 
       {/* Create/Edit Form Modal */}
-      {showCreateForm && (
-        <StudioForm
-          studio={editingStudio}
-          onSave={handleStudioSaved}
-          onCancel={() => setShowCreateForm(false)}
-        />
-      )}
+      <StudioForm
+        studio={editingStudio}
+        onSave={handleStudioSaved}
+        onCancel={() => setShowCreateForm(false)}
+        isOpen={showCreateForm}
+      />
     </div>
   )
 }

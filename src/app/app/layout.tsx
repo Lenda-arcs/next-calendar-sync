@@ -6,32 +6,24 @@ import { PATHS } from '@/lib/paths'
 import { 
   Calendar, 
   Tags, 
-  Receipt
+  Receipt,
+  Building
 } from 'lucide-react'
 import { ActiveProfileLink } from './components/ActiveProfileLink'
 import { ActiveNavLinks } from './components/ActiveNavLinks'
 import { ActiveHomeLink } from './components/ActiveHomeLink'
 
-const navigation = [
-  // { name: 'Dashboard', href: PATHS.APP.DASHBOARD, icon: Home, iconName: 'Home' },
+// Base navigation items available to all users
+const baseNavigation = [
   { name: 'Manage Events', href: PATHS.APP.MANAGE_EVENTS, icon: Calendar, iconName: 'Calendar' },
   { name: 'Manage Tags', href: PATHS.APP.MANAGE_TAGS, icon: Tags, iconName: 'Tags' },
   { name: 'Invoices', href: PATHS.APP.MANAGE_INVOICES, icon: Receipt, iconName: 'Receipt' },
 ]
 
-// For mobile navigation (only icon names)
-const mobileNavigation = navigation.map(({ name, href, iconName }) => ({
-  name,
-  href,
-  iconName
-}))
-
-// For desktop navigation (only icon names to avoid serialization issues)
-const desktopNavigation = navigation.map(({ name, href, iconName }) => ({
-  name,
-  href,
-  iconName
-}))
+// Admin-only navigation items
+const adminNavigation = [
+  { name: 'Studios', href: PATHS.APP.STUDIOS, icon: Building, iconName: 'Building' },
+]
 
 interface AppLayoutProps {
   children: React.ReactNode
@@ -39,29 +31,48 @@ interface AppLayoutProps {
 
 export default async function AppLayout({ children }: AppLayoutProps) {
   const supabase = await createServerClient()
-  
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
 
-  // Redirect to sign-in if no user is found
+  const { data: { user } } = await supabase.auth.getUser()
+
   if (!user) {
     redirect('/auth/sign-in')
   }
 
-  // Fetch user profile from database
-  let userProfile = null
-  if (user) {
-    const { data: profile } = await supabase
-      .from('users')
-      .select('*')
-      .eq('id', user.id)
-      .single()
-    userProfile = profile
-  }
+  // Get user role from the database
+  const { data: userData } = await supabase
+    .from('users')
+    .select('role, profile_image_url')
+    .eq('id', user.id)
+    .single()
 
-  // User is guaranteed to exist at this point due to auth check above
-  const profileImage = userProfile?.profile_image_url
+  const userRole = userData?.role || 'user'
+  const profileImage = userData?.profile_image_url
+
+  // Create navigation based on user role
+  const navigation = userRole === 'admin' || userRole === 'moderator' 
+    ? [...baseNavigation, ...adminNavigation]
+    : baseNavigation
+
+  // For mobile navigation (only icon names)
+  const mobileNavigation = navigation.map(({ name, href, iconName }) => ({
+    name,
+    href,
+    iconName
+  }))
+
+  // For desktop navigation (only icon names to avoid serialization issues)
+  const desktopNavigation = navigation.map(({ name, href, iconName }) => ({
+    name,
+    href,
+    iconName
+  }))
+
+  // Get user profile for additional context
+  const { data: userProfile } = await supabase
+    .from('users')
+    .select('*')
+    .eq('id', user.id)
+    .single()
 
   return (
     <div className="min-h-screen">
