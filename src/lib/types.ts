@@ -442,4 +442,7 @@ export const exampleEvents: Array<{
     ],
     variant: 'compact' as EventDisplayVariant
   }
-] 
+]
+
+// Calendar types
+export * from './types/calendar' 

@@ -127,6 +127,78 @@ export type Database = {
           },
         ]
       }
+      calendar_invitations: {
+        Row: {
+          accepted_at: string | null
+          calendar_description: string | null
+          calendar_metadata: Json | null
+          calendar_name: string | null
+          calendar_provider: string | null
+          created_at: string | null
+          expires_at: string
+          feed_url: string | null
+          id: string
+          invitation_data: Json | null
+          invitation_email: string
+          invited_at: string | null
+          processed_at: string | null
+          status: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          calendar_description?: string | null
+          calendar_metadata?: Json | null
+          calendar_name?: string | null
+          calendar_provider?: string | null
+          created_at?: string | null
+          expires_at: string
+          feed_url?: string | null
+          id?: string
+          invitation_data?: Json | null
+          invitation_email: string
+          invited_at?: string | null
+          processed_at?: string | null
+          status?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          accepted_at?: string | null
+          calendar_description?: string | null
+          calendar_metadata?: Json | null
+          calendar_name?: string | null
+          calendar_provider?: string | null
+          created_at?: string | null
+          expires_at?: string
+          feed_url?: string | null
+          id?: string
+          invitation_data?: Json | null
+          invitation_email?: string
+          invited_at?: string | null
+          processed_at?: string | null
+          status?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calendar_invitations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calendar_invitations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       events: {
         Row: {
           booking_url: string | null
@@ -319,6 +391,63 @@ export type Database = {
           },
           {
             foreignKeyName: "invoices_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      oauth_calendar_integrations: {
+        Row: {
+          access_token: string
+          calendar_ids: string[]
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          provider: string
+          provider_user_id: string
+          refresh_token: string | null
+          scopes: string[]
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          access_token: string
+          calendar_ids?: string[]
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          provider: string
+          provider_user_id: string
+          refresh_token?: string | null
+          scopes?: string[]
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          access_token?: string
+          calendar_ids?: string[]
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          provider?: string
+          provider_user_id?: string
+          refresh_token?: string | null
+          scopes?: string[]
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "oauth_calendar_integrations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "oauth_calendar_integrations_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "users"
@@ -890,9 +1019,17 @@ export type Database = {
       }
     }
     Functions: {
+      cleanup_expired_invitations: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       cleanup_expired_rate_limits: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      generate_invitation_email: {
+        Args: { p_user_id: string; p_domain?: string }
+        Returns: string
       }
       get_my_uid: {
         Args: Record<PropertyKey, never>
