@@ -6,9 +6,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
-import { Calendar, Zap, Settings, ArrowRight, CheckCircle } from 'lucide-react'
+import { Calendar, Zap, Settings, ArrowRight, CheckCircle, Mail } from 'lucide-react'
 import { OAuthCalendarConnection } from './OAuthCalendarConnection'
 import { AddCalendarForm } from './AddCalendarForm'
+import { EmailInvitationSystem } from './EmailInvitationSystem'
 import { type User } from '@/lib/types'
 
 interface EnhancedCalendarOnboardingProps {
@@ -18,7 +19,7 @@ interface EnhancedCalendarOnboardingProps {
 }
 
 export function EnhancedCalendarOnboarding({ user, success, error }: EnhancedCalendarOnboardingProps) {
-  const [activeTab, setActiveTab] = useState<'oauth' | 'manual'>('oauth')
+  const [activeTab, setActiveTab] = useState<'oauth' | 'email' | 'manual'>('oauth')
   const [connectionSuccess, setConnectionSuccess] = useState(success === 'connected')
 
   const handleOAuthSuccess = () => {
@@ -153,18 +154,25 @@ export function EnhancedCalendarOnboarding({ user, success, error }: EnhancedCal
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'oauth' | 'manual')}>
-                <TabsList className="grid w-full grid-cols-2">
+              <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'oauth' | 'email' | 'manual')}>
+                <TabsList className="grid w-full grid-cols-3">
                   <TabsTrigger value="oauth" className="flex items-center gap-2">
                     <Zap className="h-4 w-4" />
-                    Quick Connect
+                    OAuth
                     <Badge variant="secondary" className="text-xs">
-                      Recommended
+                      Fast
+                    </Badge>
+                  </TabsTrigger>
+                  <TabsTrigger value="email" className="flex items-center gap-2">
+                    <Mail className="h-4 w-4" />
+                    Email
+                    <Badge variant="secondary" className="text-xs">
+                      Easy
                     </Badge>
                   </TabsTrigger>
                   <TabsTrigger value="manual" className="flex items-center gap-2">
                     <Settings className="h-4 w-4" />
-                    Manual Setup
+                    Manual
                   </TabsTrigger>
                 </TabsList>
                 
@@ -174,6 +182,18 @@ export function EnhancedCalendarOnboarding({ user, success, error }: EnhancedCal
                     onSuccess={handleOAuthSuccess}
                     onError={handleOAuthError}
                   />
+                </TabsContent>
+                
+                <TabsContent value="email" className="mt-6">
+                  <div className="space-y-4">
+                    <div className="text-center space-y-2">
+                      <h3 className="text-lg font-semibold">Email Invitation Setup</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Generate a unique email to invite to your calendar for automatic syncing
+                      </p>
+                    </div>
+                    <EmailInvitationSystem user={user} />
+                  </div>
                 </TabsContent>
                 
                 <TabsContent value="manual" className="mt-6">

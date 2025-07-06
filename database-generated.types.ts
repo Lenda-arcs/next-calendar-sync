@@ -1027,8 +1027,16 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      create_calendar_invitation: {
+        Args: {
+          p_user_id: string
+          p_expiry_hours?: number
+          p_base_domain?: string
+        }
+        Returns: Json
+      }
       generate_invitation_email: {
-        Args: { p_user_id: string; p_domain?: string }
+        Args: { p_user_id: string; p_base_domain?: string }
         Returns: string
       }
       get_my_uid: {
