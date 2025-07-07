@@ -17,6 +17,8 @@ interface DynamicNavbarProps {
   shouldShowJumpingCTA: boolean
   onToggleHero: () => void
   onCloseHero: () => void
+  currentUserId?: string
+  teacherSlug?: string
 }
 
 export default function DynamicNavbar({ 
@@ -27,7 +29,9 @@ export default function DynamicNavbar({
   isExpanding,
   shouldShowJumpingCTA,
   onToggleHero,
-  onCloseHero
+  onCloseHero,
+  currentUserId,
+  teacherSlug
 }: DynamicNavbarProps) {
   const isLoggedIn = !!userEmail
 
@@ -139,6 +143,8 @@ export default function DynamicNavbar({
               teacherProfile={teacherProfile} 
               isAnimating={isAnimating}
               isExpanding={isExpanding}
+              currentUserId={currentUserId}
+              teacherSlug={teacherSlug}
             />
           </div>
         </div>

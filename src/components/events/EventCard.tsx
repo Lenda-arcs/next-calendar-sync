@@ -167,7 +167,7 @@ export const EventCard = React.memo<EventCardProps>(
                 </div>
               )}
 
-            {/* CTA Button - Bottom Right */}
+            {/* CTA Button - Bottom Right (for compact/full variants) */}
             {ctaTag?.cta && (
               <div className="absolute bottom-4 right-3">
                 <Button
@@ -202,9 +202,9 @@ export const EventCard = React.memo<EventCardProps>(
           variant={variant}
         />
 
-        {/* CTA Button for minimal variant - Top right corner */}
+        {/* CTA Button for minimal variant - Top right corner (only on hover) */}
         {variant === 'minimal' && ctaTag?.cta && (
-          <div className="absolute top-3 right-3">
+          <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
             <Button
               size="sm"
               variant="default"

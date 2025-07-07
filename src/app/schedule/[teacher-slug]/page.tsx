@@ -1,10 +1,8 @@
 import { Container } from '@/components/layout/container'
 import { 
-  FilterProvider, 
   FiltersWithShare, 
   FilteredEventList, 
-  ScheduleHeader,
-  ShareSection 
+  ScheduleHeader 
 } from '@/components/schedule'
 import { createServerClient } from '@/lib/supabase-server'
 
@@ -22,9 +20,6 @@ export default async function PublicSchedulePage({ params }: PageProps) {
   // Create supabase client to fetch profile data for the content
   const supabase = await createServerClient()
   
-  // Check if user is authenticated
-  const { data: { user } } = await supabase.auth.getUser()
-  
   // Fetch profile data for the schedule content
   const { data: profile } = await supabase
     .from('public_profiles')
@@ -34,32 +29,22 @@ export default async function PublicSchedulePage({ params }: PageProps) {
 
   return (
     <Container>
-      <FilterProvider>
-        <div className="space-y-6">
-          {/* Export Cart */}
-          <ShareSection 
-            currentUserId={user?.id}
-            teacherProfileId={profile?.id || undefined}
-            teacherName={profile?.name || undefined}
-            teacherSlug={teacherSlug}
-          />
-          
-          {/* Header with Filter Statistics */}
-          <ScheduleHeader />
-          
-          {/* Filter Components */}
-          <FiltersWithShare />
+      <div className="space-y-6">
+        {/* Header with Filter Statistics */}
+        <ScheduleHeader />
+        
+        {/* Filter Components */}
+        <FiltersWithShare />
 
-          {/* Filtered Events List */}
-          <FilteredEventList
-            userId={profile?.id || ''}
-            variant={profile?.event_display_variant || 'compact'}
-            className="filtered-events"
-          />
+        {/* Filtered Events List */}
+        <FilteredEventList
+          userId={profile?.id || ''}
+          variant={profile?.event_display_variant || 'compact'}
+          className="filtered-events"
+        />
 
 
-        </div>
-      </FilterProvider>
+      </div>
     </Container>
   )
 } 

@@ -1,18 +1,60 @@
 'use client'
 
+import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
+import { LoadingOverlay } from '@/components/ui'
 import TagList from '@/components/events/TagList'
-import { Mail, Globe, Instagram, Clock } from 'lucide-react'
+import { Mail, Globe, Instagram, Clock, Share2, Download } from 'lucide-react'
 import { PublicProfile } from '@/lib/types'
+import { useScheduleFilters } from '@/components/schedule/FilterProvider'
+import { useScheduleExport, useOwnerAuth, useOrigin } from '@/lib/hooks'
+import { EXPORT_CONFIG } from '@/lib/constants/export-constants'
+import { ExportPreview } from '@/components/schedule/ExportPreview'
+import { ExportOptionsDialog } from '@/components/schedule/ExportOptionsDialog'
+import { ShareDialog } from '@/components/schedule/ShareDialog'
 
 interface TeacherHeroContentProps {
   teacherProfile: PublicProfile
   isAnimating: boolean
   isExpanding: boolean
+  currentUserId?: string
+  teacherSlug?: string
 }
 
-export default function TeacherHeroContent({ teacherProfile, isAnimating, isExpanding }: TeacherHeroContentProps) {
+export default function TeacherHeroContent({ 
+  teacherProfile, 
+  isAnimating, 
+  isExpanding, 
+  currentUserId,
+  teacherSlug 
+}: TeacherHeroContentProps) {
+  const [showExportDialog, setShowExportDialog] = useState(false)
+  const [showShareDialog, setShowShareDialog] = useState(false)
+  const { filteredEvents } = useScheduleFilters()
+  const { isOwner } = useOwnerAuth({ currentUserId, teacherProfileId: teacherProfile?.id || undefined })
+  const { handleExport, isExporting, showExportPreview, canExport } = useScheduleExport({
+    teacherName: teacherProfile?.name || 'Teacher',
+    events: filteredEvents
+  })
+  const origin = useOrigin()
+
+  // Generate the share URL
+  const shareUrl = teacherSlug ? `${origin}/schedule/${teacherSlug}` : (typeof window !== 'undefined' ? window.location.href : '')
+
+  const handleExportClick = () => {
+    setShowExportDialog(true)
+  }
+
+  const handlePngExport = () => {
+    setShowExportDialog(false)
+    handleExport()
+  }
+
+  const handleShareClick = () => {
+    setShowShareDialog(true)
+  }
+
   // Generate description
   const getDescription = (profile: PublicProfile) => {
     if (profile?.bio && profile.bio.trim()) {
@@ -97,7 +139,7 @@ export default function TeacherHeroContent({ teacherProfile, isAnimating, isExpa
             </div>
           )}
 
-          {/* Mobile Contact Buttons */}
+          {/* Mobile Contact and Action Buttons */}
           <div className="flex flex-wrap gap-2">
             <Button
               size="sm"
@@ -149,6 +191,40 @@ export default function TeacherHeroContent({ teacherProfile, isAnimating, isExpa
                   <Globe className="h-4 w-4" />
                   Website
                 </a>
+              </Button>
+            )}
+          </div>
+
+          {/* Share and Export Actions - Mobile */}
+          <div className="flex flex-col gap-2 pt-2 border-t border-white/20">
+            <Button
+              size="sm"
+              onClick={handleShareClick}
+              className="bg-white/70 hover:bg-white border-white/50 w-full"
+              variant="outline"
+            >
+              <Share2 className="h-4 w-4 mr-2" />
+              Share Schedule
+            </Button>
+
+            {isOwner && (
+              <Button
+                size="sm"
+                onClick={handleExportClick}
+                disabled={!canExport || isExporting}
+                className="bg-blue-600/90 hover:bg-blue-700 text-white border-blue-600 w-full"
+              >
+                {isExporting ? (
+                  <>
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent mr-2" />
+                    Exporting...
+                  </>
+                ) : (
+                  <>
+                    <Download className="h-4 w-4 mr-2" />
+                    Export Events
+                  </>
+                )}
               </Button>
             )}
           </div>
@@ -221,7 +297,7 @@ export default function TeacherHeroContent({ teacherProfile, isAnimating, isExpa
               </div>
             )}
 
-            {/* Contact Buttons */}
+            {/* Contact and Action Buttons */}
             <div className="flex flex-col sm:flex-row items-center justify-center md:justify-start gap-3">
               <Button
                 size="sm"
@@ -275,10 +351,76 @@ export default function TeacherHeroContent({ teacherProfile, isAnimating, isExpa
                   </a>
                 </Button>
               )}
+
+              {/* Share and Export Actions - Desktop */}
+              <div className="flex items-center gap-2 ml-2 pl-2 border-l border-white/30">
+                <Button
+                  size="sm"
+                  onClick={handleShareClick}
+                  className="bg-white/70 hover:bg-white border-white/50"
+                  variant="outline"
+                >
+                  <Share2 className="h-4 w-4 mr-2" />
+                  Share
+                </Button>
+
+                {isOwner && (
+                  <Button
+                    size="sm"
+                    onClick={handleExportClick}
+                    disabled={!canExport || isExporting}
+                    className="bg-blue-600/90 hover:bg-blue-700 text-white border-blue-600"
+                  >
+                    {isExporting ? (
+                      <>
+                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent mr-2" />
+                        Exporting...
+                      </>
+                    ) : (
+                      <>
+                        <Download className="h-4 w-4 mr-2" />
+                        Export
+                      </>
+                    )}
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Export preview component */}
+      <ExportPreview
+        isVisible={showExportPreview}
+        events={filteredEvents}
+        teacherName={teacherProfile?.name || 'Teacher'}
+        elementId={EXPORT_CONFIG.EXPORT_ELEMENT_ID}
+      />
+
+      {/* Loading overlay */}
+      <LoadingOverlay
+        isVisible={isExporting}
+        message={EXPORT_CONFIG.EXPORT_MESSAGES.EXPORTING}
+      />
+
+      {/* Export Options Dialog */}
+      <ExportOptionsDialog
+        isOpen={showExportDialog}
+        onOpenChange={setShowExportDialog}
+        onPngExport={handlePngExport}
+        isExporting={isExporting}
+        events={filteredEvents}
+      />
+
+      {/* Share Dialog */}
+      <ShareDialog
+        isOpen={showShareDialog}
+        onOpenChange={setShowShareDialog}
+        url={shareUrl}
+        title={`${teacherProfile?.name || 'Teacher'}'s Yoga Schedule`}
+        description={`Check out ${teacherProfile?.name || 'Teacher'}'s upcoming yoga classes and join for a session!`}
+      />
 
       {/* Custom CSS for morphing animation */}
       <style jsx>{`

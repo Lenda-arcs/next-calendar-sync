@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Copy, Share2, Facebook, Twitter, Instagram, Linkedin, CheckCircle } from 'lucide-react'
 import { Button } from '@/components/ui'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -22,13 +22,26 @@ export function ShareDialog({
   description = 'See my upcoming yoga classes and join me for a session.'
 }: ShareDialogProps) {
   const [copied, setCopied] = useState(false)
+  const [isClient, setIsClient] = useState(false)
+  const [hasNativeShare, setHasNativeShare] = useState(false)
+
+  useEffect(() => {
+    setIsClient(true)
+    if (typeof window !== 'undefined' && typeof navigator !== 'undefined') {
+      setHasNativeShare(!!navigator.share)
+    }
+  }, [])
 
   const copyToClipboard = async () => {
     try {
-      await navigator.clipboard.writeText(url)
-      setCopied(true)
-      toast.success('URL copied to clipboard!')
-      setTimeout(() => setCopied(false), 2000)
+      if (typeof navigator !== 'undefined' && navigator.clipboard) {
+        await navigator.clipboard.writeText(url)
+        setCopied(true)
+        toast.success('URL copied to clipboard!')
+        setTimeout(() => setCopied(false), 2000)
+      } else {
+        toast.error('Clipboard not supported')
+      }
     } catch {
       toast.error('Failed to copy URL')
     }
@@ -60,7 +73,7 @@ export function ShareDialog({
         break
     }
     
-    if (shareUrl) {
+    if (shareUrl && typeof window !== 'undefined') {
       window.open(shareUrl, '_blank', 'width=600,height=400')
     }
   }
@@ -150,19 +163,21 @@ export function ShareDialog({
           </div>
 
           {/* Native Share (if supported) */}
-          {navigator.share && (
+          {isClient && hasNativeShare && (
             <div className="space-y-3">
               <h4 className="font-medium text-sm">Quick Share</h4>
               <Button
                 onClick={() => {
-                  navigator.share({
-                    title: title,
-                    text: description,
-                    url: url
-                  }).catch(() => {
-                    // Fallback to copy if sharing fails
-                    copyToClipboard()
-                  })
+                  if (typeof navigator !== 'undefined' && navigator.share) {
+                    navigator.share({
+                      title: title,
+                      text: description,
+                      url: url
+                    }).catch(() => {
+                      // Fallback to copy if sharing fails
+                      copyToClipboard()
+                    })
+                  }
                 }}
                 variant="outline"
                 className="w-full"

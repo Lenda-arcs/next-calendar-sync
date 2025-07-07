@@ -35,6 +35,7 @@ export default async function Layout({ children, params }: LayoutProps) {
     <TeacherScheduleLayout 
       profile={profile}
       user={user}
+      teacherSlug={teacherSlug}
     >
       {children}
     </TeacherScheduleLayout>
