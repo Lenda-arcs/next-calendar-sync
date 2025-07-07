@@ -39,11 +39,15 @@ export function FilteredEventList({ userId, variant = 'compact', className }: Fi
   } = useSupabaseQuery<PublicEvent[]>({
     queryKey: ['public_events', userId],
     fetcher: async (supabase) => {
+      const now = new Date()
+      const threeMonthsFromNow = new Date(now.getFullYear(), now.getMonth() + 3, now.getDate())
+      
       const { data, error } = await supabase
         .from('public_events')
         .select('*')
         .eq('user_id', userId)
-        .gte('start_time', new Date().toISOString())
+        .gte('start_time', now.toISOString())
+        .lte('start_time', threeMonthsFromNow.toISOString())
         .order('start_time', { ascending: true })
       
       if (error) throw error
@@ -89,7 +93,7 @@ export function FilteredEventList({ userId, variant = 'compact', className }: Fi
           </h3>
           <p className="text-muted-foreground mb-6">
             {(events?.length || 0) === 0 
-              ? "This teacher doesn't have any upcoming classes scheduled."
+              ? "This teacher doesn't have any classes scheduled in the next 3 months."
               : "Try adjusting your filters to see more classes."
             }
           </p>

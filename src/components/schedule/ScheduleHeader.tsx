@@ -15,7 +15,7 @@ export function ScheduleHeader() {
           Upcoming Classes
         </h2>
         <p className="text-gray-600 dark:text-gray-300 mt-1">
-          {filteredEvents.length} of {totalEvents} classes
+          {filteredEvents.length} of {totalEvents} classes in the next 3 months
           {hasActiveFilters && ' (filtered)'}
         </p>
       </div>
