@@ -1,6 +1,6 @@
 import { Container } from '@/components/layout/container'
 import { 
-  FiltersWithShare, 
+  ScheduleFilters,
   FilteredEventList, 
   ScheduleHeader 
 } from '@/components/schedule'
@@ -34,7 +34,7 @@ export default async function PublicSchedulePage({ params }: PageProps) {
         <ScheduleHeader />
         
         {/* Filter Components */}
-        <FiltersWithShare />
+        <ScheduleFilters />
 
         {/* Filtered Events List */}
         <FilteredEventList

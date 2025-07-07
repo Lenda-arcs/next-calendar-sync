@@ -8,7 +8,7 @@ export * from './useAuthUser'
 export * from './useTeacherStudioRelationships'
 export * from './useResponsive'
 export * from './useScheduleExport'
-export * from './useScreenshotMode'
+
 export * from './useScrollIntoView'
 export * from './useSupabaseMutation'
 export * from './useSupabaseQuery'

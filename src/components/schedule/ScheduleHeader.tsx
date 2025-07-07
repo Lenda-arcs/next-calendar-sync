@@ -9,7 +9,7 @@ export function ScheduleHeader() {
   const { filteredEvents, totalEvents, hasActiveFilters, clearAllFilters } = useScheduleFilters()
 
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 screenshot-hide">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
       <div>
         <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
           Upcoming Classes

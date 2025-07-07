@@ -11,7 +11,7 @@ import { useSupabaseQuery } from '@/lib/hooks/useSupabaseQuery'
 import { useAllTags } from '@/lib/hooks/useAllTags'
 import DataLoader from '@/components/ui/data-loader'
 import { PublicEventListSkeleton } from '@/components/ui/skeleton'
-import { useScreenshotMode } from '@/lib/hooks/useScreenshotMode'
+
 
 
 interface FilteredEventListProps {
@@ -29,7 +29,7 @@ export function FilteredEventList({ userId, variant = 'compact', className }: Fi
     setTags 
   } = useScheduleFilters()
   
-  const { isScreenshotMode } = useScreenshotMode()
+
 
   // Fetch events
   const {
@@ -111,13 +111,13 @@ export function FilteredEventList({ userId, variant = 'compact', className }: Fi
           loading={isLoading}
           error={errorMessage}
           empty={emptyState}
-          skeleton={() => <PublicEventListSkeleton variant={isScreenshotMode ? 'minimal' : variant} />}
+          skeleton={() => <PublicEventListSkeleton variant={variant} />}
           skeletonCount={1}
         >
           {(data) => (
             <PublicEventList
               userId={userId}
-              variant={isScreenshotMode ? 'minimal' : variant}
+              variant={variant}
               events={data}
               tags={allTags}
               disableFetching={true}

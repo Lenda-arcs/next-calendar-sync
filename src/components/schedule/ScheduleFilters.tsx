@@ -6,15 +6,14 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
-import { Select, MultiSelect, Popover, PopoverTrigger, PopoverContent } from '@/components/ui'
+import { Select, MultiSelect } from '@/components/ui'
 import { useScheduleFilters } from './FilterProvider'
 
 export function ScheduleFilters() {
   const [isFloatingVisible, setIsFloatingVisible] = useState(false)
   const [accordionValue, setAccordionValue] = useState<string>('')
-  const [isPopoverOpen, setIsPopoverOpen] = useState(false)
+  const [preventAutoClose, setPreventAutoClose] = useState(false)
   const accordionRef = useRef<HTMLDivElement>(null)
-  const popoverTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   
   const {
     filters,
@@ -34,8 +33,8 @@ export function ScheduleFilters() {
       const shouldShowFAB = !isAccordionVisible
       setIsFloatingVisible(shouldShowFAB)
       
-      // Auto-close accordion when FAB becomes visible
-      if (shouldShowFAB && accordionValue === 'filters') {
+      // Auto-close accordion when FAB becomes visible (but not if it was just opened via FAB)
+      if (shouldShowFAB && accordionValue === 'filters' && !preventAutoClose) {
         setAccordionValue('')
       }
     }
@@ -56,46 +55,7 @@ export function ScheduleFilters() {
     }
   }, [accordionValue])
 
-  // Auto-close popover functionality
-  const startPopoverTimeout = () => {
-    if (popoverTimeoutRef.current) {
-      clearTimeout(popoverTimeoutRef.current)
-    }
-    popoverTimeoutRef.current = setTimeout(() => {
-      setIsPopoverOpen(false)
-    }, 3000) // 3 seconds
-  }
 
-  const clearPopoverTimeout = () => {
-    if (popoverTimeoutRef.current) {
-      clearTimeout(popoverTimeoutRef.current)
-      popoverTimeoutRef.current = null
-    }
-  }
-
-  const handlePopoverOpenChange = (open: boolean) => {
-    setIsPopoverOpen(open)
-    if (open) {
-      startPopoverTimeout()
-    } else {
-      clearPopoverTimeout()
-    }
-  }
-
-  const handlePopoverMouseEnter = () => {
-    clearPopoverTimeout()
-  }
-
-  const handlePopoverMouseLeave = () => {
-    startPopoverTimeout()
-  }
-
-  // Cleanup timeout on unmount
-  useEffect(() => {
-    return () => {
-      clearPopoverTimeout()
-    }
-  }, [])
 
   const whenOptions = [
     { key: 'all', label: 'Any Time' },
@@ -117,9 +77,29 @@ export function ScheduleFilters() {
     return filters.studios.length + filters.yogaStyles.length + (filters.when !== 'all' ? 1 : 0)
   }
 
+  const handleFABClick = () => {
+    // Prevent auto-close when opening via FAB
+    setPreventAutoClose(true)
+    
+    // Open the accordion first for immediate feedback
+    setAccordionValue('filters')
+    
+    // Then scroll all the way to the top of the page
+    setTimeout(() => {
+      window.scrollTo({ 
+        top: 0, 
+        behavior: 'smooth' 
+      })
+      // Clear the prevent flag after scrolling is complete
+      setTimeout(() => {
+        setPreventAutoClose(false)
+      }, 500)
+    }, 150)
+  }
+
   return (
     <>
-      {/* Floating Filter Popover - Show when accordion is out of view */}
+      {/* Floating Filter Button - Show when accordion is out of view */}
       <div 
         className={`fixed bottom-6 right-6 z-50 transition-all duration-300 ease-in-out ${
           isFloatingVisible 
@@ -127,76 +107,44 @@ export function ScheduleFilters() {
             : 'opacity-0 translate-y-4 scale-95 pointer-events-none'
         }`}
       >
-        <Popover open={isPopoverOpen} onOpenChange={handlePopoverOpenChange}>
-          <PopoverTrigger asChild>
-            <Button
-              size="lg"
-              className="rounded-full shadow-lg bg-primary hover:bg-primary/90 text-primary-foreground px-3 sm:px-4 py-3 h-auto min-w-[48px] sm:min-w-[120px] transition-all duration-200 hover:scale-105"
-            >
-              <Filter className="h-5 w-5 sm:mr-2" />
-              <span className="font-medium hidden sm:inline">Filters</span>
-              
-              {/* Compact badge positioned closer to icon */}
-              <div className="ml-0.5 sm:ml-1 min-w-[20px] flex justify-center">
-                <Badge 
-                  variant="secondary" 
-                  className={`px-1 py-0 text-[10px] leading-4 min-w-[16px] h-4 flex items-center justify-center transition-all duration-200 ${
-                    hasActiveFilters 
-                      ? 'opacity-100 scale-100 animate-pulse' 
-                      : 'opacity-0 scale-95 pointer-events-none'
-                  }`}
-                >
-                  {getActiveFiltersCount() || '0'}
-                </Badge>
-              </div>
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent 
-            className="w-80 sm:w-80 w-72"
-            side="top"
-            align="end"
-            sideOffset={10}
-            onMouseEnter={handlePopoverMouseEnter}
-            onMouseLeave={handlePopoverMouseLeave}
-          >
-            <div className="grid gap-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Filter className="h-5 w-5" />
-                  <h4 className="font-medium leading-none">Find Your Perfect Class</h4>
-                </div>
-                {hasActiveFilters && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={clearAllFilters}
-                    className="text-xs px-2 py-1 hover:bg-destructive/10 hover:text-destructive transition-colors"
-                  >
-                    <X className="h-3 w-3 mr-1" />
-                    Clear All
-                  </Button>
-                )}
-              </div>
-              <div className="grid gap-4">
-                <FloatingWhenFilter options={whenOptions} />
-                <FloatingStudioFilter />
-                <FloatingYogaStyleFilter />
-              </div>
+        <Button
+          size="lg"
+          onClick={handleFABClick}
+          className="rounded-full shadow-lg bg-primary hover:bg-primary/90 text-primary-foreground px-3 sm:px-4 py-3 h-auto min-w-[48px] sm:min-w-[120px] transition-all duration-200 hover:scale-105"
+        >
+          <Filter className="h-5 w-5 sm:mr-2" />
+          <span className="font-medium hidden sm:inline">Filters</span>
+          
+          {/* Compact badge positioned closer to icon - only show when there are active filters */}
+          {hasActiveFilters && (
+            <div className="ml-0.5 sm:ml-1 min-w-[20px] flex justify-center">
+              <Badge 
+                variant="secondary" 
+                className="px-1 py-0 text-[10px] leading-4 min-w-[16px] h-4 flex items-center justify-center transition-all duration-200 animate-pulse"
+              >
+                {getActiveFiltersCount()}
+              </Badge>
             </div>
-          </PopoverContent>
-        </Popover>
+          )}
+        </Button>
       </div>
 
       {/* Static Accordion Filters - Always visible, auto-closes when FAB is active */}
       <div ref={accordionRef}>
-        <Card className="overflow-hidden">
-          <Accordion 
-            type="single" 
-            collapsible 
-            value={accordionValue} 
-            onValueChange={setAccordionValue}
-            className="w-full"
-          >
+        <Card className="overflow-hidden transition-all duration-300 ease-in-out">
+                      <Accordion 
+              type="single" 
+              collapsible 
+              value={accordionValue} 
+              onValueChange={(value) => {
+                setAccordionValue(value)
+                // Clear prevent flag when manually closing accordion
+                if (value === '') {
+                  setPreventAutoClose(false)
+                }
+              }}
+              className="w-full"
+            >
             <AccordionItem value="filters" className="border-none">
               <AccordionTrigger className="px-2 sm:px-4 py-2 hover:no-underline cursor-pointer group text-sm min-h-[40px]">
                 <div className="flex items-center justify-between w-full">
@@ -209,16 +157,14 @@ export function ScheduleFilters() {
                     
                     {/* Responsive badge container - smaller on mobile */}
                     <div className="flex items-center gap-1 min-w-[32px] sm:min-w-[80px] justify-end">
-                      <Badge 
-                        variant="secondary" 
-                        className={`px-1.5 py-0.5 text-xs flex-shrink-0 transition-all duration-200 ${
-                          hasActiveFilters 
-                            ? 'opacity-100 scale-100 animate-pulse' 
-                            : 'opacity-0 scale-95 pointer-events-none'
-                        }`}
-                      >
-                        {getActiveFiltersCount() || '0'}
-                      </Badge>
+                      {hasActiveFilters && (
+                        <Badge 
+                          variant="secondary" 
+                          className="px-1.5 py-0.5 text-xs flex-shrink-0 transition-all duration-200 opacity-100 scale-100 animate-pulse"
+                        >
+                          {getActiveFiltersCount()}
+                        </Badge>
+                      )}
                       
                       <Badge 
                         variant="outline" 
@@ -361,73 +307,7 @@ function YogaStyleFilter() {
   )
 }
 
-// Floating Popover Filter Components
-function FloatingWhenFilter({ options }: { options: Array<{ key: string; label: string }> }) {
-  const { filters, updateFilter } = useScheduleFilters()
 
-  const selectOptions = options.map(({ key, label }) => ({
-    value: key,
-    label: label
-  }))
-
-  return (
-    <Select
-      label="When"
-      value={filters.when}
-      onChange={(value) => updateFilter('when', value)}
-      options={selectOptions}
-      placeholder="Any time"
-    />
-  )
-}
-
-function FloatingStudioFilter() {
-  const { filters, filterStats, availableStudios, updateFilter } = useScheduleFilters()
-
-  if (availableStudios.length === 0) return null
-
-  const studioOptions = availableStudios.map(studio => ({
-    value: studio,
-    label: studio,
-    count: filterStats.byStudio[studio]
-  }))
-
-  return (
-    <MultiSelect
-      label="Studio Location"
-      value={filters.studios}
-      onChange={(values) => updateFilter('studios', values)}
-      options={studioOptions}
-      placeholder="Any studio"
-      displayMode="compact"
-      showCounts={true}
-    />
-  )
-}
-
-function FloatingYogaStyleFilter() {
-  const { filters, filterStats, availableYogaStyles, updateFilter } = useScheduleFilters()
-
-  if (availableYogaStyles.length === 0) return null
-
-  const yogaStyleOptions = availableYogaStyles.map(style => ({
-    value: style,
-    label: style,
-    count: filterStats.byYogaStyle[style]
-  }))
-
-  return (
-    <MultiSelect
-      label="Yoga Style"
-      value={filters.yogaStyles}
-      onChange={(values) => updateFilter('yogaStyles', values)}
-      options={yogaStyleOptions}
-      placeholder="Any style"
-      displayMode="compact"
-      showCounts={true}
-    />
-  )
-}
 
 // Mobile Accordion Filter Components (using dropdowns like floating filters)
 function MobileWhenFilter({ options }: { options: Array<{ key: string; label: string }> }) {

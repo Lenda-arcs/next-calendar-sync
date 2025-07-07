@@ -187,19 +187,5 @@
     animation: accordion-up 0.2s ease-out;
   }
 
-  /* Screenshot Mode - Hide specific elements, keep navbar and events visible
-     Applied to body via useScreenshotMode hook for 5 seconds
-     Elements with 'screenshot-hide' class will be hidden during this time */
-  .screenshot-mode .screenshot-hide {
-    opacity: 0 !important;
-    pointer-events: none !important;
-    transition: opacity 0.2s ease-out !important;
-  }
 
-  /* Hide dialogs during screenshot mode */
-  .screenshot-mode [data-radix-dialog-overlay],
-  .screenshot-mode [data-radix-dialog-content] {
-    opacity: 0 !important;
-    pointer-events: none !important;
-  }
 }
