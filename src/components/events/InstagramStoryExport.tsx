@@ -3,38 +3,51 @@
 import React from 'react'
 import { PublicEvent } from '@/lib/types'
 import { format, parseISO } from 'date-fns'
+import { Clock, MapPin } from 'lucide-react'
 
 interface InstagramStoryExportProps {
   events: PublicEvent[]
   tags?: unknown[] // Not used but kept for interface compatibility
   teacherName?: string // Not used but kept for interface compatibility
   className?: string
+  limitEvents?: boolean // New prop to control event limiting
 }
 
 export const InstagramStoryExport: React.FC<InstagramStoryExportProps> = ({
   events,
-  className = ''
+  className = '',
+  limitEvents = true // Default to true for backward compatibility
 }) => {
-  // Limit to first 3-4 events for Instagram story format
-  const limitedEvents = events.slice(0, 4)
+  // Only limit events if limitEvents is true (for Instagram story format)
+  const displayEvents = limitEvents ? events.slice(0, 4) : events
 
   return (
     <div 
       className={className}
       style={{
-        // Reset all inherited styles and force explicit values
-        all: 'initial',
         width: '1080px',
-        height: '1920px',
+        height: 'auto',
+        minHeight: '1920px',
         display: 'flex',
         flexDirection: 'column',
-        padding: '48px',
+        padding: '0',
+        margin: '0',
         position: 'relative',
         overflow: 'hidden',
-        backgroundColor: 'transparent', // Transparent background
+        backgroundColor: 'transparent',
         fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
         color: '#000000',
-        boxSizing: 'border-box'
+        boxSizing: 'border-box',
+        border: '0',
+        borderWidth: '0',
+        borderStyle: 'none',
+        borderColor: 'transparent',
+        outline: '0',
+        outlineWidth: '0',
+        outlineStyle: 'none',
+        boxShadow: 'none',
+        WebkitBoxShadow: 'none',
+        MozBoxShadow: 'none'
       }}
     >
 
@@ -42,48 +55,57 @@ export const InstagramStoryExport: React.FC<InstagramStoryExportProps> = ({
       <div style={{ 
         display: 'flex', 
         flexDirection: 'column', 
-        gap: '32px',
+        gap: '20px', // Reduced from 32px to 20px
         justifyContent: 'center',
         alignItems: 'center',
         minHeight: '100%',
-        padding: '40px 20px'
+        padding: '32px 16px', // Reduced from 48px 20px to 32px 16px
+        border: 'none', // Explicitly remove all borders
+        outline: 'none', // Remove any outline
+        margin: '0', // Remove any margins
+        boxShadow: 'none' // Remove any box shadows
       }}>
-        {limitedEvents.map((event, index) => {
+        {displayEvents.map((event, index) => {
           return (
             <div key={event.id || index} style={{ 
-              backgroundColor: 'rgba(255, 255, 255, 0.85)', // Semi-transparent white
-              backdropFilter: 'blur(8px)', // Subtle blur effect for glass-like appearance
-              borderRadius: '16px',
-              padding: '28px',
-              boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 4px 6px -2px rgba(0, 0, 0, 0.08)',
-              border: '1px solid rgba(255, 255, 255, 0.3)', // Semi-transparent border
+              backgroundColor: 'rgba(255, 255, 255, 0.85)', // Semi-transparent white for glassy effect
+              backdropFilter: 'blur(8px)', // Glassy blur effect
+              borderRadius: '12px', // Reduced from 16px to 12px
+              padding: '20px', // Reduced from 28px to 20px
+              boxShadow: '0 8px 20px -4px rgba(0, 0, 0, 0.12), 0 3px 5px -2px rgba(0, 0, 0, 0.06)',
+              border: 'none', // Explicitly remove all borders
+              outline: 'none', // Remove any outline
               width: '100%',
-              maxWidth: '640px' // Increased from 500px for more title space
+              maxWidth: '580px' // Reduced from 640px to 580px
             }}>
               {/* Event header with date */}
-              <div style={{ marginBottom: '16px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+              <div style={{ marginBottom: '12px', border: 'none', outline: 'none' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '6px', border: 'none', outline: 'none' }}>
                   <h3 style={{ 
-                    fontSize: '1.375rem', // Increased from 1.25rem
+                    fontSize: '1.25rem', // Reduced from 1.375rem to 1.25rem
                     fontWeight: '600',
                     color: '#111827',
                     margin: '0',
                     lineHeight: '1.3',
                     flex: '1',
-                    paddingRight: '12px' // Add space before date badge
+                    paddingRight: '10px', // Reduced from 12px to 10px
+                    border: 'none', // Remove all borders
+                    outline: 'none' // Remove any outline
                   }}>
                     {event.title || 'Yoga Class'}
                   </h3>
                   {event.start_time && (
                     <div style={{
-                      backgroundColor: '#f3f4f6',
-                      borderRadius: '8px',
-                      padding: '6px 10px',
-                      fontSize: '0.75rem',
-                      fontWeight: '500',
-                      color: '#374151',
+                      backgroundColor: '#1f2937',
+                      borderRadius: '10px', // Reduced from 12px to 10px
+                      padding: '6px 12px', // Reduced from 8px 14px to 6px 12px
+                      fontSize: '0.8125rem', // Slightly reduced from 0.875rem
+                      fontWeight: '700',
+                      color: '#ffffff',
                       whiteSpace: 'nowrap',
-                      flexShrink: '0'
+                      flexShrink: '0',
+                      border: 'none', // Remove any potential border
+                      boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
                     }}>
                       {format(parseISO(event.start_time), 'MMM d')}
                     </div>
@@ -92,21 +114,32 @@ export const InstagramStoryExport: React.FC<InstagramStoryExportProps> = ({
               </div>
 
               {/* Event details */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', border: 'none', outline: 'none' }}>
                 {event.start_time && (
-                  <div style={{ 
-                    fontSize: '1.125rem', // Increased for better visibility
+                                      <div style={{ 
+                    fontSize: '1rem', // Reduced from 1.125rem to 1rem
                     color: '#374151',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between', // Use full width
                     fontWeight: '600', // Bolder for emphasis
                     width: '100%',
-                    padding: '12px 0' // More vertical padding
+                    padding: '8px 0', // Reduced from 12px to 8px
+                    border: 'none', // Remove all borders
+                    outline: 'none' // Remove any outline
                   }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span style={{ fontSize: '1.25rem' }}>🕐</span>
-                      <span>{format(parseISO(event.start_time), 'H:mm')}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', border: 'none', outline: 'none' }}>
+                      <Clock style={{ 
+                        width: '18px', 
+                        height: '18px', 
+                        color: '#374151', 
+                        flexShrink: 0,
+                        border: 'none',
+                        outline: 'none',
+                        boxShadow: 'none',
+                        backgroundColor: 'transparent'
+                      }} />
+                      <span style={{ border: 'none', outline: 'none' }}>{format(parseISO(event.start_time), 'H:mm')}</span>
                     </div>
                     {event.start_time && event.end_time && (
                       <span style={{ 
@@ -116,7 +149,7 @@ export const InstagramStoryExport: React.FC<InstagramStoryExportProps> = ({
                         padding: '6px 12px', // More padding
                         borderRadius: '8px',
                         fontWeight: '500',
-                        border: '1px solid rgba(229, 231, 235, 0.5)'
+                        border: 'none' // Explicitly remove border
                       }}>
                         {(() => {
                           const start = parseISO(event.start_time)
@@ -126,10 +159,14 @@ export const InstagramStoryExport: React.FC<InstagramStoryExportProps> = ({
                           const hours = Math.floor(durationMinutes / 60)
                           const minutes = durationMinutes % 60
                           
-                          if (hours > 0) {
+                          if (hours > 0 && minutes > 0) {
                             return `${hours}h ${minutes}m`
-                          } else {
+                          } else if (hours > 0) {
+                            return `${hours}h`
+                          } else if (minutes > 0) {
                             return `${minutes}m`
+                          } else {
+                            return 'Duration not available'
                           }
                         })()}
                       </span>
@@ -138,15 +175,26 @@ export const InstagramStoryExport: React.FC<InstagramStoryExportProps> = ({
                 )}
                 {event.location && (
                   <div style={{ 
-                    fontSize: '1.125rem', // Increased to match time
+                    fontSize: '1rem', // Reduced from 1.125rem to match time
                     color: '#374151',
                     display: 'flex',
                     alignItems: 'center',
                     fontWeight: '500',
-                    gap: '8px'
+                    gap: '8px',
+                    border: 'none', // Remove all borders
+                    outline: 'none' // Remove any outline
                   }}>
-                    <span style={{ fontSize: '1.25rem' }}>📍</span>
-                    <span>{event.location}</span>
+                    <MapPin style={{ 
+                      width: '18px', 
+                      height: '18px', 
+                      color: '#374151', 
+                      flexShrink: 0,
+                      border: 'none',
+                      outline: 'none',
+                      boxShadow: 'none',
+                      backgroundColor: 'transparent'
+                    }} />
+                    <span style={{ border: 'none', outline: 'none' }}>{event.location}</span>
                   </div>
                 )}
               </div>

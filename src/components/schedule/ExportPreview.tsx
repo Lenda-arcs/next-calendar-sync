@@ -23,11 +23,25 @@ export function ExportPreview({
 
   return (
     <div className="fixed -top-[2000px] -left-[1200px] z-[-1]" aria-hidden="true">
-      <div id={elementId}>
+      <div 
+        id={elementId}
+        style={{
+          padding: '0',
+          margin: '0',
+          border: '0',
+          borderWidth: '0',
+          borderStyle: 'none',
+          borderColor: 'transparent',
+          outline: '0',
+          boxShadow: 'none',
+          backgroundColor: 'transparent'
+        }}
+      >
         <InstagramStoryExport
-          events={events.slice(0, 4)} // Limit to 4 events for better layout
-          tags={[]} // We could fetch tags here or pass them as prop
+          events={events}
+          tags={[]}
           teacherName={teacherName}
+          limitEvents={false}
         />
       </div>
     </div>
