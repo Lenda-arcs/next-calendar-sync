@@ -4,36 +4,42 @@ import React, { useState } from 'react'
 import { Download, Share2 } from 'lucide-react'
 import { Button, Card, LoadingOverlay } from '@/components/ui'
 import { useScheduleFilters } from './FilterProvider'
-import { useScheduleExport, useOwnerAuth } from '@/lib/hooks'
-import { useScreenshotMode } from '@/lib/hooks'
+import { useScheduleExport, useOwnerAuth, useOrigin } from '@/lib/hooks'
 import { SHARE_CTA_CONTENT, EXPORT_CONFIG } from '@/lib/constants/export-constants'
 import { ExportPreview } from './ExportPreview'
 import { ExportOptionsDialog } from '.'
+import { ShareDialog } from './ShareDialog'
 
 interface ShareCTAProps {
   currentUserId?: string
   teacherProfileId?: string
   teacherName?: string
+  teacherSlug?: string
 }
 
 export function ShareCTA({ 
   currentUserId, 
   teacherProfileId, 
-  teacherName = 'Teacher' 
+  teacherName = 'Teacher',
+  teacherSlug
 }: ShareCTAProps) {
   const [showExportDialog, setShowExportDialog] = useState(false)
+  const [showShareDialog, setShowShareDialog] = useState(false)
   const { filteredEvents } = useScheduleFilters()
   const { isOwner } = useOwnerAuth({ currentUserId, teacherProfileId })
   const { handleExport, isExporting, showExportPreview, canExport } = useScheduleExport({
     teacherName,
     events: filteredEvents
   })
-  const { isScreenshotMode, activateScreenshotMode } = useScreenshotMode()
+  const origin = useOrigin()
   
   // Don't render if not owner
   if (!isOwner) {
     return null
   }
+
+  // Generate the share URL
+  const shareUrl = teacherSlug ? `${origin}/schedule/${teacherSlug}` : window.location.href
 
   const handleExportClick = () => {
     setShowExportDialog(true)
@@ -44,9 +50,8 @@ export function ShareCTA({
     handleExport()
   }
 
-  const handleScreenshotMode = () => {
-    setShowExportDialog(false)
-    activateScreenshotMode()
+  const handleShareClick = () => {
+    setShowShareDialog(true)
   }
 
   return (
@@ -60,7 +65,7 @@ export function ShareCTA({
             </h3>
             <p className="text-sm text-gray-600">
               {canExport 
-                ? SHARE_CTA_CONTENT.DESCRIPTION
+                ? "Export your filtered events as PNG images or share your schedule link with your community."
                 : "Apply filters to see your events and enable export functionality."
               }
             </p>
@@ -69,7 +74,7 @@ export function ShareCTA({
           <div className="flex gap-2 sm:flex-shrink-0">
             <Button
               onClick={handleExportClick}
-              disabled={!canExport || isExporting || isScreenshotMode}
+              disabled={!canExport || isExporting}
               size="lg"
               className="bg-blue-600 hover:bg-blue-700 text-white min-w-[140px] disabled:opacity-50 disabled:cursor-not-allowed"
             >
@@ -90,7 +95,7 @@ export function ShareCTA({
               variant="outline"
               size="lg"
               className="min-w-[100px]"
-              disabled={true} // TODO: Implement native share
+              onClick={handleShareClick}
             >
               <Share2 className="h-5 w-5 mr-2" />
               {SHARE_CTA_CONTENT.BUTTONS.SHARE}
@@ -118,9 +123,16 @@ export function ShareCTA({
         isOpen={showExportDialog}
         onOpenChange={setShowExportDialog}
         onPngExport={handlePngExport}
-        onScreenshotMode={handleScreenshotMode}
         isExporting={isExporting}
-        isScreenshotMode={isScreenshotMode}
+      />
+
+      {/* Share Dialog */}
+      <ShareDialog
+        isOpen={showShareDialog}
+        onOpenChange={setShowShareDialog}
+        url={shareUrl}
+        title={`${teacherName}'s Yoga Schedule`}
+        description={`Check out ${teacherName}'s upcoming yoga classes and join for a session!`}
       />
     </>
   )
