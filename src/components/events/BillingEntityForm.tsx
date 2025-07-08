@@ -6,7 +6,8 @@ import { Card } from "../ui/card";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Select } from "../ui/select";
-import { MultiSelect } from "../ui/multi-select";
+
+import { PatternInput } from "./PatternInput";
 import { Textarea } from "../ui/textarea";
 import { toast } from 'sonner'
 import { useSupabaseMutation } from "../../lib/hooks/useSupabaseMutation";
@@ -471,14 +472,15 @@ const useBillingEntityForm = (props: Props) => {
 const TeacherForm: React.FC<{
   formData: FormData;
   errors: Record<string, string>;
-  eventLocations: string[];
+  userId: string;
   onInputChange: (field: string, value: string) => void;
   onLocationChange: (values: string[]) => void;
+  currentStudioId?: string;
   studioDefaults?: {
     suggestedStudioName: string | null;
     defaultLocationMatch: string[];
   } | null;
-}> = ({ formData, errors, eventLocations, onInputChange, onLocationChange, studioDefaults }) => (
+}> = ({ formData, errors, userId, onInputChange, onLocationChange, currentStudioId, studioDefaults }) => (
         <div className="space-y-4">
           <h3 className="text-lg font-semibold">Basic Information</h3>
           
@@ -510,19 +512,18 @@ const TeacherForm: React.FC<{
               )}
             </div>
             <div>
-                          <MultiSelect
-              id="location_match"
-              name="location_match"
-              label="Location Match *"
-              options={eventLocations.map(location => ({ value: location, label: location }))}
-              value={formData.location_match}
-              onChange={onLocationChange}
-              placeholder="Select locations to match"
-              required
-              error={errors.location_match}
-            />
+              <PatternInput
+                label="Location Match *"
+                patterns={formData.location_match}
+                onChange={onLocationChange}
+                userId={userId}
+                currentStudioId={currentStudioId}
+                placeholder="e.g., Flow Studio, Yoga Works, Downtown"
+                required
+                error={errors.location_match}
+              />
               <p className="text-xs text-muted-foreground mt-1">
-            Locations where this teacher provides substitute classes
+                Patterns to match locations where this teacher provides substitute classes
               </p>
         </div>
             </div>
@@ -634,14 +635,15 @@ const TeacherForm: React.FC<{
 const StudioForm: React.FC<{
   formData: FormData;
   errors: Record<string, string>;
-  eventLocations: string[];
   onInputChange: (field: string, value: string) => void;
   onLocationChange: (values: string[]) => void;
   rateTiers: RateTier[];
   addRateTier: () => void;
   removeRateTier: (index: number) => void;
   updateRateTier: (index: number, field: keyof RateTier, value: string) => void;
-}> = ({ formData, errors, eventLocations, onInputChange, onLocationChange, rateTiers, addRateTier, removeRateTier, updateRateTier }) => {
+  userId: string;
+  currentStudioId?: string;
+}> = ({ formData, errors, onInputChange, onLocationChange, rateTiers, addRateTier, removeRateTier, updateRateTier, userId, currentStudioId }) => {
   const rateTypeOptions = [
     { value: "flat", label: "Flat Rate" },
     { value: "per_student", label: "Per Student" },
@@ -674,19 +676,18 @@ const StudioForm: React.FC<{
             )}
           </div>
           <div>
-            <MultiSelect
-              id="location_match"
-              name="location_match"
-              label="Location Match"
-              options={eventLocations.map(location => ({ value: location, label: location }))}
-              value={formData.location_match}
+            <PatternInput
+              label="Location Patterns"
+              patterns={formData.location_match}
               onChange={onLocationChange}
-              placeholder="Select locations to match"
+              userId={userId}
+              currentStudioId={currentStudioId}
+              placeholder="Enter location patterns (e.g., 'Flow Studio', 'Yoga Works')"
               required
               error={errors.location_match}
             />
             <p className="text-xs text-muted-foreground mt-1">
-              Events matching these locations will be automatically assigned to this studio
+              Events matching these patterns will be automatically assigned to this studio
             </p>
           </div>
           </div>
@@ -1076,12 +1077,12 @@ const StudioForm: React.FC<{
 // Main Component
 const BillingEntityForm: React.FC<Props> = (props) => {
   const {
+    user,
     isEditing = false,
     isModal = false,
     onSubmit,
     onFormReady,
     entityType = 'studio',
-    eventLocations = [],
     existingStudio,
     onLoadingChange
   } = props;
@@ -1158,22 +1159,24 @@ const BillingEntityForm: React.FC<Props> = (props) => {
         <TeacherForm
           formData={formData}
           errors={errors}
-          eventLocations={eventLocations}
+          userId={user.id}
           onInputChange={handleInputChange}
           onLocationChange={handleLocationChange}
+          currentStudioId={existingStudio?.id}
           studioDefaults={studioDefaults}
         />
       ) : (
         <StudioForm
           formData={formData}
           errors={errors}
-          eventLocations={eventLocations}
           onInputChange={handleInputChange}
           onLocationChange={handleLocationChange}
           rateTiers={rateTiers}
           addRateTier={addRateTier}
           removeRateTier={removeRateTier}
           updateRateTier={updateRateTier}
+          userId={user.id}
+          currentStudioId={existingStudio?.id}
         />
       )}
 
