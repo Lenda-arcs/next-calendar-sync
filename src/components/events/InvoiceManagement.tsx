@@ -2,9 +2,8 @@
 
 import React, { useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Tabs, TabsContent, TabsList, TabsTrigger, TabContent } from '@/components/ui'
+import { Tabs, TabsContent, TabsList, TabContent, LoadingTabsTrigger } from '@/components/ui'
 import { Card, CardContent } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import DataLoader from '@/components/ui/data-loader'
 import { UninvoicedEventsList } from './UninvoicedEventsList'
@@ -14,7 +13,7 @@ import { InvoiceCard } from './InvoiceCard'
 import { useSupabaseQuery } from '@/lib/hooks/useSupabaseQuery'
 import { getUserInvoices, getUninvoicedEvents, updateInvoiceStatus, generateInvoicePDF, deleteInvoice, EventWithStudio, InvoiceWithDetails } from '@/lib/invoice-utils'
 import { toast } from 'sonner'
-import { Receipt, FileText, Settings } from 'lucide-react'
+import { Receipt, FileText, Settings, Loader2 } from 'lucide-react'
 
 interface InvoiceManagementProps {
   userId: string
@@ -31,6 +30,7 @@ export function InvoiceManagement({ userId }: InvoiceManagementProps) {
   const [selectedEvents, setSelectedEvents] = useState<EventWithStudio[]>([])
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create')
   const [editingInvoice, setEditingInvoice] = useState<InvoiceWithDetails | null>(null)
+  const [tabSwitchLoading, setTabSwitchLoading] = useState<TabValue | null>(null)
 
   // Get active tab from URL, default to 'uninvoiced'
   const getActiveTabFromUrl = (): TabValue => {
@@ -41,24 +41,31 @@ export function InvoiceManagement({ userId }: InvoiceManagementProps) {
   // Use URL as source of truth for active tab
   const activeTab = getActiveTabFromUrl()
 
-  // Update URL when tab changes
+  // Update URL when tab changes with loading feedback
   const setActiveTab = (tab: TabValue) => {
+    if (tab === activeTab) return // Don't switch if already on the tab
+    
+    setTabSwitchLoading(tab)
     const params = new URLSearchParams(searchParams)
     params.set('tab', tab)
     router.push(`?${params.toString()}`, { scroll: false })
+    
+    // Clear loading state after a short delay to ensure smooth transition
+    setTimeout(() => setTabSwitchLoading(null), 150)
   }
 
-  // Fetch uninvoiced events for overview
+  // Fetch uninvoiced events only when on uninvoiced tab
   const { 
     data: uninvoicedEvents, 
+    isLoading: uninvoicedLoading,
     refetch: refetchUninvoiced 
   } = useSupabaseQuery({
     queryKey: ['uninvoiced-events', userId],
     fetcher: () => getUninvoicedEvents(userId),
-    enabled: !!userId
+    enabled: !!userId && (activeTab === 'uninvoiced' || tabSwitchLoading === 'uninvoiced')
   })
 
-  // Fetch user invoices for overview
+  // Fetch user invoices only when on invoices tab
   const { 
     data: userInvoices,
     isLoading: invoicesLoading,
@@ -67,7 +74,7 @@ export function InvoiceManagement({ userId }: InvoiceManagementProps) {
   } = useSupabaseQuery({
     queryKey: ['user-invoices', userId],
     fetcher: () => getUserInvoices(userId),
-    enabled: !!userId
+    enabled: !!userId && (activeTab === 'invoices' || tabSwitchLoading === 'invoices')
   })
 
   const handleCreateInvoice = (studioId: string, eventIds: string[], events: EventWithStudio[]) => {
@@ -170,38 +177,37 @@ export function InvoiceManagement({ userId }: InvoiceManagementProps) {
     setSelectedEvents([])
   }
 
-  const totalUninvoicedEvents = uninvoicedEvents?.length || 0
-  const totalInvoices = userInvoices?.length || 0
+  // Only show counters when data is available to avoid showing 0 when still loading
+  const totalUninvoicedEvents = uninvoicedEvents?.length
+  const totalInvoices = userInvoices?.length
 
   return (
     <div className="space-y-6">
       <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as TabValue)}>
         <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="uninvoiced" className="flex items-center gap-1 sm:gap-2">
-            <Receipt className="w-4 h-4 flex-shrink-0" />
-            <span className="hidden sm:inline">Billing & Events</span>
-            <span className="sm:hidden">Billing</span>
-            {totalUninvoicedEvents > 0 && (
-              <Badge variant="secondary" className="ml-1 sm:ml-2 text-xs">
-                {totalUninvoicedEvents}
-              </Badge>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="invoices" className="flex items-center gap-1 sm:gap-2">
-            <FileText className="w-4 h-4 flex-shrink-0" />
-            <span className="hidden sm:inline">Invoices</span>
-            <span className="sm:hidden">Bills</span>
-            {totalInvoices > 0 && (
-              <Badge variant="secondary" className="ml-1 sm:ml-2 text-xs">
-                {totalInvoices}
-              </Badge>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="settings" className="flex items-center gap-1 sm:gap-2">
-            <Settings className="w-4 h-4 flex-shrink-0" />
-            <span className="hidden sm:inline">Settings</span>
-            <span className="sm:hidden">Config</span>
-          </TabsTrigger>
+          <LoadingTabsTrigger
+            value="uninvoiced"
+            icon={Receipt}
+            fullText="Billing & Events"
+            shortText="Billing"
+            isLoading={tabSwitchLoading === 'uninvoiced'}
+            count={totalUninvoicedEvents}
+          />
+          <LoadingTabsTrigger
+            value="invoices"
+            icon={FileText}
+            fullText="Invoices"
+            shortText="Bills"
+            isLoading={tabSwitchLoading === 'invoices'}
+            count={totalInvoices}
+          />
+          <LoadingTabsTrigger
+            value="settings"
+            icon={Settings}
+            fullText="Settings"
+            shortText="Config"
+            isLoading={tabSwitchLoading === 'settings'}
+          />
         </TabsList>
 
         <TabsContent value="uninvoiced">
@@ -209,11 +215,20 @@ export function InvoiceManagement({ userId }: InvoiceManagementProps) {
             title="Billing & Events"
             description="Manage uninvoiced events grouped by studio, sync historical data, and fix matching issues. Create invoices for completed classes."
           >
-            <UninvoicedEventsList 
-              userId={userId} 
-              onCreateInvoice={handleCreateInvoice}
-              onCreateStudio={() => setActiveTab('settings')}
-            />
+            {uninvoicedLoading ? (
+              <Card>
+                <CardContent className="py-12 text-center">
+                  <Loader2 className="w-8 h-8 mx-auto mb-4 animate-spin text-muted-foreground" />
+                  <p className="text-sm text-muted-foreground">Loading uninvoiced events...</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <UninvoicedEventsList 
+                userId={userId} 
+                onCreateInvoice={handleCreateInvoice}
+                onCreateStudio={() => setActiveTab('settings')}
+              />
+            )}
           </TabContent>
         </TabsContent>
 
@@ -224,7 +239,7 @@ export function InvoiceManagement({ userId }: InvoiceManagementProps) {
           >
             <DataLoader
               data={userInvoices}
-              loading={invoicesLoading}
+              loading={invoicesLoading || tabSwitchLoading === 'invoices'}
               error={invoicesError?.message || null}
               empty={
                 <Card>
@@ -272,7 +287,16 @@ export function InvoiceManagement({ userId }: InvoiceManagementProps) {
             title="Invoice Settings & Billing Profiles"
             description="Manage your personal billing information and billing entity configurations."
           >
-            <InvoiceSettings userId={userId} />
+            {tabSwitchLoading === 'settings' ? (
+              <Card>
+                <CardContent className="py-12 text-center">
+                  <Loader2 className="w-8 h-8 mx-auto mb-4 animate-spin text-muted-foreground" />
+                  <p className="text-sm text-muted-foreground">Loading settings...</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <InvoiceSettings userId={userId} />
+            )}
           </TabContent>
         </TabsContent>
       </Tabs>
