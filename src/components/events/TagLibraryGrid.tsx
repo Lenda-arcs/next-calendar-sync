@@ -2,10 +2,11 @@
 
 import React from 'react'
 import { EventTag } from '@/lib/event-types'
+import { UserRole } from '@/lib/types'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Edit, Trash2, Globe, Plus } from 'lucide-react'
-import { styleUtils } from '@/lib/design-system'
+
 
 interface Props {
   globalTags: EventTag[]
@@ -15,6 +16,7 @@ interface Props {
   onDeleteClick: (tagId: string) => void
   onCreateNew: () => void
   userId: string
+  userRole?: UserRole // User role for determining edit permissions
 }
 
 interface TagLibraryItemProps {
@@ -36,11 +38,7 @@ const TagLibraryItem: React.FC<TagLibraryItemProps> = ({
 }) => {
   return (
     <div
-      className={`
-        p-4 rounded-lg cursor-pointer backdrop-blur-sm bg-white/50 border border-white/40
-        hover:bg-white/60 hover:border-white/50 hover:shadow-md
-        ${styleUtils.transition}
-      `}
+      className="p-4 rounded-lg cursor-pointer backdrop-blur-sm bg-white/50 border border-white/40 hover:bg-white/60 hover:border-white/50 hover:shadow-md transition-all duration-200"
       onClick={() => onClick(tag)}
     >
       <div className="flex items-start justify-between gap-3">
@@ -105,24 +103,7 @@ const TagLibraryItem: React.FC<TagLibraryItemProps> = ({
   )
 }
 
-const CreateTagButton: React.FC<{ onClick: () => void }> = ({ onClick }) => {
-  return (
-    <div
-      className={`
-        p-4 rounded-lg cursor-pointer border-2 border-dashed border-white/40 
-        hover:border-primary/60 bg-white/20 hover:bg-white/30
-        flex items-center justify-center min-h-[84px] group
-        ${styleUtils.transition}
-      `}
-      onClick={onClick}
-    >
-      <div className="flex flex-col items-center gap-2 text-muted-foreground group-hover:text-primary transition-colors">
-        <Plus className="h-4 w-4" />
-        <span className="text-sm font-medium">Create Tag</span>
-      </div>
-    </div>
-  )
-}
+
 
 export const TagLibraryGrid: React.FC<Props> = ({
   globalTags,
@@ -132,11 +113,22 @@ export const TagLibraryGrid: React.FC<Props> = ({
   onDeleteClick,
   onCreateNew,
   userId,
+  userRole = 'user',
 }) => {
   return (
     <Card variant="default">
       <CardHeader>
-        <CardTitle className="text-foreground">Tag Library</CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-foreground">Tag Library</CardTitle>
+          <Button
+            onClick={onCreateNew}
+            variant="secondary"
+            size="sm"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Create Tag
+          </Button>
+        </div>
       </CardHeader>
       <CardContent className="space-y-8">
         {/* Global Tags Section */}
@@ -155,7 +147,12 @@ export const TagLibraryGrid: React.FC<Props> = ({
                   onClick={onTagClick}
                   onEdit={onEditClick}
                   onDelete={onDeleteClick}
-                  canEdit={tag.userId === userId}
+                  canEdit={
+                    // Admin can edit any tag
+                    userRole === 'admin' ||
+                    // User can edit their own tags (but global tags are typically admin-only)
+                    tag.userId === userId
+                  }
                 />
               ))}
             </div>
@@ -165,21 +162,26 @@ export const TagLibraryGrid: React.FC<Props> = ({
         {/* Custom Tags Section */}
         <div>
           <h3 className="text-lg font-semibold text-foreground mb-4">Your Custom Tags</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-            {customTags.map((tag) => (
-              <TagLibraryItem
-                key={tag.id}
-                tag={tag}
-                isGlobal={false}
-                onClick={onTagClick}
-                onEdit={onEditClick}
-                onDelete={onDeleteClick}
-                canEdit={true}
-              />
-            ))}
-            <CreateTagButton onClick={onCreateNew} />
-          </div>
-          {customTags.length === 0 && (
+          {customTags.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+              {customTags.map((tag) => (
+                <TagLibraryItem
+                  key={tag.id}
+                  tag={tag}
+                  isGlobal={false}
+                  onClick={onTagClick}
+                  onEdit={onEditClick}
+                  onDelete={onDeleteClick}
+                  canEdit={
+                    // Admin can edit any tag
+                    userRole === 'admin' ||
+                    // User can edit their own custom tags
+                    tag.userId === userId
+                  }
+                />
+              ))}
+            </div>
+          ) : (
             <div className="text-center py-8 text-muted-foreground">
               <Plus className="h-8 w-8 mx-auto mb-2 text-muted-foreground/50" />
               <p className="text-sm">No custom tags yet</p>

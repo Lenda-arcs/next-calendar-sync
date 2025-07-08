@@ -2,7 +2,7 @@
 
 import React, { useMemo } from 'react'
 import { useSupabaseQuery } from '@/lib/hooks/useSupabaseQuery'
-import { Tag } from '@/lib/types'
+import { Tag, UserRole } from '@/lib/types'
 import { convertToEventTag } from '@/lib/event-types'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { AlertCircle } from 'lucide-react'
@@ -15,11 +15,12 @@ import { useTagOperations } from '@/lib/hooks/useTagOperations'
 
 interface Props {
   userId: string
+  userRole?: UserRole // User role for determining edit permissions
   globalTags?: Tag[] // Accept global tags as props to avoid duplicate fetching
   customTags?: Tag[] // Accept custom tags as props to avoid duplicate fetching
 }
 
-export const TagLibrary: React.FC<Props> = ({ userId, globalTags: propGlobalTags, customTags: propCustomTags }) => {
+export const TagLibrary: React.FC<Props> = ({ userId, userRole = 'user', globalTags: propGlobalTags, customTags: propCustomTags }) => {
   // Fetch global tags (only if not provided as props)
   const { 
     data: fetchedGlobalTags, 
@@ -139,6 +140,7 @@ export const TagLibrary: React.FC<Props> = ({ userId, globalTags: propGlobalTags
             onDeleteClick={handleDeleteTag}
             onCreateNew={handleCreateNew}
             userId={userId}
+            userRole={userRole}
           />
         )}
       </DataLoader>
@@ -160,7 +162,12 @@ export const TagLibrary: React.FC<Props> = ({ userId, globalTags: propGlobalTags
           isOpen={showViewDialog}
           onClose={handleCancel}
           onEdit={() => handleEditClick(selectedTag)}
-          canEdit={!selectedTag.userId || selectedTag.userId === userId}
+          canEdit={
+            // Admin can edit any tag
+            userRole === 'admin' ||
+            // User can edit their own tags (non-global only)
+            (selectedTag.userId === userId && selectedTag.userId !== null)
+          }
         />
       )}
     </div>
