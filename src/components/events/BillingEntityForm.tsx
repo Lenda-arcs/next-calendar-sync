@@ -6,7 +6,7 @@ import { Card } from "../ui/card";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Select } from "../ui/select";
-import FormMultiSelect from "../ui/form-multi-select";
+import { MultiSelect } from "../ui/multi-select";
 import { Textarea } from "../ui/textarea";
 import { toast } from 'sonner'
 import { useSupabaseMutation } from "../../lib/hooks/useSupabaseMutation";
@@ -510,17 +510,17 @@ const TeacherForm: React.FC<{
               )}
             </div>
             <div>
-              <FormMultiSelect
-                id="location_match"
-                name="location_match"
-            label="Location Match *"
-                options={eventLocations.map(location => ({ value: location, label: location }))}
-                value={formData.location_match}
-            onChange={onLocationChange}
-                placeholder="Select locations to match"
-                required
-                error={errors.location_match}
-              />
+                          <MultiSelect
+              id="location_match"
+              name="location_match"
+              label="Location Match *"
+              options={eventLocations.map(location => ({ value: location, label: location }))}
+              value={formData.location_match}
+              onChange={onLocationChange}
+              placeholder="Select locations to match"
+              required
+              error={errors.location_match}
+            />
               <p className="text-xs text-muted-foreground mt-1">
             Locations where this teacher provides substitute classes
               </p>
@@ -674,7 +674,7 @@ const StudioForm: React.FC<{
             )}
           </div>
           <div>
-            <FormMultiSelect
+            <MultiSelect
               id="location_match"
               name="location_match"
               label="Location Match"

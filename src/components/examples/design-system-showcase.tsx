@@ -25,7 +25,7 @@ import {
   PopoverTrigger,
   PopoverContent
 } from '@/components/ui'
-import FormMultiSelect from '@/components/ui/form-multi-select'
+
 import IconButton from '@/components/ui/icon-button'
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert'
 import { 
@@ -524,7 +524,7 @@ export default function DesignSystemShowcase() {
               <CardTitle as="h4">Form Multi Select</CardTitle>
             </CardHeader>
             <CardContent>
-              <FormMultiSelect
+              <MultiSelect
                 id="colors"
                 name="selectedColors"
                 label="Favorite Colors"

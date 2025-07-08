@@ -4,7 +4,7 @@ import React from 'react'
 import { EventTag } from '@/lib/event-types'
 import { TagBadge } from '@/components/ui/tag-badge'
 import { cn } from '@/lib/utils'
-import FormMultiSelect from '@/components/ui/form-multi-select'
+import { MultiSelect } from '@/components/ui/multi-select'
 
 interface TagManagementProps {
   currentTags: EventTag[]
@@ -108,7 +108,7 @@ export const TagManagement: React.FC<TagManagementProps> = ({
       </label>
 
       <div className="flex flex-col gap-2">
-        <FormMultiSelect
+        <MultiSelect
           id="tag-selection"
           name="tags"
           label={`Select Tags (max ${MAX_TAGS})`}

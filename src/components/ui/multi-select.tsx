@@ -1,15 +1,29 @@
 'use client'
 
-import React, { useState } from 'react'
+/**
+ * Unified MultiSelect Component
+ * 
+ * This component combines the functionality of the previous multi-select and form-multi-select components.
+ * It supports:
+ * - Multiple display modes (badges, compact, summary)
+ * - Scroll arrows for dialog compatibility
+ * - Custom option and badge renderers
+ * - Maximum selections limit
+ * - Form integration with hidden inputs
+ * - Comprehensive styling and accessibility
+ */
+
+import React, { useState, useRef, useEffect } from 'react'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
-import { ChevronDown, X } from 'lucide-react'
+import { ChevronDown, ChevronUp, X } from 'lucide-react'
 
 export interface MultiSelectOption {
   value: string
   label: string
   count?: number
+  color?: string | null
 }
 
 export interface MultiSelectProps {
@@ -33,6 +47,10 @@ export interface MultiSelectProps {
   name?: string
   required?: boolean
   error?: string
+  
+  // Custom renderers (unified from form-multi-select)
+  renderOption?: (option: MultiSelectOption, isSelected: boolean, isDisabled: boolean) => React.ReactNode
+  renderSelectedBadge?: (option: MultiSelectOption, onRemove: (e: React.MouseEvent | React.KeyboardEvent) => void) => React.ReactNode
 }
 
 export const MultiSelect: React.FC<MultiSelectProps> = ({
@@ -48,9 +66,44 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({
   id,
   name,
   required = false,
-  error
+  error,
+  renderOption,
+  renderSelectedBadge
 }) => {
   const [isOpen, setIsOpen] = useState(false)
+  const [canScrollUp, setCanScrollUp] = useState(false)
+  const [canScrollDown, setCanScrollDown] = useState(false)
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
+
+  // Check scroll state
+  const checkScrollState = () => {
+    const container = scrollContainerRef.current
+    if (!container) return
+
+    const { scrollTop, scrollHeight, clientHeight } = container
+    setCanScrollUp(scrollTop > 0)
+    setCanScrollDown(scrollTop < scrollHeight - clientHeight - 1) // -1 for rounding
+  }
+
+  // Initialize scroll state when options or open state changes
+  useEffect(() => {
+    if (isOpen) {
+      setTimeout(checkScrollState, 0) // Wait for render
+    }
+  }, [isOpen, options])
+
+  // Scroll handlers
+  const scrollUp = () => {
+    const container = scrollContainerRef.current
+    if (!container) return
+    container.scrollBy({ top: -100, behavior: 'smooth' })
+  }
+
+  const scrollDown = () => {
+    const container = scrollContainerRef.current
+    if (!container) return
+    container.scrollBy({ top: 100, behavior: 'smooth' })
+  }
 
   const handleToggleOption = (optionValue: string) => {
     if (value.includes(optionValue)) {
@@ -73,9 +126,62 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({
   const getSelectedLabels = () => {
     return value.map((val) => {
       const option = options.find((opt) => opt.value === val)
-      return { value: val, label: option?.label || val }
+      return option || { value: val, label: val }
     })
   }
+
+  // Default option renderer
+  const defaultRenderOption = (option: MultiSelectOption, isSelected: boolean, isDisabled: boolean) => (
+    <div className="flex items-center justify-between w-full">
+      <div className="flex items-center gap-2">
+        <input
+          type="checkbox"
+          checked={isSelected}
+          onChange={() => {}} // Handled by onClick above
+          disabled={isDisabled}
+          className="accent-primary"
+        />
+        <span className="text-sm">{option.label}</span>
+      </div>
+      <div className="flex items-center gap-2">
+        {showCounts && option.count !== undefined && (
+          <span className="text-xs text-muted-foreground">
+            ({option.count})
+          </span>
+        )}
+        {isDisabled && (
+          <span className="text-xs text-muted-foreground">
+            Max reached
+          </span>
+        )}
+      </div>
+    </div>
+  )
+
+  // Default selected badge renderer
+  const defaultRenderSelectedBadge = (option: MultiSelectOption, onRemove: (e: React.MouseEvent | React.KeyboardEvent) => void) => (
+    <Badge
+      key={option.value}
+      variant="secondary"
+      className="bg-primary text-primary-foreground hover:bg-primary/90"
+    >
+      {option.label}
+      <span
+        role="button"
+        tabIndex={0}
+        className="ml-1 hover:bg-white/20 rounded-full w-4 h-4 flex items-center justify-center text-xs cursor-pointer"
+        onClick={onRemove}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault()
+            onRemove(e)
+          }
+        }}
+      >
+        <X className="h-2 w-2" />
+      </span>
+    </Badge>
+  )
 
   const getDisplayContent = () => {
     if (value.length === 0) {
@@ -86,28 +192,10 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({
       case 'badges':
         return (
           <div className="flex-1 flex flex-wrap gap-1">
-            {getSelectedLabels().map((item) => (
-              <Badge
-                key={item.value}
-                variant="secondary"
-                className="bg-primary text-primary-foreground hover:bg-primary/90"
-              >
-                {item.label}
-                <span
-                  role="button"
-                  tabIndex={0}
-                  className="ml-1 hover:bg-white/20 rounded-full w-4 h-4 flex items-center justify-center text-xs cursor-pointer"
-                  onClick={(e) => removeOption(item.value, e)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault()
-                      removeOption(item.value, e)
-                    }
-                  }}
-                >
-                  <X className="h-2 w-2" />
-                </span>
-              </Badge>
+            {getSelectedLabels().map((option) => (
+              renderSelectedBadge ? 
+                renderSelectedBadge(option, (e) => removeOption(option.value, e)) :
+                defaultRenderSelectedBadge(option, (e) => removeOption(option.value, e))
             ))}
           </div>
         )
@@ -182,11 +270,30 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({
         </PopoverTrigger>
         
         <PopoverContent 
-          className="p-0" 
+          className="p-0 relative" 
           align="start"
           style={{ width: 'var(--radix-popover-trigger-width)' }}
         >
-          <div className="max-h-48 overflow-y-auto">
+          {/* Top scroll arrow */}
+          {canScrollUp && (
+            <div 
+              className="absolute top-0 left-0 right-0 z-10 h-8 bg-gradient-to-b from-background to-transparent flex items-center justify-center cursor-pointer hover:bg-accent/50 transition-colors"
+              onClick={scrollUp}
+            >
+              <ChevronUp className="h-4 w-4 text-muted-foreground" />
+            </div>
+          )}
+          
+          {/* Scrollable content */}
+          <div 
+            ref={scrollContainerRef}
+            className="max-h-48 overflow-y-auto"
+            onScroll={checkScrollState}
+            style={{ 
+              paddingTop: canScrollUp ? '32px' : '0',
+              paddingBottom: canScrollDown ? '32px' : '0'
+            }}
+          >
             {options.map((option) => {
               const isSelected = value.includes(option.value)
               const isDisabled = !isSelected && isMaxReached
@@ -195,7 +302,7 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({
                 <div
                   key={option.value}
                   className={cn(
-                    'px-3 py-2 flex items-center justify-between cursor-pointer',
+                    'px-3 py-2 flex items-center cursor-pointer',
                     'hover:bg-accent hover:text-accent-foreground',
                     'border-b border-border last:border-b-0',
                     isSelected && 'bg-accent text-accent-foreground',
@@ -203,33 +310,24 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({
                   )}
                   onClick={() => !isDisabled && handleToggleOption(option.value)}
                 >
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      checked={isSelected}
-                      onChange={() => {}} // Handled by onClick above
-                      disabled={isDisabled}
-                      className="accent-primary"
-                    />
-                    <span className="text-sm">{option.label}</span>
-                  </div>
-                  
-                  <div className="flex items-center gap-2">
-                    {showCounts && option.count !== undefined && (
-                      <span className="text-xs text-muted-foreground">
-                        ({option.count})
-                      </span>
-                    )}
-                    {isDisabled && (
-                      <span className="text-xs text-muted-foreground">
-                        Max reached
-                      </span>
-                    )}
-                  </div>
+                  {renderOption ? 
+                    renderOption(option, isSelected, isDisabled) :
+                    defaultRenderOption(option, isSelected, isDisabled)
+                  }
                 </div>
               )
             })}
           </div>
+          
+          {/* Bottom scroll arrow */}
+          {canScrollDown && (
+            <div 
+              className="absolute bottom-0 left-0 right-0 z-10 h-8 bg-gradient-to-t from-background to-transparent flex items-center justify-center cursor-pointer hover:bg-accent/50 transition-colors"
+              onClick={scrollDown}
+            >
+              <ChevronDown className="h-4 w-4 text-muted-foreground" />
+            </div>
+          )}
         </PopoverContent>
       </Popover>
       

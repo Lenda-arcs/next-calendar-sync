@@ -11,7 +11,7 @@ export * from './copy-link-button'
 export * from './data-loader'
 export * from './dialog'
 export * from './form-field'
-export * from './form-multi-select'
+// Removed - merged into MultiSelect component
 export * from './form'
 export * from './icon-button'
 export * from './image-upload'
