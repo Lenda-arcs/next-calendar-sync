@@ -12,6 +12,7 @@ import { toast } from 'sonner'
 import DataLoader from '@/components/ui/data-loader'
 import { TagRulesSkeleton } from '@/components/ui/skeleton'
 import { TagRulesCard } from './TagRulesCard'
+import { TagRuleFormDialog } from './TagRuleFormDialog'
 
 // Extended TagRule interface to handle new fields until database types are regenerated
 interface ExtendedTagRule extends TagRule {
@@ -27,6 +28,7 @@ interface TagRuleState {
   }
   editingRule: ExtendedTagRule | null
   isEditing: boolean
+  dialogOpen: boolean
 }
 
 const initialState: TagRuleState = {
@@ -37,6 +39,7 @@ const initialState: TagRuleState = {
   },
   editingRule: null,
   isEditing: false,
+  dialogOpen: false,
 }
 
 interface Props {
@@ -113,10 +116,11 @@ export const TagRuleManager: React.FC<Props> = ({ userId, availableTags: propTag
       return data
     },
     onSuccess: async (data) => {
-      // Clear form
+      // Clear form and close dialog
       setState((prev) => ({
         ...prev,
         newRule: { keywords: [], locationKeywords: [], selectedTag: '' },
+        dialogOpen: false,
       }))
       
       // Add the new rule to optimistic state
@@ -171,11 +175,12 @@ export const TagRuleManager: React.FC<Props> = ({ userId, availableTags: propTag
       return data
     },
     onSuccess: async (data) => {
-      // Clear editing state
+      // Clear editing state and close dialog
       setState((prev) => ({
         ...prev,
         editingRule: null,
         isEditing: false,
+        dialogOpen: false,
       }))
       
       // Update optimistic state
@@ -273,6 +278,25 @@ export const TagRuleManager: React.FC<Props> = ({ userId, availableTags: propTag
       ...prev,
       editingRule: rule,
       isEditing: true,
+      dialogOpen: true,
+    }))
+  }
+
+  const handleOpenCreateDialog = () => {
+    setState((prev) => ({
+      ...prev,
+      editingRule: null,
+      isEditing: false,
+      dialogOpen: true,
+    }))
+  }
+
+  const handleCloseDialog = () => {
+    setState((prev) => ({
+      ...prev,
+      editingRule: null,
+      isEditing: false,
+      dialogOpen: false,
     }))
   }
 
@@ -292,13 +316,7 @@ export const TagRuleManager: React.FC<Props> = ({ userId, availableTags: propTag
     })
   }
 
-  const handleCancelEdit = () => {
-    setState((prev) => ({
-      ...prev,
-      editingRule: null,
-      isEditing: false,
-    }))
-  }
+
 
   const handleDeleteRule = async (ruleId: string) => {
     // Optimistically mark as deleted
@@ -357,48 +375,57 @@ export const TagRuleManager: React.FC<Props> = ({ userId, availableTags: propTag
         }
       >
         {(data) => (
-          <TagRulesCard
-            rules={data.rules}
-            tags={data.tags}
-            keywordSuggestions={data.keywordSuggestions}
-            onDeleteRule={handleDeleteRule}
-            onEditRule={handleEditRule}
-            onAddRule={handleAddRule}
-            onUpdateRule={handleUpdateRule}
-            onCancelEdit={handleCancelEdit}
-            newKeywords={state.newRule.keywords}
-            setNewKeywords={(value: string[]) =>
-              setState((prev) => ({
-                ...prev,
-                newRule: { ...prev.newRule, keywords: value },
-              }))
-            }
-            newLocationKeywords={state.newRule.locationKeywords}
-            setNewLocationKeywords={(value: string[]) =>
-              setState((prev) => ({
-                ...prev,
-                newRule: { ...prev.newRule, locationKeywords: value },
-              }))
-            }
-            selectedTag={state.newRule.selectedTag}
-            setSelectedTag={(value: string) =>
-              setState((prev) => ({
-                ...prev,
-                newRule: { ...prev.newRule, selectedTag: value },
-              }))
-            }
-            editingRule={state.editingRule}
-            setEditingRule={(rule: ExtendedTagRule | null) =>
-              setState((prev) => ({
-                ...prev,
-                editingRule: rule,
-              }))
-            }
-            isEditing={state.isEditing}
-            isCreating={creating}
-            isUpdating={updating}
-            suggestionsLoading={suggestionsLoading}
-          />
+          <>
+            <TagRulesCard
+              rules={data.rules}
+              tags={data.tags}
+              onDeleteRule={handleDeleteRule}
+              onEditRule={handleEditRule}
+              onCreateRule={handleOpenCreateDialog}
+              isCreating={creating}
+              isUpdating={updating}
+            />
+            
+            <TagRuleFormDialog
+              isOpen={state.dialogOpen}
+              onClose={handleCloseDialog}
+              onSave={state.isEditing ? handleUpdateRule : handleAddRule}
+              isEditing={state.isEditing}
+              keywords={state.newRule.keywords}
+              setKeywords={(value: string[]) =>
+                setState((prev) => ({
+                  ...prev,
+                  newRule: { ...prev.newRule, keywords: value },
+                }))
+              }
+              locationKeywords={state.newRule.locationKeywords}
+              setLocationKeywords={(value: string[]) =>
+                setState((prev) => ({
+                  ...prev,
+                  newRule: { ...prev.newRule, locationKeywords: value },
+                }))
+              }
+              selectedTag={state.newRule.selectedTag}
+              setSelectedTag={(value: string) =>
+                setState((prev) => ({
+                  ...prev,
+                  newRule: { ...prev.newRule, selectedTag: value },
+                }))
+              }
+              editingRule={state.editingRule}
+              setEditingRule={(rule: ExtendedTagRule | null) =>
+                setState((prev) => ({
+                  ...prev,
+                  editingRule: rule,
+                }))
+              }
+              tags={data.tags}
+              keywordSuggestions={data.keywordSuggestions}
+              isCreating={creating}
+              isUpdating={updating}
+              suggestionsLoading={suggestionsLoading}
+            />
+          </>
         )}
       </DataLoader>
     </div>
