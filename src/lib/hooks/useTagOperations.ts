@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useSupabaseMutation } from './useSupabaseMutation'
 import { TagInsert, TagUpdate } from '@/lib/types'
 import { EventTag } from '@/lib/event-types'
+import { toast } from 'sonner'
 
 interface UseTagOperationsProps {
   onSuccess?: () => void
@@ -25,9 +26,15 @@ export function useTagOperations({ onSuccess }: UseTagOperationsProps = {}) {
       return data
     },
     onSuccess: () => {
+      toast.success('Tag created successfully!')
       handleCancel()
       onSuccess?.()
     },
+    onError: (error) => {
+      toast.error('Failed to create tag', {
+        description: error.message
+      })
+    }
   })
 
   // Update tag mutation
@@ -43,9 +50,15 @@ export function useTagOperations({ onSuccess }: UseTagOperationsProps = {}) {
       return data
     },
     onSuccess: () => {
+      toast.success('Tag updated successfully!')
       handleCancel()
       onSuccess?.()
     },
+    onError: (error) => {
+      toast.error('Failed to update tag', {
+        description: error.message
+      })
+    }
   })
 
   // Delete tag mutation
@@ -61,8 +74,14 @@ export function useTagOperations({ onSuccess }: UseTagOperationsProps = {}) {
       return data
     },
     onSuccess: () => {
+      toast.success('Tag deleted successfully!')
       onSuccess?.()
     },
+    onError: (error) => {
+      toast.error('Failed to delete tag', {
+        description: error.message
+      })
+    }
   })
 
   const handleTagClick = (tag: EventTag) => {

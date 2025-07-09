@@ -3,24 +3,38 @@
 import React, { useMemo } from 'react'
 import { useSupabaseQuery } from '@/lib/hooks/useSupabaseQuery'
 import { Tag, UserRole } from '@/lib/types'
-import { convertToEventTag } from '@/lib/event-types'
+import { convertToEventTag, EventTag } from '@/lib/event-types'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { AlertCircle } from 'lucide-react'
 import DataLoader from '@/components/ui/data-loader'
 import { TagLibraryGridSkeleton } from '@/components/ui/skeleton'
 import { TagLibraryGrid } from './TagLibraryGrid'
-import { NewTagForm } from './NewTagForm'
-import { TagViewDialog } from './TagViewDialog'
-import { useTagOperations } from '@/lib/hooks/useTagOperations'
+
+interface TagOperations {
+  onTagClick: (tag: EventTag) => void
+  onEditClick: (tag: EventTag) => void
+  onDeleteClick: (tagId: string) => void
+  onCreateNew: () => void
+  creating: boolean
+  updating: boolean
+  deleting: boolean
+}
 
 interface Props {
   userId: string
   userRole?: UserRole // User role for determining edit permissions
   globalTags?: Tag[] // Accept global tags as props to avoid duplicate fetching
   customTags?: Tag[] // Accept custom tags as props to avoid duplicate fetching
+  tagOperations?: TagOperations // Accept tag operations as props
 }
 
-export const TagLibrary: React.FC<Props> = ({ userId, userRole = 'user', globalTags: propGlobalTags, customTags: propCustomTags }) => {
+export const TagLibrary: React.FC<Props> = ({ 
+  userId, 
+  userRole = 'user', 
+  globalTags: propGlobalTags, 
+  customTags: propCustomTags,
+  tagOperations 
+}) => {
   // Fetch global tags (only if not provided as props)
   const { 
     data: fetchedGlobalTags, 
@@ -45,8 +59,7 @@ export const TagLibrary: React.FC<Props> = ({ userId, userRole = 'user', globalT
   const { 
     data: fetchedCustomTags, 
     isLoading: customLoading, 
-    error: customError, 
-    refetch: refetchCustom 
+    error: customError
   } = useSupabaseQuery({
     queryKey: ['custom-tags', userId],
     fetcher: async (supabase) => {
@@ -66,25 +79,6 @@ export const TagLibrary: React.FC<Props> = ({ userId, userRole = 'user', globalT
   const globalTags = propGlobalTags || fetchedGlobalTags
   const customTags = propCustomTags || fetchedCustomTags
 
-  // Tag operations hook
-  const {
-    selectedTag,
-    showNewTagForm,
-    showViewDialog,
-    isEditing,
-    creating,
-    updating,
-    deleting,
-    handleTagClick,
-    handleEditClick,
-    handleCreateNew,
-    handleCancel,
-    handleSaveTag,
-    handleDeleteTag,
-  } = useTagOperations({ 
-    onSuccess: refetchCustom 
-  })
-
   // Convert database tags to EventTags
   const globalEventTags = useMemo(() => {
     return globalTags?.map(convertToEventTag) || []
@@ -99,6 +93,19 @@ export const TagLibrary: React.FC<Props> = ({ userId, userRole = 'user', globalT
   const loading = (propGlobalTags ? false : globalLoading) || (propCustomTags ? false : customLoading)
   const data = globalTags && customTags ? { globalTags: globalEventTags, customTags: customEventTags } : null
 
+  // If no tag operations provided, create default handlers (fallback)
+  const defaultTagOperations: TagOperations = {
+    onTagClick: () => {},
+    onEditClick: () => {},
+    onDeleteClick: () => {},
+    onCreateNew: () => {},
+    creating: false,
+    updating: false,
+    deleting: false,
+  }
+
+  const operations = tagOperations || defaultTagOperations
+
   return (
     <div className="space-y-8">
       {error && (
@@ -109,12 +116,12 @@ export const TagLibrary: React.FC<Props> = ({ userId, userRole = 'user', globalT
         </Alert>
       )}
 
-      {(creating || updating || deleting) && (
+      {(operations.creating || operations.updating || operations.deleting) && (
         <Alert>
           <AlertDescription>
-            {creating && 'Creating tag...'}
-            {updating && 'Updating tag...'}
-            {deleting && 'Deleting tag...'}
+            {operations.creating && 'Creating tag...'}
+            {operations.updating && 'Updating tag...'}
+            {operations.deleting && 'Deleting tag...'}
           </AlertDescription>
         </Alert>
       )}
@@ -135,41 +142,15 @@ export const TagLibrary: React.FC<Props> = ({ userId, userRole = 'user', globalT
           <TagLibraryGrid
             globalTags={data.globalTags}
             customTags={data.customTags}
-            onTagClick={handleTagClick}
-            onEditClick={handleEditClick}
-            onDeleteClick={handleDeleteTag}
-            onCreateNew={handleCreateNew}
+            onTagClick={operations.onTagClick}
+            onEditClick={operations.onEditClick}
+            onDeleteClick={operations.onDeleteClick}
+            onCreateNew={operations.onCreateNew}
             userId={userId}
             userRole={userRole}
           />
         )}
       </DataLoader>
-
-      {/* New/Edit Tag Form */}
-      <NewTagForm
-        isOpen={showNewTagForm}
-        isEditing={isEditing}
-        initialTag={selectedTag}
-        onSave={handleSaveTag}
-        onCancel={handleCancel}
-        userId={userId}
-      />
-
-      {/* Tag View Dialog */}
-      {selectedTag && (
-        <TagViewDialog
-          tag={selectedTag}
-          isOpen={showViewDialog}
-          onClose={handleCancel}
-          onEdit={() => handleEditClick(selectedTag)}
-          canEdit={
-            // Admin can edit any tag
-            userRole === 'admin' ||
-            // User can edit their own tags (non-global only)
-            (selectedTag.userId === userId && selectedTag.userId !== null)
-          }
-        />
-      )}
     </div>
   )
 } 

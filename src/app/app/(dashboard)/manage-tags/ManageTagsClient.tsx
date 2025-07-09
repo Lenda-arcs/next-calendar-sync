@@ -1,12 +1,16 @@
 'use client'
 
-import { TagLibrary } from '@/components/events/TagLibrary'
-import { TagRuleManager } from '@/components/events/TagRuleManager'
+import React from 'react'
 import { useAllTags } from '@/lib/hooks/useAllTags'
 import { useSupabaseQuery } from '@/lib/hooks/useSupabaseQuery'
+import { useTagOperations } from '@/lib/hooks/useTagOperations'
+import { UserRole } from '@/lib/types'
+import { TagLibrary } from '@/components/events/TagLibrary'
+import { TagRuleManager } from '@/components/events/TagRuleManager'
+import { NewTagForm } from '@/components/events/NewTagForm'
+import { TagViewDialog } from '@/components/events/TagViewDialog'
 import DataLoader from '@/components/ui/data-loader'
 import { TagLibraryGridSkeleton } from '@/components/ui/skeleton'
-import { UserRole } from '@/lib/types'
 
 interface Props {
   userId: string
@@ -14,7 +18,7 @@ interface Props {
 
 export function ManageTagsClient({ userId }: Props) {
   // Fetch all tags once and share between components
-  const { allTags, userTags, globalTags, isLoading: tagsLoading, error: tagsError } = useAllTags({ 
+  const { allTags, userTags, globalTags, isLoading: tagsLoading, error: tagsError, refetch: refetchAllTags } = useAllTags({ 
     userId, 
     enabled: !!userId 
   })
@@ -33,6 +37,25 @@ export function ManageTagsClient({ userId }: Props) {
       return data
     },
     enabled: !!userId
+  })
+
+  // Tag operations hook with proper refetch
+  const {
+    selectedTag,
+    showNewTagForm,
+    showViewDialog,
+    isEditing,
+    creating,
+    updating,
+    deleting,
+    handleTagClick,
+    handleEditClick,
+    handleCreateNew,
+    handleCancel,
+    handleSaveTag,
+    handleDeleteTag,
+  } = useTagOperations({ 
+    onSuccess: refetchAllTags // Use the shared refetch function
   })
 
   const userRole = (userData?.role || 'user') as UserRole
@@ -64,7 +87,43 @@ export function ManageTagsClient({ userId }: Props) {
             userRole={userRole}
             globalTags={globalTags}
             customTags={userTags}
+            // Pass down the tag operations instead of letting TagLibrary create its own
+            tagOperations={{
+              onTagClick: handleTagClick,
+              onEditClick: handleEditClick,
+              onDeleteClick: handleDeleteTag,
+              onCreateNew: handleCreateNew,
+              creating,
+              updating,
+              deleting,
+            }}
           />
+          
+          {/* New/Edit Tag Form */}
+          <NewTagForm
+            isOpen={showNewTagForm}
+            isEditing={isEditing}
+            initialTag={selectedTag}
+            onSave={handleSaveTag}
+            onCancel={handleCancel}
+            userId={userId}
+          />
+
+          {/* Tag View Dialog */}
+          {selectedTag && (
+            <TagViewDialog
+              tag={selectedTag}
+              isOpen={showViewDialog}
+              onClose={handleCancel}
+              onEdit={() => handleEditClick(selectedTag)}
+              canEdit={
+                // Admin can edit any tag
+                userRole === 'admin' ||
+                // User can edit their own tags (non-global only)
+                (selectedTag.userId === userId && selectedTag.userId !== null)
+              }
+            />
+          )}
         </div>
       )}
     </DataLoader>
