@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
           return NextResponse.redirect(`${origin}${next}`)
         } else {
           // Regular OAuth or other flow - redirect normally
-          return NextResponse.redirect(`${origin}${next}`)
+      return NextResponse.redirect(`${origin}${next}`)
         }
       }
     }

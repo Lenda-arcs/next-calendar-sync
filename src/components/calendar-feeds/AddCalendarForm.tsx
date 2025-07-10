@@ -121,9 +121,9 @@ export function AddCalendarForm({ user, onSuccess }: AddCalendarFormProps) {
           onSuccess()
         }, 2000)
       } else {
-        setTimeout(() => {
-          router.push('/app')
-        }, 3000)
+      setTimeout(() => {
+        router.push('/app')
+      }, 3000)
       }
     } catch (error) {
       console.error('Error adding calendar feed:', error)

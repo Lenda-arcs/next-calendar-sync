@@ -65,7 +65,7 @@ export function EnhancedCalendarOnboarding({ user, success, error, message }: En
             })
         } catch (error) {
           console.error('Failed to parse stored user segment:', error)
-        }
+  }
       }
     }
   }, [shouldShowPatternSetup, user?.id])
@@ -147,29 +147,29 @@ export function EnhancedCalendarOnboarding({ user, success, error, message }: En
                 </div>
               </div>
             </CardContent>
-          </Card>
-
+                </Card>
+                
           <div className="flex flex-col sm:flex-row gap-3">
             <Button asChild className="flex-1">
-              <a href="/app">
-                <ArrowRight className="mr-2 h-4 w-4" />
-                Go to Dashboard
-              </a>
-            </Button>
+                    <a href="/app">
+                      <ArrowRight className="mr-2 h-4 w-4" />
+                      Go to Dashboard
+                    </a>
+                  </Button>
             <Button variant="outline" asChild>
-              <a href="/app/profile">
-                Complete Profile
-              </a>
-            </Button>
+                    <a href="/app/profile">
+                      Complete Profile
+                    </a>
+                  </Button>
+                </div>
           </div>
-        </div>
-      </Container>
+        </Container>
     )
   }
 
   // Pattern setup screen
   if (currentStep === 'pattern' && currentCalendarFeedId && user?.id) {
-    return (
+  return (
       <Container 
         title="Set Up Calendar Filtering"
         subtitle="Configure which events to sync from your mixed calendar"
@@ -200,8 +200,8 @@ export function EnhancedCalendarOnboarding({ user, success, error, message }: En
               {userSegment.calendarProvider === 'google' ? 'Quick OAuth connection with Google Calendar' :
                userSegment.calendarProvider === 'apple' ? 'Step-by-step iCloud calendar setup' :
                'We\'ll help you create your first digital calendar'}
-            </p>
-          </div>
+                  </p>
+                </div>
 
           <div className="space-y-4">
             {/* Calendar Creation Wizard */}
@@ -238,7 +238,7 @@ export function EnhancedCalendarOnboarding({ user, success, error, message }: En
                   </p>
                 </div>
                 <AddCalendarForm user={user} onSuccess={handleConnectionSuccess} />
-              </div>
+                </div>
             )}
 
             {/* Email Invitation System */}
@@ -305,35 +305,35 @@ export function EnhancedCalendarOnboarding({ user, success, error, message }: En
             Let&apos;s connect your calendar and create a beautiful, shareable schedule that your students will love.
           </p>
         </div>
-
+                
         {/* Features Overview */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="text-center space-y-2">
+                    <div className="text-center space-y-2">
             <Calendar className="h-8 w-8 mx-auto text-primary" />
             <h3 className="font-medium">Sync Calendar</h3>
-            <p className="text-sm text-muted-foreground">
+                      <p className="text-sm text-muted-foreground">
               Connect your existing calendar feeds
-            </p>
-          </div>
-          <div className="text-center space-y-2">
+                      </p>
+                    </div>
+                    <div className="text-center space-y-2">
             <CheckCircle className="h-8 w-8 mx-auto text-primary" />
             <h3 className="font-medium">Smart Organization</h3>
-            <p className="text-sm text-muted-foreground">
+                      <p className="text-sm text-muted-foreground">
               Automatically categorize your classes
-            </p>
-          </div>
+                      </p>
+                    </div>
           <div className="text-center space-y-2">
             <ArrowRight className="h-8 w-8 mx-auto text-primary" />
             <h3 className="font-medium">Share Schedule</h3>
             <p className="text-sm text-muted-foreground">
               Beautiful schedule for your students
             </p>
-          </div>
-        </div>
-
+                  </div>
+                </div>
+                
         {/* Onboarding Wizard */}
         <OnboardingWizard onPathSelected={handlePathSelected} />
-      </div>
-    </Container>
+        </div>
+      </Container>
   )
 } 
