@@ -99,6 +99,7 @@ export type Database = {
           filtering_patterns: Json | null
           id: string
           last_synced_at: string | null
+          sync_approach: string | null
           user_id: string | null
         }
         Insert: {
@@ -109,6 +110,7 @@ export type Database = {
           filtering_patterns?: Json | null
           id?: string
           last_synced_at?: string | null
+          sync_approach?: string | null
           user_id?: string | null
         }
         Update: {
@@ -119,6 +121,7 @@ export type Database = {
           filtering_patterns?: Json | null
           id?: string
           last_synced_at?: string | null
+          sync_approach?: string | null
           user_id?: string | null
         }
         Relationships: [
@@ -909,7 +912,6 @@ export type Database = {
           profile_image_url: string | null
           public_url: string | null
           role: Database["public"]["Enums"]["user_role"]
-          sync_approach: string | null
           timezone: string | null
           website_url: string | null
           yoga_styles: string[] | null
@@ -928,7 +930,6 @@ export type Database = {
           profile_image_url?: string | null
           public_url?: string | null
           role?: Database["public"]["Enums"]["user_role"]
-          sync_approach?: string | null
           timezone?: string | null
           website_url?: string | null
           yoga_styles?: string[] | null
@@ -947,7 +948,6 @@ export type Database = {
           profile_image_url?: string | null
           public_url?: string | null
           role?: Database["public"]["Enums"]["user_role"]
-          sync_approach?: string | null
           timezone?: string | null
           website_url?: string | null
           yoga_styles?: string[] | null
