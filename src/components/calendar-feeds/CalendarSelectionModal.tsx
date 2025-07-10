@@ -17,9 +17,10 @@ interface CalendarSelectionModalProps {
   onClose: () => void
   onSuccess: (selectedCount: number) => void
   calendars?: CalendarItem[]
+  syncApproach?: 'yoga_only' | 'mixed_calendar'
 }
 
-export function CalendarSelectionModal({ isOpen, onClose, onSuccess, calendars: propCalendars = [] }: CalendarSelectionModalProps) {
+export function CalendarSelectionModal({ isOpen, onClose, onSuccess, calendars: propCalendars = [], syncApproach = 'yoga_only' }: CalendarSelectionModalProps) {
   const [saving, setSaving] = useState(false)
   const { state, actions } = useCalendarSelection({ 
     calendars: propCalendars, 
@@ -40,7 +41,10 @@ export function CalendarSelectionModal({ isOpen, onClose, onSuccess, calendars: 
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ selections: selectionArray })
+        body: JSON.stringify({ 
+          selections: selectionArray,
+          sync_approach: syncApproach
+        })
       })
 
       if (!response.ok) {

@@ -15,7 +15,9 @@ import {
   Plus,
   Clock,
   AlertCircle,
-  CheckCircle
+  CheckCircle,
+  Filter,
+  Settings2
 } from 'lucide-react'
 import { formatDate, type CalendarFeed } from '@/lib/calendar-feeds'
 import { useCalendarFeedActions } from '@/lib/hooks/useCalendarFeeds'
@@ -35,7 +37,7 @@ export function CalendarFeedManager({ feeds, isLoading, onRefetch, userId }: Cal
   const [optimisticFeeds, setOptimisticFeeds] = useState<CalendarFeed[]>(feeds)
   const [recentlySynced, setRecentlySynced] = useState<Set<string>>(new Set())
   const [syncResults, setSyncResults] = useState<Map<string, { success: boolean; count: number }>>(new Map())
-  const { syncFeed, deleteFeed, isSyncing, isDeleting, syncError, deleteError } = useCalendarFeedActions()
+  const { syncFeed, deleteFeed, updateSyncApproach, isSyncing, isDeleting, isUpdatingSyncApproach, syncError, deleteError, updateSyncApproachError } = useCalendarFeedActions()
 
   // Update optimistic feeds when props change
   React.useEffect(() => {
@@ -112,7 +114,31 @@ export function CalendarFeedManager({ feeds, isLoading, onRefetch, userId }: Cal
     }
   }
 
-  const isProcessing = (feedId: string) => actionFeedId === feedId && (isSyncing || isDeleting)
+  const handleSyncApproachChange = async (feedId: string, syncApproach: 'yoga_only' | 'mixed_calendar') => {
+    try {
+      setActionFeedId(feedId)
+      
+      // Optimistically update the sync approach
+      setOptimisticFeeds(prev => 
+        prev.map(feed => 
+          feed.id === feedId 
+            ? { ...feed, sync_approach: syncApproach } as CalendarFeed
+            : feed
+        )
+      )
+      
+      await updateSyncApproach(feedId, syncApproach)
+      onRefetch?.()
+    } catch (error) {
+      console.error('Failed to update sync approach:', error)
+      // Revert optimistic update
+      setOptimisticFeeds(feeds)
+    } finally {
+      setActionFeedId(null)
+    }
+  }
+
+  const isProcessing = (feedId: string) => actionFeedId === feedId && (isSyncing || isDeleting || isUpdatingSyncApproach)
 
   return (
     <div className="space-y-6">
@@ -131,6 +157,15 @@ export function CalendarFeedManager({ feeds, isLoading, onRefetch, userId }: Cal
           <AlertCircle className="h-4 w-4" />
           <div>
             <strong>Delete Error:</strong> {deleteError.message}
+          </div>
+        </Alert>
+      )}
+
+      {updateSyncApproachError && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <div>
+            <strong>Sync Approach Error:</strong> {updateSyncApproachError.message}
           </div>
         </Alert>
       )}
@@ -187,6 +222,7 @@ export function CalendarFeedManager({ feeds, isLoading, onRefetch, userId }: Cal
                   userId={userId}
                   onSync={() => handleSync(feed.id)}
                   onDelete={() => setConfirmDelete(feed.id)}
+                  onSyncApproachChange={handleSyncApproachChange}
                 />
               ))}
             </div>
@@ -235,6 +271,7 @@ interface CalendarFeedCardProps {
   userId?: string
   onSync: () => void
   onDelete: () => void
+  onSyncApproachChange?: (feedId: string, syncApproach: 'yoga_only' | 'mixed_calendar') => void
 }
 
 function CalendarFeedCard({ 
@@ -244,7 +281,8 @@ function CalendarFeedCard({
   syncResult, 
   userId,
   onSync, 
-  onDelete 
+  onDelete,
+  onSyncApproachChange 
 }: CalendarFeedCardProps) {
   const isActive = !!feed.last_synced_at
   const syncDate = formatDate(feed.last_synced_at)
@@ -298,6 +336,54 @@ function CalendarFeedCard({
                 {syncResult.count} events synced
               </div>
             )}
+          </div>
+
+          {/* Sync Approach Controls */}
+          <div className="p-3 bg-white/10 rounded-lg border border-white/20">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2 text-sm">
+                <Settings2 className="h-4 w-4 text-muted-foreground" />
+                <span className="text-muted-foreground">Sync approach:</span>
+              </div>
+              <Badge variant="outline" className="text-xs">
+                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                {(feed as any).sync_approach === 'mixed_calendar' ? 'Mixed Calendar' : 'Yoga Only'}
+              </Badge>
+            </div>
+            
+            <div className="flex gap-2">
+              <Button
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                variant={(feed as any).sync_approach === 'yoga_only' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => onSyncApproachChange?.(feed.id, 'yoga_only')}
+                disabled={isProcessing}
+                className="flex-1"
+              >
+                <Calendar className="mr-2 h-3 w-3" />
+                Yoga Only
+              </Button>
+              
+              <Button
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                variant={(feed as any).sync_approach === 'mixed_calendar' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => onSyncApproachChange?.(feed.id, 'mixed_calendar')}
+                disabled={isProcessing}
+                className="flex-1"
+              >
+                <Filter className="mr-2 h-3 w-3" />
+                Mixed Calendar
+              </Button>
+            </div>
+            
+            <p className="text-xs text-muted-foreground mt-2">
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+              {(feed as any).sync_approach === 'mixed_calendar' 
+                ? 'Events are filtered using your tag patterns' 
+                : 'All events are synced without filtering'
+              }
+            </p>
           </div>
 
           {/* Action Buttons */}

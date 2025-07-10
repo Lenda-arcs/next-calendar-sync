@@ -87,7 +87,8 @@ export function RegisterForm({ redirectTo = '/app', className }: RegisterFormPro
           options: {
             data: {
               full_name: fullName,
-            }
+            },
+            emailRedirectTo: `${window.location.origin}/auth/callback?redirect_to=${encodeURIComponent('/app/add-calendar?force_onboarding=true')}`
           }
         })
 
@@ -99,7 +100,8 @@ export function RegisterForm({ redirectTo = '/app', className }: RegisterFormPro
         if (data.user) {
           // Check if email confirmation is required
           if (!data.session) {
-            setAuthError('Please check your email and click the confirmation link to complete your registration.')
+            // Redirect to email confirmation page
+            router.push(`/auth/confirm-email?email=${encodeURIComponent(email)}&redirectTo=${encodeURIComponent(redirectTo)}`)
           } else {
             // Successful registration with immediate login
             router.push(redirectTo)

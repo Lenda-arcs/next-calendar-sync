@@ -20,6 +20,7 @@ export function CalendarSelectionPage({ success, error, availableCalendars = [] 
   const [showModal, setShowModal] = useState(false)
   const [selectedCount, setSelectedCount] = useState(0)
   const [isCompleted, setIsCompleted] = useState(false)
+  const [syncApproach, setSyncApproach] = useState<'yoga_only' | 'mixed_calendar'>('yoga_only')
 
   const handleSelectCalendars = useCallback(async () => {
     if (availableCalendars.length > 0) {
@@ -28,6 +29,19 @@ export function CalendarSelectionPage({ success, error, availableCalendars = [] 
       toast.error('No calendars available. Please try refreshing the page.')
     }
   }, [availableCalendars])
+
+  useEffect(() => {
+    // Load sync approach from localStorage
+    const storedSegment = localStorage.getItem('onboarding_user_segment')
+    if (storedSegment) {
+      try {
+        const userSegment = JSON.parse(storedSegment)
+        setSyncApproach(userSegment.syncApproach || 'yoga_only')
+      } catch (error) {
+        console.error('Failed to parse stored user segment:', error)
+      }
+    }
+  }, [])
 
   useEffect(() => {
     // Always show calendars if we have them and we're on the calendar selection page
@@ -42,9 +56,48 @@ export function CalendarSelectionPage({ success, error, availableCalendars = [] 
     setSelectedCount(count)
     setIsCompleted(true)
     toast.success(`Successfully connected ${count} calendar${count !== 1 ? 's' : ''}!`)
+    
+    // Check if this was from onboarding with mixed calendar
+    const storedSegment = localStorage.getItem('onboarding_user_segment')
+    if (storedSegment) {
+      try {
+        const userSegment = JSON.parse(storedSegment)
+        if (userSegment.syncApproach === 'mixed_calendar') {
+          // Redirect to pattern setup for mixed calendar users
+          setTimeout(() => {
+            window.location.href = '/app/add-calendar?force_onboarding=true&show_pattern_setup=true'
+          }, 2000)
+          return
+        }
+      } catch (error) {
+        console.error('Failed to parse stored user segment:', error)
+      }
+    }
   }
 
   const handleContinue = () => {
+    // Check if this was from onboarding with mixed calendar
+    const storedSegment = localStorage.getItem('onboarding_user_segment')
+    if (storedSegment) {
+      try {
+        const userSegment = JSON.parse(storedSegment)
+        if (userSegment.syncApproach === 'mixed_calendar') {
+          // Clean up localStorage and redirect to pattern setup
+          localStorage.removeItem('onboarding_user_segment')
+          localStorage.removeItem('onboarding_selected_path')
+          localStorage.removeItem('oauth_from_onboarding')
+          window.location.href = '/app/add-calendar?force_onboarding=true&show_pattern_setup=true'
+          return
+        }
+      } catch (error) {
+        console.error('Failed to parse stored user segment:', error)
+      }
+    }
+    
+    // Clean up localStorage for normal flow
+    localStorage.removeItem('onboarding_user_segment')
+    localStorage.removeItem('onboarding_selected_path')
+    localStorage.removeItem('oauth_from_onboarding')
     window.location.href = '/app'
   }
 
@@ -111,6 +164,7 @@ export function CalendarSelectionPage({ success, error, availableCalendars = [] 
         onClose={() => setShowModal(false)}
         onSuccess={handleSuccess}
         calendars={availableCalendars}
+        syncApproach={syncApproach}
       />
       </Container>
     )
@@ -193,6 +247,7 @@ export function CalendarSelectionPage({ success, error, availableCalendars = [] 
         onClose={() => setShowModal(false)}
         onSuccess={handleSuccess}
         calendars={availableCalendars}
+        syncApproach={syncApproach}
       />
     </Container>
   )

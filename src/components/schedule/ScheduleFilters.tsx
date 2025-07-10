@@ -53,7 +53,7 @@ export function ScheduleFilters() {
       window.removeEventListener('scroll', handleScroll)
       window.removeEventListener('resize', handleResize)
     }
-  }, [accordionValue])
+  }, [accordionValue, preventAutoClose])
 
 
 

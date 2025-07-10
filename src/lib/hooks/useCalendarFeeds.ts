@@ -77,10 +77,33 @@ export function useSyncAllCalendarFeeds(userId: string) {
   })
 }
 
+export function useUpdateCalendarFeedSyncApproach() {
+  return useSupabaseMutation<CalendarFeed, { feedId: string; syncApproach: 'yoga_only' | 'mixed_calendar' }>({
+    mutationFn: async (_, variables) => {
+      const response = await fetch(`/api/calendar-feeds/${variables.feedId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ sync_approach: variables.syncApproach }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to update sync approach')
+      }
+
+      const data = await response.json()
+      return data.feed
+    },
+  })
+}
+
 export function useCalendarFeedActions() {
   const createMutation = useCreateCalendarFeed()
   const deleteMutation = useDeleteCalendarFeed()
   const syncMutation = useSyncCalendarFeed()
+  const updateSyncApproachMutation = useUpdateCalendarFeedSyncApproach()
 
   const createFeed = useCallback(async (feed: CalendarFeedInsert) => {
     return createMutation.mutateAsync(feed)
@@ -94,16 +117,23 @@ export function useCalendarFeedActions() {
     return syncMutation.mutateAsync({ feedId, mode })
   }, [syncMutation])
 
+  const updateSyncApproach = useCallback(async (feedId: string, syncApproach: 'yoga_only' | 'mixed_calendar') => {
+    return updateSyncApproachMutation.mutateAsync({ feedId, syncApproach })
+  }, [updateSyncApproachMutation])
+
   return {
     createFeed,
     deleteFeed,
     syncFeed,
+    updateSyncApproach,
     isCreating: createMutation.isLoading,
     isDeleting: deleteMutation.isLoading,
     isSyncing: syncMutation.isLoading,
+    isUpdatingSyncApproach: updateSyncApproachMutation.isLoading,
     createError: createMutation.error,
     deleteError: deleteMutation.error,
     syncError: syncMutation.error,
+    updateSyncApproachError: updateSyncApproachMutation.error,
     createResult: createMutation.data,
   }
 } 

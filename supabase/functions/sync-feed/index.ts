@@ -7,6 +7,7 @@ import { matchTags, matchStudioId } from "../_shared/matching.ts";
 import { extractStudentCounts } from "./enrichInstance.ts";
 import { extractCalendarName, ensureUTCString, generateRecurrenceInstances, fetchExistingEvents, deleteStaleEvents } from "./helpers.ts";
 import { syncOAuthCalendar } from "./oauth-calendar-sync.ts";
+import { applyFilterRules } from "./filter-rules.ts";
 
 serve(async (req) => {
   const origin = req.headers.get("origin");
@@ -72,14 +73,17 @@ serve(async (req) => {
               nowUTC : 
               new Date(nowUTC.getTime() + daysToSync * 24 * 60 * 60 * 1000);
             
+            // Apply filter rules based on user's sync approach
+            const filteredEvents = await applyFilterRules(feed.user_id, feed.id, enrichedEvents);
+            
             const { data: existingEvents } = await fetchExistingEvents(supabase, feed.user_id, feed.id, windowStart, windowEnd);
-            await deleteStaleEvents(supabase, enrichedEvents, existingEvents);
+            await deleteStaleEvents(supabase, filteredEvents, existingEvents);
             
             // Upsert events
-            if (enrichedEvents.length > 0) {
+            if (filteredEvents.length > 0) {
               const { error: upsertError } = await supabase
                 .from("events")
-                .upsert(enrichedEvents, {
+                .upsert(filteredEvents, {
                   onConflict: ["user_id", "uid", "recurrence_id"]
                 });
               
@@ -198,7 +202,7 @@ serve(async (req) => {
           feed_id: feed.id,
           user_id: feed.user_id,
           updated_at: new Date().toISOString(),
-          visibility: existingEvent?.visibility || "public",
+          visibility: existingEvent?.visibility || "public", // Will be updated by privacy service
           image_url: existingEvent?.image_url || null,
           custom_tags: existingEvent?.custom_tags || [],
           tags: eventTags || [],
@@ -217,12 +221,15 @@ serve(async (req) => {
       nowUTC : 
       new Date(nowUTC.getTime() + daysToSync * 24 * 60 * 60 * 1000);
     
+    // Apply filter rules based on user's sync approach
+    const filteredEvents = await applyFilterRules(feed.user_id, feed.id, enrichedEvents);
+    
     const { data: existingEvents } = await fetchExistingEvents(supabase, feed.user_id, feed.id, windowStart, windowEnd);
-    await deleteStaleEvents(supabase, enrichedEvents, existingEvents);
+    await deleteStaleEvents(supabase, filteredEvents, existingEvents);
     
     const { error: upsertError } = await supabase
       .from("events")
-      .upsert(enrichedEvents, {
+      .upsert(filteredEvents, {
         onConflict: ["user_id", "uid", "recurrence_id"]
       });
     

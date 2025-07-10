@@ -40,6 +40,9 @@ export function OAuthCalendarConnection({ user, onError }: OAuthCalendarConnecti
       setIsConnecting(provider)
       setError(null)
       
+      // Store that this is from onboarding flow for OAuth callback handling
+      localStorage.setItem('oauth_from_onboarding', 'true')
+      
       // Initiate OAuth flow
       await oauthCalendarService.initiateOAuthFlow(provider)
       

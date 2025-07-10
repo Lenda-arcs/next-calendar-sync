@@ -129,7 +129,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { selections }: { selections: CalendarSelection[] } = await request.json()
+    const { selections, sync_approach }: { selections: CalendarSelection[], sync_approach?: string } = await request.json()
 
     if (!selections || !Array.isArray(selections)) {
       return NextResponse.json({ error: 'Invalid selections' }, { status: 400 })
@@ -206,6 +206,7 @@ export async function POST(request: NextRequest) {
           user_id: user.id,
           calendar_name: `oauth:google:${sel.calendarId}:${calendar?.summary || 'Unknown Calendar'}`,
           feed_url: null, // OAuth feeds don't have feed_url
+          sync_approach: sync_approach || 'yoga_only', // Set sync approach per calendar feed
         }
       })
 

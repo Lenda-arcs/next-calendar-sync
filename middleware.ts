@@ -102,6 +102,11 @@ export async function middleware(req: NextRequest) {
       return supabaseResponse
     }
 
+    // Allow auth callback to process without interference
+    if (pathname === '/auth/callback') {
+      return supabaseResponse
+    }
+
     // Handle protected routes (require authentication)
     if (isProtectedRoute(pathname)) {
       if (!user) {

@@ -15,6 +15,7 @@ import { type CalendarFeedInsert } from '@/lib/calendar-feeds'
 
 interface AddCalendarFormProps {
   user: User | null
+  onSuccess?: () => void
 }
 
 const TIMEZONE_OPTIONS = [
@@ -31,7 +32,7 @@ const TIMEZONE_OPTIONS = [
   { value: 'Australia/Sydney', label: 'Australia/Sydney' },
 ]
 
-export function AddCalendarForm({ user }: AddCalendarFormProps) {
+export function AddCalendarForm({ user, onSuccess }: AddCalendarFormProps) {
   const router = useRouter()
   const [formData, setFormData] = useState({
     calendarUrl: '',
@@ -80,11 +81,24 @@ export function AddCalendarForm({ user }: AddCalendarFormProps) {
     // Convert webcal URLs to https URLs automatically
     const processedUrl = convertWebcalToHttps(formData.calendarUrl)
 
+    // Get sync approach from localStorage if available
+    let syncApproach = 'yoga_only'
+    const storedSegment = localStorage.getItem('onboarding_user_segment')
+    if (storedSegment) {
+      try {
+        const userSegment = JSON.parse(storedSegment)
+        syncApproach = userSegment.syncApproach || 'yoga_only'
+      } catch (error) {
+        console.error('Failed to parse stored user segment:', error)
+      }
+    }
+
     const feedData: CalendarFeedInsert = {
       user_id: user.id,
       feed_url: processedUrl,
       calendar_name: formData.calendarName,
-    }
+      sync_approach: syncApproach,
+    } as CalendarFeedInsert & { sync_approach: string }
 
     try {
       setSyncStatus({ isCreating: true, isAutoSyncing: false })
@@ -101,10 +115,16 @@ export function AddCalendarForm({ user }: AddCalendarFormProps) {
         )
       }
       
-      // Redirect to dashboard after success
-      setTimeout(() => {
-        router.push('/app')
-      }, 3000)
+      // Call onSuccess callback if provided, otherwise redirect to dashboard
+      if (onSuccess) {
+        setTimeout(() => {
+          onSuccess()
+        }, 2000)
+      } else {
+        setTimeout(() => {
+          router.push('/app')
+        }, 3000)
+      }
     } catch (error) {
       console.error('Error adding calendar feed:', error)
       setSyncStatus({ isCreating: false, isAutoSyncing: false })

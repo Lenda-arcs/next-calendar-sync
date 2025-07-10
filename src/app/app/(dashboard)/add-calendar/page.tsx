@@ -13,6 +13,7 @@ export default async function AddCalendarPage({
     success?: string
     error?: string
     step?: string
+    message?: string
   }>
 }) {
   const supabase = await createServerClient()
@@ -41,6 +42,7 @@ export default async function AddCalendarPage({
   const success = resolvedSearchParams.success
   const error = resolvedSearchParams.error
   const step = resolvedSearchParams.step
+  const message = resolvedSearchParams.message
   const isOnboarding = feeds.length === 0 || forceOnboarding
   
   // Check if user has OAuth integration but no calendar feeds yet
@@ -69,7 +71,7 @@ export default async function AddCalendarPage({
   if (isOnboarding) {
     return (
       <div className="min-h-screen">
-        <EnhancedCalendarOnboarding user={user} success={success} error={error} />
+        <EnhancedCalendarOnboarding user={user} success={success} error={error} message={message} />
       </div>
     )
   }
