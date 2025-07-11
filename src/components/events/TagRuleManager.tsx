@@ -13,6 +13,7 @@ import DataLoader from '@/components/ui/data-loader'
 import { TagRulesSkeleton } from '@/components/ui/skeleton'
 import { TagRulesCard } from './TagRulesCard'
 import { TagRuleFormDialog } from './TagRuleFormDialog'
+import { clearTagMapCache } from '@/lib/event-utils'
 
 // Extended TagRule interface to handle new fields until database types are regenerated
 interface ExtendedTagRule extends TagRule {
@@ -94,7 +95,7 @@ export const TagRuleManager: React.FC<Props> = ({ userId, availableTags: propTag
   const availableTags = propTags || fetchedTags
 
   // Fetch keyword suggestions
-  const { allSuggestions: keywordSuggestions, isLoading: suggestionsLoading } = useKeywordSuggestions({
+  const { allSuggestions: keywordSuggestions } = useKeywordSuggestions({
     userId,
     enabled: !!userId
   })
@@ -127,6 +128,9 @@ export const TagRuleManager: React.FC<Props> = ({ userId, availableTags: propTag
       if (data && data[0]) {
         setOptimisticRules(prev => [...prev, data[0]])
       }
+      
+      // Clear tag cache since rules changed
+      clearTagMapCache()
       
       // 🚀 AUTOMATICALLY REMATCH TAGS INSTEAD OF REQUIRING FULL SYNC
       try {
@@ -190,6 +194,9 @@ export const TagRuleManager: React.FC<Props> = ({ userId, availableTags: propTag
         ))
       }
       
+      // Clear tag cache since rules changed
+      clearTagMapCache()
+      
       // 🚀 AUTOMATICALLY REMATCH TAGS INSTEAD OF REQUIRING FULL SYNC
       try {
         const rematchResult = await rematchUserTags(userId)
@@ -230,6 +237,9 @@ export const TagRuleManager: React.FC<Props> = ({ userId, availableTags: propTag
       
       // Remove from optimistic additions if it was recently added
       setOptimisticRules(prev => prev.filter(rule => rule.id !== ruleId))
+      
+      // Clear tag cache since rules changed
+      clearTagMapCache()
       
       // 🚀 AUTOMATICALLY REMATCH TAGS INSTEAD OF REQUIRING FULL SYNC
       try {
@@ -423,7 +433,7 @@ export const TagRuleManager: React.FC<Props> = ({ userId, availableTags: propTag
               keywordSuggestions={data.keywordSuggestions}
               isCreating={creating}
               isUpdating={updating}
-              suggestionsLoading={suggestionsLoading}
+              userId={userId}
             />
           </>
         )}

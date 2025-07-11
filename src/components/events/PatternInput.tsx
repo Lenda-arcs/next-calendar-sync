@@ -20,6 +20,8 @@ interface PatternConflict {
   affectedLocations: string[]
 }
 
+type PatternInputMode = 'location' | 'keywords'
+
 interface PatternInputProps {
   label: string
   patterns: string[]
@@ -30,6 +32,9 @@ interface PatternInputProps {
   required?: boolean
   error?: string
   className?: string
+  mode?: PatternInputMode // Removed location-keywords
+  maxPatterns?: number
+  suggestions?: Array<{ value: string; label: string; count?: number }>
 }
 
 export function PatternInput({
@@ -41,16 +46,68 @@ export function PatternInput({
   currentStudioId,
   required = false,
   error,
-  className
+  className,
+  mode = 'location',
+  maxPatterns = 10,
+  suggestions = []
 }: PatternInputProps) {
   const [inputValue, setInputValue] = useState('')
   const [conflicts, setConflicts] = useState<PatternConflict[]>([])
   const [previewLocations, setPreviewLocations] = useState<string[]>([])
+  const [previewEvents, setPreviewEvents] = useState<Array<{ id: string; title: string; location?: string }>>([])
   const [showPreview, setShowPreview] = useState(false)
   const [isCheckingConflicts, setIsCheckingConflicts] = useState(false)
   const supabase = createClient()
 
-  // Check for pattern conflicts
+  // Update placeholder based on mode
+  const getPlaceholder = () => {
+    switch (mode) {
+      case 'keywords':
+        return placeholder || "e.g., Flow, Vinyasa, Meditation"
+      case 'location':
+        return placeholder || "e.g., Flow Studio, Yoga Works"
+      default:
+        return placeholder || "e.g., Flow Studio, Yoga Works"
+    }
+  }
+
+  // Smart suggestion filtering
+  const getFilteredSuggestions = (suggestions: Array<{ value: string; label: string; count?: number }>) => {
+    const genericTerms = [
+      // Countries
+      'germany', 'netherlands', 'belgium', 'france', 'spain', 'italy', 'uk', 'usa',
+      // Cities (common ones)
+      'berlin', 'amsterdam', 'london', 'paris', 'madrid', 'rome', 'new york', 'los angeles',
+      // Generic location terms
+      'downtown', 'center', 'main', 'central', 'north', 'south', 'east', 'west',
+      // Generic yoga terms (for keywords mode)
+      'yoga', 'class', 'session', 'practice', 'workshop'
+    ]
+    
+    return suggestions
+      .filter(s => {
+        const lowerValue = s.value.toLowerCase()
+        // Filter out overly generic terms
+        if (genericTerms.includes(lowerValue)) return false
+        // Filter out very short terms (likely too generic)
+        if (s.value.length < 3) return false
+        // Filter out terms that are too common (more than 50% of events)
+        if (s.count && s.count > 100) return false // Adjust threshold as needed
+        return true
+      })
+      .sort((a, b) => {
+        // Prioritize terms with moderate usage (not too rare, not too common)
+        const aCount = a.count || 0
+        const bCount = b.count || 0
+        // Sweet spot: 5-50 events
+        const aScore = aCount >= 5 && aCount <= 50 ? aCount : 0
+        const bScore = bCount >= 5 && bCount <= 50 ? bCount : 0
+        return bScore - aScore
+      })
+      .slice(0, 8) // Limit to top 8 suggestions
+  }
+
+  // Check for pattern conflicts based on mode
   const checkConflicts = useCallback(async (patternsToCheck: string[]) => {
     if (patternsToCheck.length === 0) {
       setConflicts([])
@@ -59,94 +116,160 @@ export function PatternInput({
 
     setIsCheckingConflicts(true)
     try {
-      // Get existing studios with patterns
-      let query = supabase
-        .from('billing_entities')
-        .select('id, entity_name, location_match')
-        .eq('user_id', userId)
-        .eq('entity_type', 'studio')
+      if (mode === 'location') {
+        // Original studio pattern conflict checking
+        let query = supabase
+          .from('billing_entities')
+          .select('id, entity_name, location_match')
+          .eq('user_id', userId)
+          .eq('entity_type', 'studio')
 
-      // Only exclude current studio if we're in edit mode
-      if (currentStudioId) {
-        query = query.neq('id', currentStudioId)
-      }
+        if (currentStudioId) {
+          query = query.neq('id', currentStudioId)
+        }
 
-      const { data: existingStudios, error: studiosError } = await query
+        const { data: existingStudios, error: studiosError } = await query
+        if (studiosError) throw studiosError
 
-      if (studiosError) throw studiosError
+        const newConflicts: PatternConflict[] = []
 
-      const newConflicts: PatternConflict[] = []
+        for (const pattern of patternsToCheck) {
+          const conflictingStudios = []
+          const lowerPattern = pattern.toLowerCase()
 
-      for (const pattern of patternsToCheck) {
-        const conflictingStudios = []
-        const lowerPattern = pattern.toLowerCase()
-
-        for (const studio of existingStudios || []) {
-          const studioPatterns = studio.location_match || []
-          
-          for (const existingPattern of studioPatterns) {
-            const lowerExisting = existingPattern.toLowerCase()
+          for (const studio of existingStudios || []) {
+            const studioPatterns = studio.location_match || []
             
-            // Check for overlaps: either pattern contains the other
-            if (lowerPattern.includes(lowerExisting) || lowerExisting.includes(lowerPattern)) {
-              conflictingStudios.push({
-                id: studio.id,
-                name: studio.entity_name,
-                conflictingPattern: existingPattern
-              })
+            for (const existingPattern of studioPatterns) {
+              const lowerExisting = existingPattern.toLowerCase()
+              
+              if (lowerPattern.includes(lowerExisting) || lowerExisting.includes(lowerPattern)) {
+                conflictingStudios.push({
+                  id: studio.id,
+                  name: studio.entity_name,
+                  conflictingPattern: existingPattern
+                })
+              }
             }
+          }
+
+          if (conflictingStudios.length > 0) {
+            newConflicts.push({
+              pattern,
+              conflictingStudios,
+              affectedLocations: []
+            })
           }
         }
 
-        if (conflictingStudios.length > 0) {
-          newConflicts.push({
-            pattern,
-            conflictingStudios,
-            affectedLocations: [] // We'll populate this in preview
-          })
-        }
-      }
+        setConflicts(newConflicts)
+      } else {
+        // For keyword modes, check against existing tag rules
+        const { data: existingRules, error: rulesError } = await supabase
+          .from('tag_rules')
+          .select('id, keywords, location_keywords, tags(name)')
+          .eq('user_id', userId)
 
-      setConflicts(newConflicts)
+        if (rulesError) throw rulesError
+
+        const newConflicts: PatternConflict[] = []
+
+        for (const pattern of patternsToCheck) {
+          const conflictingRules = []
+          const lowerPattern = pattern.toLowerCase()
+
+          for (const rule of existingRules || []) {
+            const ruleKeywords = mode === 'keywords' 
+              ? (rule.keywords || [])
+              : (rule.location_keywords || [])
+
+            if (ruleKeywords.some((k: string) => k.toLowerCase().includes(lowerPattern))) {
+              conflictingRules.push({
+                id: rule.id,
+                name: rule.tags?.name || 'Unknown Tag',
+                conflictingPattern: ruleKeywords.find((k: string) => k.toLowerCase().includes(lowerPattern)) || pattern
+              })
+            }
+          }
+
+          if (conflictingRules.length > 0) {
+            newConflicts.push({
+              pattern,
+              conflictingStudios: conflictingRules,
+              affectedLocations: []
+            })
+          }
+        }
+
+        setConflicts(newConflicts)
+      }
     } catch (error) {
       console.error('Error checking pattern conflicts:', error)
     } finally {
       setIsCheckingConflicts(false)
     }
-  }, [userId, currentStudioId, supabase])
+  }, [userId, currentStudioId, supabase, mode])
 
-  // Preview which locations would match
+  // Preview which locations/events would match
   const previewMatches = useCallback(async (patternsToCheck: string[]) => {
     if (patternsToCheck.length === 0) {
       setPreviewLocations([])
+      setPreviewEvents([])
       return
     }
 
     try {
-      // Get user's event locations
-      const { data: events, error } = await supabase
-        .from('events')
-        .select('location')
-        .eq('user_id', userId)
-        .not('location', 'is', null)
+      if (mode === 'location') {
+        // Original location preview
+        const { data: events, error } = await supabase
+          .from('events')
+          .select('location')
+          .eq('user_id', userId)
+          .not('location', 'is', null)
 
-      if (error) throw error
+        if (error) throw error
 
-      const uniqueLocations = Array.from(new Set(
-        events.map(event => event.location).filter((location): location is string => Boolean(location))
-      ))
+        const uniqueLocations = Array.from(new Set(
+          events.map(event => event.location).filter((location): location is string => Boolean(location))
+        ))
 
-      const matchingLocations = uniqueLocations.filter(location => 
-        patternsToCheck.some(pattern => 
-          location.toLowerCase().includes(pattern.toLowerCase())
+        const matchingLocations = uniqueLocations.filter(location => 
+          patternsToCheck.some(pattern => 
+            location.toLowerCase().includes(pattern.toLowerCase())
+          )
         )
-      )
 
-      setPreviewLocations(matchingLocations)
+        setPreviewLocations(matchingLocations)
+      } else {
+        // Preview events that would match keywords
+        const { data: events, error } = await supabase
+          .from('events')
+          .select('id, title, location')
+          .eq('user_id', userId)
+
+        if (error) throw error
+
+        const matchingEvents = events.filter(event => 
+          patternsToCheck.some(pattern => {
+            const lowerPattern = pattern.toLowerCase()
+            if (mode === 'keywords') {
+              return (event.title?.toLowerCase().includes(lowerPattern))
+            } else {
+              return (event.location?.toLowerCase().includes(lowerPattern))
+            }
+          })
+        ).map(event => ({
+          id: event.id,
+          title: event.title || 'Untitled Event',
+          location: event.location || undefined
+        }))
+
+        setPreviewEvents(matchingEvents.slice(0, 20)) // Limit to 20 events
+      }
     } catch (error) {
       console.error('Error previewing matches:', error)
     }
-  }, [userId, supabase])
+  }, [userId, supabase, mode])
 
   // Check conflicts when patterns change
   useEffect(() => {
@@ -162,7 +285,7 @@ export function PatternInput({
 
   const addPattern = () => {
     const trimmedValue = inputValue.trim()
-    if (trimmedValue && !patterns.includes(trimmedValue)) {
+    if (trimmedValue && !patterns.includes(trimmedValue) && patterns.length < maxPatterns) {
       onChange([...patterns, trimmedValue])
       setInputValue('')
     }
@@ -194,14 +317,14 @@ export function PatternInput({
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
           onKeyPress={handleKeyPress}
-          placeholder={placeholder}
+          placeholder={getPlaceholder()}
           className={error ? 'border-destructive' : ''}
         />
         <Button 
           type="button" 
           onClick={addPattern} 
           size="sm"
-          disabled={!inputValue.trim() || patterns.includes(inputValue.trim())}
+          disabled={!inputValue.trim() || patterns.includes(inputValue.trim()) || patterns.length >= maxPatterns}
         >
           <Plus className="w-4 h-4" />
         </Button>
@@ -243,13 +366,51 @@ export function PatternInput({
         })}
       </div>
 
+      {/* Pattern limit warning */}
+      {patterns.length >= maxPatterns && (
+        <p className="text-xs text-muted-foreground">
+          Maximum {maxPatterns} patterns reached. Remove a pattern to add another.
+        </p>
+      )}
+
+      {/* Suggestions */}
+      {suggestions.length > 0 && (
+        <div className="space-y-2">
+          <p className="text-xs font-medium text-muted-foreground">Suggestions:</p>
+          <div className="flex flex-wrap gap-1">
+            {getFilteredSuggestions(suggestions).map((suggestion, index) => (
+              <Button
+                key={index}
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-6 px-2 text-xs"
+                onClick={() => {
+                  if (!patterns.includes(suggestion.value) && patterns.length < maxPatterns) {
+                    onChange([...patterns, suggestion.value])
+                  }
+                }}
+                disabled={patterns.includes(suggestion.value) || patterns.length >= maxPatterns}
+              >
+                {suggestion.label}
+                {suggestion.count && (
+                  <span className="ml-1 text-muted-foreground">({suggestion.count})</span>
+                )}
+              </Button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Conflict warnings */}
       {hasWarnings && (
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>
             <div className="space-y-2">
-              <p className="font-medium">Pattern conflicts detected:</p>
+              <p className="font-medium">
+                {mode === 'location' ? 'Pattern conflicts detected:' : 'Keyword conflicts detected:'}
+              </p>
               {conflicts.map((conflict, index) => (
                 <div key={index} className="text-sm">
                   <strong>&quot;{conflict.pattern}&quot;</strong> overlaps with:
@@ -262,16 +423,18 @@ export function PatternInput({
                   </ul>
                 </div>
               ))}
-              <p className="text-xs">
-                💡 Consider making patterns more specific (e.g., &quot;Flow Studio Amsterdam&quot; instead of &quot;Flow Studio&quot;)
-              </p>
+              {mode === 'location' && (
+                <p className="text-xs">
+                  💡 Consider making patterns more specific (e.g., &quot;Flow Studio Amsterdam&quot; instead of &quot;Flow Studio&quot;)
+                </p>
+              )}
             </div>
           </AlertDescription>
         </Alert>
       )}
 
-      {/* Location preview */}
-      {showPreview && (
+      {/* Preview */}
+      {showPreview && mode === 'location' && (
         <Alert>
           <CheckCircle className="h-4 w-4" />
           <AlertDescription>
@@ -295,6 +458,39 @@ export function PatternInput({
               ) : (
                 <p className="text-sm text-muted-foreground">
                   No existing locations match these patterns yet.
+                </p>
+              )}
+            </div>
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Event preview for keyword modes */}
+      {showPreview && (mode === 'keywords') && (
+        <Alert>
+          <CheckCircle className="h-4 w-4" />
+          <AlertDescription>
+            <div className="space-y-2">
+              <p className="font-medium">
+                These keywords would match {previewEvents.length} existing events:
+              </p>
+              {previewEvents.length > 0 ? (
+                <div className="space-y-1">
+                  {previewEvents.slice(0, 5).map((event, index) => (
+                    <div key={index} className="text-xs bg-gray-50 p-2 rounded">
+                      <strong>{event.title}</strong>
+                      {event.location && <span className="text-muted-foreground"> • {event.location}</span>}
+                    </div>
+                  ))}
+                  {previewEvents.length > 5 && (
+                    <p className="text-xs text-muted-foreground">
+                      +{previewEvents.length - 5} more events
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  No existing events match these keywords yet.
                 </p>
               )}
             </div>

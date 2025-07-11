@@ -1,18 +1,19 @@
 'use client'
 
 import React from 'react'
-import { useAllTags } from '@/lib/hooks/useAllTags'
+import DataLoader from '@/components/ui/data-loader'
 import { useSupabaseQuery } from '@/lib/hooks/useSupabaseQuery'
+import { useAllTags } from '@/lib/hooks/useAllTags'
 import { useTagOperations } from '@/lib/hooks/useTagOperations'
 import { UserRole } from '@/lib/types'
 import { TagLibrary } from '@/components/events/TagLibrary'
 import { TagRuleManager } from '@/components/events/TagRuleManager'
 import { NewTagForm } from '@/components/events/NewTagForm'
 import { TagViewDialog } from '@/components/events/TagViewDialog'
-import DataLoader from '@/components/ui/data-loader'
 import { TagLibraryGridSkeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
 import { Plus } from 'lucide-react'
+import { clearTagMapCache } from '@/lib/event-utils'
 
 interface Props {
   userId: string
@@ -59,6 +60,11 @@ export function ManageTagsClient({ userId }: Props) {
   } = useTagOperations({ 
     onSuccess: refetchAllTags // Use the shared refetch function
   })
+
+  // Clear cache when tags are updated
+  React.useEffect(() => {
+    clearTagMapCache()
+  }, [allTags])
 
   const userRole = (userData?.role || 'user') as UserRole
   const isLoading = tagsLoading || roleLoading

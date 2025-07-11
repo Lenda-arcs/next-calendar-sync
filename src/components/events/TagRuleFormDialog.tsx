@@ -5,7 +5,7 @@ import { Tag, TagRule } from '@/lib/types'
 import { UnifiedDialog } from '@/components/ui/unified-dialog'
 import { Button } from '@/components/ui/button'
 import { Select } from '@/components/ui/select'
-import { MultiSelect, MultiSelectOption } from '@/components/ui/multi-select'
+import { PatternInput } from './PatternInput'
 import { Loader2, Plus, Edit2 } from 'lucide-react'
 
 interface KeywordSuggestion {
@@ -37,7 +37,7 @@ interface Props {
   keywordSuggestions: KeywordSuggestion[]
   isCreating?: boolean
   isUpdating?: boolean
-  suggestionsLoading?: boolean
+  userId: string
 }
 
 export const TagRuleFormDialog: React.FC<Props> = ({
@@ -57,34 +57,18 @@ export const TagRuleFormDialog: React.FC<Props> = ({
   keywordSuggestions,
   isCreating = false,
   isUpdating = false,
-  suggestionsLoading = false,
+  userId,
 }) => {
-  // Convert keyword suggestions to multi-select options
-  const titleSuggestionOptions: MultiSelectOption[] = keywordSuggestions
-    .filter(s => s.type === 'title')
-    .map(s => ({
-      value: s.keyword,
-      label: s.keyword,
-      count: s.count
-    }))
-
-  const locationSuggestionOptions: MultiSelectOption[] = keywordSuggestions
-    .filter(s => s.type === 'location')
-    .map(s => ({
-      value: s.keyword,
-      label: s.keyword,
-      count: s.count
-    }))
-
   const title = isEditing ? 'Edit Tag Rule' : 'Create Tag Rule'
   const description = isEditing 
-    ? 'Update the keywords and tag for this rule. Changes will be applied to existing events.'
+    ? 'Update this rule to change how events are automatically tagged.'
     : 'Create a new rule to automatically tag events based on keywords in their title, description, or location.'
 
-  const currentKeywords = isEditing ? (editingRule?.keywords || []) : keywords
-  const currentLocationKeywords = isEditing ? (editingRule?.location_keywords || []) : locationKeywords
+  // Use the correct data source based on editing state
+  const currentKeywords = isEditing ? (editingRule?.keywords || []) : (Array.isArray(keywords) ? keywords : [])
+  const currentLocationKeywords = isEditing ? (editingRule?.location_keywords || []) : (Array.isArray(locationKeywords) ? locationKeywords : [])
   const currentSelectedTag = isEditing ? (editingRule?.tag_id || '') : selectedTag
-
+  
   const hasKeywords = currentKeywords.length > 0
   const hasLocationKeywords = currentLocationKeywords.length > 0
   const canSave = (hasKeywords || hasLocationKeywords) && currentSelectedTag
@@ -162,41 +146,46 @@ export const TagRuleFormDialog: React.FC<Props> = ({
       size="lg"
     >
       <div className="space-y-6">
-        {/* Keywords for title/description */}
-        <div>
-          <MultiSelect
-            label="Keywords (Title/Description)"
-            placeholder={suggestionsLoading ? "Loading suggestions..." : "Select or type keywords..."}
-            options={titleSuggestionOptions}
-            value={currentKeywords}
-            onChange={handleKeywordsChange}
-            maxSelections={5}
-            showCounts={true}
-            displayMode="badges"
-          />
-          <p className="text-xs text-muted-foreground mt-1">
-            Match these keywords in event titles or descriptions (max 5)
-          </p>
-        </div>
+        {/* Keywords for title/description using PatternInput */}
+        <PatternInput
+          label="Keywords (Title/Description)"
+          patterns={currentKeywords}
+          onChange={handleKeywordsChange}
+          placeholder="e.g., Flow, Vinyasa, Meditation"
+          userId={userId}
+          mode="keywords"
+          maxPatterns={5}
+          suggestions={keywordSuggestions.filter(s => s.type === 'title').map(s => ({ 
+            value: s.keyword, 
+            label: s.keyword,
+            count: s.count 
+          }))}
+          required={!hasLocationKeywords}
+        />
+        <p className="text-xs text-muted-foreground -mt-3">
+          Match these keywords in event titles or descriptions (max 5)
+        </p>
 
-        {/* Keywords for location */}
-        <div>
-          <MultiSelect
-            label="Location Keywords (Optional)"
-            placeholder={suggestionsLoading ? "Loading suggestions..." : "Select or type location keywords..."}
-            options={locationSuggestionOptions}
-            value={currentLocationKeywords}
-            onChange={handleLocationKeywordsChange}
-            maxSelections={5}
-            showCounts={true}
-            displayMode="badges"
-          />
-          <p className="text-xs text-muted-foreground mt-1">
-            Match these keywords in event locations (max 5)
-          </p>
-        </div>
+        {/* Keywords for location using PatternInput */}
+        <PatternInput
+          label="Location Keywords"
+          patterns={currentLocationKeywords}
+          onChange={handleLocationKeywordsChange}
+          placeholder="e.g., Studio A, Flow Room, Main Hall"
+          userId={userId}
+          mode="location"
+          maxPatterns={15}
+          suggestions={keywordSuggestions.filter(s => s.type === 'location').map(s => ({ 
+            value: s.keyword, 
+            label: s.keyword,
+            count: s.count 
+          }))}
+        />
+        <p className="text-xs text-muted-foreground -mt-3">
+          Match these keywords in event locations (max 5)
+        </p>
 
-        {/* Tag selection */}
+        {/* Tag selection - remains the same */}
         <div>
           <Select
             label="Select Tag"
@@ -214,7 +203,7 @@ export const TagRuleFormDialog: React.FC<Props> = ({
           </p>
         </div>
 
-        {/* Rules info */}
+        {/* Rules info - remains the same */}
         <div className="bg-blue-50/50 border border-blue-200/50 rounded-lg p-4">
           <h4 className="text-sm font-medium text-blue-900 mb-2">How Tag Rules Work</h4>
           <ul className="text-xs text-blue-700 space-y-1">
