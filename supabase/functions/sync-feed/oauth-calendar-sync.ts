@@ -195,7 +195,7 @@ export async function syncOAuthCalendar(options: OAuthCalendarSyncOptions) {
       image_url: null,
       custom_tags: [],
       tags: eventTags || [],
-      status: event.status?.toUpperCase() || "CONFIRMED",
+      status: event.status?.toLowerCase() || "confirmed",
       studio_id: studioId,
       students_studio: studentsStudio,
       students_online: studentsOnline

@@ -13,6 +13,8 @@ import { OnboardingWizard } from './OnboardingWizard'
 import { CalendarCreationWizard } from './CalendarCreationWizard'
 import { ICloudSetupGuide } from './iCloudSetupGuide'
 import { CalendarPatternSetup } from './CalendarPatternSetup'
+import { useCreateCalendarFeed } from '@/lib/hooks/useCalendarFeeds'
+import { type CalendarFeedInsert } from '@/lib/calendar-feeds'
 import { type User } from '@/lib/types'
 
 interface EnhancedCalendarOnboardingProps {
@@ -37,6 +39,8 @@ export function EnhancedCalendarOnboarding({ user, success, error, message }: En
   const [userSegment, setUserSegment] = useState<UserSegment | null>(null)
   const [selectedPath, setSelectedPath] = useState<OnboardingPath | null>(null)
   const [currentCalendarFeedId, setCurrentCalendarFeedId] = useState<string | null>(null)
+  
+  const createFeedMutation = useCreateCalendarFeed()
 
   const isEmailConfirmed = success === 'email_confirmed'
 
@@ -75,9 +79,12 @@ export function EnhancedCalendarOnboarding({ user, success, error, message }: En
     setUserSegment(segment)
     setCurrentStep('connect')
     
-    // Store onboarding state for OAuth flow
+    // Store onboarding state for OAuth flow - only store serializable data
     localStorage.setItem('onboarding_user_segment', JSON.stringify(segment))
-    localStorage.setItem('onboarding_selected_path', JSON.stringify(path))
+    localStorage.setItem('onboarding_selected_path', JSON.stringify({
+      id: path.id,
+      method: path.method
+    }))
   }
 
   const handleConnectionSuccess = async () => {
@@ -97,6 +104,43 @@ export function EnhancedCalendarOnboarding({ user, success, error, message }: En
     }
     
     setCurrentStep('success')
+  }
+
+  const handleICloudSetupComplete = async (feedUrl: string, calendarName: string) => {
+    if (!user?.id) return
+    
+    try {
+      // Convert webcal URLs to https URLs automatically
+      const processedUrl = feedUrl.startsWith('webcal://') ? feedUrl.replace('webcal://', 'https://') : feedUrl
+      
+      // Get sync approach from localStorage if available
+      let syncApproach = 'yoga_only'
+      if (userSegment?.syncApproach) {
+        syncApproach = userSegment.syncApproach
+      }
+
+      const feedData: CalendarFeedInsert = {
+        user_id: user.id,
+        feed_url: processedUrl,
+        calendar_name: calendarName,
+        sync_approach: syncApproach,
+      } as CalendarFeedInsert & { sync_approach: string }
+
+      const result = await createFeedMutation.mutateAsync(feedData)
+      
+      if (result.syncResult.success) {
+        setCurrentCalendarFeedId(result.feed.id)
+        await handleConnectionSuccess()
+      } else {
+        // Still proceed even if sync failed
+        setCurrentCalendarFeedId(result.feed.id)
+        await handleConnectionSuccess()
+      }
+    } catch (error) {
+      console.error('Error adding iCloud calendar feed:', error)
+      // Still proceed to success for now - user can manually sync later
+      setCurrentStep('success')
+    }
   }
 
   const handlePatternSetupComplete = () => {
@@ -215,7 +259,7 @@ export function EnhancedCalendarOnboarding({ user, success, error, message }: En
             {/* iCloud Setup Guide */}
             {selectedPath.id === 'apple-guided' && (
               <ICloudSetupGuide 
-                onSetupComplete={handleConnectionSuccess}
+                onSetupComplete={handleICloudSetupComplete}
                 onCancel={handleBackToWizard}
               />
             )}
@@ -242,7 +286,7 @@ export function EnhancedCalendarOnboarding({ user, success, error, message }: En
             )}
 
             {/* Email Invitation System */}
-            {selectedPath.method === 'manual' && (
+            {selectedPath.method === 'manual' && selectedPath.id !== 'apple-guided' && (
               <div className="space-y-4">
                 <div className="text-center">
                   <h3 className="font-medium mb-2">Email Invitation</h3>

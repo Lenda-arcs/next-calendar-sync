@@ -8,18 +8,17 @@ import {
   Mail, 
   Globe, 
   Clock, 
-  AlertCircle,
-  Check,
   Save,
   RotateCcw,
   Loader2
 } from 'lucide-react'
+import { toast } from 'sonner'
 
 import { User } from '@/lib/types'
 import { useSupabaseUpdate } from '@/lib/hooks/useSupabaseMutation'
 import ImageUpload from '@/components/ui/image-upload'
 import { YogaStylesSelect } from '@/components/ui/yoga-styles-select'
-import { cn } from '@/lib/utils'
+import { cn, urlValidation } from '@/lib/utils'
 
 interface ProfileFormProps {
   user: User
@@ -117,21 +116,19 @@ const TextArea: React.FC<{
 }
 
 export function ProfileForm({ user, onUpdate }: ProfileFormProps) {
-  const [authError, setAuthError] = useState<string>('')
-  const [successMessage, setSuccessMessage] = useState<string>('')
   const [publicUrlPreview, setPublicUrlPreview] = useState<string>('')
   const [hasFormChanges, setHasFormChanges] = useState(false)
 
   // Use the Supabase mutation hook for updating user profile
   const updateUserMutation = useSupabaseUpdate<User>('users', {
     onSuccess: (data) => {
-      setSuccessMessage('Profile updated successfully!')
+      toast.success('Profile updated successfully!')
       setHasFormChanges(false) // Reset changes flag on successful save
       onUpdate?.(data[0]) // Call the optional callback with updated user data
     },
     onError: (error) => {
       console.error('Profile update error:', error)
-      setAuthError(`Failed to update profile: ${error.message}`)
+      toast.error(`Failed to update profile: ${error.message}`)
     },
   })
 
@@ -195,42 +192,31 @@ export function ProfileForm({ user, onUpdate }: ProfileFormProps) {
       },
       instagram_url: {
         custom: (value) => {
-          if (value && typeof value === 'string' && value.trim()) {
-            const instagramRegex = /^https?:\/\/(www\.)?(instagram\.com|instagr\.am)\/.+/
-            if (!instagramRegex.test(value)) {
-              return 'Please enter a valid Instagram URL'
-            }
-          }
-          return undefined
+          const validation = urlValidation.validateInstagramUrl(value as string)
+          return validation.isValid ? undefined : validation.error
         }
       },
       website_url: {
         custom: (value) => {
-          if (value && typeof value === 'string' && value.trim()) {
-            try {
-              new URL(value)
-              return undefined
-            } catch {
-              return 'Please enter a valid website URL'
-            }
-          }
-          return undefined
+          const validation = urlValidation.validateWebsiteUrl(value as string)
+          return validation.isValid ? undefined : validation.error
         }
       }
     },
     onSubmit: async (formData) => {
-      setAuthError('')
-      setSuccessMessage('')
+      // Normalize URLs to match database constraints
+      const normalizedInstagramUrl = urlValidation.normalizeUrl(formData.instagram_url as string)
+      const normalizedWebsiteUrl = urlValidation.normalizeUrl(formData.website_url as string)
 
       // Prepare the update data
       const updateData: Partial<User> = {
         name: formData.name as string,
-        bio: formData.bio as string,
-        profile_image_url: formData.profile_image_url as string,
-        public_url: formData.public_url as string,
+        bio: formData.bio as string || null,
+        profile_image_url: formData.profile_image_url as string || null,
+        public_url: formData.public_url as string || null,
         timezone: formData.timezone as string,
-        instagram_url: formData.instagram_url as string,
-        website_url: formData.website_url as string,
+        instagram_url: normalizedInstagramUrl,
+        website_url: normalizedWebsiteUrl,
         yoga_styles: formData.yoga_styles as string[],
         event_display_variant: formData.event_display_variant as 'minimal' | 'compact' | 'full',
       }
@@ -266,8 +252,6 @@ export function ProfileForm({ user, onUpdate }: ProfileFormProps) {
   const handleReset = () => {
     reset()
     setHasFormChanges(false)
-    setAuthError('')
-    setSuccessMessage('')
   }
 
   // Handle save action from FAB
@@ -284,31 +268,8 @@ export function ProfileForm({ user, onUpdate }: ProfileFormProps) {
     }
   }, [values.public_url])
 
-  // Clear messages after 5 seconds
-  useEffect(() => {
-    if (successMessage) {
-      const timer = setTimeout(() => setSuccessMessage(''), 5000)
-      return () => clearTimeout(timer)
-    }
-  }, [successMessage])
-
   return (
     <div className="max-w-4xl mx-auto space-y-8">
-      {/* Messages */}
-      {authError && (
-        <div className="flex items-center gap-2 p-4 text-sm text-red-600 bg-red-50/30 border border-red-200 rounded-xl backdrop-blur-sm">
-          <AlertCircle className="h-4 w-4 flex-shrink-0" />
-          <span>{authError}</span>
-        </div>
-      )}
-
-      {successMessage && (
-        <div className="flex items-center gap-2 p-4 text-sm text-green-600 bg-green-50/30 border border-green-200 rounded-xl backdrop-blur-sm">
-          <Check className="h-4 w-4 flex-shrink-0" />
-          <span>{successMessage}</span>
-        </div>
-      )}
-
       <Form onSubmit={handleSubmit} loading={loading || updateUserMutation.isLoading}>
         {/* Basic Information */}
         <Card variant="glass">
@@ -410,21 +371,37 @@ export function ProfileForm({ user, onUpdate }: ProfileFormProps) {
               <FormField
                 label="Instagram URL"
                 type="url"
-                placeholder="https://instagram.com/yourusername"
+                placeholder="instagram.com/yourusername or https://instagram.com/yourusername"
                 value={values.instagram_url as string}
                 onChange={(e) => setValue('instagram_url', e.target.value)}
-                onBlur={() => validateFieldOnBlur('instagram_url')}
+                onBlur={() => {
+                  const currentValue = values.instagram_url as string
+                  const validation = urlValidation.validateInstagramUrl(currentValue)
+                  if (validation.normalizedUrl !== currentValue) {
+                    setValue('instagram_url', validation.normalizedUrl || '')
+                  }
+                  validateFieldOnBlur('instagram_url')
+                }}
                 error={errors.instagram_url}
+                helperText="We'll automatically add https:// if needed"
               />
 
               <FormField
                 label="Website URL"
                 type="url"
-                placeholder="https://your-website.com"
+                placeholder="your-website.com or https://your-website.com"
                 value={values.website_url as string}
                 onChange={(e) => setValue('website_url', e.target.value)}
-                onBlur={() => validateFieldOnBlur('website_url')}
+                onBlur={() => {
+                  const currentValue = values.website_url as string
+                  const validation = urlValidation.validateWebsiteUrl(currentValue)
+                  if (validation.normalizedUrl !== currentValue) {
+                    setValue('website_url', validation.normalizedUrl || '')
+                  }
+                  validateFieldOnBlur('website_url')
+                }}
                 error={errors.website_url}
+                helperText="We'll automatically add https:// if needed"
               />
             </div>
           </CardContent>

@@ -2,7 +2,7 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import ical from "npm:ical";
 import { createSupabaseAdminClient } from "../_shared/supabaseClient.ts";
-import { getCorsHeaders, createCorsResponse } from "../_shared/cors.ts";
+import { getCorsHeaders } from "../_shared/cors.ts";
 import { matchTags, matchStudioId } from "../_shared/matching.ts";
 import { extractStudentCounts } from "./enrichInstance.ts";
 import { extractCalendarName, ensureUTCString, generateRecurrenceInstances, fetchExistingEvents, deleteStaleEvents } from "./helpers.ts";
@@ -144,8 +144,30 @@ serve(async (req) => {
       
     const tagMap = Object.fromEntries((tags || []).map((t) => [t.id, t.slug]));
     
-    const icsRes = await fetch(feed.feed_url);
+    console.log(`Fetching calendar feed from URL: ${feed.feed_url}`);
+    
+    // Add specific headers for better compatibility with iCloud and other calendar providers
+    const icsRes = await fetch(feed.feed_url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; CalendarSync/1.0)',
+        'Accept': 'text/calendar, application/calendar, text/plain, */*',
+        'Cache-Control': 'no-cache'
+      }
+    });
+    
+    if (!icsRes.ok) {
+      console.error(`Failed to fetch calendar feed: ${icsRes.status} ${icsRes.statusText}`);
+      throw new Error(`Failed to fetch calendar feed: ${icsRes.status} ${icsRes.statusText}`);
+    }
+    
     const icsText = await icsRes.text();
+    
+    if (!icsText || icsText.trim().length === 0) {
+      console.error("Calendar feed returned empty content");
+      throw new Error("Calendar feed returned empty content");
+    }
+    
+    console.log(`Successfully fetched calendar feed, content length: ${icsText.length}`);
     const calendarName = extractCalendarName(icsText);
     const parsed = ical.parseICS(icsText);
     const shouldSkip = isHistorical ? 
@@ -206,7 +228,7 @@ serve(async (req) => {
           image_url: existingEvent?.image_url || null,
           custom_tags: existingEvent?.custom_tags || [],
           tags: eventTags || [],
-          status: instance.status || "CONFIRMED",
+          status: instance.status?.toLowerCase() || "confirmed",
           studio_id: existingEvent?.studio_id || matchStudioId(instance.location, studios),
           students_studio: existingEvent?.students_studio || studentsStudio,
           students_online: existingEvent?.students_online || studentsOnline

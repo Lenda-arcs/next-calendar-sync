@@ -100,7 +100,7 @@ export type Database = {
           id: string
           last_synced_at: string | null
           sync_approach: string | null
-          user_id: string | null
+          user_id: string
         }
         Insert: {
           calendar_name?: string | null
@@ -111,7 +111,7 @@ export type Database = {
           id?: string
           last_synced_at?: string | null
           sync_approach?: string | null
-          user_id?: string | null
+          user_id: string
         }
         Update: {
           calendar_name?: string | null
@@ -122,7 +122,7 @@ export type Database = {
           id?: string
           last_synced_at?: string | null
           sync_approach?: string | null
-          user_id?: string | null
+          user_id?: string
         }
         Relationships: [
           {
@@ -217,7 +217,7 @@ export type Database = {
           title: string | null
           uid: string | null
           updated_at: string | null
-          user_id: string | null
+          user_id: string
           visibility: string | null
         }
         Insert: {
@@ -244,7 +244,7 @@ export type Database = {
           title?: string | null
           uid?: string | null
           updated_at?: string | null
-          user_id?: string | null
+          user_id: string
           visibility?: string | null
         }
         Update: {
@@ -271,7 +271,7 @@ export type Database = {
           title?: string | null
           uid?: string | null
           updated_at?: string | null
-          user_id?: string | null
+          user_id?: string
           visibility?: string | null
         }
         Relationships: [
@@ -725,27 +725,27 @@ export type Database = {
           keyword: string | null
           keywords: string[] | null
           location_keywords: string[] | null
-          tag_id: string | null
+          tag_id: string
           updated_at: string | null
-          user_id: string | null
+          user_id: string
         }
         Insert: {
           id?: string
           keyword?: string | null
           keywords?: string[] | null
           location_keywords?: string[] | null
-          tag_id?: string | null
+          tag_id: string
           updated_at?: string | null
-          user_id?: string | null
+          user_id: string
         }
         Update: {
           id?: string
           keyword?: string | null
           keywords?: string[] | null
           location_keywords?: string[] | null
-          tag_id?: string | null
+          tag_id?: string
           updated_at?: string | null
-          user_id?: string | null
+          user_id?: string
         }
         Relationships: [
           {
@@ -783,7 +783,8 @@ export type Database = {
           name: string | null
           priority: number | null
           slug: string | null
-          user_id: string | null
+          updated_at: string | null
+          user_id: string
         }
         Insert: {
           audience?: string[] | null
@@ -796,7 +797,8 @@ export type Database = {
           name?: string | null
           priority?: number | null
           slug?: string | null
-          user_id?: string | null
+          updated_at?: string | null
+          user_id: string
         }
         Update: {
           audience?: string[] | null
@@ -809,7 +811,8 @@ export type Database = {
           name?: string | null
           priority?: number | null
           slug?: string | null
-          user_id?: string | null
+          updated_at?: string | null
+          user_id?: string
         }
         Relationships: [
           {
@@ -901,6 +904,7 @@ export type Database = {
         Row: {
           bio: string | null
           calendar_feed_count: number
+          created_at: string | null
           email: string | null
           event_display_variant:
             | Database["public"]["Enums"]["event_display_variant"]
@@ -919,6 +923,7 @@ export type Database = {
         Insert: {
           bio?: string | null
           calendar_feed_count?: number
+          created_at?: string | null
           email?: string | null
           event_display_variant?:
             | Database["public"]["Enums"]["event_display_variant"]
@@ -937,6 +942,7 @@ export type Database = {
         Update: {
           bio?: string | null
           calendar_feed_count?: number
+          created_at?: string | null
           email?: string | null
           event_display_variant?:
             | Database["public"]["Enums"]["event_display_variant"]
@@ -1077,6 +1083,10 @@ export type Database = {
       cleanup_expired_rate_limits: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      cleanup_old_rejected_requests: {
+        Args: { cleanup_age_months?: number }
+        Returns: number
       }
       create_calendar_invitation: {
         Args: {

@@ -55,7 +55,7 @@ export default function ManageEventsPage() {
 
   // Filtering state
   const [visibilityFilter, setVisibilityFilter] = React.useState<VisibilityFilter>('all')
-  const [timeFilter, setTimeFilter] = React.useState<TimeFilter>('future')
+  const [timeFilter, setTimeFilter] = React.useState<TimeFilter>('all')
 
   // UI state
   const [resetSignal, setResetSignal] = React.useState(0)
@@ -185,7 +185,7 @@ export default function ManageEventsPage() {
 
   // Convert database events to display events for EventGrid
   const displayEvents = React.useMemo(() => {
-    if (!events || !allAvailableTags.length) return []
+    if (!events) return []
 
     const filteredEvents = applyEventFilters(events)
     
