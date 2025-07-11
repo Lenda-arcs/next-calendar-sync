@@ -11,6 +11,8 @@ import { NewTagForm } from '@/components/events/NewTagForm'
 import { TagViewDialog } from '@/components/events/TagViewDialog'
 import DataLoader from '@/components/ui/data-loader'
 import { TagLibraryGridSkeleton } from '@/components/ui/skeleton'
+import { Button } from '@/components/ui/button'
+import { Plus } from 'lucide-react'
 
 interface Props {
   userId: string
@@ -64,68 +66,74 @@ export function ManageTagsClient({ userId }: Props) {
   const errorMessage = error?.message || null
 
   return (
-    <DataLoader
-      data={allTags}
-      loading={isLoading}
-      error={errorMessage}
-      skeleton={TagLibraryGridSkeleton}
-      skeletonCount={1}
-      empty={
-        <div className="text-center py-8 text-muted-foreground">
-          <p>No tags found. Create your first tag!</p>
-        </div>
-      }
-    >
-      {() => (
-        <div className="space-y-12">
-          <TagRuleManager 
-            userId={userId} 
-            availableTags={allTags}
-          />
-          <TagLibrary 
-            userId={userId} 
-            userRole={userRole}
-            globalTags={globalTags}
-            customTags={userTags}
-            // Pass down the tag operations instead of letting TagLibrary create its own
-            tagOperations={{
-              onTagClick: handleTagClick,
-              onEditClick: handleEditClick,
-              onDeleteClick: handleDeleteTag,
-              onCreateNew: handleCreateNew,
-              creating,
-              updating,
-              deleting,
-            }}
-          />
-          
-          {/* New/Edit Tag Form */}
-          <NewTagForm
-            isOpen={showNewTagForm}
-            isEditing={isEditing}
-            initialTag={selectedTag}
-            onSave={handleSaveTag}
-            onCancel={handleCancel}
-            userId={userId}
-          />
-
-          {/* Tag View Dialog */}
-          {selectedTag && (
-            <TagViewDialog
-              tag={selectedTag}
-              isOpen={showViewDialog}
-              onClose={handleCancel}
-              onEdit={() => handleEditClick(selectedTag)}
-              canEdit={
-                // Admin can edit any tag
-                userRole === 'admin' ||
-                // User can edit their own tags (non-global only)
-                (selectedTag.userId === userId && selectedTag.userId !== null)
-              }
+    <>
+      <DataLoader
+        data={allTags}
+        loading={isLoading}
+        error={errorMessage}
+        skeleton={TagLibraryGridSkeleton}
+        skeletonCount={1}
+        empty={
+          <div className="text-center py-8 text-muted-foreground">
+            <p className="mb-4">No tags found. Create your first tag!</p>
+            <Button onClick={handleCreateNew} variant="default">
+              <Plus className="h-4 w-4 mr-2" />
+              Create Your First Tag
+            </Button>
+          </div>
+        }
+      >
+        {() => (
+          <div className="space-y-12">
+            <TagRuleManager 
+              userId={userId} 
+              availableTags={allTags}
             />
-          )}
-        </div>
-      )}
-    </DataLoader>
+            <TagLibrary 
+              userId={userId} 
+              userRole={userRole}
+              globalTags={globalTags}
+              customTags={userTags}
+              // Pass down the tag operations instead of letting TagLibrary create its own
+              tagOperations={{
+                onTagClick: handleTagClick,
+                onEditClick: handleEditClick,
+                onDeleteClick: handleDeleteTag,
+                onCreateNew: handleCreateNew,
+                creating,
+                updating,
+                deleting,
+              }}
+            />
+            
+            {/* Tag View Dialog */}
+            {selectedTag && (
+              <TagViewDialog
+                tag={selectedTag}
+                isOpen={showViewDialog}
+                onClose={handleCancel}
+                onEdit={() => handleEditClick(selectedTag)}
+                canEdit={
+                  // Admin can edit any tag
+                  userRole === 'admin' ||
+                  // User can edit their own tags (non-global only)
+                  (selectedTag.userId === userId && selectedTag.userId !== null)
+                }
+              />
+            )}
+          </div>
+        )}
+      </DataLoader>
+
+      {/* New/Edit Tag Form - MOVED OUTSIDE DataLoader so it works in empty state */}
+      <NewTagForm
+        isOpen={showNewTagForm}
+        isEditing={isEditing}
+        initialTag={selectedTag}
+        onSave={handleSaveTag}
+        onCancel={handleCancel}
+        userId={userId}
+      />
+    </>
   )
 } 
