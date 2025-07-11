@@ -1,0 +1,11 @@
+export { StudioActions } from './StudioActions';
+export { StudioActionButtons } from './StudioActionButtons';
+export { StudioContactInfo } from './StudioContactInfo';
+export { StudioDeleteDialog } from './StudioDeleteDialog';
+export { StudioForm } from './StudioForm';
+export { StudioItem } from './StudioItem';
+export { StudioList } from './StudioList';
+export { StudioManagement } from './StudioManagement';
+export { StudioRateConfig } from './StudioRateConfig';
+export { StudioRequestDialog } from './StudioRequestDialog';
+export { StudioTeacherRequests } from './StudioTeacherRequests'; 

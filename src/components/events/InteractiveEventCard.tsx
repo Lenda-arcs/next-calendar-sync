@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { EventTag, EventDisplayVariant } from '@/lib/event-types'
 import { EventCard } from './EventCard'
-import { TagManagement } from './TagManagement'
+import { TagManagement } from '@/components/tags/TagManagement'
 import { Card } from '@/components/ui/card'
 
 interface InteractiveEventCardProps {

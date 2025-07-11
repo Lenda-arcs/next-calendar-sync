@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { InvoiceManagement } from '@/components/events/InvoiceManagement'
+import { InvoiceManagement } from '@/components/invoices/InvoiceManagement'
 
 interface ManageInvoicesClientProps {
   userId: string

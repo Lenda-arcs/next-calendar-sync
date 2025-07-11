@@ -10,44 +10,18 @@ export { default as EventGrid } from './EventGrid'
 export { default as PublicEventList } from './PublicEventList'
 export { default as PrivateEventList } from './PrivateEventList'
 
-// Tag management components
-export { TagRuleManager } from './TagRuleManager'
-export { TagLibrary } from './TagLibrary'
-export { TagRulesCard } from './TagRulesCard'
-export { TagLibraryGrid } from './TagLibraryGrid'
-export { NewTagForm } from './NewTagForm'
-export { TagViewDialog } from './TagViewDialog'
-export { ColorPicker } from './ColorPicker'
-
-// Legacy tag components
-export { TagManagement } from './TagManagement'
-export { default as TagList } from './TagList'
-
-// Manage events page components
+// Event management components
 export { default as EventsControlPanel } from './EventsControlPanel'
 export { default as EventsEmptyState } from './EventsEmptyState'
 export { default as FloatingActionButtons } from './FloatingActionButtons'
 
-// Invoice management components
-export { EventInvoiceCard } from './EventInvoiceCard'
-export { EventDetailsEditModal } from './EventDetailsEditModal'
-export { UninvoicedEventsList } from './UninvoicedEventsList'
+// Event processing components
 export { ExcludedEventsSection } from './ExcludedEventsSection'
 export { SubstituteEventModal } from './SubstituteEventModal'
 export { HistoricalSyncCTA } from './HistoricalSyncCTA'
 export { UnmatchedEventsSection } from './UnmatchedEventsSection'
-export { InvoiceCreationModal } from './InvoiceCreationModal'
 export { EditableEventItem } from './EditableEventItem'
-export { useInvoiceCreationState } from './useInvoiceCreationState'
-export { InvoiceManagement } from './InvoiceManagement'
-export { InvoiceSettings } from './InvoiceSettings'
-export { UserInvoiceSettingsModal } from './UserInvoiceSettingsModal'
-export { UserInvoiceSettingsForm } from './UserInvoiceSettingsForm'
-export { PDFTemplateCustomization } from './PDFTemplateCustomizationSimple'
-export { BillingEntityManagement } from './BillingEntityManagement'
-export { BillingEntityCard } from './BillingEntityCard'
-export { default as BillingEntityForm } from './BillingEntityForm'
-export { default as BillingEntityFormModal } from './BillingEntityFormModal'
+export { EventDetailsEditModal } from './EventDetailsEditModal'
 
 // Rematch utilities
 export { 
@@ -57,9 +31,8 @@ export {
   RematchAllButton 
 } from './RematchEventsButton'
 
-// Studio management components
-export { StudioManagement } from './StudioManagement'
-export { StudioForm } from './StudioForm'
-export { StudioList } from './StudioList'
-export { StudioTeacherRequests } from './StudioTeacherRequests'
-export { StudioRequestDialog } from './StudioRequestDialog' 
+// Utility components
+export { ColorPicker } from '@/components/tags/ColorPicker'
+
+// Shared event components
+export * from './shared'; 

@@ -6,9 +6,9 @@ import EventGrid from '@/components/events/EventGrid'
 import { 
   EventsControlPanel,
   EventsEmptyState,
-  FloatingActionButtons,
-  NewTagForm
+  FloatingActionButtons
 } from '@/components/events'
+import { NewTagForm } from '@/components/tags'
 import { Loader2, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import DataLoader from '@/components/ui/data-loader'

@@ -13,8 +13,8 @@ import { useEffect } from 'react'
 import { toast } from 'sonner'
 import { UserInvoiceSettingsModal } from './UserInvoiceSettingsModal'
 import { UserInvoiceSettings, PDFTemplateConfig, PDFTemplateTheme } from '@/lib/types'
-import { BillingEntityManagement } from './BillingEntityManagement'
-import { PDFTemplateCustomization } from './PDFTemplateCustomizationSimple'
+import { BillingEntityManagement } from '@/components/billing/BillingEntityManagement'
+import { PDFTemplateCustomization } from '@/components/export/PDFTemplateCustomizationSimple'
 import { Loader2 } from 'lucide-react'
 
 interface InvoiceSettingsProps {
@@ -65,15 +65,43 @@ export function InvoiceSettings({ userId }: InvoiceSettingsProps) {
   // Mutation for updating PDF template settings
   const pdfTemplateMutation = useSupabaseMutation({
     mutationFn: async (supabase, data: { pdf_template_config: PDFTemplateConfig | null; template_theme: PDFTemplateTheme }) => {
-      const { data: result, error } = await supabase
+      // First, try to update existing record
+      const { data: updateResult, error: updateError } = await supabase
         .from('user_invoice_settings')
         .update(data)
         .eq('user_id', userId)
         .select()
         .single()
       
-      if (error) throw error
-      return result
+      if (updateError) {
+        // If update fails because record doesn't exist, try to insert
+        if (updateError.code === 'PGRST116') {
+          // Get user's name from users table for the required full_name field
+          const { data: userData, error: userError } = await supabase
+            .from('users')
+            .select('name')
+            .eq('id', userId)
+            .single()
+          
+          if (userError) throw new Error(`Could not fetch user data: ${userError.message}`)
+          
+          const { data: insertResult, error: insertError } = await supabase
+            .from('user_invoice_settings')
+            .insert([{ 
+              user_id: userId, 
+              full_name: userData.name || 'Unknown User',
+              ...data 
+            }])
+            .select()
+            .single()
+          
+          if (insertError) throw insertError
+          return insertResult
+        }
+        throw updateError
+      }
+      
+      return updateResult
     },
     onSuccess: () => {
       toast.success('PDF template settings saved successfully')

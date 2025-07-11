@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { InstagramStoryExport } from '@/components/events/InstagramStoryExport'
+import { InstagramStoryExport } from '@/components/export/InstagramStoryExport'
 import { PublicEvent } from '@/lib/types'
 
 interface ExportPreviewProps {

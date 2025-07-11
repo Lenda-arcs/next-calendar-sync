@@ -6,7 +6,7 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { ImageGallery } from './ImageGallery'
 import { EventDetails } from './EventDetails'
-import TagList from './TagList'
+import TagList from '@/components/tags/TagList'
 import { EventTag, EventDisplayVariant } from '@/lib/event-types'
 import { styleUtils } from '@/lib/design-system'
 

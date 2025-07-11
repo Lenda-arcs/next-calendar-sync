@@ -12,7 +12,7 @@ import { Event } from '@/lib/types'
 import { toast } from 'sonner'
 import { UserIcon, UserCheckIcon, Plus } from 'lucide-react'
 import { Select } from '@/components/ui/select'
-import BillingEntityFormModal from './BillingEntityFormModal'
+import BillingEntityFormModal from '@/components/billing/BillingEntityFormModal'
 import type { BillingEntity, RecipientInfo } from '@/lib/types'
 
 interface SubstituteEventModalProps {

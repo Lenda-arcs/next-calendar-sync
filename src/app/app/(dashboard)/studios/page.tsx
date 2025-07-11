@@ -1,7 +1,7 @@
 import { Suspense } from 'react'
 import { redirect } from 'next/navigation'
 import { createServerClient } from '@/lib/supabase-server'
-import { StudioManagement } from '@/components/events'
+import { StudioManagement } from '@/components/studios'
 
 export default async function StudiosPage() {
   const supabase = await createServerClient()

@@ -7,7 +7,7 @@ import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Select } from "../ui/select";
 
-import { PatternInput } from "./PatternInput";
+import { PatternInput } from "@/components/tags/PatternInput";
 import { Textarea } from "../ui/textarea";
 import { toast } from 'sonner'
 import { useSupabaseMutation } from "../../lib/hooks/useSupabaseMutation";

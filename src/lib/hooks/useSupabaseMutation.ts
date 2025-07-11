@@ -73,8 +73,21 @@ export function useSupabaseMutation<TData = unknown, TVariables = unknown>({
           error = err
         } else if (err && typeof err === 'object' && 'message' in err) {
           // Handle Supabase error objects
-          const supabaseError = err as { message: string; code?: string; details?: string }
-          error = new Error(supabaseError.message || 'Database operation failed')
+          const supabaseError = err as { message: string; code?: string; details?: string; hint?: string }
+          const errorMessage = supabaseError.message || 'Database operation failed'
+          const errorDetails = supabaseError.details ? ` Details: ${supabaseError.details}` : ''
+          const errorHint = supabaseError.hint ? ` Hint: ${supabaseError.hint}` : ''
+          const errorCode = supabaseError.code ? ` (Code: ${supabaseError.code})` : ''
+          
+          error = new Error(`${errorMessage}${errorDetails}${errorHint}${errorCode}`)
+        } else if (err && typeof err === 'object') {
+          // Handle generic error objects
+          const errorString = JSON.stringify(err)
+          if (errorString === '{}') {
+            error = new Error('Database operation failed with unknown error. Please check your database connection and table permissions.')
+          } else {
+            error = new Error(`Database operation failed: ${errorString}`)
+          }
         } else {
           error = new Error('Unknown error occurred')
         }
