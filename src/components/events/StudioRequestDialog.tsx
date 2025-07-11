@@ -2,24 +2,18 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { createClient } from '@/lib/supabase'
 import { Studio } from '@/lib/types'
-
-interface StudioContactInfo {
-  email?: string
-  phone?: string
-  website?: string
-}
 import { useSupabaseQuery } from '@/lib/hooks/useSupabaseQuery'
 import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { UnifiedDialog } from '@/components/ui/unified-dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Search, MapPin, Mail, Globe, Instagram, Send, X } from 'lucide-react'
+import { Search, MapPin, Send, X, Sparkles, Calendar } from 'lucide-react'
 import { toast } from 'sonner'
 
 interface StudioRequestDialogProps {
@@ -28,17 +22,61 @@ interface StudioRequestDialogProps {
   userId: string
 }
 
+interface RelevantStudio extends Studio {
+  matchScore: number
+  matchedLocations: string[]
+  matchedPatterns: string[]
+}
+
 export function StudioRequestDialog({ isOpen, onClose, userId }: StudioRequestDialogProps) {
   const [searchTerm, setSearchTerm] = useState('')
-  const [selectedStudio, setSelectedStudio] = useState<Studio | null>(null)
+  const [selectedStudio, setSelectedStudio] = useState<RelevantStudio | null>(null)
   const [message, setMessage] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const supabase = createClient()
 
-  // Fetch available studios
-  const { data: studios, isLoading } = useSupabaseQuery({
-    queryKey: ['available-studios', userId],
+  // Fetch user's event locations to determine relevant studios
+  const { data: userEventLocations } = useSupabaseQuery({
+    queryKey: ['user-event-locations', userId],
     fetcher: async (supabase) => {
+      const { data, error } = await supabase
+        .from('events')
+        .select('location, title')
+        .eq('user_id', userId)
+        .not('location', 'is', null)
+        .limit(100) // Recent events to determine patterns
+
+      if (error) throw error
+
+      // Extract unique locations and keywords from titles
+      const locations = new Set<string>()
+      const titleKeywords = new Set<string>()
+
+      data?.forEach((event: { location?: string | null; title?: string | null }) => {
+        if (event.location) {
+          locations.add(event.location.toLowerCase())
+        }
+        if (event.title) {
+          // Extract meaningful words from titles
+          const words = event.title.toLowerCase().split(/\s+/)
+            .filter((word: string) => word.length > 2 && !['the', 'and', 'with', 'for', 'class'].includes(word))
+          words.forEach((word: string) => titleKeywords.add(word))
+        }
+      })
+
+      return {
+        locations: Array.from(locations),
+        titleKeywords: Array.from(titleKeywords)
+      }
+    },
+    enabled: isOpen && !!userId
+  })
+
+  // Fetch available studios and calculate relevance
+  const { data: relevantStudios, isLoading } = useSupabaseQuery<RelevantStudio[]>({
+    queryKey: ['relevant-studios', userId, String(userEventLocations?.locations.length || 0)],
+    fetcher: async (supabase) => {
+      // Get all verified studios
       const { data: studiosData, error: studiosError } = await supabase
         .from('studios')
         .select('*')
@@ -47,7 +85,7 @@ export function StudioRequestDialog({ isOpen, onClose, userId }: StudioRequestDi
 
       if (studiosError) throw studiosError
 
-      // Fetch existing requests for this user
+      // Get existing requests for this user
       const { data: existingRequests, error: requestsError } = await supabase
         .from('studio_teacher_requests')
         .select('studio_id, status')
@@ -56,13 +94,92 @@ export function StudioRequestDialog({ isOpen, onClose, userId }: StudioRequestDi
 
       if (requestsError) throw requestsError
 
-      // Filter out studios where user already has a pending or approved request
       const existingStudioIds = new Set(existingRequests?.map((req: { studio_id: string; status: string }) => req.studio_id) || [])
       const availableStudios = studiosData?.filter((studio: Studio) => !existingStudioIds.has(studio.id)) || []
-      
-      return availableStudios
+
+      // If no user event data yet, return all available studios with score 0
+      if (!userEventLocations || userEventLocations.locations.length === 0) {
+        return availableStudios.map((studio: Studio) => ({
+          ...studio,
+          matchScore: 0,
+          matchedLocations: [],
+          matchedPatterns: []
+        }))
+      }
+
+      // Calculate relevance score for each studio
+      const relevantStudios: RelevantStudio[] = []
+
+      for (const studio of availableStudios) {
+        const locationPatterns = studio.location_patterns || []
+        const studioName = studio.name.toLowerCase()
+        const studioAddress = (studio.address || '').toLowerCase()
+        
+        let matchScore = 0
+        const matchedLocations: string[] = []
+        const matchedPatterns: string[] = []
+
+        // Check if studio location patterns match user's event locations
+        for (const userLocation of userEventLocations.locations) {
+          for (const pattern of locationPatterns) {
+            const patternLower = pattern.toLowerCase()
+            
+            // Strong match: pattern is contained in user location or vice versa
+            if (userLocation.includes(patternLower) || patternLower.includes(userLocation)) {
+              matchScore += 10
+              if (!matchedLocations.includes(userLocation)) {
+                matchedLocations.push(userLocation)
+              }
+              if (!matchedPatterns.includes(pattern)) {
+                matchedPatterns.push(pattern)
+              }
+            }
+          }
+
+          // Medium match: studio name or address matches user location
+          if (userLocation.includes(studioName) || studioName.includes(userLocation) ||
+              (studioAddress && (userLocation.includes(studioAddress) || studioAddress.includes(userLocation)))) {
+            matchScore += 5
+            if (!matchedLocations.includes(userLocation)) {
+              matchedLocations.push(userLocation)
+            }
+          }
+        }
+
+        // Only include studios with actual relevance to user's events
+        // If user has no events, show all studios but with 0 score
+        if (matchScore > 0 || userEventLocations.locations.length === 0) {
+          relevantStudios.push({
+            ...studio,
+            matchScore,
+            matchedLocations,
+            matchedPatterns
+          })
+        }
+      }
+
+      // Sort by relevance score (highest first), then by name
+      const sortedStudios = relevantStudios.sort((a, b) => {
+        if (b.matchScore !== a.matchScore) {
+          return b.matchScore - a.matchScore
+        }
+        return a.name.localeCompare(b.name)
+      })
+
+      // If user has events but no studios match, show a few fallback studios
+      if (userEventLocations.locations.length > 0 && sortedStudios.length === 0) {
+        const fallbackStudios = availableStudios.slice(0, 3).map((studio: Studio) => ({
+          ...studio,
+          matchScore: 0,
+          matchedLocations: [],
+          matchedPatterns: []
+        }))
+        return fallbackStudios
+      }
+
+      return sortedStudios
     },
-    enabled: isOpen
+    enabled: isOpen && !!userEventLocations
   })
 
   // Reset form when dialog closes
@@ -74,13 +191,71 @@ export function StudioRequestDialog({ isOpen, onClose, userId }: StudioRequestDi
     }
   }, [isOpen])
 
-  const filteredStudios = studios?.filter((studio: Studio) =>
-    studio.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    studio.address?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    studio.location_patterns?.some((pattern: string) => 
-      pattern.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-  ) || []
+  // Fetch all studios for search functionality
+  const { data: allStudios } = useSupabaseQuery({
+    queryKey: ['all-studios-search', userId],
+    fetcher: async (supabase) => {
+      const { data: studiosData, error: studiosError } = await supabase
+        .from('studios')
+        .select('*')
+        .eq('verified', true)
+        .order('name')
+
+      if (studiosError) throw studiosError
+
+      // Get existing requests for this user
+      const { data: existingRequests, error: requestsError } = await supabase
+        .from('studio_teacher_requests')
+        .select('studio_id, status')
+        .eq('teacher_id', userId)
+        .in('status', ['pending', 'approved'])
+
+      if (requestsError) throw requestsError
+
+      const existingStudioIds = new Set(existingRequests?.map((req: { studio_id: string; status: string }) => req.studio_id) || [])
+      return studiosData?.filter((studio: Studio) => !existingStudioIds.has(studio.id)) || []
+    },
+    enabled: isOpen && !!userId
+  })
+
+  // Filter studios based on search - search all studios or show relevant ones
+  const filteredStudios = useMemo(() => {
+    if (!relevantStudios || relevantStudios.length === 0) return []
+    
+    if (!searchTerm) {
+      // No search term - show top 8 most relevant
+      return relevantStudios.slice(0, 8)
+    }
+
+    // When searching, search through ALL available studios, not just relevant ones
+    if (!allStudios) return []
+    
+    const searchResults = allStudios.filter((studio: Studio) =>
+      studio.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      studio.address?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (studio.location_patterns || []).some((pattern: string) => 
+        pattern.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    ).slice(0, 8)
+
+    // Convert to RelevantStudio format with calculated relevance
+    return searchResults.map((studio: Studio) => {
+      const relevantStudio = relevantStudios.find((rs: RelevantStudio) => rs.id === studio.id)
+      
+      if (relevantStudio) {
+        // Studio was already in relevant list - use its existing relevance data
+        return relevantStudio
+      } else {
+        // Studio not in relevant list - add it with 0 relevance
+        return {
+          ...studio,
+          matchScore: 0,
+          matchedLocations: [],
+          matchedPatterns: []
+        }
+      }
+    })
+  }, [relevantStudios, searchTerm, allStudios])
 
   const handleSubmitRequest = async () => {
     if (!selectedStudio) return
@@ -128,20 +303,63 @@ export function StudioRequestDialog({ isOpen, onClose, userId }: StudioRequestDi
     }
   }
 
-  return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Send className="w-5 h-5" />
-            Request to Join Studio
-          </DialogTitle>
-        </DialogHeader>
+  const hasRelevantStudios = relevantStudios && relevantStudios.length > 0 && relevantStudios.some((s: RelevantStudio) => s.matchScore > 0)
 
-        <div className="space-y-6">
+  // Footer for request composition step
+  const footer = selectedStudio ? (
+    <>
+      <Button variant="outline" onClick={onClose}>
+        Cancel
+      </Button>
+      <Button 
+        onClick={handleSubmitRequest}
+        disabled={isSubmitting}
+        className="flex items-center gap-2"
+      >
+        {isSubmitting ? (
+          <>
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+            Sending...
+          </>
+        ) : (
+          <>
+            <Send className="w-4 h-4" />
+            Send Request
+          </>
+        )}
+      </Button>
+    </>
+  ) : undefined
+
+  return (
+    <UnifiedDialog
+      open={isOpen}
+      onOpenChange={onClose}
+      title={
+        <div className="flex items-center gap-2">
+          <Send className="w-5 h-5" />
+          Request to Join Studio
+        </div>
+      }
+      size="lg"
+      footer={footer}
+    >
+      <div className="space-y-6">
           {!selectedStudio ? (
             // Studio selection step
             <div className="space-y-4">
+              {hasRelevantStudios && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <div className="flex items-center gap-2 text-blue-700">
+                    <Sparkles className="w-4 h-4" />
+                    <span className="text-sm font-medium">Smart Suggestions</span>
+                  </div>
+                  <p className="text-xs text-blue-600 mt-1">
+                    These studios match your event locations. Studios are ranked by relevance to your teaching history.
+                  </p>
+                </div>
+              )}
+
               <div>
                 <Label htmlFor="search">Search Studios</Label>
                 <div className="relative">
@@ -150,58 +368,56 @@ export function StudioRequestDialog({ isOpen, onClose, userId }: StudioRequestDi
                     id="search"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    placeholder="Search by name, location, or address..."
+                    placeholder="Search by name or location..."
                     className="pl-10"
                   />
                 </div>
               </div>
 
-              <div className="space-y-3 max-h-96 overflow-y-auto">
+              <div className="space-y-3 max-h-96 min-h-[24rem] overflow-y-auto">
                 {isLoading ? (
                   <div className="text-center py-8">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
-                    <p className="text-sm text-gray-500 mt-2">Loading studios...</p>
+                    <p className="text-sm text-gray-500 mt-2">Finding relevant studios...</p>
                   </div>
                 ) : filteredStudios.length === 0 ? (
                   <div className="text-center py-8 text-gray-500">
-                    <MapPin className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                    <p>No studios found</p>
-                    {searchTerm && (
-                      <p className="text-sm">Try adjusting your search terms</p>
-                    )}
+                    <Calendar className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                    <p className="font-medium">No matching studios found</p>
+                    <p className="text-sm text-gray-400 mt-1">
+                      {searchTerm ? 'Try adjusting your search terms' : 'Add some events to get personalized studio recommendations'}
+                    </p>
                   </div>
                 ) : (
-                  filteredStudios.map((studio: Studio) => (
+                  filteredStudios.map((studio: RelevantStudio) => (
                     <Card 
                       key={studio.id}
-                      className="cursor-pointer hover:shadow-md transition-shadow"
+                      className={`cursor-pointer hover:shadow-md transition-all duration-200 ${
+                        studio.matchScore > 0 ? 'border-blue-200 bg-blue-50/30' : ''
+                      }`}
                       onClick={() => setSelectedStudio(studio)}
                     >
-                      <CardHeader className="pb-3">
+                      <CardHeader className="pb-2 pt-3">
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
-                            <CardTitle className="text-lg">{studio.name}</CardTitle>
-                            {studio.description && (
-                              <CardDescription className="mt-1">
-                                {studio.description}
-                              </CardDescription>
-                            )}
-                          </div>
-                          <div className="flex gap-1">
-                            {studio.verified && (
-                              <Badge variant="secondary" className="text-green-600">
-                                Verified
-                              </Badge>
-                            )}
-                            {studio.featured && (
-                              <Badge variant="secondary" className="text-yellow-600">
-                                Featured
-                              </Badge>
-                            )}
+                            <CardTitle className="text-base flex items-center gap-2">
+                              {studio.name}
+                              {studio.matchScore > 0 && (
+                                <Badge variant="secondary" className="text-blue-600 bg-blue-100">
+                                  <Sparkles className="w-3 h-3 mr-1" />
+                                  Match
+                                </Badge>
+                              )}
+                              {studio.featured && (
+                                <Badge variant="secondary" className="text-yellow-600">
+                                  Featured
+                                </Badge>
+                              )}
+                            </CardTitle>
                           </div>
                         </div>
                       </CardHeader>
-                      <CardContent>
+                      <CardContent className="pt-0">
                         {studio.address && (
                           <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
                             <MapPin className="w-4 h-4" />
@@ -209,41 +425,20 @@ export function StudioRequestDialog({ isOpen, onClose, userId }: StudioRequestDi
                           </div>
                         )}
                         
-                        {studio.location_patterns && studio.location_patterns.length > 0 && (
-                          <div className="flex flex-wrap gap-1 mb-2">
-                            {studio.location_patterns.slice(0, 3).map((pattern: string, index: number) => (
-                              <Badge key={index} variant="outline" className="text-xs">
-                                {pattern}
+                        {studio.matchedLocations.length > 0 && (
+                          <div className="flex flex-wrap gap-1">
+                            {studio.matchedLocations.slice(0, 2).map((location, index) => (
+                              <Badge key={index} variant="outline" className="text-xs text-blue-600 border-blue-200">
+                                📍 {location}
                               </Badge>
                             ))}
-                            {studio.location_patterns.length > 3 && (
+                            {studio.matchedLocations.length > 2 && (
                               <Badge variant="outline" className="text-xs">
-                                +{studio.location_patterns.length - 3} more
+                                +{studio.matchedLocations.length - 2} more
                               </Badge>
                             )}
                           </div>
                         )}
-
-                        <div className="flex items-center gap-4 text-sm text-gray-500">
-                          {studio.contact_info && (studio.contact_info as StudioContactInfo).email && (
-                            <div className="flex items-center gap-1">
-                              <Mail className="w-3 h-3" />
-                              Contact available
-                            </div>
-                          )}
-                          {studio.website_url && (
-                            <div className="flex items-center gap-1">
-                              <Globe className="w-3 h-3" />
-                              Website
-                            </div>
-                          )}
-                          {studio.instagram_url && (
-                            <div className="flex items-center gap-1">
-                              <Instagram className="w-3 h-3" />
-                              Instagram
-                            </div>
-                          )}
-                        </div>
                       </CardContent>
                     </Card>
                   ))
@@ -266,16 +461,34 @@ export function StudioRequestDialog({ isOpen, onClose, userId }: StudioRequestDi
 
               <Card>
                 <CardHeader>
-                  <CardTitle>Requesting to join: {selectedStudio.name}</CardTitle>
-                  {selectedStudio.description && (
-                    <CardDescription>{selectedStudio.description}</CardDescription>
-                  )}
+                  <CardTitle className="flex items-center gap-2">
+                    Requesting to join: {selectedStudio.name}
+                    {selectedStudio.matchScore > 0 && (
+                      <Badge variant="secondary" className="text-blue-600 bg-blue-100">
+                        <Sparkles className="w-3 h-3 mr-1" />
+                        Recommended
+                      </Badge>
+                    )}
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   {selectedStudio.address && (
                     <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
                       <MapPin className="w-4 h-4" />
                       {selectedStudio.address}
+                    </div>
+                  )}
+
+                  {selectedStudio.matchedLocations.length > 0 && (
+                    <div className="bg-green-50 p-3 rounded-md mb-4">
+                      <p className="text-sm font-medium mb-2 text-green-800">Why this studio matches you:</p>
+                      <div className="flex flex-wrap gap-2">
+                        {selectedStudio.matchedLocations.map((location, index) => (
+                          <Badge key={index} variant="outline" className="text-xs text-green-700 border-green-300">
+                            📍 You teach at: {location}
+                          </Badge>
+                        ))}
+                      </div>
                     </div>
                   )}
                   
@@ -307,32 +520,10 @@ export function StudioRequestDialog({ isOpen, onClose, userId }: StudioRequestDi
                 </p>
               </div>
 
-              <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={onClose}>
-                  Cancel
-                </Button>
-                <Button 
-                  onClick={handleSubmitRequest}
-                  disabled={isSubmitting}
-                  className="flex items-center gap-2"
-                >
-                  {isSubmitting ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                      Sending...
-                    </>
-                  ) : (
-                    <>
-                      <Send className="w-4 h-4" />
-                      Send Request
-                    </>
-                  )}
-                </Button>
-              </div>
+
             </div>
           )}
         </div>
-      </DialogContent>
-    </Dialog>
-  )
-}
+      </UnifiedDialog>
+    )
+  }

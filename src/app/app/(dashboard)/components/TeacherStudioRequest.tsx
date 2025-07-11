@@ -25,9 +25,9 @@ export function TeacherStudioRequest({ userId }: TeacherStudioRequestProps) {
 
   if (isLoading) {
     return (
-      <Card variant="outlined">
+      <Card variant="glass">
         <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
+          <CardTitle className="text-lg flex items-center gap-2 font-serif">
             <Building className="h-5 w-5" />
             Studio Connections
           </CardTitle>
@@ -44,9 +44,9 @@ export function TeacherStudioRequest({ userId }: TeacherStudioRequestProps) {
 
   return (
     <>
-      <Card variant="outlined">
+      <Card variant="glass">
         <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
+          <CardTitle className="text-lg flex items-center gap-2 font-serif">
             <Building className="h-5 w-5" />
             {hasConnectedStudios ? 'Connected Studios' : 'Join Studios'}
           </CardTitle>
@@ -117,15 +117,17 @@ export function TeacherStudioRequest({ userId }: TeacherStudioRequestProps) {
               </div>
 
               {/* Add more studios button */}
-              <Button 
-                onClick={() => setShowRequestDialog(true)}
-                variant="outline"
-                className="w-full flex items-center gap-2"
-                size="sm"
-              >
-                <Plus className="h-4 w-4" />
-                Request Access to More Studios
-              </Button>
+              <div className="flex gap-2 pt-2">
+                <Button 
+                  onClick={() => setShowRequestDialog(true)}
+                  variant="secondary"
+                  size="sm"
+                  className="flex-1"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Request More Studios
+                </Button>
+              </div>
             </div>
           ) : (
             /* Show CTA when no connections */
