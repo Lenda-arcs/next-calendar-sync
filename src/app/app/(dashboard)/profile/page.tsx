@@ -43,7 +43,8 @@ export default async function ProfilePage() {
       event_display_variant: null,
       role: 'user',
       calendar_feed_count: 0,
-      is_featured: null
+      is_featured: null,
+      created_at: null
     }
     
     return (

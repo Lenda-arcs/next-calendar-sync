@@ -126,6 +126,10 @@ export function useTagOperations({ onSuccess }: UseTagOperationsProps = {}) {
       updateTag({ id: selectedTag.id, data: updateData })
     } else {
       // Convert EventTag to database format for insert
+      if (!tagData.userId) {
+        throw new Error('User ID is required when creating a tag')
+      }
+      
       const insertData: TagInsert = {
         slug: tagData.slug,
         name: tagData.name,
@@ -136,7 +140,7 @@ export function useTagOperations({ onSuccess }: UseTagOperationsProps = {}) {
         cta_url: tagData.cta?.url || null,
         priority: tagData.priority,
         image_url: tagData.imageUrl,
-        user_id: tagData.userId || null,
+        user_id: tagData.userId,
       }
       
       createTag(insertData)
