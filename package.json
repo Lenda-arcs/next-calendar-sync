@@ -7,7 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "generate-types": "./scripts/generate-types.sh"
+    "generate-types": "./scripts/generate-types.sh",
+    "sql": "./scripts/run-sql.sh",
+    "sql:query": "./scripts/run-sql.sh query",
+    "sql:file": "./scripts/run-sql.sh file"
   },
   "dependencies": {
     "@netlify/plugin-nextjs": "^5.11.3",

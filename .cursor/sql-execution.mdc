@@ -1,0 +1,207 @@
+---
+description: Complete guide for executing SQL queries against Supabase database from terminal
+alwaysApply: true
+---
+
+# SQL Query Execution Guide
+
+## Overview
+This project uses Supabase as the database backend. There are multiple ways to execute SQL queries from the terminal for development, debugging, and migration purposes.
+
+## Prerequisites
+- PostgreSQL client (`psql`) must be installed:
+  - macOS: `brew install postgresql`
+  - Ubuntu/Debian: `sudo apt-get install postgresql-client`
+  - CentOS/RHEL: `sudo yum install postgresql`
+
+## Environment Setup
+
+### Option 1: Direct DATABASE_URL (Recommended)
+Set your complete Supabase database connection string:
+
+1. **In `.env` file:**
+   ```
+   DATABASE_URL=postgresql://postgres:your-password@db.your-project-ref.supabase.co:5432/postgres
+   ```
+
+2. **Or export before running:**
+   ```bash
+   export DATABASE_URL=postgresql://postgres:your-password@db.your-project-ref.supabase.co:5432/postgres
+   ```
+
+### Option 2: Component Variables
+Set individual components that will be automatically combined:
+
+**In `.env` file:**
+```
+DATABASE_PASSWORD=your-password
+SUPABASE_PROJECT_ID=your-project-ref
+```
+
+The script will automatically build: `postgresql://postgres:${DATABASE_PASSWORD}@db.${SUPABASE_PROJECT_ID}.supabase.co:5432/postgres`
+
+**Note:** Passwords with special characters (like `*`, `@`, `^`, `&`, `%`) are automatically URL-encoded to ensure proper connection.
+
+### Getting Your Credentials
+Get your connection details from your Supabase dashboard > Settings > Database
+
+## Execution Methods
+
+### Method 1: Helper Script (Recommended)
+Use the custom helper script at `scripts/run-sql.sh`:
+
+```bash
+# Execute SQL queries directly
+./scripts/run-sql.sh query "SELECT * FROM users LIMIT 5;"
+npm run sql:query "SELECT id, email FROM auth.users ORDER BY created_at DESC LIMIT 10;"
+
+# Execute SQL files
+./scripts/run-sql.sh file sql/create_studios_table.sql
+npm run sql:file sql/fix-user-creation-timing.sql
+
+# Show help and available SQL files
+./scripts/run-sql.sh
+npm run sql
+```
+
+### Method 2: Direct psql Connection
+```bash
+# Execute query directly
+psql "$DATABASE_URL" -c "SELECT * FROM auth.users LIMIT 5;"
+
+# Execute file directly
+psql "$DATABASE_URL" -f sql/your-file.sql
+
+# Connect interactively
+psql "$DATABASE_URL"
+```
+
+### Method 3: Alternative with Supabase CLI (for migrations)
+```bash
+# Create a migration file for permanent schema changes
+npx supabase migration new your_migration_name
+
+# Apply migrations
+npx supabase db push --linked
+```
+
+## Available SQL Files
+The project includes several SQL files in the `sql/` directory:
+- `create_studios_table.sql` - Studio management tables
+- `add_calendar_invitations.sql` - Calendar invitation system
+- `add_oauth_calendar_integration.sql` - OAuth integration
+- `fix-user-creation-timing.sql` - User creation timing fixes
+- `create_studio_teacher_requests.sql` - Teacher request system
+- `add_pdf_template_customization.sql` - PDF template features
+
+## Common Query Examples
+
+### User Management
+```bash
+# Check recent users
+npm run sql:query "SELECT id, email, created_at FROM auth.users ORDER BY created_at DESC LIMIT 10;"
+
+# Count total users
+npm run sql:query "SELECT COUNT(*) as total_users FROM auth.users;"
+
+# Check user roles
+npm run sql:query "SELECT u.email, p.role FROM auth.users u LEFT JOIN public.profiles p ON u.id = p.id;"
+```
+
+### Schema Inspection
+```bash
+# List all tables
+npm run sql:query "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public';"
+
+# Describe table structure
+npm run sql:query "SELECT column_name, data_type, is_nullable FROM information_schema.columns WHERE table_name = 'users';"
+
+# Check constraints
+npm run sql:query "SELECT conname, contype FROM pg_constraint WHERE conrelid = 'public.users'::regclass;"
+```
+
+### Application-Specific Queries
+```bash
+# Check calendar feeds
+npm run sql:query "SELECT id, name, feed_url, created_at FROM public.calendar_feeds ORDER BY created_at DESC;"
+
+# Check events
+npm run sql:query "SELECT id, title, start_time, end_time FROM public.events WHERE start_time > NOW() LIMIT 10;"
+
+# Check studios
+npm run sql:query "SELECT id, name, owner_id, created_at FROM public.studios ORDER BY created_at DESC;"
+```
+
+## Best Practices
+
+### Safety Guidelines
+1. **Always use LIMIT** when querying large tables
+2. **Use transactions** for multi-statement operations:
+   ```sql
+   BEGIN;
+   -- Your queries here
+   COMMIT;
+   ```
+3. **Backup before destructive operations** - especially migrations
+4. **Test on staging first** if available
+
+### Performance Tips
+1. **Use EXPLAIN** to analyze query performance:
+   ```bash
+   npm run sql:query "EXPLAIN ANALYZE SELECT * FROM users WHERE email = 'test@example.com';"
+   ```
+2. **Check indexes** for slow queries:
+   ```bash
+   npm run sql:query "SELECT indexname, indexdef FROM pg_indexes WHERE tablename = 'users';"
+   ```
+
+### Development Workflow
+1. **Write queries in files** for reusability (save in `sql/` directory)
+2. **Use descriptive filenames** (e.g., `add_user_preferences_table.sql`)
+3. **Include rollback scripts** when creating migrations
+4. **Document complex queries** with comments
+
+## Debugging Database Issues
+
+### Check Connection
+```bash
+npm run sql:query "SELECT NOW();"
+```
+
+### Check RLS Policies
+```bash
+npm run sql:query "SELECT schemaname, tablename, policyname, permissive, roles, cmd, qual FROM pg_policies WHERE schemaname = 'public';"
+```
+
+### Check Functions
+```bash
+npm run sql:query "SELECT routine_name, routine_type FROM information_schema.routines WHERE routine_schema = 'public';"
+```
+
+## Integration with Development
+
+### Type Generation
+After schema changes, regenerate types:
+```bash
+npm run generate-types
+```
+
+### Migration Workflow
+1. Write migration SQL in `sql/` directory
+2. Test with helper script: `npm run sql:file sql/your-migration.sql`
+3. Apply to production via Supabase dashboard or CI/CD
+4. Update types: `npm run generate-types`
+
+## Troubleshooting
+
+### Common Issues
+- **"DATABASE_URL not set"**: Ensure `DATABASE_URL` is properly configured in your .env file
+- **"psql command not found"**: Install PostgreSQL client (`brew install postgresql` on macOS)
+- **"Permission denied"**: Check if you have proper database access and correct password
+- **"Connection timeout"**: Verify your network connection and project status
+- **"SSL required"**: Add `?sslmode=require` to your DATABASE_URL if needed
+
+### Getting Help
+- Check Supabase dashboard for connection details
+- Review database logs in Supabase dashboard
+- Use `./scripts/run-sql.sh` without arguments for usage help
