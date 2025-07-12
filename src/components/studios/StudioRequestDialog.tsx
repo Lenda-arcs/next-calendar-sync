@@ -98,7 +98,7 @@ export function StudioRequestDialog({ isOpen, onClose, userId }: StudioRequestDi
       const availableStudios = studiosData?.filter((studio: Studio) => !existingStudioIds.has(studio.id)) || []
 
       // If no user event data yet, return all available studios with score 0
-      if (!userEventLocations || userEventLocations.locations.length === 0) {
+      if (!userEventLocations || !userEventLocations.locations || userEventLocations.locations.length === 0) {
         return availableStudios.map((studio: Studio) => ({
           ...studio,
           matchScore: 0,
@@ -148,7 +148,7 @@ export function StudioRequestDialog({ isOpen, onClose, userId }: StudioRequestDi
 
         // Only include studios with actual relevance to user's events
         // If user has no events, show all studios but with 0 score
-        if (matchScore > 0 || userEventLocations.locations.length === 0) {
+        if (matchScore > 0) {
           relevantStudios.push({
             ...studio,
             matchScore,
@@ -167,7 +167,7 @@ export function StudioRequestDialog({ isOpen, onClose, userId }: StudioRequestDi
       })
 
       // If user has events but no studios match, show a few fallback studios
-      if (userEventLocations.locations.length > 0 && sortedStudios.length === 0) {
+      if (userEventLocations?.locations && userEventLocations.locations.length > 0 && sortedStudios.length === 0) {
         const fallbackStudios = availableStudios.slice(0, 3).map((studio: Studio) => ({
           ...studio,
           matchScore: 0,
