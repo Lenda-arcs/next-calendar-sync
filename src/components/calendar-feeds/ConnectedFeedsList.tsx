@@ -6,6 +6,7 @@ import { ExternalLink, Plus } from 'lucide-react'
 import { formatDate, type CalendarFeed } from '@/lib/calendar-feeds'
 import { PATHS } from '@/lib/paths'
 import Link from 'next/link'
+import { useTranslationNamespace } from '@/lib/i18n/context'
 
 interface ConnectedFeedsListProps {
   feeds: CalendarFeed[]
@@ -14,6 +15,8 @@ interface ConnectedFeedsListProps {
 }
 
 export function ConnectedFeedsList({ feeds, isLoading, onViewDetails }: ConnectedFeedsListProps) {
+  const { t } = useTranslationNamespace('calendar')
+
   if (isLoading) {
     return (
       <div className="animate-pulse space-y-2">
@@ -27,12 +30,12 @@ export function ConnectedFeedsList({ feeds, isLoading, onViewDetails }: Connecte
     return (
       <div className="text-center py-4">
         <p className="text-muted-foreground text-sm mb-4">
-          No calendar feeds connected yet.
+          {t('integration.noFeeds')}
         </p>
         <Button asChild size="sm">
           <Link href={PATHS.APP.ADD_CALENDAR}>
             <Plus className="mr-2 h-4 w-4" />
-            Add Calendar Feed
+            {t('integration.addCalendar')}
           </Link>
         </Button>
       </div>
@@ -49,17 +52,17 @@ export function ConnectedFeedsList({ feeds, isLoading, onViewDetails }: Connecte
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
               <h4 className="font-medium text-sm truncate">
-                {feed.calendar_name || 'Unnamed Calendar'}
+                {feed.calendar_name || t('integration.unnamedCalendar')}
               </h4>
               <Badge 
                 variant={feed.last_synced_at ? "default" : "secondary"}
                 className="text-xs"
               >
-                {feed.last_synced_at ? "Active" : "Pending"}
+                {feed.last_synced_at ? t('integration.active') : t('integration.pending')}
               </Badge>
             </div>
             <p className="text-xs text-muted-foreground">
-              Last synced: {formatDate(feed.last_synced_at)}
+              {t('integration.lastSynced')} {formatDate(feed.last_synced_at)}
             </p>
           </div>
         </div>
@@ -68,7 +71,7 @@ export function ConnectedFeedsList({ feeds, isLoading, onViewDetails }: Connecte
       {feeds.length > 2 && (
         <div className="text-center pt-2">
           <p className="text-xs text-muted-foreground mb-2">
-            +{feeds.length - 2} more feeds
+            {t('integration.moreFeeds', { count: (feeds.length - 2).toString() })}
           </p>
         </div>
       )}
@@ -81,12 +84,12 @@ export function ConnectedFeedsList({ feeds, isLoading, onViewDetails }: Connecte
           onClick={onViewDetails}
         >
           <ExternalLink className="mr-2 h-4 w-4" />
-          Manage Feeds
+          {t('integration.manageFeeds')}
         </Button>
         <Button asChild size="sm" variant="secondary">
           <Link href={PATHS.APP.ADD_CALENDAR}>
             <Plus className="mr-2 h-4 w-4" />
-            Add More
+            {t('integration.addMore')}
           </Link>
         </Button>
       </div>

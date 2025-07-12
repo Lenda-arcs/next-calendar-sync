@@ -7,6 +7,7 @@ import { Calendar } from 'lucide-react'
 import { ConnectedFeedsList } from './ConnectedFeedsList'
 import { CalendarFeedsModal } from './CalendarFeedsModal'
 import { type CalendarFeed } from '@/lib/calendar-feeds'
+import { useTranslationNamespace } from '@/lib/i18n/context'
 
 interface CalendarFeedsProfileSectionProps {
   feeds: CalendarFeed[]
@@ -18,6 +19,7 @@ export function CalendarFeedsProfileSection({
   isLoading 
 }: CalendarFeedsProfileSectionProps) {
   const [modalOpen, setModalOpen] = useState(false)
+  const { t } = useTranslationNamespace('calendar')
 
   const handleViewDetails = () => {
     setModalOpen(true)
@@ -29,13 +31,13 @@ export function CalendarFeedsProfileSection({
         <CardHeader>
           <CardTitle className="flex items-center gap-2 font-serif">
             <Calendar className="h-5 w-5" />
-            Calendar Integration
+            {t('integration.title')}
             {feeds.length > 0 && (
               <Badge variant="secondary">{feeds.length}</Badge>
             )}
           </CardTitle>
           <CardDescription>
-            Manage your connected calendar feeds and sync settings.
+            {t('integration.description')}
           </CardDescription>
         </CardHeader>
         <CardContent>

@@ -1,7 +1,7 @@
 import { createServerClient } from '@/lib/supabase-server'
 import { redirect } from 'next/navigation'
 import { LogoutButton } from '@/components/auth'
-import { MobileNavMenu } from '@/components/ui'
+import { MobileNavMenu, CompactLanguageSelector } from '@/components/ui'
 import { PATHS } from '@/lib/paths'
 import { 
   Calendar, 
@@ -92,6 +92,9 @@ export default async function AppLayout({ children }: AppLayoutProps) {
             <div className="flex items-center space-x-4">
               {/* Mobile Navigation Menu */}
               <MobileNavMenu navigation={mobileNavigation} />
+
+              {/* Language Selector */}
+              <CompactLanguageSelector />
 
               {/* Desktop User Info */}
               <span className="text-sm font-sans text-foreground/70 hidden sm:block">

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { StudioRequestDialog } from '@/components/studios'
 import { useTeacherStudioRelationships } from '@/lib/hooks/useTeacherStudioRelationships'
+import { useTranslationNamespace } from '@/lib/i18n/context'
 import { Building, Send, MapPin, CheckCircle, Plus, Clock } from 'lucide-react'
 
 interface TeacherStudioRequestProps {
@@ -13,6 +14,7 @@ interface TeacherStudioRequestProps {
 }
 
 export function TeacherStudioRequest({ userId }: TeacherStudioRequestProps) {
+  const { t } = useTranslationNamespace('dashboard.studioRequest')
   const [showRequestDialog, setShowRequestDialog] = useState(false)
 
   // Fetch teacher's studio relationships
@@ -29,7 +31,7 @@ export function TeacherStudioRequest({ userId }: TeacherStudioRequestProps) {
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2 font-serif">
             <Building className="h-5 w-5" />
-            Studio Connections
+            {t('title')}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -48,12 +50,12 @@ export function TeacherStudioRequest({ userId }: TeacherStudioRequestProps) {
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2 font-serif">
             <Building className="h-5 w-5" />
-            {hasConnectedStudios ? 'Connected Studios' : 'Join Studios'}
+            {hasConnectedStudios ? t('titleConnected') : t('titleJoin')}
           </CardTitle>
           <CardDescription>
             {hasConnectedStudios 
-              ? 'Your approved studio connections for substitute teaching.'
-              : 'Request to join verified studios and expand your teaching opportunities.'
+              ? t('descriptionConnected')
+              : t('descriptionJoin')
             }
           </CardDescription>
         </CardHeader>
@@ -70,7 +72,7 @@ export function TeacherStudioRequest({ userId }: TeacherStudioRequestProps) {
                           {relationship.studio.name}
                           <Badge variant="secondary" className="text-green-600">
                             <CheckCircle className="w-3 h-3 mr-1" />
-                            Approved
+                            {t('approved')}
                           </Badge>
                         </h4>
                         {relationship.studio.address && (
@@ -110,7 +112,10 @@ export function TeacherStudioRequest({ userId }: TeacherStudioRequestProps) {
                 {teacherRelationships && teacherRelationships.length > 2 && (
                   <div className="text-center">
                     <Badge variant="outline" className="text-xs">
-                      +{teacherRelationships.length - 2} more studio{teacherRelationships.length - 2 !== 1 ? 's' : ''} connected
+                      {t('moreStudios', { 
+                        count: (teacherRelationships.length - 2).toString(),
+                        plural: teacherRelationships.length - 2 !== 1 ? 's' : ''
+                      })}
                     </Badge>
                   </div>
                 )}
@@ -125,7 +130,7 @@ export function TeacherStudioRequest({ userId }: TeacherStudioRequestProps) {
                   className="flex-1"
                 >
                   <Plus className="h-4 w-4 mr-2" />
-                  Request More Studios
+                  {t('requestMore')}
                 </Button>
               </div>
             </div>
@@ -137,7 +142,7 @@ export function TeacherStudioRequest({ userId }: TeacherStudioRequestProps) {
               className="w-full flex items-center gap-2"
             >
               <Send className="h-4 w-4" />
-              Request Studio Access
+              {t('requestAccess')}
             </Button>
           )}
         </CardContent>

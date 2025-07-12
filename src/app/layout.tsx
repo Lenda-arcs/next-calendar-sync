@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { DM_Serif_Display, Outfit } from "next/font/google";
 import "./globals.css";
 import SupabaseProvider from '@/components/providers/supabase-provider'
+import { LanguageProvider } from '@/lib/i18n/context'
 import { Toaster } from "@/components/ui/sonner"
 
 const dmSerifDisplay = DM_Serif_Display({
@@ -29,10 +30,12 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${dmSerifDisplay.variable} ${outfit.variable}`}>
       <body className="min-h-screen bg-background font-sans antialiased">
-        <SupabaseProvider>
-        {children}
-        </SupabaseProvider>
-        <Toaster />
+        <LanguageProvider>
+          <SupabaseProvider>
+            {children}
+          </SupabaseProvider>
+          <Toaster />
+        </LanguageProvider>
       </body>
     </html>
   );

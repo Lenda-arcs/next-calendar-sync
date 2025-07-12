@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { Form, FormField, Button, useForm } from '@/components/ui'
 import { createClient } from '@/lib/supabase'
 import { Mail, Lock, Eye, EyeOff, AlertCircle, Loader2 } from 'lucide-react'
+import { useTranslationNamespace } from '@/lib/i18n/context'
 // Uncomment when you want to add CAPTCHA protection
 // import HCaptcha from '@hcaptcha/react-hcaptcha'
 
@@ -19,6 +20,7 @@ interface LoginFormData {
 }
 
 export function LoginForm({ redirectTo = '/app', className }: LoginFormProps) {
+  const { t } = useTranslationNamespace('auth.signIn')
   const supabase = createClient()
   const [showPassword, setShowPassword] = React.useState(false)
   const [authError, setAuthError] = React.useState<string>('')
@@ -134,7 +136,7 @@ export function LoginForm({ redirectTo = '/app', className }: LoginFormProps) {
         )}
 
         <FormField
-          label="Email"
+          label={t('emailLabel')}
           type="email"
           placeholder="Enter your email"
           value={values.email as string}
@@ -147,7 +149,7 @@ export function LoginForm({ redirectTo = '/app', className }: LoginFormProps) {
         />
 
         <FormField
-          label="Password"
+          label={t('passwordLabel')}
           type={showPassword ? 'text' : 'password'}
           placeholder="Enter your password"
           value={values.password as string}
@@ -174,7 +176,7 @@ export function LoginForm({ redirectTo = '/app', className }: LoginFormProps) {
             href="/auth/forgot-password"
             className="text-primary hover:text-primary/80 transition-colors"
           >
-            Forgot your password?
+            {t('forgotPassword')}
           </Link>
         </div>
 
@@ -190,7 +192,7 @@ export function LoginForm({ redirectTo = '/app', className }: LoginFormProps) {
               Signing in...
             </>
           ) : (
-            'Sign In'
+            t('signInButton')
           )}
         </Button>
 
