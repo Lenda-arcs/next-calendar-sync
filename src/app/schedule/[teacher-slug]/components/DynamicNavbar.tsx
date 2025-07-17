@@ -55,7 +55,7 @@ export default function DynamicNavbar({
           <div className="flex items-center space-x-4">
             <LoadingNavLink
               href={isLoggedIn ? "/app" : "/"}
-              text={t('pages.publicSchedule.navbar.home')}
+              text={"avara."}
               avatarSrc={dummyLogo.src}
               avatarAlt="Logo"
               icon={Home}
