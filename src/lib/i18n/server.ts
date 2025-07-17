@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server'
+import { cookies } from 'next/headers'
 import { Language, SUPPORTED_LANGUAGES, DEFAULT_LANGUAGE } from './types'
 
 /**
@@ -28,6 +29,27 @@ export function getServerLanguage(request: NextRequest): Language {
   }
 
   // 4. Default fallback
+  return DEFAULT_LANGUAGE
+}
+
+/**
+ * Safe server-side language detection for static generation
+ * This function handles the case where cookies aren't available during build time
+ */
+export async function getServerLanguageSafe(): Promise<Language> {
+  try {
+    const cookieStore = await cookies()
+    const languageCookie = cookieStore.get('language')?.value
+    
+    if (languageCookie && SUPPORTED_LANGUAGES.includes(languageCookie as Language)) {
+      return languageCookie as Language
+    }
+  } catch {
+    // During static generation, cookies aren't available
+    // This is expected behavior, not an error
+    return DEFAULT_LANGUAGE
+  }
+  
   return DEFAULT_LANGUAGE
 }
 

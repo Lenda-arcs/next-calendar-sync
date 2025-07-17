@@ -1,14 +1,13 @@
 import { Metadata } from 'next/types'
-import { cookies } from 'next/headers'
 import { 
   Language, 
-  DEFAULT_LANGUAGE,
-  SUPPORTED_LANGUAGES
+  DEFAULT_LANGUAGE
 } from './types'
 import { 
   getServerTranslation, 
   getLocaleString, 
-  generateLanguageAlternates 
+  generateLanguageAlternates,
+  getServerLanguageSafe
 } from './server'
 
 export interface MetadataOptions {
@@ -28,22 +27,9 @@ export interface MetadataOptions {
 
 /**
  * Get the current language from cookies, with fallback to default
+ * This function is now an alias for getServerLanguageSafe for consistency
  */
-async function getCurrentLanguage(): Promise<Language> {
-  try {
-    const cookieStore = await cookies()
-    const languageCookie = cookieStore.get('language')?.value
-    
-    if (languageCookie && SUPPORTED_LANGUAGES.includes(languageCookie as Language)) {
-      return languageCookie as Language
-    }
-  } catch (error) {
-    // Cookies might not be available in some contexts
-    console.log('Could not access cookies for language detection:', error)
-  }
-  
-  return DEFAULT_LANGUAGE
-}
+const getCurrentLanguage = getServerLanguageSafe
 
 /**
  * Generate comprehensive metadata for a page with SEO optimization
