@@ -303,6 +303,23 @@ const translations: Translations = {
       removeTeacher: 'Remove Teacher',
       updateRates: 'Update Rates',
       studioSettings: 'Studio Settings'
+    },
+
+    management: {
+      title: 'Studio Management',
+      subtitle: 'Manage studios, teachers, and billing relationships',
+      createStudio: 'Create Studio',
+      accessRestricted: 'Access Restricted',
+      accessRestrictedDesc: 'Only administrators can manage studios.',
+      overview: {
+        totalStudios: 'Total Studios',
+        activeTeachers: 'Active Teachers',
+        verifiedStudios: 'Verified Studios'
+      },
+      tabs: {
+        studios: 'Studios',
+        teacherRequests: 'Teacher Requests'
+      }
     }
   },
   invoices: {
@@ -341,6 +358,337 @@ const translations: Translations = {
       notes: 'Notes',
       vatExempt: 'VAT exempt according to German small business regulation',
       untitledEvent: 'Untitled Event'
+    },
+    
+    management: {
+      title: 'Manage Invoices',
+      subtitle: 'Create and track invoices for your events and services.',
+      tabs: {
+        billing: 'Billing & Events',
+        billingShort: 'Billing',
+        invoices: 'Invoices',
+        invoicesShort: 'Bills',
+        settings: 'Settings',
+        settingsShort: 'Config'
+      },
+      billingTab: {
+        title: 'Billing & Events',
+        description: 'Manage uninvoiced events grouped by studio, sync historical data, and fix matching issues. Create invoices for completed classes.',
+        loading: 'Loading uninvoiced events...'
+      },
+      invoicesTab: {
+        title: 'Your Invoices',
+        description: 'View and manage your created invoices.',
+        noInvoicesTitle: 'No Invoices Yet',
+        noInvoicesDescription: 'Create your first invoice by selecting events from the "Uninvoiced Events" tab.',
+        viewUninvoiced: 'View Uninvoiced Events'
+      },
+      settingsTab: {
+        title: 'Invoice Settings & Billing Profiles',
+        description: 'Manage your personal billing information and billing entity configurations.',
+        loading: 'Loading settings...'
+      }
+    },
+    
+    creation: {
+      modalTitle: '{mode} Invoice - {studioName}',
+      editTitle: 'Edit',
+      createTitle: 'Create',
+      invoiceDetails: 'Invoice Details',
+      invoiceNumber: 'Invoice Number',
+      notes: 'Notes (Optional)',
+      notesPlaceholder: 'Add any additional notes for this invoice...',
+      events: 'Events ({count})',
+      eventsDescription: 'Click the edit icon to modify the title and rate for each event.',
+      total: 'Total:',
+      noEvents: 'No events selected.',
+      creating: 'Creating...',
+      updating: 'Updating...',
+      create: 'Create Invoice',
+      update: 'Update Invoice',
+      cancel: 'Cancel',
+      close: 'Close',
+      successTitle: 'Invoice Created Successfully!',
+      successUpdatedTitle: 'Invoice Updated Successfully!',
+      successMessage: 'Invoice {invoiceNumber} has been {mode} for €{total}',
+      pdfOptions: 'PDF Options',
+      generatePDF: 'Generate PDF',
+      generating: 'Generating PDF...',
+      viewPDF: 'View PDF',
+      pdfGenerated: 'PDF Generated Successfully!',
+      pdfGeneratedDesc: 'Your invoice PDF has been created and is ready to view.',
+      pdfFailed: 'PDF Generation Failed',
+      pdfFailedDesc: 'Unable to generate PDF. Please try again.'
+    },
+    
+    card: {
+      unknownStudio: 'Unknown Studio',
+      events: 'events',
+      period: 'Period:',
+      created: 'Created:',
+      pdf: 'PDF',
+      edit: 'Edit',
+      view: 'View',
+      draft: 'Draft',
+      sent: 'Sent',
+      paid: 'Paid',
+      overdue: 'Overdue',
+      cancelled: 'Cancelled',
+      sent_: 'Sent',
+      paid_: 'Paid',
+      overdue_: 'Overdue',
+      statusChange: 'Status:',
+      generatePDF: 'Generate PDF',
+      viewPDF: 'View PDF',
+      delete: 'Delete',
+      confirmDelete: 'Delete Invoice?',
+      confirmDeleteDesc: 'This action cannot be undone. This will permanently delete the invoice and remove all event links.',
+      deleteSuccess: 'Invoice Deleted Successfully',
+      deleteSuccessDesc: 'Invoice, PDF file, and all event links have been removed. Events are now available for future invoicing.',
+      deleteFailed: 'Failed to Delete Invoice',
+      deleteFailedDesc: 'Unable to delete the invoice. Please try again.'
+    },
+    
+    settings: {
+      invoiceInfoTitle: 'Your Invoice Information',
+      invoiceInfoDesc: 'Set up your personal billing details for generating invoices',
+      editSettings: 'Edit Settings',
+      noSettingsTitle: 'No invoice settings configured',
+      noSettingsDesc: 'Set up your billing information to generate invoices',
+      setupSettings: 'Set up Invoice Settings',
+      setupComplete: 'Setup Complete',
+      contactInfo: 'Contact Information',
+      email: 'Email',
+      phone: 'Phone',
+      address: 'Address',
+      bankingTax: 'Banking & Tax Information',
+      iban: 'IBAN',
+      bic: 'BIC/SWIFT',
+      taxId: 'Tax ID',
+      vatId: 'VAT ID',
+      billingProfilesTitle: 'Billing Profiles',
+      billingProfilesDesc: 'Set up billing information for studios and teachers',
+      pdfCustomizationTitle: 'PDF Template Customization',
+      pdfCustomizationDesc: 'Customize the appearance of your invoice PDFs with logos, colors, and layout options',
+      currentTheme: 'Current Theme:',
+      customConfiguration: 'Custom template configuration active',
+      defaultConfiguration: 'Using default template settings'
+    },
+    
+    settingsForm: {
+      basicInfo: 'Basic Information',
+      bankingInfo: 'Banking Information',
+      taxInfo: 'Tax Information',
+      fullName: 'Full Name',
+      fullNameRequired: 'Full Name *',
+      email: 'Email',
+      phone: 'Phone',
+      address: 'Address',
+      iban: 'IBAN',
+      ibanPlaceholder: 'DE89 3704 0044 0532 0130 00',
+      bic: 'BIC/SWIFT Code',
+      bicPlaceholder: 'COBADEFFXXX',
+      taxId: 'Tax ID',
+      vatId: 'VAT ID',
+      vatIdPlaceholder: 'DE123456789',
+      kleinunternehmerregelung: 'Kleinunternehmerregelung (§19 UStG)',
+      kleinunternehmerregelungDesc: 'Check this if you are exempt from VAT under German small business regulation. This will add the required legal text to your invoices.',
+      saving: 'Saving...',
+      updateSettings: 'Update Settings',
+      saveSettings: 'Save Settings',
+      cancel: 'Cancel',
+      editTitle: 'Edit Invoice Settings',
+      setupTitle: 'Set up Invoice Settings'
+    },
+    
+    uninvoiced: {
+      billingTitle: 'Billing & Events',
+      billingDesc: 'Manage uninvoiced events grouped by studio, sync historical data, and fix matching issues. Create invoices for completed classes.',
+      loading: 'Loading uninvoiced events...',
+      noEvents: 'No uninvoiced events found.',
+      noEventsTitle: 'No Uninvoiced Events',
+      noEventsDescription: 'All your completed events have been invoiced, or you don\'t have any events with assigned studios yet.',
+      createInvoice: 'Create Invoice',
+      selectAll: 'Select All',
+      deselectAll: 'Deselect All',
+      selectedCount: '{count} selected',
+      selectedTotal: 'Selected',
+      refresh: 'Refresh',
+      refreshing: 'Refreshing...',
+      syncingRefreshing: 'Syncing & Refreshing...',
+      studioActions: 'Studio Actions',
+      eventActions: 'Event Actions',
+      substituteTeacher: 'Setup Substitute Teacher',
+      editEvent: 'Edit Event Details',
+      exclude: 'Mark as Free',
+      rematchStudios: 'Rematch with Studios',
+      rematching: 'Rematching...',
+      updating: 'Updating...',
+      fixStudioMatching: 'Fix Studio Matching',
+      fixMatching: 'Fix Matching',
+      payout: 'Payout:',
+      total: 'Total',
+      selected: 'Selected',
+      unknownStudio: 'Unknown Studio',
+      eventWithoutStudio: 'Events without studio matching',
+      untitledEvent: 'Untitled Event',
+      noDate: 'No date',
+      teacher: 'Teacher',
+      event: 'event',
+      events: 'events',
+      studioMatchingIssues: 'Studio matching issues',
+      studioMatchingIssuesDesc: 'Re-apply studio location patterns to existing events to fix assignment problems.',
+      studioMatchingIssuesMobileDesc: 'Fix studio assignment problems',
+      studioMatchingUpdated: 'Studio Matching Updated!',
+      studioMatchingUpdatedDesc: '{updated_count} out of {total_events_processed} events were matched with studios.',
+      studioMatchingFailed: 'Failed to update studio matching',
+      rateConfig: {
+        noRateConfig: 'No rate config',
+        flatRate: 'Flat Rate',
+        perStudent: 'Per Student',
+        tieredRates: 'Tiered Rates',
+        variable: 'Variable',
+        base: 'Base:'
+      },
+      months: {
+        january: 'January',
+        february: 'February',
+        march: 'March',
+        april: 'April',
+        may: 'May',
+        june: 'June',
+        july: 'July',
+        august: 'August',
+        september: 'September',
+        october: 'October',
+        november: 'November',
+        december: 'December'
+      }
+    },
+
+    pdfCustomization: {
+      title: 'PDF Template Customization',
+      description: 'Customize the appearance of your invoice PDFs with logos, colors, and layout options',
+      tabs: {
+        theme: 'Theme',
+        branding: 'Branding',
+        layout: 'Layout'
+      },
+      buttons: {
+        cancel: 'Cancel',
+        preview: 'Preview PDF',
+        save: 'Save Template',
+        saving: 'Saving...',
+        generating: 'Generating...',
+        generatingPreview: 'Generating...'
+      },
+      theme: {
+        title: 'Template Theme',
+        professional: {
+          label: 'Professional',
+          description: 'Dark gray headers, bordered tables, classic business layout'
+        },
+        modern: {
+          label: 'Modern',
+          description: 'Bright emerald green accents, minimal tables, spacious design'
+        },
+        minimal: {
+          label: 'Minimal',
+          description: 'Light gray tones, small fonts, compact narrow layout'
+        },
+        creative: {
+          label: 'Creative',
+          description: 'Purple headers & accents, large fonts, modern styling'
+        },
+        custom: {
+          label: 'Custom',
+          description: 'Full control over all colors, fonts, and layout options'
+        },
+        selected: 'Selected'
+      },
+      branding: {
+        logoUpload: {
+          title: 'Logo & Branding',
+          description: 'Upload your company logo for invoice headers',
+          uploadLogo: 'Upload Logo',
+          currentLogo: 'Current logo:',
+          logoSize: 'Logo Size',
+          logoPosition: 'Logo Position',
+          sizes: {
+            small: 'Small',
+            medium: 'Medium',
+            large: 'Large'
+          },
+          positions: {
+            topLeft: 'Top Left',
+            topCenter: 'Top Center',
+            topRight: 'Top Right',
+            headerLeft: 'Header Left',
+            headerCenter: 'Header Center',
+            headerRight: 'Header Right'
+          }
+        },
+        colors: {
+          title: 'Colors',
+          description: 'Customize colors for your template',
+          customOnly: 'Colors',
+          customOnlyDesc: 'Color customization is only available with the Custom theme. Select "Custom" theme to modify colors.',
+          headerColor: 'Header Color',
+          accentColor: 'Accent Color'
+        },
+        text: {
+          letterhead: 'Letterhead Text',
+          letterheadPlaceholder: 'Enter letterhead text (e.g., company name, tagline)',
+          footer: 'Footer Text',
+          footerPlaceholder: 'Enter footer text (e.g., contact information, legal notices)'
+        }
+      },
+      layout: {
+        typography: {
+          title: 'Typography',
+          fontFamily: 'Font Family',
+          fontSize: 'Font Size',
+          fonts: {
+            helvetica: 'Helvetica',
+            times: 'Times',
+            courier: 'Courier',
+            arial: 'Arial'
+          },
+          sizes: {
+            small: 'Small',
+            normal: 'Normal',
+            large: 'Large'
+          }
+        },
+        page: {
+          title: 'Page Settings',
+          orientation: 'Page Orientation',
+          size: 'Page Size',
+          orientations: {
+            portrait: 'Portrait',
+            landscape: 'Landscape'
+          },
+          sizes: {
+            a4: 'A4',
+            letter: 'Letter',
+            legal: 'Legal'
+          }
+        },
+        content: {
+          title: 'Content Options',
+          showCompanyInfo: 'Show Company Information',
+          showCompanyAddress: 'Show Company Address',
+          showLogo: 'Show Logo',
+          showInvoiceNotes: 'Show Invoice Notes',
+          showTaxInfo: 'Show Tax Information',
+          showPaymentTerms: 'Show Payment Terms'
+        }
+      },
+      preview: {
+        success: 'PDF preview generated successfully!',
+        failed: 'Failed to generate PDF preview',
+        failedDesc: 'Please try again.'
+      }
     }
   },
   dashboard: {

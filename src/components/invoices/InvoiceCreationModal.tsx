@@ -23,6 +23,7 @@ import {
 import { InvoiceInsert } from '@/lib/types'
 import { toast } from 'sonner'
 import { Loader2, CheckCircle, FileText } from 'lucide-react'
+import { useTranslation } from '@/lib/i18n/context'
 
 interface InvoiceCreationModalProps {
   isOpen: boolean
@@ -47,6 +48,8 @@ export function InvoiceCreationModal({
   existingInvoice,
   onSuccess
 }: InvoiceCreationModalProps) {
+  const { t } = useTranslation()
+  
   // Use the custom hook for state management
   const {
     invoiceNumber,
@@ -220,7 +223,10 @@ export function InvoiceCreationModal({
     <UnifiedDialog
       open={isOpen}
       onOpenChange={onClose}
-      title={`${mode === 'edit' ? 'Edit' : 'Create'} Invoice - ${studio?.entity_name || 'Unknown Studio'}`}
+      title={t('invoices.creation.modalTitle', { 
+        mode: mode === 'edit' ? t('invoices.creation.editTitle') : t('invoices.creation.createTitle'),
+        studioName: studio?.entity_name || t('invoices.card.unknownStudio')
+      })}
       size="lg"
       footer={footerContent}
     >
@@ -230,9 +236,15 @@ export function InvoiceCreationModal({
               <div className="mx-auto flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
                 <CheckCircle className="w-8 h-8 text-green-600" />
               </div>
-              <h3 className="text-2xl font-bold text-green-800 mb-2">Invoice {mode === 'edit' ? 'Updated' : 'Created'} Successfully!</h3>
+              <h3 className="text-2xl font-bold text-green-800 mb-2">
+                {mode === 'edit' ? t('invoices.creation.successUpdatedTitle') : t('invoices.creation.successTitle')}
+              </h3>
               <p className="text-lg text-gray-700 mb-4">
-                Invoice <strong>{invoiceNumber}</strong> has been {mode === 'edit' ? 'updated' : 'created'} for <strong>€{totalAmount.toFixed(2)}</strong>
+                {t('invoices.creation.successMessage', {
+                  invoiceNumber,
+                  mode: mode === 'edit' ? t('invoices.creation.editTitle').toLowerCase() : t('invoices.creation.createTitle').toLowerCase(),
+                  total: totalAmount.toFixed(2)
+                })}
               </p>
             </div>
 
@@ -291,11 +303,11 @@ export function InvoiceCreationModal({
           <div className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Invoice Details</CardTitle>
+                <CardTitle>{t('invoices.creation.invoiceDetails')}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <Label htmlFor="invoice_number">Invoice Number</Label>
+                  <Label htmlFor="invoice_number">{t('invoices.creation.invoiceNumber')}</Label>
                   <Input
                     id="invoice_number"
                     value={invoiceNumber}
@@ -304,12 +316,12 @@ export function InvoiceCreationModal({
                   />
                 </div>
                 <div>
-                  <Label htmlFor="notes">Notes (Optional)</Label>
+                  <Label htmlFor="notes">{t('invoices.creation.notes')}</Label>
                   <textarea
                     id="notes"
                     value={notes}
                     onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setNotes(e.target.value)}
-                    placeholder="Add any additional notes for this invoice..."
+                    placeholder={t('invoices.creation.notesPlaceholder')}
                     rows={3}
                     disabled={invoiceMutation.isLoading}
                     className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
@@ -321,11 +333,11 @@ export function InvoiceCreationModal({
             <Card>
               <CardHeader>
                 <CardTitle>
-                  Events {isReady && `(${editableEvents.length})`}
+                  {isReady ? t('invoices.creation.events', { count: editableEvents.length.toString() }) : t('invoices.creation.events', { count: '0' })}
                 </CardTitle>
                 {isReady && (
                   <p className="text-sm text-gray-600 mt-1">
-                    Click the edit icon to modify the title and rate for each event.
+                    {t('invoices.creation.eventsDescription')}
                   </p>
                 )}
               </CardHeader>
@@ -347,14 +359,14 @@ export function InvoiceCreationModal({
                     </div>
                     <div className="border-t pt-4 mt-6">
                       <div className="flex justify-between items-center text-lg font-bold">
-                        <span>Total:</span>
+                        <span>{t('invoices.creation.total')}</span>
                         <span>€{totalAmount.toFixed(2)}</span>
                       </div>
                     </div>
                   </>
                 ) : (
                   <div className="text-center py-8">
-                    <p className="text-gray-600">No events selected.</p>
+                    <p className="text-gray-600">{t('invoices.creation.noEvents')}</p>
                   </div>
                 )}
               </CardContent>

@@ -14,6 +14,7 @@ import { useSupabaseQuery } from '@/lib/hooks/useSupabaseQuery'
 import { getUserInvoices, getUninvoicedEvents, updateInvoiceStatus, generateInvoicePDF, deleteInvoice, EventWithStudio, InvoiceWithDetails } from '@/lib/invoice-utils'
 import { toast } from 'sonner'
 import { Receipt, FileText, Settings, Loader2 } from 'lucide-react'
+import { useTranslation } from '@/lib/i18n/context'
 
 interface InvoiceManagementProps {
   userId: string
@@ -22,6 +23,7 @@ interface InvoiceManagementProps {
 type TabValue = 'uninvoiced' | 'invoices' | 'settings'
 
 export function InvoiceManagement({ userId }: InvoiceManagementProps) {
+  const { t } = useTranslation()
   const router = useRouter()
   const searchParams = useSearchParams()
   const [invoiceModalOpen, setInvoiceModalOpen] = useState(false)
@@ -116,18 +118,18 @@ export function InvoiceManagement({ userId }: InvoiceManagementProps) {
       refetchInvoices()
       
       // Show success toast with option to view PDF
-      toast('PDF Generated Successfully!', {
-        description: 'Your invoice PDF has been created and is ready to view.',
+      toast(t('invoices.creation.pdfGenerated'), {
+        description: t('invoices.creation.pdfGeneratedDesc'),
         action: {
-          label: 'View PDF',
+          label: t('invoices.creation.viewPDF'),
           onClick: () => window.open(pdf_url, '_blank'),
         },
         duration: 8000
       })
     } catch (error) {
       console.error('Failed to generate PDF:', error)
-      toast.error('PDF Generation Failed', {
-        description: 'Unable to generate PDF. Please try again.',
+      toast.error(t('invoices.creation.pdfFailed'), {
+        description: t('invoices.creation.pdfFailedDesc'),
         duration: 6000
       })
     }
@@ -145,14 +147,14 @@ export function InvoiceManagement({ userId }: InvoiceManagementProps) {
       refetchUninvoiced()
       refetchInvoices()
       
-      toast('Invoice Deleted Successfully', {
-        description: 'Invoice, PDF file, and all event links have been removed. Events are now available for future invoicing.',
+      toast(t('invoices.card.deleteSuccess'), {
+        description: t('invoices.card.deleteSuccessDesc'),
         duration: 5000
       })
     } catch (error) {
       console.error('Failed to delete invoice:', error)
-      toast.error('Failed to Delete Invoice', {
-        description: 'Unable to delete the invoice. Please try again.',
+      toast.error(t('invoices.card.deleteFailed'), {
+        description: t('invoices.card.deleteFailedDesc'),
         duration: 6000
       })
     }
@@ -188,38 +190,38 @@ export function InvoiceManagement({ userId }: InvoiceManagementProps) {
           <LoadingTabsTrigger
             value="uninvoiced"
             icon={Receipt}
-            fullText="Billing & Events"
-            shortText="Billing"
+            fullText={t('invoices.management.tabs.billing')}
+            shortText={t('invoices.management.tabs.billingShort')}
             isLoading={tabSwitchLoading === 'uninvoiced'}
             count={totalUninvoicedEvents}
           />
           <LoadingTabsTrigger
             value="invoices"
             icon={FileText}
-            fullText="Invoices"
-            shortText="Bills"
+            fullText={t('invoices.management.tabs.invoices')}
+            shortText={t('invoices.management.tabs.invoicesShort')}
             isLoading={tabSwitchLoading === 'invoices'}
             count={totalInvoices}
           />
           <LoadingTabsTrigger
             value="settings"
             icon={Settings}
-            fullText="Settings"
-            shortText="Config"
+            fullText={t('invoices.management.tabs.settings')}
+            shortText={t('invoices.management.tabs.settingsShort')}
             isLoading={tabSwitchLoading === 'settings'}
           />
         </TabsList>
 
         <TabsContent value="uninvoiced">
           <TabContent 
-            title="Billing & Events"
-            description="Manage uninvoiced events grouped by studio, sync historical data, and fix matching issues. Create invoices for completed classes."
+            title={t('invoices.management.billingTab.title')}
+            description={t('invoices.management.billingTab.description')}
           >
             {uninvoicedLoading ? (
               <Card>
                 <CardContent className="py-12 text-center">
                   <Loader2 className="w-8 h-8 mx-auto mb-4 animate-spin text-muted-foreground" />
-                  <p className="text-sm text-muted-foreground">Loading uninvoiced events...</p>
+                  <p className="text-sm text-muted-foreground">{t('invoices.management.billingTab.loading')}</p>
                 </CardContent>
               </Card>
             ) : (
@@ -234,8 +236,8 @@ export function InvoiceManagement({ userId }: InvoiceManagementProps) {
 
         <TabsContent value="invoices">
           <TabContent 
-            title="Your Invoices"
-            description="View and manage your created invoices."
+            title={t('invoices.management.invoicesTab.title')}
+            description={t('invoices.management.invoicesTab.description')}
           >
             <DataLoader
               data={userInvoices}
@@ -249,15 +251,15 @@ export function InvoiceManagement({ userId }: InvoiceManagementProps) {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                       </svg>
                     </div>
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">No Invoices Yet</h3>
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">{t('invoices.management.invoicesTab.noInvoicesTitle')}</h3>
                     <p className="text-sm text-gray-600 mb-4 max-w-sm mx-auto">
-                      Create your first invoice by selecting events from the &quot;Uninvoiced Events&quot; tab.
+                      {t('invoices.management.invoicesTab.noInvoicesDescription')}
                     </p>
                     <Button 
                       onClick={() => setActiveTab('uninvoiced')}
                       variant="outline"
                     >
-                      View Uninvoiced Events
+                      {t('invoices.management.invoicesTab.viewUninvoiced')}
                     </Button>
                   </CardContent>
                 </Card>
@@ -284,14 +286,14 @@ export function InvoiceManagement({ userId }: InvoiceManagementProps) {
 
         <TabsContent value="settings">
           <TabContent 
-            title="Invoice Settings & Billing Profiles"
-            description="Manage your personal billing information and billing entity configurations."
+            title={t('invoices.management.settingsTab.title')}
+            description={t('invoices.management.settingsTab.description')}
           >
             {tabSwitchLoading === 'settings' ? (
               <Card>
                 <CardContent className="py-12 text-center">
                   <Loader2 className="w-8 h-8 mx-auto mb-4 animate-spin text-muted-foreground" />
-                  <p className="text-sm text-muted-foreground">Loading settings...</p>
+                  <p className="text-sm text-muted-foreground">{t('invoices.management.settingsTab.loading')}</p>
                 </CardContent>
               </Card>
             ) : (

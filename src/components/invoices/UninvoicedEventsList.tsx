@@ -15,6 +15,7 @@ import { ExcludedEventsSection } from '@/components/events/ExcludedEventsSection
 import { SubstituteEventModal } from '@/components/events/SubstituteEventModal'
 import { calculateTotalPayout, EventWithStudio } from '@/lib/invoice-utils'
 import { BillingEntity, RateConfig } from '@/lib/types'
+import { useTranslation } from '@/lib/i18n/context'
 
 import { useInvoiceEvents, useStudioActions } from '@/lib/hooks'
 import { useCalendarFeeds } from '@/lib/hooks/useCalendarFeeds'
@@ -34,6 +35,8 @@ interface UninvoicedEventsListProps {
 }
 
 export function UninvoicedEventsList({ userId, onCreateInvoice, onCreateStudio }: UninvoicedEventsListProps) {
+  const { t } = useTranslation()
+  
   // ==================== STATE MANAGEMENT ====================
   const [selectedEvents, setSelectedEvents] = useState<Record<string, string[]>>({})
   const [substituteEventId, setSubstituteEventId] = useState<string | null>(null)
@@ -138,8 +141,11 @@ export function UninvoicedEventsList({ userId, onCreateInvoice, onCreateStudio }
         rematch_studios: true
       })
       
-      toast.success('Studio Matching Updated!', {
-        description: `${rematchResult.updated_count} out of ${rematchResult.total_events_processed} events were matched with studios.`,
+      toast.success(t('invoices.uninvoiced.studioMatchingUpdated'), {
+        description: t('invoices.uninvoiced.studioMatchingUpdatedDesc', {
+          updated_count: rematchResult.updated_count.toString(),
+          total_events_processed: rematchResult.total_events_processed.toString()
+        }),
         duration: 4000,
       })
 
@@ -148,16 +154,16 @@ export function UninvoicedEventsList({ userId, onCreateInvoice, onCreateStudio }
 
     } catch (err) {
       console.error('Failed to rematch studios:', err)
-      const errorMessage = err instanceof Error ? err.message : 'Failed to rematch studios'
+      const errorMessage = err instanceof Error ? err.message : t('invoices.uninvoiced.studioMatchingFailed')
       
-      toast.error('Failed to update studio matching', {
+      toast.error(t('invoices.uninvoiced.studioMatchingFailed'), {
         description: errorMessage,
         duration: 6000,
       })
     } finally {
       setIsRematchingStudios(false)
     }
-  }, [userId, refetchAll])
+  }, [userId, refetchAll, t])
 
   const selectedEvent = substituteEventId 
     ? uninvoicedEvents?.find(event => event.id === substituteEventId) || null
@@ -247,8 +253,22 @@ export function UninvoicedEventsList({ userId, onCreateInvoice, onCreateStudio }
   const getMonthLabel = useCallback((monthKey: string) => {
     const [year, month] = monthKey.split('-')
     const date = new Date(parseInt(year), parseInt(month) - 1)
-    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long' })
-  }, [])
+    const monthNames = [
+      t('invoices.uninvoiced.months.january'),
+      t('invoices.uninvoiced.months.february'),
+      t('invoices.uninvoiced.months.march'),
+      t('invoices.uninvoiced.months.april'),
+      t('invoices.uninvoiced.months.may'),
+      t('invoices.uninvoiced.months.june'),
+      t('invoices.uninvoiced.months.july'),
+      t('invoices.uninvoiced.months.august'),
+      t('invoices.uninvoiced.months.september'),
+      t('invoices.uninvoiced.months.october'),
+      t('invoices.uninvoiced.months.november'),
+      t('invoices.uninvoiced.months.december')
+    ]
+    return `${monthNames[date.getMonth()]} ${year}`
+  }, [t])
 
   const isTeacherBillingEntity = useCallback((entity: BillingEntity | null) => {
     return entity?.entity_type === 'teacher'
@@ -270,17 +290,17 @@ export function UninvoicedEventsList({ userId, onCreateInvoice, onCreateStudio }
             layout="vertical"
           />
           <InfoCardSection
-            title="Studio matching issues"
+            title={t('invoices.uninvoiced.studioMatchingIssues')}
             count={0}
-            description="Re-apply studio location patterns to existing events to fix assignment problems."
-            mobileDescription="Fix studio assignment problems"
+            description={t('invoices.uninvoiced.studioMatchingIssuesDesc')}
+            mobileDescription={t('invoices.uninvoiced.studioMatchingIssuesMobileDesc')}
             icon={RotateCcw}
             colorScheme={colorSchemes.purple}
             layout="vertical"
             actions={[
               {
-                label: isRematchingStudios ? 'Updating...' : 'Fix Studio Matching',
-                mobileLabel: isRematchingStudios ? 'Updating...' : 'Fix Matching',
+                label: isRematchingStudios ? t('invoices.uninvoiced.updating') : t('invoices.uninvoiced.fixStudioMatching'),
+                mobileLabel: isRematchingStudios ? t('invoices.uninvoiced.updating') : t('invoices.uninvoiced.fixMatching'),
                 icon: RotateCcw,
                 onClick: handleRematchStudios,
                 disabled: isRematchingStudios,
@@ -315,13 +335,13 @@ export function UninvoicedEventsList({ userId, onCreateInvoice, onCreateStudio }
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
               </div>
-              <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2">No Uninvoiced Events</h3>
+              <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2">{t('invoices.uninvoiced.noEventsTitle')}</h3>
               <p className="text-sm text-gray-600 mb-3 sm:mb-4 max-w-sm mx-auto">
-                All your completed events have been invoiced, or you don&apos;t have any events with assigned studios yet.
+                {t('invoices.uninvoiced.noEventsDescription')}
               </p>
               <Button variant="outline" onClick={handleRefresh} disabled={isRefreshing} size="sm" className="w-full sm:w-auto">
                 <RefreshCw className={`mr-2 h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-                {isRefreshing ? 'Syncing & Refreshing...' : 'Refresh'}
+                {isRefreshing ? t('invoices.uninvoiced.syncingRefreshing') : t('invoices.uninvoiced.refresh')}
               </Button>
             </CardContent>
           </Card>
@@ -364,7 +384,7 @@ export function UninvoicedEventsList({ userId, onCreateInvoice, onCreateStudio }
                               </CardTitle>
                               {isTeacher && (
                                 <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full flex-shrink-0">
-                                  Teacher
+                                  {t('invoices.uninvoiced.teacher')}
                                 </span>
                               )}
                               <div className="text-xs text-gray-400 group-hover:text-blue-500 transition-colors opacity-0 group-hover:opacity-100 hidden sm:block flex-shrink-0 ml-2">
@@ -373,22 +393,22 @@ export function UninvoicedEventsList({ userId, onCreateInvoice, onCreateStudio }
                             </div>
                             <div className="flex items-center gap-2 sm:gap-3 text-sm">
                               <span className="text-gray-600 text-xs sm:text-sm">
-                                {studioEvents.length} event{studioEvents.length !== 1 ? 's' : ''}
+                                {studioEvents.length} {studioEvents.length !== 1 ? t('invoices.uninvoiced.events') : t('invoices.uninvoiced.event')}
                               </span>
                               <span className="text-gray-500 text-xs hidden sm:block">
                                 {(() => {
                                   const rateConfig = displayEntity.rate_config as RateConfig | null
-                                  if (!rateConfig) return 'No rate config'
+                                  if (!rateConfig) return t('invoices.uninvoiced.rateConfig.noRateConfig')
                                   
-                                  const rateTypeDisplay = rateConfig.type === 'flat' ? 'Flat Rate' : 
-                                                         rateConfig.type === 'per_student' ? 'Per Student' :
-                                                         rateConfig.type === 'tiered' ? 'Tiered Rates' : 'Unknown'
+                                  const rateTypeDisplay = rateConfig.type === 'flat' ? t('invoices.uninvoiced.rateConfig.flatRate') : 
+                                                         rateConfig.type === 'per_student' ? t('invoices.uninvoiced.rateConfig.perStudent') :
+                                                         rateConfig.type === 'tiered' ? t('invoices.uninvoiced.rateConfig.tieredRates') : 'Unknown'
                                   
                                   const baseRateDisplay = rateConfig.type === 'flat' ? rateConfig.base_rate?.toFixed(2) :
                                                          rateConfig.type === 'per_student' ? rateConfig.rate_per_student?.toFixed(2) :
-                                                         'Variable'
+                                                         t('invoices.uninvoiced.rateConfig.variable')
                                   
-                                  return `${rateTypeDisplay} • Base: €${baseRateDisplay || '0.00'}`
+                                  return `${rateTypeDisplay} • ${t('invoices.uninvoiced.rateConfig.base')} €${baseRateDisplay || '0.00'}`
                                 })()}
                               </span>
                             </div>
@@ -398,7 +418,7 @@ export function UninvoicedEventsList({ userId, onCreateInvoice, onCreateStudio }
                               €{totalPayout.toFixed(2)}
                             </div>
                             <div className="text-xs text-gray-600">
-                              Total
+                              {t('invoices.uninvoiced.total')}
                             </div>
                           </div>
                         </div>
@@ -417,19 +437,19 @@ export function UninvoicedEventsList({ userId, onCreateInvoice, onCreateStudio }
                                   variant="outline"
                                   className="flex-shrink-0"
                                 >
-                                  {allEventsSelected ? 'Deselect All' : 'Select All'}
+                                  {allEventsSelected ? t('invoices.uninvoiced.deselectAll') : t('invoices.uninvoiced.selectAll')}
                                 </Button>
                                 
                                 {someEventsSelected && (
                                   <div className="flex items-center gap-3 text-sm">
                                     <span className="text-gray-600">
-                                      {selectedEventIds.length}/{studioEvents.length} selected
+                                      {t('invoices.uninvoiced.selectedCount', { count: `${selectedEventIds.length}/${studioEvents.length}` })}
                                     </span>
                                     <div className="text-right">
                                       <div className="font-bold text-blue-600">
                                         €{selectedTotal.toFixed(2)}
                                       </div>
-                                      <div className="text-xs text-gray-500">Selected</div>
+                                      <div className="text-xs text-gray-500">{t('invoices.uninvoiced.selectedTotal')}</div>
                                     </div>
                                   </div>
                                 )}

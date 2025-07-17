@@ -357,6 +357,23 @@ export interface StudioTranslations {
     updateRates: string
     studioSettings: string
   }
+
+  management: {
+    title: string
+    subtitle: string
+    createStudio: string
+    accessRestricted: string
+    accessRestrictedDesc: string
+    overview: {
+      totalStudios: string
+      activeTeachers: string
+      verifiedStudios: string
+    }
+    tabs: {
+      studios: string
+      teacherRequests: string
+    }
+  }
 }
 
 export interface InvoiceTranslations {
@@ -397,6 +414,337 @@ export interface InvoiceTranslations {
     notes: string
     vatExempt: string
     untitledEvent: string
+  }
+  
+  management: {
+    title: string
+    subtitle: string
+    tabs: {
+      billing: string
+      billingShort: string
+      invoices: string
+      invoicesShort: string
+      settings: string
+      settingsShort: string
+    }
+    billingTab: {
+      title: string
+      description: string
+      loading: string
+    }
+    invoicesTab: {
+      title: string
+      description: string
+      noInvoicesTitle: string
+      noInvoicesDescription: string
+      viewUninvoiced: string
+    }
+    settingsTab: {
+      title: string
+      description: string
+      loading: string
+    }
+  }
+  
+  creation: {
+    modalTitle: string
+    editTitle: string
+    createTitle: string
+    invoiceDetails: string
+    invoiceNumber: string
+    notes: string
+    notesPlaceholder: string
+    events: string
+    eventsDescription: string
+    total: string
+    noEvents: string
+    creating: string
+    updating: string
+    create: string
+    update: string
+    cancel: string
+    close: string
+    successTitle: string
+    successUpdatedTitle: string
+    successMessage: string
+    pdfOptions: string
+    generatePDF: string
+    generating: string
+    viewPDF: string
+    pdfGenerated: string
+    pdfGeneratedDesc: string
+    pdfFailed: string
+    pdfFailedDesc: string
+  }
+  
+  card: {
+    unknownStudio: string
+    events: string
+    period: string
+    created: string
+    pdf: string
+    edit: string
+    view: string
+    draft: string
+    sent: string
+    paid: string
+    overdue: string
+    cancelled: string
+    sent_: string
+    paid_: string
+    overdue_: string
+    statusChange: string
+    generatePDF: string
+    viewPDF: string
+    delete: string
+    confirmDelete: string
+    confirmDeleteDesc: string
+    deleteSuccess: string
+    deleteSuccessDesc: string
+    deleteFailed: string
+    deleteFailedDesc: string
+  }
+  
+  settings: {
+    invoiceInfoTitle: string
+    invoiceInfoDesc: string
+    editSettings: string
+    noSettingsTitle: string
+    noSettingsDesc: string
+    setupSettings: string
+    setupComplete: string
+    contactInfo: string
+    email: string
+    phone: string
+    address: string
+    bankingTax: string
+    iban: string
+    bic: string
+    taxId: string
+    vatId: string
+    billingProfilesTitle: string
+    billingProfilesDesc: string
+    pdfCustomizationTitle: string
+    pdfCustomizationDesc: string
+    currentTheme: string
+    customConfiguration: string
+    defaultConfiguration: string
+  }
+  
+  settingsForm: {
+    basicInfo: string
+    bankingInfo: string
+    taxInfo: string
+    fullName: string
+    fullNameRequired: string
+    email: string
+    phone: string
+    address: string
+    iban: string
+    ibanPlaceholder: string
+    bic: string
+    bicPlaceholder: string
+    taxId: string
+    vatId: string
+    vatIdPlaceholder: string
+    kleinunternehmerregelung: string
+    kleinunternehmerregelungDesc: string
+    saving: string
+    updateSettings: string
+    saveSettings: string
+    cancel: string
+    editTitle: string
+    setupTitle: string
+  }
+  
+  uninvoiced: {
+    billingTitle: string
+    billingDesc: string
+    loading: string
+    noEvents: string
+    noEventsTitle: string
+    noEventsDescription: string
+    createInvoice: string
+    selectAll: string
+    deselectAll: string
+    selectedCount: string
+    selectedTotal: string
+    refresh: string
+    refreshing: string
+    syncingRefreshing: string
+    studioActions: string
+    eventActions: string
+    substituteTeacher: string
+    editEvent: string
+    exclude: string
+    rematchStudios: string
+    rematching: string
+    updating: string
+    fixStudioMatching: string
+    fixMatching: string
+    payout: string
+    total: string
+    selected: string
+    unknownStudio: string
+    eventWithoutStudio: string
+    untitledEvent: string
+    noDate: string
+    teacher: string
+    event: string
+    events: string
+    studioMatchingIssues: string
+    studioMatchingIssuesDesc: string
+    studioMatchingIssuesMobileDesc: string
+    studioMatchingUpdated: string
+    studioMatchingUpdatedDesc: string
+    studioMatchingFailed: string
+    rateConfig: {
+      noRateConfig: string
+      flatRate: string
+      perStudent: string
+      tieredRates: string
+      variable: string
+      base: string
+    }
+    months: {
+      january: string
+      february: string
+      march: string
+      april: string
+      may: string
+      june: string
+      july: string
+      august: string
+      september: string
+      october: string
+      november: string
+      december: string
+    }
+  }
+
+  pdfCustomization: {
+    title: string
+    description: string
+    tabs: {
+      theme: string
+      branding: string
+      layout: string
+    }
+    buttons: {
+      cancel: string
+      preview: string
+      save: string
+      saving: string
+      generating: string
+      generatingPreview: string
+    }
+    theme: {
+      title: string
+      professional: {
+        label: string
+        description: string
+      }
+      modern: {
+        label: string
+        description: string
+      }
+      minimal: {
+        label: string
+        description: string
+      }
+      creative: {
+        label: string
+        description: string
+      }
+      custom: {
+        label: string
+        description: string
+      }
+      selected: string
+    }
+    branding: {
+      logoUpload: {
+        title: string
+        description: string
+        uploadLogo: string
+        currentLogo: string
+        logoSize: string
+        logoPosition: string
+        sizes: {
+          small: string
+          medium: string
+          large: string
+        }
+        positions: {
+          topLeft: string
+          topCenter: string
+          topRight: string
+          headerLeft: string
+          headerCenter: string
+          headerRight: string
+        }
+      }
+      colors: {
+        title: string
+        description: string
+        customOnly: string
+        customOnlyDesc: string
+        headerColor: string
+        accentColor: string
+      }
+      text: {
+        letterhead: string
+        letterheadPlaceholder: string
+        footer: string
+        footerPlaceholder: string
+      }
+    }
+    layout: {
+      typography: {
+        title: string
+        fontFamily: string
+        fontSize: string
+        fonts: {
+          helvetica: string
+          times: string
+          courier: string
+          arial: string
+        }
+        sizes: {
+          small: string
+          normal: string
+          large: string
+        }
+      }
+      page: {
+        title: string
+        orientation: string
+        size: string
+        orientations: {
+          portrait: string
+          landscape: string
+        }
+        sizes: {
+          a4: string
+          letter: string
+          legal: string
+        }
+      }
+      content: {
+        title: string
+        showCompanyInfo: string
+        showCompanyAddress: string
+        showLogo: string
+        showInvoiceNotes: string
+        showTaxInfo: string
+        showPaymentTerms: string
+      }
+    }
+    preview: {
+      success: string
+      failed: string
+      failedDesc: string
+    }
   }
 }
 

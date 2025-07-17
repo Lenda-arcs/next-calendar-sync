@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { useSupabaseMutation } from '@/lib/hooks/useSupabaseMutation'
 import { UserInvoiceSettings, UserInvoiceSettingsInsert, UserInvoiceSettingsUpdate } from '@/lib/types'
+import { useTranslation } from '@/lib/i18n/context'
 import { Loader2 } from 'lucide-react'
 
 interface UserInvoiceSettingsFormProps {
@@ -26,6 +27,7 @@ export function UserInvoiceSettingsForm({
   onLoadingChange,
   formRef
 }: UserInvoiceSettingsFormProps) {
+  const { t } = useTranslation()
   const [formData, setFormData] = useState({
     full_name: '',
     email: '',
@@ -126,10 +128,10 @@ export function UserInvoiceSettingsForm({
     <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
       {/* Basic Information */}
       <div className="space-y-4">
-        <h3 className="text-lg font-medium text-gray-900">Basic Information</h3>
+        <h3 className="text-lg font-medium text-gray-900">{t('invoices.settingsForm.basicInfo')}</h3>
         
         <div>
-          <Label htmlFor="full_name">Full Name *</Label>
+          <Label htmlFor="full_name">{t('invoices.settingsForm.fullNameRequired')}</Label>
           <Input
             id="full_name"
             value={formData.full_name}
@@ -140,7 +142,7 @@ export function UserInvoiceSettingsForm({
         </div>
 
         <div>
-          <Label htmlFor="email">Email</Label>
+          <Label htmlFor="email">{t('invoices.settingsForm.email')}</Label>
           <Input
             id="email"
             type="email"
@@ -151,7 +153,7 @@ export function UserInvoiceSettingsForm({
         </div>
 
         <div>
-          <Label htmlFor="phone">Phone</Label>
+          <Label htmlFor="phone">{t('invoices.settingsForm.phone')}</Label>
           <Input
             id="phone"
             value={formData.phone}
@@ -161,7 +163,7 @@ export function UserInvoiceSettingsForm({
         </div>
 
         <div>
-          <Label htmlFor="address">Address</Label>
+          <Label htmlFor="address">{t('invoices.settingsForm.address')}</Label>
           <Textarea
             id="address"
             value={formData.address}
@@ -174,26 +176,26 @@ export function UserInvoiceSettingsForm({
 
       {/* Banking Information */}
       <div className="space-y-4">
-        <h3 className="text-lg font-medium text-gray-900">Banking Information</h3>
+        <h3 className="text-lg font-medium text-gray-900">{t('invoices.settingsForm.bankingInfo')}</h3>
         
         <div>
-          <Label htmlFor="iban">IBAN</Label>
+          <Label htmlFor="iban">{t('invoices.settingsForm.iban')}</Label>
           <Input
             id="iban"
             value={formData.iban}
             onChange={(e) => handleInputChange('iban', e.target.value)}
-            placeholder="DE89 3704 0044 0532 0130 00"
+            placeholder={t('invoices.settingsForm.ibanPlaceholder')}
             disabled={settingsMutation.isLoading}
           />
         </div>
 
         <div>
-          <Label htmlFor="bic">BIC/SWIFT Code</Label>
+          <Label htmlFor="bic">{t('invoices.settingsForm.bic')}</Label>
           <Input
             id="bic"
             value={formData.bic}
             onChange={(e) => handleInputChange('bic', e.target.value)}
-            placeholder="COBADEFFXXX"
+            placeholder={t('invoices.settingsForm.bicPlaceholder')}
             disabled={settingsMutation.isLoading}
           />
         </div>
@@ -201,10 +203,10 @@ export function UserInvoiceSettingsForm({
 
       {/* Tax Information */}
       <div className="space-y-4">
-        <h3 className="text-lg font-medium text-gray-900">Tax Information</h3>
+        <h3 className="text-lg font-medium text-gray-900">{t('invoices.settingsForm.taxInfo')}</h3>
         
         <div>
-          <Label htmlFor="tax_id">Tax ID</Label>
+          <Label htmlFor="tax_id">{t('invoices.settingsForm.taxId')}</Label>
           <Input
             id="tax_id"
             value={formData.tax_id}
@@ -214,12 +216,12 @@ export function UserInvoiceSettingsForm({
         </div>
 
         <div>
-          <Label htmlFor="vat_id">VAT ID</Label>
+          <Label htmlFor="vat_id">{t('invoices.settingsForm.vatId')}</Label>
           <Input
             id="vat_id"
             value={formData.vat_id}
             onChange={(e) => handleInputChange('vat_id', e.target.value)}
-            placeholder="DE123456789"
+            placeholder={t('invoices.settingsForm.vatIdPlaceholder')}
             disabled={settingsMutation.isLoading}
           />
         </div>
@@ -234,12 +236,11 @@ export function UserInvoiceSettingsForm({
             className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
           />
           <Label htmlFor="kleinunternehmerregelung" className="text-sm">
-            Kleinunternehmerregelung (§19 UStG)
+            {t('invoices.settingsForm.kleinunternehmerregelung')}
           </Label>
         </div>
         <p className="text-sm text-gray-500 ml-6">
-          Check this if you are exempt from VAT under German small business regulation. 
-          This will add the required legal text to your invoices.
+          {t('invoices.settingsForm.kleinunternehmerregelungDesc')}
         </p>
       </div>
 
@@ -262,10 +263,10 @@ export function UserInvoiceSettingsForm({
             {settingsMutation.isLoading ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Saving...
+                {t('invoices.settingsForm.saving')}
               </>
             ) : (
-              existingSettings ? 'Update Settings' : 'Save Settings'
+              existingSettings ? t('invoices.settingsForm.updateSettings') : t('invoices.settingsForm.saveSettings')
             )}
           </Button>
         </div>

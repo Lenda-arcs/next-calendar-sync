@@ -11,6 +11,7 @@ import { Plus, Users, MapPin, Star, Shield } from 'lucide-react'
 import { StudioForm } from './StudioForm'
 import { StudioList } from './StudioList'
 import { StudioTeacherRequests } from './StudioTeacherRequests'
+import { useTranslation } from '@/lib/i18n/context'
 
 interface StudioManagementProps {
   userId: string
@@ -18,6 +19,7 @@ interface StudioManagementProps {
 }
 
 export function StudioManagement({ userRole }: StudioManagementProps) {
+  const { t } = useTranslation()
   const [activeTab, setActiveTab] = useState('studios')
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [editingStudio, setEditingStudio] = useState<Studio | null>(null)
@@ -91,10 +93,10 @@ export function StudioManagement({ userRole }: StudioManagementProps) {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Shield className="w-5 h-5" />
-              Access Restricted
+              {t('studios.management.accessRestricted')}
             </CardTitle>
             <CardDescription>
-              Only administrators can manage studios.
+              {t('studios.management.accessRestrictedDesc')}
             </CardDescription>
           </CardHeader>
         </Card>
@@ -141,12 +143,12 @@ export function StudioManagement({ userRole }: StudioManagementProps) {
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Studio Management</h1>
-          <p className="text-gray-600">Manage studios, teachers, and billing relationships</p>
+          <h1 className="text-2xl font-bold">{t('studios.management.title')}</h1>
+          <p className="text-gray-600">{t('studios.management.subtitle')}</p>
         </div>
         <Button onClick={handleCreateStudio} className="flex items-center gap-2">
           <Plus className="w-4 h-4" />
-          Create Studio
+          {t('studios.management.createStudio')}
         </Button>
       </div>
 
@@ -156,7 +158,7 @@ export function StudioManagement({ userRole }: StudioManagementProps) {
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
               <MapPin className="w-4 h-4" />
-              Total Studios
+              {t('studios.management.overview.totalStudios')}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -168,7 +170,7 @@ export function StudioManagement({ userRole }: StudioManagementProps) {
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
               <Users className="w-4 h-4" />
-              Active Teachers
+              {t('studios.management.overview.activeTeachers')}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -182,7 +184,7 @@ export function StudioManagement({ userRole }: StudioManagementProps) {
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
               <Star className="w-4 h-4" />
-              Verified Studios
+              {t('studios.management.overview.verifiedStudios')}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -196,9 +198,9 @@ export function StudioManagement({ userRole }: StudioManagementProps) {
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
-          <TabsTrigger value="studios">Studios</TabsTrigger>
+          <TabsTrigger value="studios">{t('studios.management.tabs.studios')}</TabsTrigger>
           <TabsTrigger value="requests">
-            Teacher Requests
+            {t('studios.management.tabs.teacherRequests')}
             {pendingRequests && pendingRequests.length > 0 && (
               <Badge variant="destructive" className="ml-2">
                 {pendingRequests.length}

@@ -303,6 +303,23 @@ const translations: Translations = {
       removeTeacher: 'Lehrer entfernen',
       updateRates: 'Preise aktualisieren',
       studioSettings: 'Studio-Einstellungen'
+    },
+
+    management: {
+      title: 'Studio-Verwaltung',
+      subtitle: 'Studios, Lehrer und Abrechnungsbeziehungen verwalten',
+      createStudio: 'Studio erstellen',
+      accessRestricted: 'Zugriff eingeschränkt',
+      accessRestrictedDesc: 'Nur Administratoren können Studios verwalten.',
+      overview: {
+        totalStudios: 'Studios gesamt',
+        activeTeachers: 'Aktive Lehrer',
+        verifiedStudios: 'Verifizierte Studios'
+      },
+      tabs: {
+        studios: 'Studios',
+        teacherRequests: 'Lehrer-Anfragen'
+      }
     }
   },
   invoices: {
@@ -341,6 +358,337 @@ const translations: Translations = {
       notes: 'Notizen',
       vatExempt: 'Gemäß § 19 UStG wird keine Umsatzsteuer berechnet.',
       untitledEvent: 'Unbenannte Veranstaltung'
+    },
+    
+    management: {
+      title: 'Rechnungen verwalten',
+      subtitle: 'Erstellen und verfolgen Sie Rechnungen für Ihre Veranstaltungen und Dienstleistungen.',
+      tabs: {
+        billing: 'Abrechnung & Veranstaltungen',
+        billingShort: 'Abrechnung',
+        invoices: 'Rechnungen',
+        invoicesShort: 'Rechnungen',
+        settings: 'Einstellungen',
+        settingsShort: 'Config'
+      },
+      billingTab: {
+        title: 'Abrechnung & Veranstaltungen',
+        description: 'Verwalten Sie nicht abgerechnete Veranstaltungen nach Studios gruppiert, synchronisieren Sie historische Daten und beheben Sie Zuordnungsprobleme. Erstellen Sie Rechnungen für abgeschlossene Kurse.',
+        loading: 'Lade nicht abgerechnete Veranstaltungen...'
+      },
+      invoicesTab: {
+        title: 'Ihre Rechnungen',
+        description: 'Betrachten und verwalten Sie Ihre erstellten Rechnungen.',
+        noInvoicesTitle: 'Noch keine Rechnungen',
+        noInvoicesDescription: 'Erstellen Sie Ihre erste Rechnung, indem Sie Veranstaltungen aus dem Tab "Nicht abgerechnete Veranstaltungen" auswählen.',
+        viewUninvoiced: 'Nicht abgerechnete Veranstaltungen anzeigen'
+      },
+      settingsTab: {
+        title: 'Rechnungseinstellungen & Abrechnungsprofile',
+        description: 'Verwalten Sie Ihre persönlichen Abrechnungsinformationen und Abrechnungseinstellungen.',
+        loading: 'Lade Einstellungen...'
+      }
+    },
+    
+    creation: {
+      modalTitle: 'Rechnung {mode} - {studioName}',
+      editTitle: 'Bearbeiten',
+      createTitle: 'Erstellen',
+      invoiceDetails: 'Rechnungsdetails',
+      invoiceNumber: 'Rechnungsnummer',
+      notes: 'Notizen (Optional)',
+      notesPlaceholder: 'Fügen Sie zusätzliche Notizen für diese Rechnung hinzu...',
+      events: 'Veranstaltungen ({count})',
+      eventsDescription: 'Klicken Sie auf das Bearbeiten-Symbol, um Titel und Tarif für jede Veranstaltung zu ändern.',
+      total: 'Gesamt:',
+      noEvents: 'Keine Veranstaltungen ausgewählt.',
+      creating: 'Erstelle...',
+      updating: 'Aktualisiere...',
+      create: 'Rechnung erstellen',
+      update: 'Rechnung aktualisieren',
+      cancel: 'Abbrechen',
+      close: 'Schließen',
+      successTitle: 'Rechnung erfolgreich erstellt!',
+      successUpdatedTitle: 'Rechnung erfolgreich aktualisiert!',
+      successMessage: 'Rechnung {invoiceNumber} wurde {mode} für €{total}',
+      pdfOptions: 'PDF-Optionen',
+      generatePDF: 'PDF generieren',
+      generating: 'Generiere PDF...',
+      viewPDF: 'PDF anzeigen',
+      pdfGenerated: 'PDF erfolgreich generiert!',
+      pdfGeneratedDesc: 'Ihre Rechnungs-PDF wurde erstellt und ist bereit zur Ansicht.',
+      pdfFailed: 'PDF-Generierung fehlgeschlagen',
+      pdfFailedDesc: 'PDF konnte nicht generiert werden. Bitte versuchen Sie es erneut.'
+    },
+    
+    card: {
+      unknownStudio: 'Unbekanntes Studio',
+      events: 'Veranstaltungen',
+      period: 'Zeitraum:',
+      created: 'Erstellt:',
+      pdf: 'PDF',
+      edit: 'Bearbeiten',
+      view: 'Anzeigen',
+      draft: 'Entwurf',
+      sent: 'Gesendet',
+      paid: 'Bezahlt',
+      overdue: 'Überfällig',
+      cancelled: 'Storniert',
+      sent_: 'Gesendet',
+      paid_: 'Bezahlt',
+      overdue_: 'Überfällig',
+      statusChange: 'Status:',
+      generatePDF: 'PDF generieren',
+      viewPDF: 'PDF anzeigen',
+      delete: 'Löschen',
+      confirmDelete: 'Rechnung löschen?',
+      confirmDeleteDesc: 'Diese Aktion kann nicht rückgängig gemacht werden. Die Rechnung wird dauerhaft gelöscht und alle Event-Verknüpfungen entfernt.',
+      deleteSuccess: 'Rechnung erfolgreich gelöscht',
+      deleteSuccessDesc: 'Rechnung, PDF-Datei und alle Event-Verknüpfungen wurden entfernt. Events sind jetzt wieder für zukünftige Rechnungen verfügbar.',
+      deleteFailed: 'Rechnung konnte nicht gelöscht werden',
+      deleteFailedDesc: 'Rechnung konnte nicht gelöscht werden. Bitte versuchen Sie es erneut.'
+    },
+    
+    settings: {
+      invoiceInfoTitle: 'Ihre Rechnungsinformationen',
+      invoiceInfoDesc: 'Richten Sie Ihre persönlichen Abrechnungsdetails für die Rechnungserstellung ein',
+      editSettings: 'Einstellungen bearbeiten',
+      noSettingsTitle: 'Keine Rechnungseinstellungen konfiguriert',
+      noSettingsDesc: 'Richten Sie Ihre Abrechnungsinformationen ein, um Rechnungen zu generieren',
+      setupSettings: 'Rechnungseinstellungen einrichten',
+      setupComplete: 'Setup abgeschlossen',
+      contactInfo: 'Kontaktinformationen',
+      email: 'E-Mail',
+      phone: 'Telefon',
+      address: 'Adresse',
+      bankingTax: 'Bank- & Steuerinformationen',
+      iban: 'IBAN',
+      bic: 'BIC/SWIFT',
+      taxId: 'Steuer-ID',
+      vatId: 'USt-IdNr.',
+      billingProfilesTitle: 'Abrechnungsprofile',
+      billingProfilesDesc: 'Abrechnungsinformationen für Studios und Lehrer einrichten',
+      pdfCustomizationTitle: 'PDF-Vorlagenanpassung',
+      pdfCustomizationDesc: 'Passen Sie das Erscheinungsbild Ihrer Rechnungs-PDFs mit Logos, Farben und Layout-Optionen an',
+      currentTheme: 'Aktuelles Theme:',
+      customConfiguration: 'Benutzerdefinierte Vorlagenkonfiguration aktiv',
+      defaultConfiguration: 'Standard-Vorlageneinstellungen verwenden'
+    },
+    
+    settingsForm: {
+      basicInfo: 'Grundlegende Informationen',
+      bankingInfo: 'Bankdaten',
+      taxInfo: 'Steuerinformationen',
+      fullName: 'Vollständiger Name',
+      fullNameRequired: 'Vollständiger Name *',
+      email: 'E-Mail',
+      phone: 'Telefon',
+      address: 'Adresse',
+      iban: 'IBAN',
+      ibanPlaceholder: 'DE89 3704 0044 0532 0130 00',
+      bic: 'BIC/SWIFT-Code',
+      bicPlaceholder: 'COBADEFFXXX',
+      taxId: 'Steuer-ID',
+      vatId: 'USt-IdNr.',
+      vatIdPlaceholder: 'DE123456789',
+      kleinunternehmerregelung: 'Kleinunternehmerregelung (§19 UStG)',
+      kleinunternehmerregelungDesc: 'Wählen Sie dies, wenn Sie von der Umsatzsteuer nach der deutschen Kleinunternehmerregelung befreit sind. Dies fügt den erforderlichen gesetzlichen Text zu Ihren Rechnungen hinzu.',
+      saving: 'Speichere...',
+      updateSettings: 'Einstellungen aktualisieren',
+      saveSettings: 'Einstellungen speichern',
+      cancel: 'Abbrechen',
+      editTitle: 'Rechnungseinstellungen bearbeiten',
+      setupTitle: 'Rechnungseinstellungen einrichten'
+    },
+    
+    uninvoiced: {
+      billingTitle: 'Abrechnung & Veranstaltungen',
+      billingDesc: 'Verwalten Sie nicht abgerechnete Veranstaltungen nach Studios gruppiert, synchronisieren Sie historische Daten und beheben Sie Zuordnungsprobleme. Erstellen Sie Rechnungen für abgeschlossene Kurse.',
+      loading: 'Lade nicht abgerechnete Veranstaltungen...',
+      noEvents: 'Keine nicht abgerechneten Veranstaltungen gefunden.',
+      noEventsTitle: 'Keine nicht abgerechneten Veranstaltungen',
+      noEventsDescription: 'Alle Ihre abgeschlossenen Veranstaltungen wurden bereits abgerechnet oder Sie haben noch keine Veranstaltungen mit zugewiesenen Studios.',
+      createInvoice: 'Rechnung erstellen',
+      selectAll: 'Alle auswählen',
+      deselectAll: 'Alle abwählen',
+      selectedCount: '{count} ausgewählt',
+      selectedTotal: 'Ausgewählt',
+      refresh: 'Aktualisieren',
+      refreshing: 'Aktualisiere...',
+      syncingRefreshing: 'Synchronisiere & Aktualisiere...',
+      studioActions: 'Studio-Aktionen',
+      eventActions: 'Event-Aktionen',
+      substituteTeacher: 'Vertretungslehrer einrichten',
+      editEvent: 'Event-Details bearbeiten',
+      exclude: 'Als kostenlos markieren',
+      rematchStudios: 'Mit Studios neu zuordnen',
+      rematching: 'Ordne neu zu...',
+      updating: 'Aktualisiere...',
+      fixStudioMatching: 'Studio-Zuordnung reparieren',
+      fixMatching: 'Zuordnung reparieren',
+      payout: 'Auszahlung:',
+      total: 'Gesamt',
+      selected: 'Ausgewählt',
+      unknownStudio: 'Unbekanntes Studio',
+      eventWithoutStudio: 'Veranstaltungen ohne Studio-Zuordnung',
+      untitledEvent: 'Unbenannte Veranstaltung',
+      noDate: 'Kein Datum',
+      teacher: 'Lehrer',
+      event: 'Veranstaltung',
+      events: 'Veranstaltungen',
+      studioMatchingIssues: 'Studio-Zuordnungsprobleme',
+      studioMatchingIssuesDesc: 'Wenden Sie Studio-Standortmuster erneut auf bestehende Veranstaltungen an, um Zuordnungsprobleme zu beheben.',
+      studioMatchingIssuesMobileDesc: 'Studio-Zuordnungsprobleme beheben',
+      studioMatchingUpdated: 'Studio-Zuordnung aktualisiert!',
+      studioMatchingUpdatedDesc: '{updated_count} von {total_events_processed} Veranstaltungen wurden mit Studios verknüpft.',
+      studioMatchingFailed: 'Fehler beim Aktualisieren der Studio-Zuordnung',
+      rateConfig: {
+        noRateConfig: 'Keine Tarifkonfiguration',
+        flatRate: 'Pauschaltarif',
+        perStudent: 'Pro Schüler',
+        tieredRates: 'Gestaffelte Tarife',
+        variable: 'Variabel',
+        base: 'Basis:'
+      },
+      months: {
+        january: 'Januar',
+        february: 'Februar',
+        march: 'März',
+        april: 'April',
+        may: 'Mai',
+        june: 'Juni',
+        july: 'Juli',
+        august: 'August',
+        september: 'September',
+        october: 'Oktober',
+        november: 'November',
+        december: 'Dezember'
+      }
+    },
+
+    pdfCustomization: {
+      title: 'PDF-Vorlagenanpassung',
+      description: 'Passen Sie das Erscheinungsbild Ihrer Rechnungs-PDFs mit Logos, Farben und Layout-Optionen an',
+      tabs: {
+        theme: 'Theme',
+        branding: 'Branding',
+        layout: 'Layout'
+      },
+      buttons: {
+        cancel: 'Abbrechen',
+        preview: 'PDF-Vorschau',
+        save: 'Vorlage speichern',
+        saving: 'Speichere...',
+        generating: 'Erstelle...',
+        generatingPreview: 'Erstelle...'
+      },
+      theme: {
+        title: 'Vorlagen-Theme',
+        professional: {
+          label: 'Professionell',
+          description: 'Dunkelgraue Kopfzeilen, umrandete Tabellen, klassisches Business-Layout'
+        },
+        modern: {
+          label: 'Modern',
+          description: 'Leuchtend grüne Akzente, minimale Tabellen, großzügiges Design'
+        },
+        minimal: {
+          label: 'Minimal',
+          description: 'Hellgraue Töne, kleine Schriftarten, kompaktes schmales Layout'
+        },
+        creative: {
+          label: 'Kreativ',
+          description: 'Lila Kopfzeilen & Akzente, große Schriftarten, modernes Styling'
+        },
+        custom: {
+          label: 'Benutzerdefiniert',
+          description: 'Vollständige Kontrolle über alle Farben, Schriftarten und Layout-Optionen'
+        },
+        selected: 'Ausgewählt'
+      },
+      branding: {
+        logoUpload: {
+          title: 'Logo & Branding',
+          description: 'Laden Sie Ihr Firmenlogo für Rechnungskopfzeilen hoch',
+          uploadLogo: 'Logo hochladen',
+          currentLogo: 'Aktuelles Logo:',
+          logoSize: 'Logo-Größe',
+          logoPosition: 'Logo-Position',
+          sizes: {
+            small: 'Klein',
+            medium: 'Mittel',
+            large: 'Groß'
+          },
+          positions: {
+            topLeft: 'Oben links',
+            topCenter: 'Oben mittig',
+            topRight: 'Oben rechts',
+            headerLeft: 'Kopfzeile links',
+            headerCenter: 'Kopfzeile mittig',
+            headerRight: 'Kopfzeile rechts'
+          }
+        },
+        colors: {
+          title: 'Farben',
+          description: 'Passen Sie Farben für Ihre Vorlage an',
+          customOnly: 'Farben',
+          customOnlyDesc: 'Farbanpassung ist nur mit dem benutzerdefinierten Theme verfügbar. Wählen Sie "Benutzerdefiniert" um Farben zu ändern.',
+          headerColor: 'Kopfzeilen-Farbe',
+          accentColor: 'Akzent-Farbe'
+        },
+        text: {
+          letterhead: 'Briefkopf-Text',
+          letterheadPlaceholder: 'Briefkopf-Text eingeben (z.B. Firmenname, Slogan)',
+          footer: 'Fußzeilen-Text',
+          footerPlaceholder: 'Fußzeilen-Text eingeben (z.B. Kontaktinformationen, rechtliche Hinweise)'
+        }
+      },
+      layout: {
+        typography: {
+          title: 'Typografie',
+          fontFamily: 'Schriftart',
+          fontSize: 'Schriftgröße',
+          fonts: {
+            helvetica: 'Helvetica',
+            times: 'Times',
+            courier: 'Courier',
+            arial: 'Arial'
+          },
+          sizes: {
+            small: 'Klein',
+            normal: 'Normal',
+            large: 'Groß'
+          }
+        },
+        page: {
+          title: 'Seiteneinstellungen',
+          orientation: 'Seitenausrichtung',
+          size: 'Seitengröße',
+          orientations: {
+            portrait: 'Hochformat',
+            landscape: 'Querformat'
+          },
+          sizes: {
+            a4: 'A4',
+            letter: 'Letter',
+            legal: 'Legal'
+          }
+        },
+        content: {
+          title: 'Inhaltsoptionen',
+          showCompanyInfo: 'Firmeninformationen anzeigen',
+          showCompanyAddress: 'Firmenadresse anzeigen',
+          showLogo: 'Logo anzeigen',
+          showInvoiceNotes: 'Rechnungsnotizen anzeigen',
+          showTaxInfo: 'Steuerinformationen anzeigen',
+          showPaymentTerms: 'Zahlungsbedingungen anzeigen'
+        }
+      },
+      preview: {
+        success: 'PDF-Vorschau erfolgreich erstellt!',
+        failed: 'Fehler beim Erstellen der PDF-Vorschau',
+        failedDesc: 'Bitte versuchen Sie es erneut.'
+      }
     }
   },
   dashboard: {

@@ -303,6 +303,23 @@ const translations: Translations = {
       removeTeacher: 'Remover Instructor',
       updateRates: 'Actualizar Tarifas',
       studioSettings: 'Configuración del Studio'
+    },
+
+    management: {
+      title: 'Gestión de Estudios',
+      subtitle: 'Gestionar estudios, instructores y relaciones de facturación',
+      createStudio: 'Crear Estudio',
+      accessRestricted: 'Acceso Restringido',
+      accessRestrictedDesc: 'Solo los administradores pueden gestionar estudios.',
+      overview: {
+        totalStudios: 'Estudios Totales',
+        activeTeachers: 'Instructores Activos',
+        verifiedStudios: 'Estudios Verificados'
+      },
+      tabs: {
+        studios: 'Estudios',
+        teacherRequests: 'Solicitudes de Instructores'
+      }
     }
   },
   invoices: {
@@ -341,6 +358,337 @@ const translations: Translations = {
       notes: 'Notas',
       vatExempt: 'Exento de IVA según la regulación alemana de pequeñas empresas',
       untitledEvent: 'Evento sin título'
+    },
+    
+    management: {
+      title: 'Gestionar Facturas',
+      subtitle: 'Crear y rastrear facturas para sus eventos y servicios.',
+      tabs: {
+        billing: 'Facturación y Eventos',
+        billingShort: 'Facturación',
+        invoices: 'Facturas',
+        invoicesShort: 'Facturas',
+        settings: 'Configuración',
+        settingsShort: 'Config'
+      },
+      billingTab: {
+        title: 'Facturación y Eventos',
+        description: 'Gestionar eventos no facturados agrupados por estudio, sincronizar datos históricos y solucionar problemas de coincidencia. Crear facturas para clases completadas.',
+        loading: 'Cargando eventos no facturados...'
+      },
+      invoicesTab: {
+        title: 'Sus Facturas',
+        description: 'Ver y gestionar sus facturas creadas.',
+        noInvoicesTitle: 'Aún no hay Facturas',
+        noInvoicesDescription: 'Cree su primera factura seleccionando eventos de la pestaña "Eventos No Facturados".',
+        viewUninvoiced: 'Ver Eventos No Facturados'
+      },
+      settingsTab: {
+        title: 'Configuración de Facturas y Perfiles de Facturación',
+        description: 'Gestionar su información personal de facturación y configuraciones de entidades de facturación.',
+        loading: 'Cargando configuración...'
+      }
+    },
+    
+    creation: {
+      modalTitle: '{mode} Factura - {studioName}',
+      editTitle: 'Editar',
+      createTitle: 'Crear',
+      invoiceDetails: 'Detalles de Factura',
+      invoiceNumber: 'Número de Factura',
+      notes: 'Notas (Opcional)',
+      notesPlaceholder: 'Agregar notas adicionales para esta factura...',
+      events: 'Eventos ({count})',
+      eventsDescription: 'Haga clic en el ícono de editar para modificar el título y tarifa de cada evento.',
+      total: 'Total:',
+      noEvents: 'No hay eventos seleccionados.',
+      creating: 'Creando...',
+      updating: 'Actualizando...',
+      create: 'Crear Factura',
+      update: 'Actualizar Factura',
+      cancel: 'Cancelar',
+      close: 'Cerrar',
+      successTitle: '¡Factura Creada Exitosamente!',
+      successUpdatedTitle: '¡Factura Actualizada Exitosamente!',
+      successMessage: 'Factura {invoiceNumber} ha sido {mode} por €{total}',
+      pdfOptions: 'Opciones de PDF',
+      generatePDF: 'Generar PDF',
+      generating: 'Generando PDF...',
+      viewPDF: 'Ver PDF',
+      pdfGenerated: '¡PDF Generado Exitosamente!',
+      pdfGeneratedDesc: 'Su PDF de factura ha sido creado y está listo para ver.',
+      pdfFailed: 'Generación de PDF Falló',
+      pdfFailedDesc: 'No se pudo generar el PDF. Por favor intente de nuevo.'
+    },
+    
+    card: {
+      unknownStudio: 'Estudio Desconocido',
+      events: 'eventos',
+      period: 'Período:',
+      created: 'Creado:',
+      pdf: 'PDF',
+      edit: 'Editar',
+      view: 'Ver',
+      draft: 'Borrador',
+      sent: 'Enviado',
+      paid: 'Pagado',
+      overdue: 'Vencido',
+      cancelled: 'Cancelado',
+      sent_: 'Enviado',
+      paid_: 'Pagado',
+      overdue_: 'Vencido',
+      statusChange: 'Estado:',
+      generatePDF: 'Generar PDF',
+      viewPDF: 'Ver PDF',
+      delete: 'Eliminar',
+      confirmDelete: '¿Eliminar Factura?',
+      confirmDeleteDesc: 'Esta acción no se puede deshacer. Esto eliminará permanentemente la factura y removerá todos los enlaces de eventos.',
+      deleteSuccess: 'Factura Eliminada Exitosamente',
+      deleteSuccessDesc: 'Factura, archivo PDF y todos los enlaces de eventos han sido removidos. Los eventos ahora están disponibles para futuras facturas.',
+      deleteFailed: 'Error al Eliminar Factura',
+      deleteFailedDesc: 'No se pudo eliminar la factura. Por favor intente de nuevo.'
+    },
+    
+    settings: {
+      invoiceInfoTitle: 'Su Información de Factura',
+      invoiceInfoDesc: 'Configure sus detalles personales de facturación para generar facturas',
+      editSettings: 'Editar Configuración',
+      noSettingsTitle: 'No hay configuración de facturas configurada',
+      noSettingsDesc: 'Configure su información de facturación para generar facturas',
+      setupSettings: 'Configurar Ajustes de Factura',
+      setupComplete: 'Configuración Completa',
+      contactInfo: 'Información de Contacto',
+      email: 'Correo Electrónico',
+      phone: 'Teléfono',
+      address: 'Dirección',
+      bankingTax: 'Información Bancaria y Fiscal',
+      iban: 'IBAN',
+      bic: 'BIC/SWIFT',
+      taxId: 'ID Fiscal',
+      vatId: 'ID de IVA',
+      billingProfilesTitle: 'Perfiles de Facturación',
+      billingProfilesDesc: 'Configurar información de facturación para estudios y profesores',
+      pdfCustomizationTitle: 'Personalización de Plantilla PDF',
+      pdfCustomizationDesc: 'Personalice la apariencia de sus PDFs de factura con logos, colores y opciones de diseño',
+      currentTheme: 'Tema Actual:',
+      customConfiguration: 'Configuración de plantilla personalizada activa',
+      defaultConfiguration: 'Usando configuración de plantilla predeterminada'
+    },
+    
+    settingsForm: {
+      basicInfo: 'Información Básica',
+      bankingInfo: 'Información Bancaria',
+      taxInfo: 'Información Fiscal',
+      fullName: 'Nombre Completo',
+      fullNameRequired: 'Nombre Completo *',
+      email: 'Correo Electrónico',
+      phone: 'Teléfono',
+      address: 'Dirección',
+      iban: 'IBAN',
+      ibanPlaceholder: 'DE89 3704 0044 0532 0130 00',
+      bic: 'Código BIC/SWIFT',
+      bicPlaceholder: 'COBADEFFXXX',
+      taxId: 'ID Fiscal',
+      vatId: 'ID de IVA',
+      vatIdPlaceholder: 'DE123456789',
+      kleinunternehmerregelung: 'Kleinunternehmerregelung (§19 UStG)',
+      kleinunternehmerregelungDesc: 'Marque esto si está exento del IVA bajo la regulación alemana de pequeñas empresas. Esto agregará el texto legal requerido a sus facturas.',
+      saving: 'Guardando...',
+      updateSettings: 'Actualizar Configuración',
+      saveSettings: 'Guardar Configuración',
+      cancel: 'Cancelar',
+      editTitle: 'Editar Configuración de Facturas',
+      setupTitle: 'Configurar Ajustes de Factura'
+    },
+    
+    uninvoiced: {
+      billingTitle: 'Facturación y Eventos',
+      billingDesc: 'Gestionar eventos no facturados agrupados por estudio, sincronizar datos históricos y solucionar problemas de coincidencia. Crear facturas para clases completadas.',
+      loading: 'Cargando eventos no facturados...',
+      noEvents: 'No se encontraron eventos no facturados.',
+      noEventsTitle: 'Sin Eventos No Facturados',
+      noEventsDescription: 'Todos sus eventos completados han sido facturados, o aún no tiene eventos con estudios asignados.',
+      createInvoice: 'Crear Factura',
+      selectAll: 'Seleccionar Todo',
+      deselectAll: 'Deseleccionar Todo',
+      selectedCount: '{count} seleccionado',
+      selectedTotal: 'Seleccionado',
+      refresh: 'Actualizar',
+      refreshing: 'Actualizando...',
+      syncingRefreshing: 'Sincronizando y Actualizando...',
+      studioActions: 'Acciones del Estudio',
+      eventActions: 'Acciones del Evento',
+      substituteTeacher: 'Configurar Instructor Sustituto',
+      editEvent: 'Editar Detalles del Evento',
+      exclude: 'Marcar como Gratuito',
+      rematchStudios: 'Reemparejar con Estudios',
+      rematching: 'Reemparejando...',
+      updating: 'Actualizando...',
+      fixStudioMatching: 'Reparar Coincidencia de Estudio',
+      fixMatching: 'Reparar Coincidencia',
+      payout: 'Pago:',
+      total: 'Total',
+      selected: 'Seleccionado',
+      unknownStudio: 'Estudio Desconocido',
+      eventWithoutStudio: 'Eventos sin coincidencia de estudio',
+      untitledEvent: 'Evento Sin Título',
+      noDate: 'Sin fecha',
+      teacher: 'Instructor',
+      event: 'evento',
+      events: 'eventos',
+      studioMatchingIssues: 'Problemas de coincidencia de estudio',
+      studioMatchingIssuesDesc: 'Vuelva a aplicar patrones de ubicación de estudio a eventos existentes para solucionar problemas de asignación.',
+      studioMatchingIssuesMobileDesc: 'Solucionar problemas de asignación de estudio',
+      studioMatchingUpdated: '¡Coincidencia de Estudio Actualizada!',
+      studioMatchingUpdatedDesc: '{updated_count} de {total_events_processed} eventos fueron emparejados con estudios.',
+      studioMatchingFailed: 'Error al actualizar la coincidencia de estudio',
+      rateConfig: {
+        noRateConfig: 'Sin configuración de tarifa',
+        flatRate: 'Tarifa Fija',
+        perStudent: 'Por Estudiante',
+        tieredRates: 'Tarifas Escalonadas',
+        variable: 'Variable',
+        base: 'Base:'
+      },
+      months: {
+        january: 'Enero',
+        february: 'Febrero',
+        march: 'Marzo',
+        april: 'Abril',
+        may: 'Mayo',
+        june: 'Junio',
+        july: 'Julio',
+        august: 'Agosto',
+        september: 'Septiembre',
+        october: 'Octubre',
+        november: 'Noviembre',
+        december: 'Diciembre'
+      }
+    },
+
+    pdfCustomization: {
+      title: 'Personalización de Plantilla PDF',
+      description: 'Personalice la apariencia de sus PDFs de factura con logos, colores y opciones de diseño',
+      tabs: {
+        theme: 'Tema',
+        branding: 'Marca',
+        layout: 'Diseño'
+      },
+      buttons: {
+        cancel: 'Cancelar',
+        preview: 'Vista Previa PDF',
+        save: 'Guardar Plantilla',
+        saving: 'Guardando...',
+        generating: 'Generando...',
+        generatingPreview: 'Generando...'
+      },
+      theme: {
+        title: 'Tema de Plantilla',
+        professional: {
+          label: 'Profesional',
+          description: 'Encabezados gris oscuro, tablas con bordes, diseño empresarial clásico'
+        },
+        modern: {
+          label: 'Moderno',
+          description: 'Acentos verde esmeralda brillante, tablas mínimas, diseño espacioso'
+        },
+        minimal: {
+          label: 'Mínimo',
+          description: 'Tonos gris claro, fuentes pequeñas, diseño compacto y estrecho'
+        },
+        creative: {
+          label: 'Creativo',
+          description: 'Encabezados y acentos morados, fuentes grandes, estilo moderno'
+        },
+        custom: {
+          label: 'Personalizado',
+          description: 'Control completo sobre todos los colores, fuentes y opciones de diseño'
+        },
+        selected: 'Seleccionado'
+      },
+      branding: {
+        logoUpload: {
+          title: 'Logo y Marca',
+          description: 'Suba el logo de su empresa para los encabezados de facturas',
+          uploadLogo: 'Subir Logo',
+          currentLogo: 'Logo actual:',
+          logoSize: 'Tamaño del Logo',
+          logoPosition: 'Posición del Logo',
+          sizes: {
+            small: 'Pequeño',
+            medium: 'Mediano',
+            large: 'Grande'
+          },
+          positions: {
+            topLeft: 'Arriba Izquierda',
+            topCenter: 'Arriba Centro',
+            topRight: 'Arriba Derecha',
+            headerLeft: 'Encabezado Izquierda',
+            headerCenter: 'Encabezado Centro',
+            headerRight: 'Encabezado Derecha'
+          }
+        },
+        colors: {
+          title: 'Colores',
+          description: 'Personalice colores para su plantilla',
+          customOnly: 'Colores',
+          customOnlyDesc: 'La personalización de colores solo está disponible con el tema Personalizado. Seleccione "Personalizado" para modificar colores.',
+          headerColor: 'Color del Encabezado',
+          accentColor: 'Color de Acento'
+        },
+        text: {
+          letterhead: 'Texto del Membrete',
+          letterheadPlaceholder: 'Ingrese texto del membrete (ej. nombre de empresa, eslogan)',
+          footer: 'Texto del Pie de Página',
+          footerPlaceholder: 'Ingrese texto del pie de página (ej. información de contacto, avisos legales)'
+        }
+      },
+      layout: {
+        typography: {
+          title: 'Tipografía',
+          fontFamily: 'Familia de Fuente',
+          fontSize: 'Tamaño de Fuente',
+          fonts: {
+            helvetica: 'Helvetica',
+            times: 'Times',
+            courier: 'Courier',
+            arial: 'Arial'
+          },
+          sizes: {
+            small: 'Pequeño',
+            normal: 'Normal',
+            large: 'Grande'
+          }
+        },
+        page: {
+          title: 'Configuración de Página',
+          orientation: 'Orientación de Página',
+          size: 'Tamaño de Página',
+          orientations: {
+            portrait: 'Vertical',
+            landscape: 'Horizontal'
+          },
+          sizes: {
+            a4: 'A4',
+            letter: 'Carta',
+            legal: 'Legal'
+          }
+        },
+        content: {
+          title: 'Opciones de Contenido',
+          showCompanyInfo: 'Mostrar Información de la Empresa',
+          showCompanyAddress: 'Mostrar Dirección de la Empresa',
+          showLogo: 'Mostrar Logo',
+          showInvoiceNotes: 'Mostrar Notas de Factura',
+          showTaxInfo: 'Mostrar Información Fiscal',
+          showPaymentTerms: 'Mostrar Términos de Pago'
+        }
+      },
+      preview: {
+        success: '¡Vista previa PDF generada exitosamente!',
+        failed: 'Error al generar vista previa PDF',
+        failedDesc: 'Por favor intente de nuevo.'
+      }
     }
   },
   dashboard: {

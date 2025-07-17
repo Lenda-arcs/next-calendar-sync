@@ -13,55 +13,10 @@ import { PDFTemplateConfig, PDFTemplateTheme } from '@/lib/types'
 import { Palette, FileText, Settings, Eye, Loader2 } from 'lucide-react'
 import ImageUpload from '@/components/ui/image-upload'
 import { generatePDFPreview } from '@/lib/invoice-utils'
+import { useTranslation } from '@/lib/i18n/context'
 import { toast } from 'sonner'
 
-// Constants
-const THEME_OPTIONS = [
-  { value: 'professional', label: 'Professional', description: 'Dark gray headers, bordered tables, classic business layout' },
-  { value: 'modern', label: 'Modern', description: 'Bright emerald green accents, minimal tables, spacious design' },
-  { value: 'minimal', label: 'Minimal', description: 'Light gray tones, small fonts, compact narrow layout' },
-  { value: 'creative', label: 'Creative', description: 'Purple headers & accents, large fonts, modern styling' },
-  { value: 'custom', label: 'Custom', description: 'Full control over all colors, fonts, and layout options' }
-]
 
-const FONT_FAMILY_OPTIONS = [
-  { value: 'helvetica', label: 'Helvetica' },
-  { value: 'times', label: 'Times' },
-  { value: 'courier', label: 'Courier' },
-  { value: 'arial', label: 'Arial' }
-]
-
-const FONT_SIZE_OPTIONS = [
-  { value: 'small', label: 'Small' },
-  { value: 'normal', label: 'Normal' },
-  { value: 'large', label: 'Large' }
-]
-
-const LOGO_SIZE_OPTIONS = [
-  { value: 'small', label: 'Small' },
-  { value: 'medium', label: 'Medium' },
-  { value: 'large', label: 'Large' }
-]
-
-const LOGO_POSITION_OPTIONS = [
-  { value: 'top-left', label: 'Top Left' },
-  { value: 'top-center', label: 'Top Center' },
-  { value: 'top-right', label: 'Top Right' },
-  { value: 'header-left', label: 'Header Left' },
-  { value: 'header-center', label: 'Header Center' },
-  { value: 'header-right', label: 'Header Right' }
-]
-
-const PAGE_ORIENTATION_OPTIONS = [
-  { value: 'portrait', label: 'Portrait' },
-  { value: 'landscape', label: 'Landscape' }
-]
-
-const PAGE_SIZE_OPTIONS = [
-  { value: 'a4', label: 'A4' },
-  { value: 'letter', label: 'Letter' },
-  { value: 'legal', label: 'Legal' }
-]
 
 interface PDFTemplateCustomizationProps {
   isOpen: boolean
@@ -98,92 +53,143 @@ const Checkbox: React.FC<{
 const ThemeSelector: React.FC<{
   selectedTheme: PDFTemplateTheme
   onThemeChange: (theme: PDFTemplateTheme) => void
-}> = ({ selectedTheme, onThemeChange }) => (
-  <div className="space-y-4">
-    <Label className="text-base font-medium">Template Theme</Label>
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      {THEME_OPTIONS.map((theme) => (
-        <div
-          key={theme.value}
-          className={`p-4 border rounded-lg cursor-pointer transition-all ${
-            selectedTheme === theme.value
-              ? 'border-blue-500 bg-blue-50'
-              : 'border-gray-200 hover:border-gray-300'
-          }`}
-          onClick={() => onThemeChange(theme.value as PDFTemplateTheme)}
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="font-medium">{theme.label}</h3>
-              <p className="text-sm text-gray-600">{theme.description}</p>
+}> = ({ selectedTheme, onThemeChange }) => {
+  const { t } = useTranslation()
+  
+  const THEME_OPTIONS = [
+    { 
+      value: 'professional', 
+      label: t('invoices.pdfCustomization.theme.professional.label'), 
+      description: t('invoices.pdfCustomization.theme.professional.description')
+    },
+    { 
+      value: 'modern', 
+      label: t('invoices.pdfCustomization.theme.modern.label'), 
+      description: t('invoices.pdfCustomization.theme.modern.description')
+    },
+    { 
+      value: 'minimal', 
+      label: t('invoices.pdfCustomization.theme.minimal.label'), 
+      description: t('invoices.pdfCustomization.theme.minimal.description')
+    },
+    { 
+      value: 'creative', 
+      label: t('invoices.pdfCustomization.theme.creative.label'), 
+      description: t('invoices.pdfCustomization.theme.creative.description')
+    },
+    { 
+      value: 'custom', 
+      label: t('invoices.pdfCustomization.theme.custom.label'), 
+      description: t('invoices.pdfCustomization.theme.custom.description')
+    }
+  ]
+
+  return (
+    <div className="space-y-4">
+      <Label className="text-base font-medium">{t('invoices.pdfCustomization.theme.title')}</Label>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {THEME_OPTIONS.map((theme) => (
+          <div
+            key={theme.value}
+            className={`p-4 border rounded-lg cursor-pointer transition-all ${
+              selectedTheme === theme.value
+                ? 'border-blue-500 bg-blue-50'
+                : 'border-gray-200 hover:border-gray-300'
+            }`}
+            onClick={() => onThemeChange(theme.value as PDFTemplateTheme)}
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-medium">{theme.label}</h3>
+                <p className="text-sm text-gray-600">{theme.description}</p>
+              </div>
+              {selectedTheme === theme.value && (
+                <Badge variant="secondary">{t('invoices.pdfCustomization.theme.selected')}</Badge>
+              )}
             </div>
-            {selectedTheme === theme.value && (
-              <Badge variant="secondary">Selected</Badge>
-            )}
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
-  </div>
-)
+  )
+}
 
 // Logo Upload Section Component
 const LogoUploadSection: React.FC<{
   config: PDFTemplateConfig
   userId: string
   onConfigChange: (updates: Partial<PDFTemplateConfig>) => void
-}> = ({ config, userId, onConfigChange }) => (
-  <div className="space-y-4">
-    <Label className="text-base font-medium">Logo & Branding</Label>
+}> = ({ config, userId, onConfigChange }) => {
+  const { t } = useTranslation()
+  
+  const LOGO_SIZE_OPTIONS = [
+    { value: 'small', label: t('invoices.pdfCustomization.branding.logoUpload.sizes.small') },
+    { value: 'medium', label: t('invoices.pdfCustomization.branding.logoUpload.sizes.medium') },
+    { value: 'large', label: t('invoices.pdfCustomization.branding.logoUpload.sizes.large') }
+  ]
+
+  const LOGO_POSITION_OPTIONS = [
+    { value: 'top-left', label: t('invoices.pdfCustomization.branding.logoUpload.positions.topLeft') },
+    { value: 'top-center', label: t('invoices.pdfCustomization.branding.logoUpload.positions.topCenter') },
+    { value: 'top-right', label: t('invoices.pdfCustomization.branding.logoUpload.positions.topRight') },
+    { value: 'header-left', label: t('invoices.pdfCustomization.branding.logoUpload.positions.headerLeft') },
+    { value: 'header-center', label: t('invoices.pdfCustomization.branding.logoUpload.positions.headerCenter') },
+    { value: 'header-right', label: t('invoices.pdfCustomization.branding.logoUpload.positions.headerRight') }
+  ]
+
+  return (
     <div className="space-y-4">
-      <div>
-        <Label className="text-sm font-medium">Logo Upload</Label>
-        <p className="text-xs text-gray-600 mb-2">Upload your company logo for invoice headers</p>
-        <div className="flex justify-center">
-          <ImageUpload
-            currentImageUrl={config.logo_url}
-            onImageUrlChange={(url) => onConfigChange({ logo_url: url })}
-            userId={userId}
-            aspectRatio={2}
-            bucketName="profile-assets"
-            folderPath="logos"
-            maxFileSize={2 * 1024 * 1024}
-            allowedTypes={['image/jpeg', 'image/png', 'image/webp']}
-            className="w-32 h-20 rounded-lg border-2 border-dashed border-gray-300 bg-gray-50"
-            placeholderText="Upload Logo"
-            maxImages={1}
-          />
+      <Label className="text-base font-medium">{t('invoices.pdfCustomization.branding.logoUpload.title')}</Label>
+      <div className="space-y-4">
+        <div>
+          <Label className="text-sm font-medium">{t('invoices.pdfCustomization.branding.logoUpload.uploadLogo')}</Label>
+          <p className="text-xs text-gray-600 mb-2">{t('invoices.pdfCustomization.branding.logoUpload.description')}</p>
+          <div className="flex justify-center">
+            <ImageUpload
+              currentImageUrl={config.logo_url}
+              onImageUrlChange={(url) => onConfigChange({ logo_url: url })}
+              userId={userId}
+              aspectRatio={2}
+              bucketName="profile-assets"
+              folderPath="logos"
+              maxFileSize={2 * 1024 * 1024}
+              allowedTypes={['image/jpeg', 'image/png', 'image/webp']}
+              className="w-32 h-20 rounded-lg border-2 border-dashed border-gray-300 bg-gray-50"
+              placeholderText={t('invoices.pdfCustomization.branding.logoUpload.uploadLogo')}
+              maxImages={1}
+            />
+          </div>
+          {config.logo_url && (
+            <p className="text-xs text-gray-500 text-center">
+              {t('invoices.pdfCustomization.branding.logoUpload.currentLogo')} {config.logo_url}
+            </p>
+          )}
         </div>
+        
         {config.logo_url && (
-          <p className="text-xs text-gray-500 text-center">
-            Current logo: {config.logo_url}
-          </p>
+          <>
+            <div>
+              <Label className="text-sm font-medium">{t('invoices.pdfCustomization.branding.logoUpload.logoSize')}</Label>
+              <Select
+                value={config.logo_size || 'medium'}
+                onChange={(value) => onConfigChange({ logo_size: value as 'small' | 'medium' | 'large' })}
+                options={LOGO_SIZE_OPTIONS}
+              />
+            </div>
+            <div>
+              <Label className="text-sm font-medium">{t('invoices.pdfCustomization.branding.logoUpload.logoPosition')}</Label>
+              <Select
+                value={config.logo_position || 'top-left'}
+                onChange={(value) => onConfigChange({ logo_position: value as 'top-left' | 'top-center' | 'top-right' | 'header-left' | 'header-center' | 'header-right' })}
+                options={LOGO_POSITION_OPTIONS}
+              />
+            </div>
+          </>
         )}
       </div>
-      
-      {config.logo_url && (
-        <>
-          <div>
-            <Label className="text-sm font-medium">Logo Size</Label>
-            <Select
-              value={config.logo_size || 'medium'}
-              onChange={(value) => onConfigChange({ logo_size: value as 'small' | 'medium' | 'large' })}
-              options={LOGO_SIZE_OPTIONS}
-            />
-          </div>
-          <div>
-            <Label className="text-sm font-medium">Logo Position</Label>
-            <Select
-              value={config.logo_position || 'top-left'}
-              onChange={(value) => onConfigChange({ logo_position: value as 'top-left' | 'top-center' | 'top-right' | 'header-left' | 'header-center' | 'header-right' })}
-              options={LOGO_POSITION_OPTIONS}
-            />
-          </div>
-        </>
-      )}
     </div>
-  </div>
-)
+  )
+}
 
 // Color Customization Component
 const ColorCustomization: React.FC<{
@@ -191,15 +197,15 @@ const ColorCustomization: React.FC<{
   isCustomTheme: boolean
   onConfigChange: (updates: Partial<PDFTemplateConfig>) => void
 }> = ({ config, isCustomTheme, onConfigChange }) => {
+  const { t } = useTranslation()
+  
   if (!isCustomTheme) {
     return (
       <div className="space-y-4">
-        <Label className="text-base font-medium">Colors</Label>
+        <Label className="text-base font-medium">{t('invoices.pdfCustomization.branding.colors.customOnly')}</Label>
         <div className="p-4 bg-gray-50 rounded-lg border">
           <p className="text-sm text-gray-600 text-center">
-            Color customization is only available with the <strong>Custom</strong> theme.
-            <br />
-            Select &quot;Custom&quot; theme to modify colors.
+            {t('invoices.pdfCustomization.branding.colors.customOnlyDesc')}
           </p>
         </div>
       </div>
@@ -208,23 +214,23 @@ const ColorCustomization: React.FC<{
 
   return (
     <div className="space-y-4">
-      <Label className="text-base font-medium">Colors</Label>
-      <p className="text-sm text-gray-600">Customize colors for your template</p>
+      <Label className="text-base font-medium">{t('invoices.pdfCustomization.branding.colors.title')}</Label>
+      <p className="text-sm text-gray-600">{t('invoices.pdfCustomization.branding.colors.description')}</p>
       <div className="space-y-3">
         <div>
-          <Label className="text-sm font-medium">Header Color</Label>
+          <Label className="text-sm font-medium">{t('invoices.pdfCustomization.branding.colors.headerColor')}</Label>
           <ColorPicker
             selectedColor={config.header_color || '#000000'}
             onColorChange={(color: string) => onConfigChange({ header_color: color })}
-            label="Header Color"
+            label={t('invoices.pdfCustomization.branding.colors.headerColor')}
           />
         </div>
         <div>
-          <Label className="text-sm font-medium">Accent Color</Label>
+          <Label className="text-sm font-medium">{t('invoices.pdfCustomization.branding.colors.accentColor')}</Label>
           <ColorPicker
             selectedColor={config.accent_color || '#3B82F6'}
             onColorChange={(color: string) => onConfigChange({ accent_color: color })}
-            label="Accent Color"
+            label={t('invoices.pdfCustomization.branding.colors.accentColor')}
           />
         </div>
       </div>
@@ -236,131 +242,171 @@ const ColorCustomization: React.FC<{
 const TextFields: React.FC<{
   config: PDFTemplateConfig
   onConfigChange: (updates: Partial<PDFTemplateConfig>) => void
-}> = ({ config, onConfigChange }) => (
-  <>
-    <div className="space-y-3">
-      <Label className="text-sm font-medium">Letterhead Text</Label>
-      <Textarea
-        placeholder="Enter letterhead text (e.g., company name, tagline)"
-        value={config.letterhead_text || ''}
-        onChange={(e) => onConfigChange({ letterhead_text: e.target.value })}
-        rows={2}
-      />
-    </div>
+}> = ({ config, onConfigChange }) => {
+  const { t } = useTranslation()
+  
+  return (
+    <>
+      <div className="space-y-3">
+        <Label className="text-sm font-medium">{t('invoices.pdfCustomization.branding.text.letterhead')}</Label>
+        <Textarea
+          placeholder={t('invoices.pdfCustomization.branding.text.letterheadPlaceholder')}
+          value={config.letterhead_text || ''}
+          onChange={(e) => onConfigChange({ letterhead_text: e.target.value })}
+          rows={2}
+        />
+      </div>
 
-    <div className="space-y-3">
-      <Label className="text-sm font-medium">Footer Text</Label>
-      <Textarea
-        placeholder="Enter footer text (e.g., contact information, legal notices)"
-        value={config.footer_text || ''}
-        onChange={(e) => onConfigChange({ footer_text: e.target.value })}
-        rows={2}
-      />
-    </div>
-  </>
-)
+      <div className="space-y-3">
+        <Label className="text-sm font-medium">{t('invoices.pdfCustomization.branding.text.footer')}</Label>
+        <Textarea
+          placeholder={t('invoices.pdfCustomization.branding.text.footerPlaceholder')}
+          value={config.footer_text || ''}
+          onChange={(e) => onConfigChange({ footer_text: e.target.value })}
+          rows={2}
+        />
+      </div>
+    </>
+  )
+}
 
 // Typography Settings Component
 const TypographySettings: React.FC<{
   config: PDFTemplateConfig
   onConfigChange: (updates: Partial<PDFTemplateConfig>) => void
-}> = ({ config, onConfigChange }) => (
-  <div className="space-y-4">
-    <Label className="text-base font-medium">Typography</Label>
-    <div className="space-y-3">
-      <div>
-        <Label className="text-sm font-medium">Font Family</Label>
-        <Select
-          value={config.font_family || 'helvetica'}
-          onChange={(value) => onConfigChange({ font_family: value as 'helvetica' | 'times' | 'courier' | 'arial' | 'custom' })}
-          options={FONT_FAMILY_OPTIONS}
-        />
-      </div>
-      <div>
-        <Label className="text-sm font-medium">Font Size</Label>
-        <Select
-          value={config.font_size || 'normal'}
-          onChange={(value) => onConfigChange({ font_size: value as 'small' | 'normal' | 'large' })}
-          options={FONT_SIZE_OPTIONS}
-        />
+}> = ({ config, onConfigChange }) => {
+  const { t } = useTranslation()
+  
+  const FONT_FAMILY_OPTIONS = [
+    { value: 'helvetica', label: t('invoices.pdfCustomization.layout.typography.fonts.helvetica') },
+    { value: 'times', label: t('invoices.pdfCustomization.layout.typography.fonts.times') },
+    { value: 'courier', label: t('invoices.pdfCustomization.layout.typography.fonts.courier') },
+    { value: 'arial', label: t('invoices.pdfCustomization.layout.typography.fonts.arial') }
+  ]
+
+  const FONT_SIZE_OPTIONS = [
+    { value: 'small', label: t('invoices.pdfCustomization.layout.typography.sizes.small') },
+    { value: 'normal', label: t('invoices.pdfCustomization.layout.typography.sizes.normal') },
+    { value: 'large', label: t('invoices.pdfCustomization.layout.typography.sizes.large') }
+  ]
+
+  return (
+    <div className="space-y-4">
+      <Label className="text-base font-medium">{t('invoices.pdfCustomization.layout.typography.title')}</Label>
+      <div className="space-y-3">
+        <div>
+          <Label className="text-sm font-medium">{t('invoices.pdfCustomization.layout.typography.fontFamily')}</Label>
+          <Select
+            value={config.font_family || 'helvetica'}
+            onChange={(value) => onConfigChange({ font_family: value as 'helvetica' | 'times' | 'courier' | 'arial' | 'custom' })}
+            options={FONT_FAMILY_OPTIONS}
+          />
+        </div>
+        <div>
+          <Label className="text-sm font-medium">{t('invoices.pdfCustomization.layout.typography.fontSize')}</Label>
+          <Select
+            value={config.font_size || 'normal'}
+            onChange={(value) => onConfigChange({ font_size: value as 'small' | 'normal' | 'large' })}
+            options={FONT_SIZE_OPTIONS}
+          />
+        </div>
       </div>
     </div>
-  </div>
-)
+  )
+}
 
 // Page Settings Component
 const PageSettings: React.FC<{
   config: PDFTemplateConfig
   onConfigChange: (updates: Partial<PDFTemplateConfig>) => void
-}> = ({ config, onConfigChange }) => (
-  <div className="space-y-4">
-    <Label className="text-base font-medium">Page Settings</Label>
-    <div className="space-y-3">
-      <div>
-        <Label className="text-sm font-medium">Page Orientation</Label>
-        <Select
-          value={config.page_orientation || 'portrait'}
-          onChange={(value) => onConfigChange({ page_orientation: value as 'portrait' | 'landscape' })}
-          options={PAGE_ORIENTATION_OPTIONS}
-        />
-      </div>
-      <div>
-        <Label className="text-sm font-medium">Page Size</Label>
-        <Select
-          value={config.page_size || 'a4'}
-          onChange={(value) => onConfigChange({ page_size: value as 'a4' | 'letter' | 'legal' | 'a3' })}
-          options={PAGE_SIZE_OPTIONS}
-        />
+}> = ({ config, onConfigChange }) => {
+  const { t } = useTranslation()
+  
+  const PAGE_ORIENTATION_OPTIONS = [
+    { value: 'portrait', label: t('invoices.pdfCustomization.layout.page.orientations.portrait') },
+    { value: 'landscape', label: t('invoices.pdfCustomization.layout.page.orientations.landscape') }
+  ]
+
+  const PAGE_SIZE_OPTIONS = [
+    { value: 'a4', label: t('invoices.pdfCustomization.layout.page.sizes.a4') },
+    { value: 'letter', label: t('invoices.pdfCustomization.layout.page.sizes.letter') },
+    { value: 'legal', label: t('invoices.pdfCustomization.layout.page.sizes.legal') }
+  ]
+
+  return (
+    <div className="space-y-4">
+      <Label className="text-base font-medium">{t('invoices.pdfCustomization.layout.page.title')}</Label>
+      <div className="space-y-3">
+        <div>
+          <Label className="text-sm font-medium">{t('invoices.pdfCustomization.layout.page.orientation')}</Label>
+          <Select
+            value={config.page_orientation || 'portrait'}
+            onChange={(value) => onConfigChange({ page_orientation: value as 'portrait' | 'landscape' })}
+            options={PAGE_ORIENTATION_OPTIONS}
+          />
+        </div>
+        <div>
+          <Label className="text-sm font-medium">{t('invoices.pdfCustomization.layout.page.size')}</Label>
+          <Select
+            value={config.page_size || 'a4'}
+            onChange={(value) => onConfigChange({ page_size: value as 'a4' | 'letter' | 'legal' | 'a3' })}
+            options={PAGE_SIZE_OPTIONS}
+          />
+        </div>
       </div>
     </div>
-  </div>
-)
+  )
+}
 
 // Content Options Component
 const ContentOptions: React.FC<{
   config: PDFTemplateConfig
   onConfigChange: (updates: Partial<PDFTemplateConfig>) => void
-}> = ({ config, onConfigChange }) => (
-  <div className="space-y-4">
-    <Label className="text-base font-medium">Content Options</Label>
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div className="space-y-3">
-        <Checkbox
-          checked={config.show_company_info ?? true}
-          onChange={(checked) => onConfigChange({ show_company_info: checked })}
-          label="Show Company Information"
-        />
-        <Checkbox
-          checked={config.show_company_address ?? true}
-          onChange={(checked) => onConfigChange({ show_company_address: checked })}
-          label="Show Company Address"
-        />
-        <Checkbox
-          checked={config.show_logo ?? true}
-          onChange={(checked) => onConfigChange({ show_logo: checked })}
-          label="Show Logo"
-        />
-      </div>
-      <div className="space-y-3">
-        <Checkbox
-          checked={config.show_invoice_notes ?? true}
-          onChange={(checked) => onConfigChange({ show_invoice_notes: checked })}
-          label="Show Invoice Notes"
-        />
-        <Checkbox
-          checked={config.show_tax_info ?? true}
-          onChange={(checked) => onConfigChange({ show_tax_info: checked })}
-          label="Show Tax Information"
-        />
-        <Checkbox
-          checked={config.show_payment_terms ?? true}
-          onChange={(checked) => onConfigChange({ show_payment_terms: checked })}
-          label="Show Payment Terms"
-        />
+}> = ({ config, onConfigChange }) => {
+  const { t } = useTranslation()
+  
+  return (
+    <div className="space-y-4">
+      <Label className="text-base font-medium">{t('invoices.pdfCustomization.layout.content.title')}</Label>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-3">
+          <Checkbox
+            checked={config.show_company_info ?? true}
+            onChange={(checked) => onConfigChange({ show_company_info: checked })}
+            label={t('invoices.pdfCustomization.layout.content.showCompanyInfo')}
+          />
+          <Checkbox
+            checked={config.show_company_address ?? true}
+            onChange={(checked) => onConfigChange({ show_company_address: checked })}
+            label={t('invoices.pdfCustomization.layout.content.showCompanyAddress')}
+          />
+          <Checkbox
+            checked={config.show_logo ?? true}
+            onChange={(checked) => onConfigChange({ show_logo: checked })}
+            label={t('invoices.pdfCustomization.layout.content.showLogo')}
+          />
+        </div>
+        <div className="space-y-3">
+          <Checkbox
+            checked={config.show_invoice_notes ?? true}
+            onChange={(checked) => onConfigChange({ show_invoice_notes: checked })}
+            label={t('invoices.pdfCustomization.layout.content.showInvoiceNotes')}
+          />
+          <Checkbox
+            checked={config.show_tax_info ?? true}
+            onChange={(checked) => onConfigChange({ show_tax_info: checked })}
+            label={t('invoices.pdfCustomization.layout.content.showTaxInfo')}
+          />
+          <Checkbox
+            checked={config.show_payment_terms ?? true}
+            onChange={(checked) => onConfigChange({ show_payment_terms: checked })}
+            label={t('invoices.pdfCustomization.layout.content.showPaymentTerms')}
+          />
+        </div>
       </div>
     </div>
-  </div>
-)
+  )
+}
 
 // Default configuration
 const getDefaultConfig = (): PDFTemplateConfig => ({
@@ -407,6 +453,7 @@ export function PDFTemplateCustomization({
   onSave,
   isLoading = false
 }: PDFTemplateCustomizationProps) {
+  const { t } = useTranslation()
   const [activeTab, setActiveTab] = useState('theme')
   const [localConfig, setLocalConfig] = useState<PDFTemplateConfig>(getDefaultConfig())
   const [localTheme, setLocalTheme] = useState<PDFTemplateTheme>(currentTheme)
@@ -467,10 +514,10 @@ export function PDFTemplateCustomization({
         window.open(pdf_url, '_blank')
       }
       
-      toast.success('PDF preview generated successfully!')
+      toast.success(t('invoices.pdfCustomization.preview.success'))
     } catch (error) {
       console.error('Failed to generate PDF preview:', error)
-      toast.error(`Failed to generate PDF preview: ${error instanceof Error ? error.message : 'Please try again.'}`)
+      toast.error(`${t('invoices.pdfCustomization.preview.failed')}: ${error instanceof Error ? error.message : t('invoices.pdfCustomization.preview.failedDesc')}`)
     } finally {
       setIsPreviewLoading(false)
     }
@@ -485,7 +532,7 @@ export function PDFTemplateCustomization({
   const footerContent = (
     <>
       <Button variant="outline" onClick={handleClose} disabled={isLoading || isPreviewLoading}>
-        Cancel
+        {t('invoices.pdfCustomization.buttons.cancel')}
       </Button>
       <Button
         variant="outline"
@@ -496,12 +543,12 @@ export function PDFTemplateCustomization({
         {isPreviewLoading ? (
           <>
             <Loader2 className="h-4 w-4 animate-spin text-primary" />
-            Generating...
+            {t('invoices.pdfCustomization.buttons.generatingPreview')}
           </>
         ) : (
           <>
             <Eye className="h-4 w-4" />
-            Preview PDF
+            {t('invoices.pdfCustomization.buttons.preview')}
           </>
         )}
       </Button>
@@ -511,7 +558,7 @@ export function PDFTemplateCustomization({
         className="flex items-center gap-2"
         loading={isLoading}
       >
-        {isLoading ? 'Saving...' : 'Save Template'}
+        {isLoading ? t('invoices.pdfCustomization.buttons.saving') : t('invoices.pdfCustomization.buttons.save')}
       </Button>
     </>
   )
@@ -523,10 +570,10 @@ export function PDFTemplateCustomization({
       title={
         <div className="flex items-center gap-2">
           <FileText className="h-5 w-5" />
-          PDF Template Customization
+          {t('invoices.pdfCustomization.title')}
         </div>
       }
-      description="Customize the appearance of your invoice PDFs with logos, colors, and layout options"
+      description={t('invoices.pdfCustomization.description')}
       size="xl"
       footer={footerContent}
     >
@@ -534,15 +581,15 @@ export function PDFTemplateCustomization({
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="theme" className="flex items-center gap-2">
             <Palette className="h-4 w-4" />
-            Theme
+            {t('invoices.pdfCustomization.tabs.theme')}
           </TabsTrigger>
           <TabsTrigger value="branding" className="flex items-center gap-2">
             <Settings className="h-4 w-4" />
-            Branding
+            {t('invoices.pdfCustomization.tabs.branding')}
           </TabsTrigger>
           <TabsTrigger value="layout" className="flex items-center gap-2">
             <FileText className="h-4 w-4" />
-            Layout
+            {t('invoices.pdfCustomization.tabs.layout')}
           </TabsTrigger>
         </TabsList>
 
