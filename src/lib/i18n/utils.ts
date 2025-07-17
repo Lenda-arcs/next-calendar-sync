@@ -1,4 +1,5 @@
 import { Language, Translations, DEFAULT_LANGUAGE, SUPPORTED_LANGUAGES, LOCALES } from './types'
+import { useState, useEffect } from 'react'
 
 // Validation function
 export function validateLanguage(language: string | undefined): Language {
@@ -64,26 +65,35 @@ export const STORAGE_KEYS = {
   LANGUAGE: 'calendar-sync-language'
 } as const
 
-// Get saved language from localStorage
+// Get saved language from cookie (consistent with server-side detection)
 export function getSavedLanguage(): Language {
   if (typeof window === 'undefined') return DEFAULT_LANGUAGE
   
   try {
-    const saved = localStorage.getItem(STORAGE_KEYS.LANGUAGE)
+    // Read from the same cookie that the server sets
+    const cookies = document.cookie.split(';')
+    const languageCookie = cookies.find(cookie => cookie.trim().startsWith('language='))
+    const saved = languageCookie?.split('=')[1]?.trim()
     return validateLanguage(saved || undefined)
   } catch {
     return DEFAULT_LANGUAGE
   }
 }
 
-// Save language to localStorage
+// Save language to cookie (consistent with server-side approach)
 export function saveLanguage(language: Language): void {
   if (typeof window === 'undefined') return
   
   try {
+    // Set the same cookie that the server expects
+    const maxAge = 60 * 60 * 24 * 365 // 1 year
+    const secure = window.location.protocol === 'https:' ? '; Secure' : ''
+    document.cookie = `language=${language}; Max-Age=${maxAge}; Path=/; SameSite=Lax${secure}`
+    
+    // Also save to localStorage as backup for client-only components
     localStorage.setItem(STORAGE_KEYS.LANGUAGE, language)
   } catch {
-    // Ignore localStorage errors
+    // Ignore cookie/localStorage errors
   }
 }
 
@@ -95,12 +105,30 @@ export function detectBrowserLanguage(): Language {
   return validateLanguage(browserLang)
 }
 
-// Get initial language (saved > browser > default)
+// Get initial language with hydration-safe approach
 export function getInitialLanguage(): Language {
+  // During SSR, always return default language to prevent hydration mismatch
+  if (typeof window === 'undefined') return DEFAULT_LANGUAGE
+  
   const saved = getSavedLanguage()
   if (saved !== DEFAULT_LANGUAGE) return saved
   
   return detectBrowserLanguage()
+}
+
+// Hydration-safe language hook for components
+export function useHydrationSafeLanguage(): Language {
+  const [isClient, setIsClient] = useState(false)
+  
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
+  
+  // During SSR and initial hydration, use default language
+  if (!isClient) return DEFAULT_LANGUAGE
+  
+  // After hydration, use the actual detected language
+  return getInitialLanguage()
 }
 
 // Translation loading utilities

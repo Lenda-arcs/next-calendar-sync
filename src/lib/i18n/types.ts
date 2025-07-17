@@ -3,24 +3,24 @@ export type Language = 'en' | 'de' | 'es'
 
 export interface LocaleConfig {
   label: string
-  flag: string
+  code: string
   dateFormat: string
 }
 
 export const LOCALES: Record<Language, LocaleConfig> = {
   en: {
     label: 'English',
-    flag: '🇺🇸',
+    code: 'EN',
     dateFormat: 'MM/dd/yyyy'
   },
   de: {
     label: 'Deutsch',
-    flag: '🇩🇪',
+    code: 'DE',
     dateFormat: 'dd.MM.yyyy'
   },
   es: {
     label: 'Español',
-    flag: '🇪🇸',
+    code: 'ES',
     dateFormat: 'dd/MM/yyyy'
   }
 }

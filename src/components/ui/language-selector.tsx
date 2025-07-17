@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { Languages } from 'lucide-react'
+import { Globe } from 'lucide-react'
 import { Button } from './button'
 import { 
   Popover, 
@@ -9,7 +9,7 @@ import {
   PopoverTrigger 
 } from './popover'
 import { useLanguage } from '@/lib/i18n/context'
-import { Language, LOCALES } from '@/lib/i18n/types'
+import { Language, LOCALES, DEFAULT_LANGUAGE } from '@/lib/i18n/types'
 
 interface LanguageSelectorProps {
   className?: string
@@ -24,13 +24,21 @@ export function LanguageSelector({
 }: LanguageSelectorProps) {
   const { language, setLanguage } = useLanguage()
   const [isOpen, setIsOpen] = React.useState(false)
+  const [isMounted, setIsMounted] = React.useState(false)
+  
+  // Prevent hydration mismatch by not rendering language-specific content until mounted
+  React.useEffect(() => {
+    setIsMounted(true)
+  }, [])
 
   const handleLanguageChange = (newLanguage: Language) => {
     setLanguage(newLanguage)
     setIsOpen(false)
   }
 
-  const currentLocale = LOCALES[language]
+  // Show default language during SSR and initial hydration
+  const displayLanguage = isMounted ? language : DEFAULT_LANGUAGE
+  const currentLocale = LOCALES[displayLanguage]
 
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
@@ -41,32 +49,34 @@ export function LanguageSelector({
           className={className}
           aria-label="Select language"
         >
-          <Languages className="h-4 w-4" />
+          <Globe className="h-4 w-4" />
           {showLabel && (
             <span className="ml-2 hidden sm:inline">
-              {currentLocale.flag} {currentLocale.label}
+              {currentLocale.code} • {currentLocale.label}
             </span>
           )}
           {!showLabel && (
-            <span className="ml-2 text-sm">
-              {currentLocale.flag}
+            <span className="ml-1 text-xs font-semibold text-muted-foreground">
+              {currentLocale.code}
             </span>
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-48 p-1">
+      <PopoverContent align="end" className="w-40 p-1">
         {Object.entries(LOCALES).map(([langCode, locale]) => (
           <button
             key={langCode}
             onClick={() => handleLanguageChange(langCode as Language)}
-            className={`w-full text-left px-3 py-2 rounded-md hover:bg-accent flex items-center ${
-              langCode === language ? 'bg-accent' : ''
+            className={`w-full text-left px-3 py-2 rounded-lg hover:bg-accent flex items-center gap-2 transition-colors ${
+              langCode === displayLanguage ? 'bg-accent' : ''
             }`}
           >
-            <span className="mr-2 text-lg">{locale.flag}</span>
-            <span className="flex-1">{locale.label}</span>
-            {langCode === language && (
-              <span className="text-primary text-sm">✓</span>
+            <span className="inline-flex items-center justify-center w-6 h-5 text-xs font-semibold bg-muted rounded text-muted-foreground">
+              {locale.code}
+            </span>
+            <span className="text-sm">{locale.label}</span>
+            {langCode === displayLanguage && (
+              <span className="ml-auto text-primary text-sm">✓</span>
             )}
           </button>
         ))}
@@ -79,11 +89,20 @@ export function LanguageSelector({
 export function CompactLanguageSelector({ className }: { className?: string }) {
   const { language, setLanguage } = useLanguage()
   const [isOpen, setIsOpen] = React.useState(false)
+  const [isMounted, setIsMounted] = React.useState(false)
+  
+  // Prevent hydration mismatch by not rendering language-specific content until mounted
+  React.useEffect(() => {
+    setIsMounted(true)
+  }, [])
   
   const handleLanguageChange = (newLanguage: Language) => {
     setLanguage(newLanguage)
     setIsOpen(false)
   }
+
+  // Show default flag during SSR and initial hydration
+  const displayLanguage = isMounted ? language : DEFAULT_LANGUAGE
 
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
@@ -91,10 +110,13 @@ export function CompactLanguageSelector({ className }: { className?: string }) {
         <Button
           variant="ghost"
           size="sm"
-          className={`p-2 h-8 w-8 ${className}`}
+          className={`h-8 w-auto min-w-[2.5rem] px-2 ${className}`}
           aria-label="Select language"
         >
-          <span className="text-sm">{LOCALES[language].flag}</span>
+          <Globe className="h-3.5 w-3.5 mr-1" />
+          <span className="text-xs font-semibold">
+            {LOCALES[displayLanguage].code}
+          </span>
         </Button>
       </PopoverTrigger>
       <PopoverContent align="end" className="w-36 p-1">
@@ -102,11 +124,13 @@ export function CompactLanguageSelector({ className }: { className?: string }) {
           <button
             key={langCode}
             onClick={() => handleLanguageChange(langCode as Language)}
-            className={`w-full text-left px-3 py-2 rounded-md hover:bg-accent flex items-center ${
-              langCode === language ? 'bg-accent' : ''
+            className={`w-full text-left px-3 py-2 rounded-lg hover:bg-accent flex items-center gap-2 transition-colors ${
+              langCode === displayLanguage ? 'bg-accent' : ''
             }`}
           >
-            <span className="mr-2">{locale.flag}</span>
+            <span className="inline-flex items-center justify-center w-6 h-5 text-xs font-semibold bg-muted rounded text-muted-foreground">
+              {locale.code}
+            </span>
             <span className="text-sm">{locale.label}</span>
           </button>
         ))}
@@ -140,11 +164,11 @@ export function InlineLanguageSelector({
         id="language-select"
         value={language}
         onChange={handleLanguageChange}
-        className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+        className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary bg-background"
       >
         {Object.entries(LOCALES).map(([langCode, locale]) => (
           <option key={langCode} value={langCode}>
-            {locale.flag} {locale.label}
+            {locale.code} • {locale.label}
           </option>
         ))}
       </select>
