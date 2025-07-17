@@ -16,12 +16,14 @@ import {
 import { useBillingEntityManagement } from '@/lib/hooks'
 import { BillingEntityCard } from './BillingEntityCard'
 import BillingEntityFormModal from './BillingEntityFormModal'
+import { useTranslation } from '@/lib/i18n/context'
 
 interface BillingEntityManagementProps {
   userId: string
 }
 
 export function BillingEntityManagement({ userId }: BillingEntityManagementProps) {
+  const { t } = useTranslation()
   const {
     entities,
     studioEntities,
@@ -52,14 +54,14 @@ export function BillingEntityManagement({ userId }: BillingEntityManagementProps
         empty={
           <div className="text-center py-6 sm:py-8 px-4">
             <div className="text-gray-600 mb-4 sm:mb-6">
-              <p className="text-base sm:text-lg mb-2 font-medium">No billing entities configured yet</p>
-              <p className="text-sm sm:text-base text-gray-500">Create your first studio or teacher profile to start managing invoices</p>
+              <p className="text-base sm:text-lg mb-2 font-medium">{t('invoices.billingEntities.noBillingEntities')}</p>
+              <p className="text-sm sm:text-base text-gray-500">{t('invoices.billingEntities.noBillingEntitiesDesc')}</p>
             </div>
             <Button 
               onClick={handleCreate}
               className="w-full sm:w-auto"
             >
-              Create Your First Profile
+              {t('invoices.billingEntities.createFirstProfile')}
             </Button>
           </div>
         }
@@ -70,14 +72,14 @@ export function BillingEntityManagement({ userId }: BillingEntityManagementProps
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
               <div>
                 <h3 className="text-base font-medium text-gray-900">
-                  {entityList.length} Billing Entities
+                  {entityList.length} {t('invoices.billingEntities.title')}
                 </h3>
               </div>
               <Button 
                 onClick={handleCreate}
                 className="w-full sm:w-auto"
               >
-                Add New
+                {t('invoices.billingEntities.addNew')}
               </Button>
             </div>
 
@@ -85,7 +87,7 @@ export function BillingEntityManagement({ userId }: BillingEntityManagementProps
             {studioEntities.length > 0 && (
               <div className="space-y-4">
                 <div className="flex items-center gap-2">
-                  <h4 className="font-medium text-gray-900">Studios ({studioEntities.length})</h4>
+                  <h4 className="font-medium text-gray-900">{t('invoices.billingEntities.studios')} ({studioEntities.length})</h4>
                 </div>
                 <div className="grid gap-4 sm:gap-6 sm:grid-cols-1 lg:grid-cols-2">
                   {studioEntities.map(entity => (
@@ -110,7 +112,7 @@ export function BillingEntityManagement({ userId }: BillingEntityManagementProps
             {teacherEntities.length > 0 && (
               <div className="space-y-4">
                 <div className="flex items-center gap-2">
-                  <h4 className="font-medium text-gray-900">Teachers ({teacherEntities.length})</h4>
+                  <h4 className="font-medium text-gray-900">{t('invoices.billingEntities.teachers')} ({teacherEntities.length})</h4>
                 </div>
                 <div className="grid gap-4 sm:gap-6 sm:grid-cols-1 lg:grid-cols-2">
                   {teacherEntities.map(entity => (
@@ -145,20 +147,20 @@ export function BillingEntityManagement({ userId }: BillingEntityManagementProps
       <AlertDialog open={deleteDialogOpen} onOpenChange={handleDeleteDialogClose}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Billing Entity</AlertDialogTitle>
+            <AlertDialogTitle>{t('invoices.billingEntities.deleteTitle')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete &quot;{entityToDelete?.entity_name}&quot;? This action cannot be undone and will remove all associated billing information.
+              {t('invoices.billingEntities.deleteConfirmation', { name: entityToDelete?.entity_name || '' })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={handleDeleteDialogClose}>
-              Cancel
+              {t('invoices.billingEntities.cancel')}
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmDelete}
               className="bg-red-600 hover:bg-red-700"
             >
-              Delete
+              {t('invoices.billingEntities.delete')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

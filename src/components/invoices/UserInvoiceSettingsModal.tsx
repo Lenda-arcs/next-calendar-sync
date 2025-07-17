@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { UnifiedDialog } from '@/components/ui/unified-dialog'
 import { UserInvoiceSettingsForm } from './UserInvoiceSettingsForm'
 import { UserInvoiceSettings } from '@/lib/types'
+import { useTranslation } from '@/lib/i18n/context'
 import { Loader2 } from 'lucide-react'
 
 interface UserInvoiceSettingsModalProps {
@@ -22,6 +23,7 @@ export function UserInvoiceSettingsModal({
   existingSettings,
   onSettingsUpdated
 }: UserInvoiceSettingsModalProps) {
+  const { t } = useTranslation()
   const formRef = useRef<HTMLFormElement>(null)
   const [isLoading, setIsLoading] = useState(false)
 
@@ -45,7 +47,7 @@ export function UserInvoiceSettingsModal({
         onClick={onClose}
         disabled={isLoading}
       >
-        Cancel
+        {t('invoices.settingsForm.cancel')}
       </Button>
       <Button
         onClick={handleSubmit}
@@ -54,10 +56,10 @@ export function UserInvoiceSettingsModal({
         {isLoading ? (
           <>
             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            Saving...
+            {t('invoices.settingsForm.saving')}
           </>
         ) : (
-          existingSettings ? 'Update Settings' : 'Save Settings'
+          existingSettings ? t('invoices.settingsForm.updateSettings') : t('invoices.settingsForm.saveSettings')
         )}
       </Button>
     </div>
@@ -67,7 +69,7 @@ export function UserInvoiceSettingsModal({
     <UnifiedDialog
       open={isOpen}
       onOpenChange={onClose}
-      title={existingSettings ? "Edit Invoice Settings" : "Set up Invoice Settings"}
+      title={existingSettings ? t('invoices.settingsForm.editTitle') : t('invoices.settingsForm.setupTitle')}
       size="xl"
       footer={footer}
     >

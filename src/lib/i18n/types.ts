@@ -522,6 +522,7 @@ export interface InvoiceTranslations {
     bic: string
     taxId: string
     vatId: string
+    noBankingTaxInfo: string
     billingProfilesTitle: string
     billingProfilesDesc: string
     pdfCustomizationTitle: string
@@ -529,6 +530,14 @@ export interface InvoiceTranslations {
     currentTheme: string
     customConfiguration: string
     defaultConfiguration: string
+    openTemplateEditor: string
+    previewCurrentTemplate: string
+    generating: string
+    pdfTemplateSettingsSaved: string
+    pdfTemplateSettingsFailed: string
+    noCustomTemplateToPreview: string
+    pdfPreviewGenerated: string
+    pdfPreviewFailed: string
   }
   
   settingsForm: {
@@ -739,12 +748,26 @@ export interface InvoiceTranslations {
         showTaxInfo: string
         showPaymentTerms: string
       }
-    }
+    },
     preview: {
       success: string
       failed: string
       failedDesc: string
     }
+  }
+
+  billingEntities: {
+    title: string
+    noBillingEntities: string
+    noBillingEntitiesDesc: string
+    createFirstProfile: string
+    addNew: string
+    studios: string
+    teachers: string
+    deleteTitle: string
+    deleteConfirmation: string
+    cancel: string
+    delete: string
   }
 }
 

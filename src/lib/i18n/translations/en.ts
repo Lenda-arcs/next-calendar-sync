@@ -466,13 +466,22 @@ const translations: Translations = {
       bic: 'BIC/SWIFT',
       taxId: 'Tax ID',
       vatId: 'VAT ID',
+      noBankingTaxInfo: 'No banking or tax information provided',
       billingProfilesTitle: 'Billing Profiles',
       billingProfilesDesc: 'Set up billing information for studios and teachers',
       pdfCustomizationTitle: 'PDF Template Customization',
       pdfCustomizationDesc: 'Customize the appearance of your invoice PDFs with logos, colors, and layout options',
       currentTheme: 'Current Theme:',
       customConfiguration: 'Custom template configuration active',
-      defaultConfiguration: 'Using default template settings'
+      defaultConfiguration: 'Using default template settings',
+      openTemplateEditor: 'Open Template Editor',
+      previewCurrentTemplate: 'Preview Current Template',
+      generating: 'Generating...',
+      pdfTemplateSettingsSaved: 'PDF template settings saved successfully',
+      pdfTemplateSettingsFailed: 'Failed to save PDF template settings',
+      noCustomTemplateToPreview: 'No custom template configuration to preview. Try selecting a different theme or adding custom settings.',
+      pdfPreviewGenerated: 'PDF preview generated successfully!',
+      pdfPreviewFailed: 'Failed to generate PDF preview'
     },
     
     settingsForm: {
@@ -689,6 +698,20 @@ const translations: Translations = {
         failed: 'Failed to generate PDF preview',
         failedDesc: 'Please try again.'
       }
+    },
+
+    billingEntities: {
+      title: 'Billing Entities',
+      noBillingEntities: 'No billing entities configured yet',
+      noBillingEntitiesDesc: 'Create your first studio or teacher profile to start managing invoices',
+      createFirstProfile: 'Create Your First Profile',
+      addNew: 'Add New',
+      studios: 'Studios',
+      teachers: 'Teachers',
+      deleteTitle: 'Delete Billing Entity',
+      deleteConfirmation: 'Are you sure you want to delete "{name}"? This action cannot be undone and will remove all associated billing information.',
+      cancel: 'Cancel',
+      delete: 'Delete'
     }
   },
   dashboard: {

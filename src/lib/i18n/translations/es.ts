@@ -466,13 +466,22 @@ const translations: Translations = {
       bic: 'BIC/SWIFT',
       taxId: 'ID Fiscal',
       vatId: 'ID de IVA',
+      noBankingTaxInfo: 'No se proporcionó información bancaria o fiscal',
       billingProfilesTitle: 'Perfiles de Facturación',
       billingProfilesDesc: 'Configurar información de facturación para estudios y profesores',
       pdfCustomizationTitle: 'Personalización de Plantilla PDF',
       pdfCustomizationDesc: 'Personalice la apariencia de sus PDFs de factura con logos, colores y opciones de diseño',
       currentTheme: 'Tema Actual:',
       customConfiguration: 'Configuración de plantilla personalizada activa',
-      defaultConfiguration: 'Usando configuración de plantilla predeterminada'
+      defaultConfiguration: 'Usando configuración de plantilla predeterminada',
+      openTemplateEditor: 'Abrir Editor de Plantillas',
+      previewCurrentTemplate: 'Vista Previa de Plantilla Actual',
+      generating: 'Generando...',
+      pdfTemplateSettingsSaved: 'Configuración de plantilla PDF guardada exitosamente',
+      pdfTemplateSettingsFailed: 'Error al guardar la configuración de plantilla PDF',
+      noCustomTemplateToPreview: 'No hay configuración de plantilla personalizada para previsualizar. Intente seleccionar un tema diferente o agregar configuraciones personalizadas.',
+      pdfPreviewGenerated: '¡Vista previa PDF generada exitosamente!',
+      pdfPreviewFailed: 'Error al generar vista previa PDF'
     },
     
     settingsForm: {
@@ -689,6 +698,20 @@ const translations: Translations = {
         failed: 'Error al generar vista previa PDF',
         failedDesc: 'Por favor intente de nuevo.'
       }
+    },
+
+    billingEntities: {
+      title: 'Entidades de Facturación',
+      noBillingEntities: 'Aún no se han configurado entidades de facturación',
+      noBillingEntitiesDesc: 'Crea tu primer perfil de estudio o instructor para comenzar a gestionar facturas',
+      createFirstProfile: 'Crear Tu Primer Perfil',
+      addNew: 'Agregar Nuevo',
+      studios: 'Estudios',
+      teachers: 'Instructores',
+      deleteTitle: 'Eliminar Entidad de Facturación',
+      deleteConfirmation: '¿Estás seguro de que quieres eliminar "{name}"? Esta acción no se puede deshacer y eliminará toda la información de facturación asociada.',
+      cancel: 'Cancelar',
+      delete: 'Eliminar'
     }
   },
   dashboard: {

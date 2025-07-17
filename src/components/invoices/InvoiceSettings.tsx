@@ -15,6 +15,7 @@ import { UserInvoiceSettingsModal } from './UserInvoiceSettingsModal'
 import { UserInvoiceSettings, PDFTemplateConfig, PDFTemplateTheme } from '@/lib/types'
 import { BillingEntityManagement } from '@/components/billing/BillingEntityManagement'
 import { PDFTemplateCustomization } from '@/components/export/PDFTemplateCustomizationSimple'
+import { useTranslation } from '@/lib/i18n/context'
 import { Loader2 } from 'lucide-react'
 
 interface InvoiceSettingsProps {
@@ -22,6 +23,7 @@ interface InvoiceSettingsProps {
 }
 
 export function InvoiceSettings({ userId }: InvoiceSettingsProps) {
+  const { t } = useTranslation()
   const [showSettingsModal, setShowSettingsModal] = useState(false)
   const [showPdfCustomModal, setShowPdfCustomModal] = useState(false)
   const [pdfConfig, setPdfConfig] = useState<PDFTemplateConfig | null>(null)
@@ -104,11 +106,11 @@ export function InvoiceSettings({ userId }: InvoiceSettingsProps) {
       return updateResult
     },
     onSuccess: () => {
-      toast.success('PDF template settings saved successfully')
+      toast.success(t('invoices.settings.pdfTemplateSettingsSaved'))
       refetchSettings()
     },
     onError: (error) => {
-      toast.error(`Failed to save PDF template settings: ${error.message}`)
+      toast.error(`${t('invoices.settings.pdfTemplateSettingsFailed')}: ${error.message}`)
     }
   })
 
@@ -129,7 +131,7 @@ export function InvoiceSettings({ userId }: InvoiceSettingsProps) {
     setIsPreviewLoading(true)
     try {
       if (!pdfConfig && pdfTheme === 'professional') {
-        toast.info('No custom template configuration to preview. Try selecting a different theme or adding custom settings.')
+        toast.info(t('invoices.settings.noCustomTemplateToPreview'))
         return
       }
 
@@ -176,16 +178,14 @@ export function InvoiceSettings({ userId }: InvoiceSettingsProps) {
         window.open(pdf_url, '_blank')
       }
       
-      toast.success('PDF preview generated successfully!')
+      toast.success(t('invoices.settings.pdfPreviewGenerated'))
     } catch (error) {
       console.error('Failed to generate PDF preview:', error)
-      toast.error(`Failed to generate PDF preview: ${error instanceof Error ? error.message : 'Please try again.'}`)
+      toast.error(`${t('invoices.settings.pdfPreviewFailed')}: ${error instanceof Error ? error.message : 'Please try again.'}`)
     } finally {
       setIsPreviewLoading(false)
     }
   }
-
-
 
   return (
     <div className="space-y-8">
@@ -196,10 +196,10 @@ export function InvoiceSettings({ userId }: InvoiceSettingsProps) {
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
               <div className="flex-1 min-w-0">
                 <CardTitle className="text-lg sm:text-xl text-gray-900">
-                  Your Invoice Information
+                  {t('invoices.settings.invoiceInfoTitle')}
                 </CardTitle>
                 <p className="text-sm sm:text-base text-gray-600 mt-1">
-                  Set up your personal billing details for generating invoices
+                  {t('invoices.settings.invoiceInfoDesc')}
                 </p>
               </div>
               {userSettings && (
@@ -209,7 +209,7 @@ export function InvoiceSettings({ userId }: InvoiceSettingsProps) {
                   className="w-full sm:w-auto flex-shrink-0"
                   size="sm"
                 >
-                  Edit Settings
+                  {t('invoices.settings.editSettings')}
                 </Button>
               )}
             </div>
@@ -224,13 +224,13 @@ export function InvoiceSettings({ userId }: InvoiceSettingsProps) {
             empty={
               <div className="text-center py-6 sm:py-8 px-4">
                 <div className="text-gray-600 mb-4 sm:mb-6">
-                  <p className="text-base sm:text-lg mb-2 font-medium">No invoice settings configured</p>
-                  <p className="text-sm sm:text-base mb-4 sm:mb-6 text-gray-500">Set up your billing information to generate invoices</p>
+                  <p className="text-base sm:text-lg mb-2 font-medium">{t('invoices.settings.noSettingsTitle')}</p>
+                  <p className="text-sm sm:text-base mb-4 sm:mb-6 text-gray-500">{t('invoices.settings.noSettingsDesc')}</p>
                   <Button 
                     onClick={() => setShowSettingsModal(true)}
                     className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto"
                   >
-                    Set up Invoice Settings
+                    {t('invoices.settings.setupSettings')}
                   </Button>
                 </div>
               </div>
@@ -245,7 +245,7 @@ export function InvoiceSettings({ userId }: InvoiceSettingsProps) {
                       {settings.full_name}
                     </h3>
                     <Badge className="bg-green-100 text-green-800 text-xs">
-                      Setup Complete
+                      {t('invoices.settings.setupComplete')}
                     </Badge>
                   </div>
                 </div>
@@ -253,10 +253,10 @@ export function InvoiceSettings({ userId }: InvoiceSettingsProps) {
                 {/* Information Sections */}
                 <InfoGrid>
                   {/* Contact Information */}
-                  <InfoSection title="Contact Information">
+                  <InfoSection title={t('invoices.settings.contactInfo')}>
                     {settings.email && (
                       <InfoItem 
-                        label="Email" 
+                        label={t('invoices.settings.email')} 
                         value={settings.email}
                         valueClassName="font-mono break-all"
                       />
@@ -264,14 +264,14 @@ export function InvoiceSettings({ userId }: InvoiceSettingsProps) {
                     
                     {settings.phone && (
                       <InfoItem 
-                        label="Phone" 
+                        label={t('invoices.settings.phone')} 
                         value={settings.phone}
                       />
                     )}
                     
                     {settings.address && (
                       <InfoItem 
-                        label="Address" 
+                        label={t('invoices.settings.address')} 
                         value={settings.address}
                         valueClassName="whitespace-pre-line"
                       />
@@ -279,10 +279,10 @@ export function InvoiceSettings({ userId }: InvoiceSettingsProps) {
                   </InfoSection>
 
                   {/* Banking & Tax Information */}
-                  <InfoSection title="Banking & Tax Information">
+                  <InfoSection title={t('invoices.settings.bankingTax')}>
                     {settings.iban && (
                       <InfoItem 
-                        label="IBAN" 
+                        label={t('invoices.settings.iban')} 
                         value={settings.iban}
                         valueClassName="font-mono break-all"
                       />
@@ -290,7 +290,7 @@ export function InvoiceSettings({ userId }: InvoiceSettingsProps) {
                     
                     {settings.bic && (
                       <InfoItem 
-                        label="BIC/SWIFT" 
+                        label={t('invoices.settings.bic')} 
                         value={settings.bic}
                         valueClassName="font-mono"
                       />
@@ -298,20 +298,20 @@ export function InvoiceSettings({ userId }: InvoiceSettingsProps) {
                     
                     {settings.tax_id && (
                       <InfoItem 
-                        label="Tax ID" 
+                        label={t('invoices.settings.taxId')} 
                         value={settings.tax_id}
                       />
                     )}
                     
                     {settings.vat_id && (
                       <InfoItem 
-                        label="VAT ID" 
+                        label={t('invoices.settings.vatId')} 
                         value={settings.vat_id}
                       />
                     )}
                     
                     {!settings.iban && !settings.bic && !settings.tax_id && !settings.vat_id && (
-                      <p className="text-sm text-gray-600 italic">No banking or tax information provided</p>
+                      <p className="text-sm text-gray-600 italic">{t('invoices.settings.noBankingTaxInfo')}</p>
                     )}
                   </InfoSection>
                 </InfoGrid>
@@ -328,10 +328,10 @@ export function InvoiceSettings({ userId }: InvoiceSettingsProps) {
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
               <div className="flex-1 min-w-0">
                 <CardTitle className="text-lg sm:text-xl text-gray-900">
-                  Billing Profiles
+                  {t('invoices.settings.billingProfilesTitle')}
                 </CardTitle>
                 <p className="text-sm sm:text-base text-gray-600 mt-1">
-                  Set up billing information for studios and teachers
+                  {t('invoices.settings.billingProfilesDesc')}
                 </p>
               </div>
             </div>
@@ -349,10 +349,10 @@ export function InvoiceSettings({ userId }: InvoiceSettingsProps) {
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
               <div className="flex-1 min-w-0">
                 <CardTitle className="text-lg sm:text-xl text-gray-900">
-                  PDF Template Customization
+                  {t('invoices.settings.pdfCustomizationTitle')}
                 </CardTitle>
                 <p className="text-sm sm:text-base text-gray-600 mt-1">
-                  Customize the appearance of your invoice PDFs with logos, colors, and layout options
+                  {t('invoices.settings.pdfCustomizationDesc')}
                 </p>
               </div>
             </div>
@@ -362,17 +362,17 @@ export function InvoiceSettings({ userId }: InvoiceSettingsProps) {
           <div className="text-center py-6 sm:py-8 px-4">
             <div className="text-gray-600 mb-4 sm:mb-6">
               <p className="text-base sm:text-lg mb-2 font-medium">
-                Current Theme: <span className="capitalize font-semibold text-gray-900">{pdfTheme}</span>
+                {t('invoices.settings.currentTheme')} <span className="capitalize font-semibold text-gray-900">{pdfTheme}</span>
               </p>
               <p className="text-sm sm:text-base mb-4 sm:mb-6 text-gray-500">
-                {pdfConfig ? 'Custom template configuration active' : 'Using default template settings'}
+                {pdfConfig ? t('invoices.settings.customConfiguration') : t('invoices.settings.defaultConfiguration')}
               </p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 <Button 
                   onClick={() => setShowPdfCustomModal(true)}
                   className="bg-blue-600 hover:bg-blue-700"
                 >
-                  Open Template Editor
+                  {t('invoices.settings.openTemplateEditor')}
                 </Button>
                 <Button 
                   variant="outline"
@@ -383,10 +383,10 @@ export function InvoiceSettings({ userId }: InvoiceSettingsProps) {
                   {isPreviewLoading ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                      Generating...
+                      {t('invoices.settings.generating')}
                     </>
                   ) : (
-                    'Preview Current Template'
+                    t('invoices.settings.previewCurrentTemplate')
                   )}
                 </Button>
               </div>

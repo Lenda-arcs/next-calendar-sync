@@ -466,13 +466,22 @@ const translations: Translations = {
       bic: 'BIC/SWIFT',
       taxId: 'Steuer-ID',
       vatId: 'USt-IdNr.',
+      noBankingTaxInfo: 'Keine Bank- oder Steuerinformationen angegeben',
       billingProfilesTitle: 'Abrechnungsprofile',
       billingProfilesDesc: 'Abrechnungsinformationen für Studios und Lehrer einrichten',
       pdfCustomizationTitle: 'PDF-Vorlagenanpassung',
       pdfCustomizationDesc: 'Passen Sie das Erscheinungsbild Ihrer Rechnungs-PDFs mit Logos, Farben und Layout-Optionen an',
       currentTheme: 'Aktuelles Theme:',
       customConfiguration: 'Benutzerdefinierte Vorlagenkonfiguration aktiv',
-      defaultConfiguration: 'Standard-Vorlageneinstellungen verwenden'
+      defaultConfiguration: 'Standard-Vorlageneinstellungen verwenden',
+      openTemplateEditor: 'Vorlagen-Editor öffnen',
+      previewCurrentTemplate: 'Aktuelle Vorlage vorschauen',
+      generating: 'Erstelle...',
+      pdfTemplateSettingsSaved: 'PDF-Vorlageneinstellungen erfolgreich gespeichert',
+      pdfTemplateSettingsFailed: 'Fehler beim Speichern der PDF-Vorlageneinstellungen',
+      noCustomTemplateToPreview: 'Keine benutzerdefinierte Vorlagenkonfiguration zur Vorschau verfügbar. Versuchen Sie, ein anderes Theme auszuwählen oder benutzerdefinierte Einstellungen hinzuzufügen.',
+      pdfPreviewGenerated: 'PDF-Vorschau erfolgreich erstellt!',
+      pdfPreviewFailed: 'Fehler beim Erstellen der PDF-Vorschau'
     },
     
     settingsForm: {
@@ -689,6 +698,20 @@ const translations: Translations = {
         failed: 'Fehler beim Erstellen der PDF-Vorschau',
         failedDesc: 'Bitte versuchen Sie es erneut.'
       }
+    },
+
+    billingEntities: {
+      title: 'Abrechnungseinheiten',
+      noBillingEntities: 'Noch keine Abrechnungseinheiten konfiguriert',
+      noBillingEntitiesDesc: 'Erstellen Sie Ihr erstes Studio- oder Lehrerprofil, um mit der Rechnungsverwaltung zu beginnen',
+      createFirstProfile: 'Erstes Profil erstellen',
+      addNew: 'Neu hinzufügen',
+      studios: 'Studios',
+      teachers: 'Lehrer',
+      deleteTitle: 'Abrechnungseinheit löschen',
+      deleteConfirmation: 'Sind Sie sicher, dass Sie "{name}" löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden und entfernt alle zugehörigen Abrechnungsinformationen.',
+      cancel: 'Abbrechen',
+      delete: 'Löschen'
     }
   },
   dashboard: {
