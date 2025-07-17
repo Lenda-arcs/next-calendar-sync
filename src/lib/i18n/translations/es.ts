@@ -421,6 +421,83 @@ const translations: Translations = {
       refreshEvents: 'Actualizar Eventos',
       createTag: 'Crear Etiqueta',
       manageTag: 'Gestionar Etiquetas',
+      controlPanel: {
+        title: 'Gestión de Eventos',
+        timeLabel: 'Tiempo:',
+        visibilityLabel: 'Visibilidad:',
+        futureEvents: 'Eventos Futuros',
+        allEvents: 'Todos los Eventos',
+        allVisibility: 'Todos ({count})',
+        publicVisibility: 'Público ({count})',
+        privateVisibility: 'Privado ({count})',
+        pendingChangesInfo: '{count} cambio{plural} sin guardar',
+        pendingChangesAction: 'Usa los botones de acción flotantes para guardar o descartar',
+        createNewTag: 'Crear Nueva Etiqueta',
+        refresh: 'Actualizar',
+        quickActions: 'Acciones Rápidas (~1-3s)',
+        syncing: 'Sincronizando...',
+        fullCalendarSync: 'Sincronización Completa del Calendario',
+        syncDescription: 'Reparar etiquetas de eventos o descargar datos frescos del calendario (~15-30s para sincronizar)',
+        availableTags: 'Etiquetas Disponibles:'
+      },
+      emptyState: {
+        noEvents: 'No se encontraron eventos',
+        noEventsFiltered: 'Ningún evento coincide con tus filtros',
+        connectCalendar: 'Conecta tus feeds de calendario para comenzar a importar eventos.',
+        changeFiltersPublicPrivate: 'Intenta cambiar tus filtros para ver eventos {visibility} o eventos pasados.',
+        changeFiltersTime: 'Intenta cambiar el filtro de tiempo para ver todos los eventos incluyendo los pasados.',
+        changeFiltersVisibility: 'Intenta cambiar el filtro de visibilidad para ver todos los eventos.',
+        addCalendarFeed: 'Agregar Feed de Calendario',
+        showAllVisibility: 'Mostrar Toda la Visibilidad',
+        showAllTime: 'Mostrar Todo el Tiempo'
+      },
+      floatingButtons: {
+        discardTooltip: 'Descartar todos los cambios pendientes',
+        saving: 'Guardando...',
+        saveChanges: 'Guardar {count} Cambio{plural}'
+      },
+      dateHeaders: {
+        today: 'Hoy',
+        tomorrow: 'Mañana'
+      },
+      rematch: {
+        updating: 'Actualizando...',
+        selectedEvents: 'Eventos Seleccionados',
+        feedEvents: 'Eventos del Feed',
+        allEvents: 'Todos los Eventos',
+        tags: 'Etiquetas',
+        studios: 'Studios',
+        fixAction: 'Reparar {actions} para {scope}',
+        matchingUpdated: '¡Coincidencia Actualizada!',
+        eventsUpdated: '{updated} de {total} eventos fueron actualizados.',
+        failedToUpdate: 'Error al actualizar coincidencia'
+      },
+      historicalSync: {
+        title: 'Faltan eventos anteriores',
+        description: 'Sincroniza eventos históricos de tus feeds de calendario conectados para encontrar clases no facturadas de meses anteriores.',
+        mobileDescription: 'Sincronizar eventos históricos de feeds de calendario',
+        syncButton: 'Sincronizar Eventos Históricos',
+        syncButtonMobile: 'Sincronizar Históricos',
+        syncing: 'Sincronizando...',
+        noFeeds: 'No se Encontraron Feeds de Calendario',
+        noFeedsDesc: 'Por favor conecta tus feeds de calendario primero antes de sincronizar eventos históricos.',
+        syncComplete: '¡Sincronización Histórica Completa!',
+        syncCompleteDesc: '{count} evento{plural} histórico{plural} sincronizado{plural} de {feeds} feed{feedsPlural} de calendario. {matched} evento{matchedPlural} fueron emparejado{matchedPlural} con etiquetas y studios.',
+        syncCompleteNoEvents: 'No se encontraron nuevos eventos históricos. Tus feeds de calendario ({feeds}) fueron verificados exitosamente.',
+        syncFailed: 'Sincronización Histórica Fallida',
+        syncFailedDesc: 'No se pudieron sincronizar eventos históricos. Por favor intenta de nuevo.'
+      },
+      unmatchedEvents: {
+        title: 'Eventos No Emparejados',
+        description: 'Eventos que no pudieron ser emparejados con una ubicación de studio',
+        mobileDescription: 'No emparejados con studios',
+        excludeButton: 'Marcar como Gratuito',
+        excludeTooltip: 'Marcar este evento como excluido del emparejamiento con studios',
+        eventExcluded: 'Evento Marcado como Gratuito',
+        eventExcludedDesc: 'El evento ha sido excluido del emparejamiento con studios y facturación.',
+        excludeFailed: 'Error al Marcar Evento como Gratuito',
+        excludeFailedDesc: 'No se pudo excluir el evento. Por favor intenta de nuevo.'
+      },
       filterControls: {
         timeFilter: 'Filtro de Tiempo',
         visibilityFilter: 'Filtro de Visibilidad',
@@ -592,6 +669,17 @@ const translations: Translations = {
         description: 'Estamos experimentando dificultades técnicas. Por favor intenta de nuevo más tarde o contacta soporte para asistencia con tu horario de yoga.',
         keywords: 'error del servidor, soporte técnico, soporte de plataforma de yoga'
       }
+    }
+  },
+  tags: {
+    management: {
+      unnamedTag: 'Etiqueta Sin Nombre',
+      maxReached: 'Máximo alcanzado',
+      showOnPublicPage: 'Mostrar en página pública',
+      selectTags: 'Seleccionar Etiquetas (máx {count})',
+      selectTagsPlaceholder: 'Seleccionar etiquetas...',
+      maxTagsSelected: 'Máximo {count} etiquetas seleccionadas',
+      maxTagsAllowed: 'Máximo de {count} etiquetas permitidas. Remover una etiqueta para seleccionar otra.'
     }
   }
 }

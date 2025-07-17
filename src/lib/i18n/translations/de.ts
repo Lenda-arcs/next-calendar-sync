@@ -421,6 +421,83 @@ const translations: Translations = {
       refreshEvents: 'Veranstaltungen aktualisieren',
       createTag: 'Tag erstellen',
       manageTag: 'Tags verwalten',
+      controlPanel: {
+        title: 'Veranstaltungsverwaltung',
+        timeLabel: 'Zeit:',
+        visibilityLabel: 'Sichtbarkeit:',
+        futureEvents: 'Zukünftige Veranstaltungen',
+        allEvents: 'Alle Veranstaltungen',
+        allVisibility: 'Alle ({count})',
+        publicVisibility: 'Öffentlich ({count})',
+        privateVisibility: 'Privat ({count})',
+        pendingChangesInfo: '{count} ungespeicherte Änderung{plural}',
+        pendingChangesAction: 'Verwenden Sie die schwebenden Aktionsschaltflächen zum Speichern oder Verwerfen',
+        createNewTag: 'Neues Tag erstellen',
+        refresh: 'Aktualisieren',
+        quickActions: 'Schnellaktionen (~1-3s)',
+        syncing: 'Synchronisiere...',
+        fullCalendarSync: 'Vollständige Kalendersynchronisation',
+        syncDescription: 'Event-Tags reparieren oder frische Kalenderdaten herunterladen (~15-30s für Sync)',
+        availableTags: 'Verfügbare Tags:'
+      },
+      emptyState: {
+        noEvents: 'Keine Veranstaltungen gefunden',
+        noEventsFiltered: 'Keine Veranstaltungen entsprechen Ihren Filtern',
+        connectCalendar: 'Verbinden Sie Ihre Kalender-Feeds, um Events zu importieren.',
+        changeFiltersPublicPrivate: 'Versuchen Sie, Ihre Filter zu ändern, um {visibility} Events oder vergangene Events zu sehen.',
+        changeFiltersTime: 'Versuchen Sie, den Zeitfilter zu ändern, um alle Events einschließlich vergangener zu sehen.',
+        changeFiltersVisibility: 'Versuchen Sie, den Sichtbarkeitsfilter zu ändern, um alle Events zu sehen.',
+        addCalendarFeed: 'Kalender-Feed hinzufügen',
+        showAllVisibility: 'Alle Sichtbarkeiten anzeigen',
+        showAllTime: 'Alle Zeiten anzeigen'
+      },
+      floatingButtons: {
+        discardTooltip: 'Alle ausstehenden Änderungen verwerfen',
+        saving: 'Speichere...',
+        saveChanges: '{count} Änderung{plural} speichern'
+      },
+      dateHeaders: {
+        today: 'Heute',
+        tomorrow: 'Morgen'
+      },
+      rematch: {
+        updating: 'Aktualisiere...',
+        selectedEvents: 'Ausgewählte Events',
+        feedEvents: 'Feed-Events',
+        allEvents: 'Alle Events',
+        tags: 'Tags',
+        studios: 'Studios',
+        fixAction: '{actions} für {scope} reparieren',
+        matchingUpdated: 'Zuordnung aktualisiert!',
+        eventsUpdated: '{updated} von {total} Events wurden aktualisiert.',
+        failedToUpdate: 'Zuordnung konnte nicht aktualisiert werden'
+      },
+      historicalSync: {
+        title: 'Ältere Events fehlen',
+        description: 'Synchronisieren Sie historische Events aus Ihren verbundenen Kalender-Feeds, um unbezahlte Kurse aus vorherigen Monaten zu finden.',
+        mobileDescription: 'Historische Events aus Kalender-Feeds synchronisieren',
+        syncButton: 'Historische Events synchronisieren',
+        syncButtonMobile: 'Historisch synchronisieren',
+        syncing: 'Synchronisiere...',
+        noFeeds: 'Keine Kalender-Feeds gefunden',
+        noFeedsDesc: 'Bitte verbinden Sie zuerst Ihre Kalender-Feeds, bevor Sie historische Events synchronisieren.',
+        syncComplete: 'Historische Synchronisation abgeschlossen!',
+        syncCompleteDesc: '{count} historische{plural} Event{plural} von {feeds} Kalender-Feed{feedsPlural} synchronisiert. {matched} Event{matchedPlural} wurden mit Tags und Studios zugeordnet.',
+        syncCompleteNoEvents: 'Keine neuen historischen Events gefunden. Ihre Kalender-Feeds ({feeds}) wurden erfolgreich überprüft.',
+        syncFailed: 'Historische Synchronisation fehlgeschlagen',
+        syncFailedDesc: 'Historische Events konnten nicht synchronisiert werden. Bitte versuchen Sie es erneut.'
+      },
+      unmatchedEvents: {
+        title: 'Nicht zugeordnete Events',
+        description: 'Events, die keinem Studio-Standort zugeordnet werden konnten',
+        mobileDescription: 'Nicht mit Studios zugeordnet',
+        excludeButton: 'Als kostenlos markieren',
+        excludeTooltip: 'Dieses Event von der Studio-Zuordnung ausschließen',
+        eventExcluded: 'Event als kostenlos markiert',
+        eventExcludedDesc: 'Das Event wurde von der Studio-Zuordnung und Abrechnung ausgeschlossen.',
+        excludeFailed: 'Event konnte nicht als kostenlos markiert werden',
+        excludeFailedDesc: 'Das Event konnte nicht ausgeschlossen werden. Bitte versuchen Sie es erneut.'
+      },
       filterControls: {
         timeFilter: 'Zeitfilter',
         visibilityFilter: 'Sichtbarkeitsfilter',
@@ -592,6 +669,17 @@ const translations: Translations = {
         description: 'Wir haben technische Schwierigkeiten. Bitte versuchen Sie es später noch einmal oder kontaktieren Sie den Support für Hilfe mit Ihrem Yoga-Terminplan.',
         keywords: 'Server-Fehler, technischer Support, Yoga-Plattform-Support'
       }
+    }
+  },
+  tags: {
+    management: {
+      unnamedTag: 'Unbenanntes Tag',
+      maxReached: 'Maximum erreicht',
+      showOnPublicPage: 'Auf öffentlicher Seite anzeigen',
+      selectTags: 'Tags auswählen (max {count})',
+      selectTagsPlaceholder: 'Tags auswählen...',
+      maxTagsSelected: 'Maximum {count} Tags ausgewählt',
+      maxTagsAllowed: 'Maximal {count} Tags erlaubt. Entfernen Sie ein Tag, um ein anderes auszuwählen.'
     }
   }
 }

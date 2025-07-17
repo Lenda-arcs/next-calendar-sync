@@ -5,6 +5,7 @@ import { EventTag } from '@/lib/event-types'
 import { TagBadge } from '@/components/ui/tag-badge'
 import { cn } from '@/lib/utils'
 import { MultiSelect } from '@/components/ui/multi-select'
+import { useTranslation } from '@/lib/i18n/context'
 
 interface TagManagementProps {
   currentTags: EventTag[]
@@ -21,12 +22,13 @@ export const TagManagement: React.FC<TagManagementProps> = ({
   publicStatus,
   onVisibilityChange,
 }) => {
+  const { t } = useTranslation()
   const MAX_TAGS = 3
 
   // Convert EventTag[] to Option[] format for FormMultiSelect with color support
   const tagOptions = availableTags.map(tag => ({
     value: tag.id,
-    label: tag.name || 'Unnamed Tag',
+    label: tag.name || t('tags.management.unnamedTag'),
     color: tag.color
   }))
 
@@ -69,7 +71,7 @@ export const TagManagement: React.FC<TagManagementProps> = ({
       </div>
       {isDisabled && (
         <span className="ml-2 text-xs text-muted-foreground">
-          Max reached
+          {t('tags.management.maxReached')}
         </span>
       )}
     </div>
@@ -104,25 +106,25 @@ export const TagManagement: React.FC<TagManagementProps> = ({
           onChange={(e) => onVisibilityChange(e.target.checked)}
           className="accent-primary"
         />
-        <span>Show on public page</span>
+        <span>{t('tags.management.showOnPublicPage')}</span>
       </label>
 
       <div className="flex flex-col gap-2">
         <MultiSelect
           id="tag-selection"
           name="tags"
-          label={`Select Tags (max ${MAX_TAGS})`}
+          label={t('tags.management.selectTags', { count: MAX_TAGS.toString() })}
           options={tagOptions}
           value={selectedTagIds}
           onChange={handleTagSelectionChange}
-          placeholder={currentTags.length >= MAX_TAGS ? `Maximum ${MAX_TAGS} tags selected` : 'Select tags...'}
+          placeholder={currentTags.length >= MAX_TAGS ? t('tags.management.maxTagsSelected', { count: MAX_TAGS.toString() }) : t('tags.management.selectTagsPlaceholder')}
           maxSelections={MAX_TAGS}
           renderOption={renderOption}
           renderSelectedBadge={renderSelectedBadge}
         />
         {currentTags.length >= MAX_TAGS && (
           <p className="text-xs text-muted-foreground">
-            Maximum of {MAX_TAGS} tags allowed. Remove a tag to select another.
+            {t('tags.management.maxTagsAllowed', { count: MAX_TAGS.toString() })}
           </p>
         )}
       </div>

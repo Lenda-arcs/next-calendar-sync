@@ -8,6 +8,7 @@ import { InteractiveEventCard } from './InteractiveEventCard'
 import { Calendar } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { type EventDisplayVariant, type EventTag } from '@/lib/event-types'
+import { useTranslation } from '@/lib/i18n/context'
 
 // Base event interface that both PublicEvent and enhanced events can satisfy
 interface BaseEventForGrid {
@@ -89,20 +90,20 @@ const groupEventsByDate = (events: BaseEventForGrid[]) => {
 }
 
 // Utility function to format date headers (client-safe version)
-const getDateHeader = (date: Date, currentDate?: Date) => {
+const getDateHeader = (date: Date, currentDate?: Date, t?: (key: string) => string) => {
   // Use provided currentDate or fallback to a static approach for SSR safety
-  if (currentDate) {
+  if (currentDate && t) {
     if (isToday(date)) {
       return {
-        primary: 'Today',
+        primary: t('pages.manageEvents.dateHeaders.today'),
         secondary: format(date, 'EEEE, MMMM d'),
-        compact: 'Today',
+        compact: t('pages.manageEvents.dateHeaders.today'),
       }
     } else if (isTomorrow(date)) {
       return {
-        primary: 'Tomorrow',
+        primary: t('pages.manageEvents.dateHeaders.tomorrow'),
         secondary: format(date, 'EEEE, MMMM d'),
-        compact: 'Tomorrow',
+        compact: t('pages.manageEvents.dateHeaders.tomorrow'),
       }
     } else if (isThisWeek(date, { weekStartsOn: 0 })) {
       return {
@@ -169,6 +170,7 @@ const EventGrid: React.FC<EventGridProps> = ({
   onEventUpdate,
   maxColumns,
 }) => {
+  const { t } = useTranslation()
   // Client-side date state to prevent hydration mismatches
   const [currentDate, setCurrentDate] = useState<Date | undefined>(undefined)
   
@@ -221,14 +223,14 @@ const EventGrid: React.FC<EventGridProps> = ({
   // Create a flattened array of events with day information for desktop layout
   const flattenedEvents = useMemo(() => {
     return groupedEvents.flatMap(({ date, events: dayEvents }) => {
-      const { compact } = getDateHeader(date, currentDate)
+      const { compact } = getDateHeader(date, currentDate, t)
       return dayEvents.map((event, index) => ({
         event,
         dayLabel: compact,
         isFirstOfDay: index === 0,
       }))
     })
-  }, [groupedEvents, currentDate])
+  }, [groupedEvents, currentDate, t])
 
   // Loading state
   if (loading) {
@@ -298,7 +300,7 @@ const EventGrid: React.FC<EventGridProps> = ({
       {/* Mobile Layout: Grouped by day with headers */}
       <div className="block md:hidden space-y-8">
         {groupedEvents.map(({ dateKey, date, events: dayEvents }) => {
-          const { primary, secondary } = getDateHeader(date, currentDate)
+          const { primary, secondary } = getDateHeader(date, currentDate, t)
 
           return (
             <div key={dateKey} className="space-y-4">

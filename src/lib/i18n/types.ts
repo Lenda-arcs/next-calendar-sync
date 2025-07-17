@@ -552,6 +552,83 @@ export interface PagesTranslations {
     refreshEvents: string
     createTag: string
     manageTag: string
+    controlPanel: {
+      title: string
+      timeLabel: string
+      visibilityLabel: string
+      futureEvents: string
+      allEvents: string
+      allVisibility: string
+      publicVisibility: string
+      privateVisibility: string
+      pendingChangesInfo: string
+      pendingChangesAction: string
+      createNewTag: string
+      refresh: string
+      quickActions: string
+      syncing: string
+      fullCalendarSync: string
+      syncDescription: string
+      availableTags: string
+    }
+    emptyState: {
+      noEvents: string
+      noEventsFiltered: string
+      connectCalendar: string
+      changeFiltersPublicPrivate: string
+      changeFiltersTime: string
+      changeFiltersVisibility: string
+      addCalendarFeed: string
+      showAllVisibility: string
+      showAllTime: string
+    }
+    floatingButtons: {
+      discardTooltip: string
+      saving: string
+      saveChanges: string
+    }
+    dateHeaders: {
+      today: string
+      tomorrow: string
+    }
+    rematch: {
+      updating: string
+      selectedEvents: string
+      feedEvents: string
+      allEvents: string
+      tags: string
+      studios: string
+      fixAction: string
+      matchingUpdated: string
+      eventsUpdated: string
+      failedToUpdate: string
+    }
+    historicalSync: {
+      title: string
+      description: string
+      mobileDescription: string
+      syncButton: string
+      syncButtonMobile: string
+      syncing: string
+      noFeeds: string
+      noFeedsDesc: string
+      syncComplete: string
+      syncCompleteDesc: string
+      syncCompleteNoEvents: string
+      syncFailed: string
+      syncFailedDesc: string
+    }
+    unmatchedEvents: {
+      title: string
+      description: string
+      mobileDescription: string
+      excludeButton: string
+      excludeTooltip: string
+      eventExcluded: string
+      eventExcludedDesc: string
+      excludeFailed: string
+      excludeFailedDesc: string
+    }
     filterControls: {
       timeFilter: string
       visibilityFilter: string
@@ -655,6 +732,18 @@ export interface PagesTranslations {
   }
 }
 
+export interface TagTranslations {
+  management: {
+    unnamedTag: string
+    maxReached: string
+    showOnPublicPage: string
+    selectTags: string
+    selectTagsPlaceholder: string
+    maxTagsSelected: string
+    maxTagsAllowed: string
+  }
+}
+
 export interface Translations {
   common: CommonTranslations
   auth: AuthTranslations
@@ -665,6 +754,7 @@ export interface Translations {
   dashboard: DashboardTranslations
   pages: PagesTranslations
   seo: SeoTranslations
+  tags: TagTranslations
 }
 
 // Translation key path type for type safety

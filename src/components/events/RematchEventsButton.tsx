@@ -6,6 +6,7 @@ import { RefreshCw } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { rematchEvents, RematchEventsParams } from '@/lib/rematch-utils'
+import { useTranslation } from '@/lib/i18n/context'
 
 interface RematchEventsButtonProps {
   userId: string
@@ -30,6 +31,7 @@ export function RematchEventsButton({
   className,
   children
 }: RematchEventsButtonProps) {
+  const { t } = useTranslation()
   const [isRematching, setIsRematching] = useState(false)
 
   const handleRematch = async () => {
@@ -48,8 +50,11 @@ export function RematchEventsButton({
       const rematchResult = await rematchEvents(params)
       
       // Show success toast
-      toast.success('Matching Updated!', {
-        description: `${rematchResult.updated_count} out of ${rematchResult.total_events_processed} events were updated.`,
+      toast.success(t('pages.manageEvents.rematch.matchingUpdated'), {
+        description: t('pages.manageEvents.rematch.eventsUpdated', {
+          updated: rematchResult.updated_count.toString(),
+          total: rematchResult.total_events_processed.toString()
+        }),
         duration: 4000,
       })
 
@@ -58,7 +63,7 @@ export function RematchEventsButton({
       const errorMessage = err instanceof Error ? err.message : 'Failed to rematch events'
       
       // Show error toast
-      toast.error('Failed to update matching', {
+      toast.error(t('pages.manageEvents.rematch.failedToUpdate'), {
         description: errorMessage,
         duration: 6000,
       })
@@ -68,15 +73,20 @@ export function RematchEventsButton({
   }
 
   const getButtonText = () => {
-    if (isRematching) return 'Updating...'
+    if (isRematching) return t('pages.manageEvents.rematch.updating')
     if (children) return children
     
-    const scope = eventIds ? 'Selected Events' : feedId ? 'Feed Events' : 'All Events'
+    const scope = eventIds ? t('pages.manageEvents.rematch.selectedEvents') : 
+                  feedId ? t('pages.manageEvents.rematch.feedEvents') : 
+                  t('pages.manageEvents.rematch.allEvents')
     const actions = []
-    if (rematchTags) actions.push('Tags')
-    if (rematchStudios) actions.push('Studios')
+    if (rematchTags) actions.push(t('pages.manageEvents.rematch.tags'))
+    if (rematchStudios) actions.push(t('pages.manageEvents.rematch.studios'))
     
-    return `Fix ${actions.join(' & ')} for ${scope}`
+    return t('pages.manageEvents.rematch.fixAction', {
+      actions: actions.join(' & '),
+      scope: scope
+    })
   }
 
   return (

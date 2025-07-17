@@ -3,6 +3,7 @@
 import { Button } from '@/components/ui/button'
 import { Save, X, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useTranslation } from '@/lib/i18n/context'
 
 interface FloatingActionButtonsProps {
   pendingChangesCount: number
@@ -17,6 +18,8 @@ export default function FloatingActionButtons({
   onSave,
   onDiscard
 }: FloatingActionButtonsProps) {
+  const { t } = useTranslation()
+  
   if (pendingChangesCount === 0) return null
 
   return (
@@ -29,7 +32,7 @@ export default function FloatingActionButtons({
           onClick={onDiscard}
           className="bg-background shadow-lg border-2"
           disabled={isSaving}
-          title="Discard all pending changes"
+          title={t('pages.manageEvents.floatingButtons.discardTooltip')}
         >
           <X className="h-4 w-4" />
         </Button>
@@ -47,12 +50,15 @@ export default function FloatingActionButtons({
           {isSaving ? (
             <>
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              Saving...
+              {t('pages.manageEvents.floatingButtons.saving')}
             </>
           ) : (
             <>
               <Save className="h-4 w-4 mr-2" />
-              Save {pendingChangesCount} Change{pendingChangesCount !== 1 ? 's' : ''}
+              {t('pages.manageEvents.floatingButtons.saveChanges', { 
+                count: pendingChangesCount.toString(),
+                plural: pendingChangesCount !== 1 ? 's' : ''
+              })}
             </>
           )}
         </Button>

@@ -421,6 +421,83 @@ const translations: Translations = {
       refreshEvents: 'Refresh Events',
       createTag: 'Create Tag',
       manageTag: 'Manage Tags',
+      controlPanel: {
+        title: 'Event Management',
+        timeLabel: 'Time:',
+        visibilityLabel: 'Visibility:',
+        futureEvents: 'Future Events',
+        allEvents: 'All Events',
+        allVisibility: 'All ({count})',
+        publicVisibility: 'Public ({count})',
+        privateVisibility: 'Private ({count})',
+        pendingChangesInfo: '{count} unsaved change{plural}',
+        pendingChangesAction: 'Use the floating action buttons to save or discard',
+        createNewTag: 'Create New Tag',
+        refresh: 'Refresh',
+        quickActions: 'Quick Actions (~1-3s)',
+        syncing: 'Syncing...',
+        fullCalendarSync: 'Full Calendar Sync',
+        syncDescription: 'Fix event tags or download fresh calendar data (~15-30s for sync)',
+        availableTags: 'Available Tags:'
+      },
+      emptyState: {
+        noEvents: 'No events found',
+        noEventsFiltered: 'No events match your filters',
+        connectCalendar: 'Connect your calendar feeds to start importing events.',
+        changeFiltersPublicPrivate: 'Try changing your filters to see {visibility} events or past events.',
+        changeFiltersTime: 'Try changing the time filter to see all events including past ones.',
+        changeFiltersVisibility: 'Try changing the visibility filter to see all events.',
+        addCalendarFeed: 'Add Calendar Feed',
+        showAllVisibility: 'Show All Visibility',
+        showAllTime: 'Show All Time'
+      },
+      floatingButtons: {
+        discardTooltip: 'Discard all pending changes',
+        saving: 'Saving...',
+        saveChanges: 'Save {count} Change{plural}'
+      },
+      dateHeaders: {
+        today: 'Today',
+        tomorrow: 'Tomorrow'
+      },
+      rematch: {
+        updating: 'Updating...',
+        selectedEvents: 'Selected Events',
+        feedEvents: 'Feed Events',
+        allEvents: 'All Events',
+        tags: 'Tags',
+        studios: 'Studios',
+        fixAction: 'Fix {actions} for {scope}',
+        matchingUpdated: 'Matching Updated!',
+        eventsUpdated: '{updated} out of {total} events were updated.',
+        failedToUpdate: 'Failed to update matching'
+      },
+      historicalSync: {
+        title: 'Missing older events',
+        description: 'Sync historical events from your connected calendar feeds to find uninvoiced classes from previous months.',
+        mobileDescription: 'Sync historical events from calendar feeds',
+        syncButton: 'Sync Historical Events',
+        syncButtonMobile: 'Sync Historical',
+        syncing: 'Syncing...',
+        noFeeds: 'No Calendar Feeds Found',
+        noFeedsDesc: 'Please connect your calendar feeds first before syncing historical events.',
+        syncComplete: 'Historical Sync Complete!',
+        syncCompleteDesc: '{count} historical event{plural} synced from {feeds} calendar feed{feedsPlural}. {matched} event{matchedPlural} were matched with tags and studios.',
+        syncCompleteNoEvents: 'No new historical events found. Your calendar feeds ({feeds}) were checked successfully.',
+        syncFailed: 'Historical Sync Failed',
+        syncFailedDesc: 'Unable to sync historical events. Please try again.'
+      },
+      unmatchedEvents: {
+        title: 'Unmatched Events',
+        description: 'Events that could not be matched with a studio location',
+        mobileDescription: 'Unmatched with studios',
+        excludeButton: 'Mark as Free',
+        excludeTooltip: 'Mark this event as excluded from studio matching',
+        eventExcluded: 'Event Marked as Free',
+        eventExcludedDesc: 'The event has been excluded from studio matching and invoicing.',
+        excludeFailed: 'Failed to Mark Event as Free',
+        excludeFailedDesc: 'Unable to exclude the event. Please try again.'
+      },
       filterControls: {
         timeFilter: 'Time Filter',
         visibilityFilter: 'Visibility Filter',
@@ -592,6 +669,17 @@ const translations: Translations = {
         description: 'We are experiencing technical difficulties. Please try again later or contact support for assistance with your yoga schedule.',
         keywords: 'server error, technical support, yoga platform support'
       }
+    }
+  },
+  tags: {
+    management: {
+      unnamedTag: 'Unnamed Tag',
+      maxReached: 'Max reached',
+      showOnPublicPage: 'Show on public page',
+      selectTags: 'Select Tags (max {count})',
+      selectTagsPlaceholder: 'Select tags...',
+      maxTagsSelected: 'Maximum {count} tags selected',
+      maxTagsAllowed: 'Maximum of {count} tags allowed. Remove a tag to select another.'
     }
   }
 }

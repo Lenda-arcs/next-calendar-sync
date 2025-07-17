@@ -6,6 +6,7 @@ import { TagBadge } from '@/components/ui/tag-badge'
 import { Settings, Plus, ArrowLeftRight, RefreshCw, Zap } from 'lucide-react'
 import { Tag as TagType } from '@/lib/types'
 import { RematchTagsButton } from './RematchEventsButton'
+import { useTranslation } from '@/lib/i18n/context'
 
 export type VisibilityFilter = 'all' | 'public' | 'private'
 export type TimeFilter = 'future' | 'all'
@@ -51,59 +52,61 @@ export default function EventsControlPanel({
   onSyncFeeds,
   onRefresh
 }: EventsControlPanelProps) {
+  const { t } = useTranslation()
+  
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Settings className="h-5 w-5" />
-          Event Management
+          {t('pages.manageEvents.controlPanel.title')}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Filter Controls */}
         <div className="space-y-4">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-sm font-medium">Time:</span>
+            <span className="text-sm font-medium">{t('pages.manageEvents.controlPanel.timeLabel')}</span>
             <div className="flex flex-wrap gap-1">
               <Button
                 variant={timeFilter === 'future' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => onTimeFilterChange('future')}
               >
-                Future Events
+                {t('pages.manageEvents.controlPanel.futureEvents')}
               </Button>
               <Button
                 variant={timeFilter === 'all' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => onTimeFilterChange('all')}
               >
-                All Events
+                {t('pages.manageEvents.controlPanel.allEvents')}
               </Button>
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-sm font-medium">Visibility:</span>
+            <span className="text-sm font-medium">{t('pages.manageEvents.controlPanel.visibilityLabel')}</span>
             <div className="flex flex-wrap gap-1">
               <Button
                 variant={visibilityFilter === 'all' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => onVisibilityFilterChange('all')}
               >
-                All ({eventStats.total})
+                {t('pages.manageEvents.controlPanel.allVisibility', { count: eventStats.total.toString() })}
               </Button>
               <Button
                 variant={visibilityFilter === 'public' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => onVisibilityFilterChange('public')}
               >
-                Public ({eventStats.public})
+                {t('pages.manageEvents.controlPanel.publicVisibility', { count: eventStats.public.toString() })}
               </Button>
               <Button
                 variant={visibilityFilter === 'private' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => onVisibilityFilterChange('private')}
               >
-                Private ({eventStats.private})
+                {t('pages.manageEvents.controlPanel.privateVisibility', { count: eventStats.private.toString() })}
               </Button>
             </div>
           </div>
@@ -114,8 +117,13 @@ export default function EventsControlPanel({
           {hasPendingChanges && (
             <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
               <p className="text-sm text-amber-800">
-                <span className="font-medium">{pendingChangesCount} unsaved change{pendingChangesCount !== 1 ? 's' : ''}</span>
-                {' '}• Use the floating action buttons to save or discard
+                <span className="font-medium">
+                  {t('pages.manageEvents.controlPanel.pendingChangesInfo', { 
+                    count: pendingChangesCount.toString(),
+                    plural: pendingChangesCount !== 1 ? 's' : ''
+                  })}
+                </span>
+                {' '}• {t('pages.manageEvents.controlPanel.pendingChangesAction')}
               </p>
             </div>
           )}
@@ -128,7 +136,7 @@ export default function EventsControlPanel({
               onClick={onCreateTag}
             >
               <Plus className="h-4 w-4 mr-2" />
-              Create New Tag
+              {t('pages.manageEvents.controlPanel.createNewTag')}
             </Button>
             <Button 
               onClick={onRefresh}
@@ -137,7 +145,7 @@ export default function EventsControlPanel({
               size="sm"
             >
               <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-              Refresh
+              {t('pages.manageEvents.controlPanel.refresh')}
             </Button>
           </div>
 
@@ -146,7 +154,7 @@ export default function EventsControlPanel({
             <div className="border-t pt-3">
               <p className="text-sm font-medium text-muted-foreground mb-2 flex items-center gap-1">
                 <Zap className="h-3 w-3" />
-                Quick Actions (~1-3s)
+                {t('pages.manageEvents.controlPanel.quickActions')}
               </p>
               <div className="flex flex-wrap gap-2">
                 <RematchTagsButton 
@@ -161,11 +169,11 @@ export default function EventsControlPanel({
                   size="sm"
                 >
                   <ArrowLeftRight className={`h-4 w-4 mr-2 ${isSyncing ? 'animate-pulse' : ''}`} />
-                  {isSyncing ? 'Syncing...' : 'Full Calendar Sync'}
+                  {isSyncing ? t('pages.manageEvents.controlPanel.syncing') : t('pages.manageEvents.controlPanel.fullCalendarSync')}
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                Fix event tags or download fresh calendar data (~15-30s for sync)
+                {t('pages.manageEvents.controlPanel.syncDescription')}
               </p>
             </div>
           )}
@@ -173,7 +181,7 @@ export default function EventsControlPanel({
           {/* Available Tags */}
           {(userTags?.length || globalTags?.length) && (
             <div className="pt-4 border-t">
-              <p className="text-sm text-muted-foreground mb-2">Available Tags:</p>
+              <p className="text-sm text-muted-foreground mb-2">{t('pages.manageEvents.controlPanel.availableTags')}</p>
               <div className="flex flex-wrap gap-2">
                 {userTags?.map(tag => (
                   <TagBadge 
