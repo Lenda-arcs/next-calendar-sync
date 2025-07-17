@@ -402,6 +402,77 @@ const translations: Translations = {
         signOut: 'Cerrar Sesión'
       }
     }
+  },
+  seo: {
+    home: {
+      title: 'SyncIt - Plataforma Hermosa de Gestión de Horarios de Yoga',
+      description: 'Conecta tu calendario y crea hermosos horarios compartibles para tus clases de yoga. Confiado por 500+ instructores de yoga en todo el mundo. Gratis para empezar.',
+      keywords: 'horario de yoga, sincronización de calendario, gestión de clases, plataforma de instructores, profesor de yoga, compartir horarios, integración de calendario'
+    },
+    dashboard: {
+      title: 'Panel de Control - Gestiona tu Horario de Yoga | SyncIt',
+      description: 'Gestiona tus clases de yoga, feeds de calendario y comparte tu horario con estudiantes. Ve próximas clases, gestiona eventos y rastrea tu horario de enseñanza.',
+      keywords: 'panel de yoga, gestión de clases, gestión de horarios, panel de instructores, gestión de calendario'
+    },
+    profile: {
+      title: 'Configuración del Perfil - Personaliza tu Perfil de Yoga | SyncIt',
+      description: 'Personaliza tu perfil público de instructor de yoga. Añade tu biografía, especialidades, información de contacto y crea una hermosa página para tus estudiantes.',
+      keywords: 'perfil de yoga, perfil de instructor, perfil de profesor de yoga, perfil público, biografía de yoga'
+    },
+    addCalendar: {
+      title: 'Agregar Calendario - Conecta tu Horario de Yoga | SyncIt',
+      description: 'Conecta tu Google Calendar, iCloud o cualquier feed de calendario para sincronizar automáticamente tus clases de yoga. Configuración fácil en menos de 2 minutos.',
+      keywords: 'sincronización de calendario, Google Calendar, sincronización iCloud, integración de calendario, calendario de yoga'
+    },
+    manageEvents: {
+      title: 'Gestionar Eventos - Tus Clases de Yoga | SyncIt',
+      description: 'Ve y gestiona todas tus clases de yoga y eventos. Edita detalles de clases, añade etiquetas y organiza tu horario de enseñanza.',
+      keywords: 'eventos de yoga, gestión de clases, gestión de eventos, horario de yoga, organización de clases'
+    },
+    manageTags: {
+      title: 'Gestionar Etiquetas - Organiza tus Clases de Yoga | SyncIt',
+      description: 'Crea y gestiona etiquetas para tus clases de yoga. Categoriza clases automáticamente por tipo, nivel y ubicación.',
+      keywords: 'etiquetas de yoga, categorías de clases, tipos de clases de yoga, organización de eventos, etiquetado de clases'
+    },
+    studios: {
+      title: 'Studios - Tus Ubicaciones de Enseñanza | SyncIt',
+      description: 'Gestiona tus relaciones con estudios de yoga y ubicaciones de enseñanza. Conéctate con estudios y rastrea tus oportunidades de enseñanza.',
+      keywords: 'estudios de yoga, ubicaciones de enseñanza, gestión de estudios, red de profesores de yoga'
+    },
+    invoices: {
+      title: 'Facturas - Gestión de Ingresos de Enseñanza de Yoga | SyncIt',
+      description: 'Genera facturas profesionales para tu enseñanza de yoga. Rastrea ingresos, crea reportes de facturación y gestiona tus ingresos de enseñanza.',
+      keywords: 'facturas de yoga, ingresos de enseñanza, facturación de yoga, pagos de instructores, ingresos de enseñanza'
+    },
+    teacherSchedule: {
+      title: '{teacherName} - Horario de Clases de Yoga',
+      description: 'Reserva clases de yoga con {teacherName}. Ve próximas sesiones, tipos de clases, especialidades e información de contacto. {location}',
+      keywords: 'clases de yoga, {teacherName}, reservar yoga, horario de yoga, instructor de yoga, {location}'
+    },
+    auth: {
+      signIn: {
+        title: 'Iniciar Sesión - Accede a tu Panel de Yoga | SyncIt',
+        description: 'Inicia sesión en tu cuenta SyncIt para gestionar tu horario de yoga, feeds de calendario y compartir tus clases con estudiantes.',
+        keywords: 'iniciar sesión, login, panel de yoga, login de instructor, acceso a cuenta'
+      },
+      signUp: {
+        title: 'Crear Cuenta - Inicia tu Horario de Yoga | SyncIt',
+        description: 'Crea tu cuenta gratuita de SyncIt y comienza a compartir tu horario de yoga con estudiantes. Conecta tu calendario y construye tu presencia online.',
+        keywords: 'crear cuenta, registrarse, instructor de yoga, cuenta gratuita, compartir horarios'
+      }
+    },
+    errors: {
+      notFound: {
+        title: 'Página No Encontrada - SyncIt',
+        description: 'La página que buscas no pudo ser encontrada. Regresa a tu panel de horario de yoga o navega nuestra plataforma de instructores de yoga.',
+        keywords: 'página no encontrada, 404, horario de yoga, plataforma de instructores'
+      },
+      serverError: {
+        title: 'Error del Servidor - SyncIt',
+        description: 'Estamos experimentando dificultades técnicas. Por favor intenta de nuevo más tarde o contacta soporte para asistencia con tu horario de yoga.',
+        keywords: 'error del servidor, soporte técnico, soporte de plataforma de yoga'
+      }
+    }
   }
 }
 

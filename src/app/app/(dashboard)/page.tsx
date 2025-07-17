@@ -1,6 +1,12 @@
 import { createServerClient } from '@/lib/supabase-server'
 import { getUserCalendarFeeds } from '@/lib/calendar-feeds'
 import DashboardContent from './DashboardContent'
+import { generateDashboardMetadata } from '@/lib/i18n/metadata'
+import type { Metadata } from 'next'
+
+export async function generateMetadata(): Promise<Metadata> {
+  return generateDashboardMetadata()
+}
 
 export default async function DashboardPage() {
   const supabase = await createServerClient()

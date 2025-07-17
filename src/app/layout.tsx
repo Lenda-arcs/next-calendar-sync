@@ -4,6 +4,7 @@ import "./globals.css";
 import SupabaseProvider from '@/components/providers/supabase-provider'
 import { LanguageProvider } from '@/lib/i18n/context'
 import { Toaster } from "@/components/ui/sonner"
+import { generateHomeMetadata } from '@/lib/i18n/metadata'
 
 const dmSerifDisplay = DM_Serif_Display({
   variable: "--font-dm-serif",
@@ -17,10 +18,10 @@ const outfit = Outfit({
   weight: ["300", "400", "500", "600", "700"],
 });
 
-export const metadata: Metadata = {
-  title: "SyncIt",
-  description: "Sync and manage your calendar events with ease",
-};
+// Generate metadata for the root layout
+export async function generateMetadata(): Promise<Metadata> {
+  return generateHomeMetadata()
+}
 
 export default function RootLayout({
   children,

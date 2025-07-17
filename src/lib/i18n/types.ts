@@ -462,6 +462,78 @@ export interface DashboardTranslations {
 }
 
 // Main translations interface
+export interface SeoTranslations {
+  home: {
+    title: string
+    description: string
+    keywords: string
+  }
+  dashboard: {
+    title: string
+    description: string
+    keywords: string
+  }
+  profile: {
+    title: string
+    description: string
+    keywords: string
+  }
+  addCalendar: {
+    title: string
+    description: string
+    keywords: string
+  }
+  manageEvents: {
+    title: string
+    description: string
+    keywords: string
+  }
+  manageTags: {
+    title: string
+    description: string
+    keywords: string
+  }
+  studios: {
+    title: string
+    description: string
+    keywords: string
+  }
+  invoices: {
+    title: string
+    description: string
+    keywords: string
+  }
+  teacherSchedule: {
+    title: string
+    description: string
+    keywords: string
+  }
+  auth: {
+    signIn: {
+      title: string
+      description: string
+      keywords: string
+    }
+    signUp: {
+      title: string
+      description: string
+      keywords: string
+    }
+  }
+  errors: {
+    notFound: {
+      title: string
+      description: string
+      keywords: string
+    }
+    serverError: {
+      title: string
+      description: string
+      keywords: string
+    }
+  }
+}
+
 export interface Translations {
   common: CommonTranslations
   auth: AuthTranslations
@@ -470,6 +542,7 @@ export interface Translations {
   studios: StudioTranslations
   invoices: InvoiceTranslations
   dashboard: DashboardTranslations
+  seo: SeoTranslations
 }
 
 // Translation key path type for type safety

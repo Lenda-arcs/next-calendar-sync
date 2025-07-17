@@ -402,6 +402,77 @@ const translations: Translations = {
         signOut: 'Abmelden'
       }
     }
+  },
+  seo: {
+    home: {
+      title: 'SyncIt - Schöne Yoga-Terminplanung Plattform',
+      description: 'Verbinden Sie Ihren Kalender und erstellen Sie schöne, teilbare Terminpläne für Ihre Yoga-Kurse. Vertrauen von 500+ Yoga-Lehrern weltweit. Kostenlos starten.',
+      keywords: 'Yoga-Terminplan, Kalender-Sync, Kursverwaltung, Lehrer-Plattform, Yoga-Lehrer, Terminplan-Sharing, Kalender-Integration'
+    },
+    dashboard: {
+      title: 'Dashboard - Verwalten Sie Ihren Yoga-Terminplan | SyncIt',
+      description: 'Verwalten Sie Ihre Yoga-Kurse, Kalender-Feeds und teilen Sie Ihren Terminplan mit Schülern. Sehen Sie kommende Kurse, verwalten Sie Termine und verfolgen Sie Ihren Unterrichtsplan.',
+      keywords: 'Yoga-Dashboard, Kursverwaltung, Terminplanung, Lehrer-Dashboard, Kalender-Management'
+    },
+    profile: {
+      title: 'Profil-Einstellungen - Ihr Yoga-Profil anpassen | SyncIt',
+      description: 'Passen Sie Ihr öffentliches Yoga-Lehrer-Profil an. Fügen Sie Ihre Biografie, Spezialisierungen, Kontaktinformationen hinzu und erstellen Sie eine schöne Seite für Ihre Schüler.',
+      keywords: 'Yoga-Profil, Lehrer-Profil, Yoga-Lehrer-Profil, öffentliches Profil, Yoga-Biografie'
+    },
+    addCalendar: {
+      title: 'Kalender hinzufügen - Verbinden Sie Ihren Yoga-Terminplan | SyncIt',
+      description: 'Verbinden Sie Ihren Google Kalender, iCloud oder einen beliebigen Kalender-Feed, um Ihre Yoga-Kurse automatisch zu synchronisieren. Einfache Einrichtung in unter 2 Minuten.',
+      keywords: 'Kalender-Sync, Google Kalender, iCloud-Sync, Kalender-Integration, Yoga-Kalender'
+    },
+    manageEvents: {
+      title: 'Termine verwalten - Ihre Yoga-Kurse | SyncIt',
+      description: 'Sehen und verwalten Sie alle Ihre Yoga-Kurse und Termine. Bearbeiten Sie Kursdetails, fügen Sie Tags hinzu und organisieren Sie Ihren Unterrichtsplan.',
+      keywords: 'Yoga-Termine, Kursverwaltung, Terminverwaltung, Yoga-Terminplan, Kursorganisation'
+    },
+    manageTags: {
+      title: 'Tags verwalten - Organisieren Sie Ihre Yoga-Kurse | SyncIt',
+      description: 'Erstellen und verwalten Sie Tags für Ihre Yoga-Kurse. Kategorisieren Sie Kurse automatisch nach Typ, Level und Standort.',
+      keywords: 'Yoga-Tags, Kurs-Kategorien, Yoga-Kurstypen, Terminorganisation, Kurs-Kennzeichnung'
+    },
+    studios: {
+      title: 'Studios - Ihre Unterrichtsorte | SyncIt',
+      description: 'Verwalten Sie Ihre Yoga-Studio-Beziehungen und Unterrichtsorte. Verbinden Sie sich mit Studios und verfolgen Sie Ihre Unterrichtsmöglichkeiten.',
+      keywords: 'Yoga-Studios, Unterrichtsorte, Studio-Management, Yoga-Lehrer-Netzwerk'
+    },
+    invoices: {
+      title: 'Rechnungen - Yoga-Unterricht Einkommensverwaltung | SyncIt',
+      description: 'Erstellen Sie professionelle Rechnungen für Ihren Yoga-Unterricht. Verfolgen Sie Einkommen, erstellen Sie Abrechnungsberichte und verwalten Sie Ihre Unterrichts-Einnahmen.',
+      keywords: 'Yoga-Rechnungen, Unterrichts-Einkommen, Yoga-Abrechnung, Lehrer-Zahlungen, Unterrichts-Einnahmen'
+    },
+    teacherSchedule: {
+      title: '{teacherName} - Yoga-Kursterminplan',
+      description: 'Buchen Sie Yoga-Kurse mit {teacherName}. Sehen Sie kommende Stunden, Kurstypen, Spezialisierungen und Kontaktinformationen. {location}',
+      keywords: 'Yoga-Kurse, {teacherName}, Yoga buchen, Yoga-Terminplan, Yoga-Lehrer, {location}'
+    },
+    auth: {
+      signIn: {
+        title: 'Anmelden - Zugang zu Ihrem Yoga-Dashboard | SyncIt',
+        description: 'Melden Sie sich bei Ihrem SyncIt-Konto an, um Ihren Yoga-Terminplan zu verwalten, Kalender-Feeds zu verwalten und Ihre Kurse mit Schülern zu teilen.',
+        keywords: 'Anmelden, Login, Yoga-Dashboard, Lehrer-Login, Konto-Zugang'
+      },
+      signUp: {
+        title: 'Konto erstellen - Starten Sie Ihren Yoga-Terminplan | SyncIt',
+        description: 'Erstellen Sie Ihr kostenloses SyncIt-Konto und beginnen Sie, Ihren Yoga-Terminplan mit Schülern zu teilen. Verbinden Sie Ihren Kalender und bauen Sie Ihre Online-Präsenz auf.',
+        keywords: 'Konto erstellen, Registrierung, Yoga-Lehrer, kostenloses Konto, Terminplan-Sharing'
+      }
+    },
+    errors: {
+      notFound: {
+        title: 'Seite nicht gefunden - SyncIt',
+        description: 'Die Seite, die Sie suchen, konnte nicht gefunden werden. Kehren Sie zu Ihrem Yoga-Terminplan-Dashboard zurück oder durchsuchen Sie unsere Yoga-Lehrer-Plattform.',
+        keywords: 'Seite nicht gefunden, 404, Yoga-Terminplan, Lehrer-Plattform'
+      },
+      serverError: {
+        title: 'Server-Fehler - SyncIt',
+        description: 'Wir haben technische Schwierigkeiten. Bitte versuchen Sie es später noch einmal oder kontaktieren Sie den Support für Hilfe mit Ihrem Yoga-Terminplan.',
+        keywords: 'Server-Fehler, technischer Support, Yoga-Plattform-Support'
+      }
+    }
   }
 }
 

@@ -4,6 +4,12 @@ import { redirect } from 'next/navigation'
 import { getUserCalendarFeeds } from '@/lib/calendar-feeds'
 import { fetchOAuthCalendars } from '@/lib/server/oauth-calendar-service'
 import AddCalendarContent from './AddCalendarContent'
+import { generateAddCalendarMetadata } from '@/lib/i18n/metadata'
+import type { Metadata } from 'next'
+
+export async function generateMetadata(): Promise<Metadata> {
+  return generateAddCalendarMetadata()
+}
 
 export default async function AddCalendarPage({
   searchParams

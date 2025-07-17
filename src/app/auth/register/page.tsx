@@ -3,6 +3,12 @@ import Link from 'next/link'
 import { RegisterForm } from '@/components/auth'
 import { PATHS } from '@/lib/paths'
 import { ArrowLeft } from 'lucide-react'
+import { generateAuthMetadata } from '@/lib/i18n/metadata'
+import type { Metadata } from 'next'
+
+export async function generateMetadata(): Promise<Metadata> {
+  return generateAuthMetadata('signUp')
+}
 
 export default function RegisterPage() {
   return (

@@ -2,6 +2,12 @@ import { createServerClient } from '@/lib/supabase-server'
 import { redirect } from 'next/navigation'
 import { User } from '@/lib/types'
 import ProfileContent from './ProfileContent'
+import { generateProfileMetadata } from '@/lib/i18n/metadata'
+import type { Metadata } from 'next'
+
+export async function generateMetadata(): Promise<Metadata> {
+  return generateProfileMetadata()
+}
 
 export default async function ProfilePage() {
   const supabase = await createServerClient()

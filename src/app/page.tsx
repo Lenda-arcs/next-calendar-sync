@@ -7,10 +7,17 @@ import { PageSection } from '@/components/layout/page-section'
 import { EventCard } from '@/components/events'
 import { exampleEvents } from '@/lib/types'
 import { PATHS } from '@/lib/paths'
+import { StructuredData } from '@/components/seo/StructuredData'
+import { generateOrganizationStructuredData } from '@/lib/i18n/metadata'
 
 export default function LandingPage() {
+  // Generate organization structured data for SEO
+  const organizationData = generateOrganizationStructuredData()
+  
   return (
     <main className="flex flex-col">
+      {/* Add structured data for SEO */}
+      <StructuredData data={organizationData} />
       {/* Hero Section */}
       <PageSection className="pt-16 pb-20">
         <Container maxWidth="2xl" className="text-center py-20">
