@@ -11,7 +11,8 @@ const translations: Translations = {
       studios: 'Studios',
       profile: 'Perfil',
       addCalendar: 'Agregar Calendario',
-      signOut: 'Cerrar Sesión'
+      signOut: 'Cerrar Sesión',
+      appName: 'avara.'
     },
     actions: {
       save: 'Guardar',
@@ -968,6 +969,30 @@ const translations: Translations = {
           required: '• Se requiere al menos un tipo de palabra clave',
           immediate: '• Los cambios se aplican a eventos existentes inmediatamente'
         }
+      }
+    },
+    publicSchedule: {
+      navbar: {
+        home: 'Inicio',
+        closeProfile: 'Cerrar perfil'
+      },
+      hero: {
+        yogaTeacher: 'Profesora de Yoga',
+        specialties: 'Especialidades',
+        email: 'Correo Electrónico',
+        instagram: 'Instagram',
+        website: 'Sitio Web',
+        share: 'Compartir',
+        shareSchedule: 'Compartir Horario',
+        export: 'Exportar',
+        exportEvents: 'Exportar Eventos',
+        exporting: 'Exportando...',
+        defaultBio: 'Únete a {name} para clases de yoga y movimiento consciente. Echa un vistazo a mis próximas sesiones y reserva tu lugar.',
+        defaultBioNoName: 'Bienvenido a mi horario',
+        shareTitle: 'Horario de Yoga de {name}',
+        shareDescription: '¡Echa un vistazo a las próximas clases de yoga de {name} y únete a una sesión!',
+        shareDefaultTitle: 'Horario de Yoga del Profesor',
+        shareDefaultDescription: '¡Echa un vistazo a las próximas clases de yoga y únete a una sesión!'
       }
     }
   },

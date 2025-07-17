@@ -1,12 +1,13 @@
 'use client'
 
 import { LogoutButton } from '@/components/auth'
-import { LoadingNavLink } from '@/components/ui'
+import { LoadingNavLink, CompactLanguageSelector } from '@/components/ui'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { Home, User, X } from 'lucide-react'
 import { PublicProfile } from '@/lib/types'
 import TeacherHeroContent from './TeacherHeroContent'
 import dummyLogo from '@/assets/dummy_logo.png'
+import { useTranslation } from '@/lib/i18n/context'
 
 interface DynamicNavbarProps {
   userEmail?: string
@@ -34,6 +35,7 @@ export default function DynamicNavbar({
   teacherSlug
 }: DynamicNavbarProps) {
   const isLoggedIn = !!userEmail
+  const { t } = useTranslation()
 
   return (
     <header className={`
@@ -53,7 +55,7 @@ export default function DynamicNavbar({
           <div className="flex items-center space-x-4">
             <LoadingNavLink
               href={isLoggedIn ? "/app" : "/"}
-              text="Home"
+              text={t('pages.publicSchedule.navbar.home')}
               avatarSrc={dummyLogo.src}
               avatarAlt="Logo"
               icon={Home}
@@ -75,6 +77,9 @@ export default function DynamicNavbar({
                 />
               </>
             )}
+
+            {/* Language Selector */}
+            <CompactLanguageSelector />
           </div>
         </div>
 
@@ -133,7 +138,7 @@ export default function DynamicNavbar({
             <button
               onClick={onCloseHero}
               className="absolute top-2 right-2 w-8 h-8 rounded-full bg-white/70 hover:bg-white/90 border border-white/50 flex items-center justify-center shadow-sm transition-colors duration-200 z-10"
-              aria-label="Close profile"
+              aria-label={t('pages.publicSchedule.navbar.closeProfile')}
             >
               <X className="h-4 w-4 text-gray-600" />
             </button>

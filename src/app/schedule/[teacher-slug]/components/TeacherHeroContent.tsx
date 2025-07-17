@@ -13,6 +13,7 @@ import { EXPORT_CONFIG } from '@/lib/constants/export-constants'
 import { ExportPreview } from '@/components/schedule/ExportPreview'
 import { ExportOptionsDialog } from '@/components/schedule/ExportOptionsDialog'
 import { ShareDialog } from '@/components/schedule/ShareDialog'
+import { useTranslation } from '@/lib/i18n/context'
 
 interface TeacherHeroContentProps {
   teacherProfile: PublicProfile
@@ -38,6 +39,7 @@ export default function TeacherHeroContent({
     events: filteredEvents
   })
   const origin = useOrigin()
+  const { t } = useTranslation()
 
   // Generate the share URL
   const shareUrl = teacherSlug ? `${origin}/schedule/${teacherSlug}` : (typeof window !== 'undefined' ? window.location.href : '')
@@ -60,8 +62,8 @@ export default function TeacherHeroContent({
     if (profile?.bio && profile.bio.trim()) {
       return profile.bio
     }
-    if (!profile?.name) return 'Welcome to my schedule'
-    return `Join ${profile.name} for yoga classes and mindful movement. Check out my upcoming sessions and book your spot.`
+    if (!profile?.name) return t('pages.publicSchedule.hero.defaultBioNoName')
+    return t('pages.publicSchedule.hero.defaultBio', { name: profile.name })
   }
 
   // Generate contact email placeholder
@@ -104,7 +106,7 @@ export default function TeacherHeroContent({
                 {teacherProfile?.name || 'User'}
               </h1>
               <div className="flex items-center gap-2 mb-2">
-                <p className="text-sm text-gray-600">Yoga Teacher</p>
+                <p className="text-sm text-gray-600">{t('pages.publicSchedule.hero.yogaTeacher')}</p>
                 {teacherProfile?.timezone && (
                   <>
                     <span className="w-1 h-1 bg-gray-600 rounded-full"></span>
@@ -129,7 +131,7 @@ export default function TeacherHeroContent({
           {teacherProfile?.yoga_styles && teacherProfile.yoga_styles.length > 0 && (
             <div>
               <TagList
-                label="Specialties"
+                label={t('pages.publicSchedule.hero.specialties')}
                 tags={teacherProfile.yoga_styles}
                 variant="purple"
                 layout="inline"
@@ -152,7 +154,7 @@ export default function TeacherHeroContent({
                 className="flex items-center justify-center gap-2"
               >
                 <Mail className="h-4 w-4" />
-                Email
+                {t('pages.publicSchedule.hero.email')}
               </a>
             </Button>
 
@@ -170,7 +172,7 @@ export default function TeacherHeroContent({
                   className="flex items-center justify-center gap-2"
                 >
                   <Instagram className="h-4 w-4" />
-                  Instagram
+                  {t('pages.publicSchedule.hero.instagram')}
                 </a>
               </Button>
             )}
@@ -189,7 +191,7 @@ export default function TeacherHeroContent({
                   className="flex items-center justify-center gap-2"
                 >
                   <Globe className="h-4 w-4" />
-                  Website
+                  {t('pages.publicSchedule.hero.website')}
                 </a>
               </Button>
             )}
@@ -204,7 +206,7 @@ export default function TeacherHeroContent({
               variant="outline"
             >
               <Share2 className="h-4 w-4 mr-2" />
-              Share Schedule
+              {t('pages.publicSchedule.hero.shareSchedule')}
             </Button>
 
             {isOwner && (
@@ -217,12 +219,12 @@ export default function TeacherHeroContent({
                 {isExporting ? (
                   <>
                     <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent mr-2" />
-                    Exporting...
+                    {t('pages.publicSchedule.hero.exporting')}
                   </>
                 ) : (
                   <>
                     <Download className="h-4 w-4 mr-2" />
-                    Export Events
+                    {t('pages.publicSchedule.hero.exportEvents')}
                   </>
                 )}
               </Button>
@@ -262,7 +264,7 @@ export default function TeacherHeroContent({
               </h1>
               <div className="flex items-center justify-center md:justify-start gap-2 mb-3">
                 <span className="text-base text-gray-600 font-light">
-                  Yoga Teacher
+                  {t('pages.publicSchedule.hero.yogaTeacher')}
                 </span>
                 {teacherProfile?.timezone && (
                   <>
@@ -287,7 +289,7 @@ export default function TeacherHeroContent({
             {teacherProfile?.yoga_styles && teacherProfile.yoga_styles.length > 0 && (
               <div className="mb-4">
                 <TagList
-                  label="Specialties"
+                  label={t('pages.publicSchedule.hero.specialties')}
                   tags={teacherProfile.yoga_styles}
                   variant="purple"
                   layout="inline"
@@ -310,7 +312,7 @@ export default function TeacherHeroContent({
                   className="flex items-center gap-2"
                 >
                   <Mail className="h-4 w-4" />
-                  Email
+                  {t('pages.publicSchedule.hero.email')}
                 </a>
               </Button>
 
@@ -328,7 +330,7 @@ export default function TeacherHeroContent({
                     className="flex items-center gap-2"
                   >
                     <Instagram className="h-4 w-4" />
-                    Instagram
+                    {t('pages.publicSchedule.hero.instagram')}
                   </a>
                 </Button>
               )}
@@ -347,7 +349,7 @@ export default function TeacherHeroContent({
                     className="flex items-center gap-2"
                   >
                     <Globe className="h-4 w-4" />
-                    Website
+                    {t('pages.publicSchedule.hero.website')}
                   </a>
                 </Button>
               )}
@@ -361,7 +363,7 @@ export default function TeacherHeroContent({
                   variant="outline"
                 >
                   <Share2 className="h-4 w-4 mr-2" />
-                  Share
+                  {t('pages.publicSchedule.hero.share')}
                 </Button>
 
                 {isOwner && (
@@ -374,12 +376,12 @@ export default function TeacherHeroContent({
                     {isExporting ? (
                       <>
                         <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent mr-2" />
-                        Exporting...
+                        {t('pages.publicSchedule.hero.exporting')}
                       </>
                     ) : (
                       <>
                         <Download className="h-4 w-4 mr-2" />
-                        Export
+                        {t('pages.publicSchedule.hero.export')}
                       </>
                     )}
                   </Button>
@@ -418,8 +420,14 @@ export default function TeacherHeroContent({
         isOpen={showShareDialog}
         onOpenChange={setShowShareDialog}
         url={shareUrl}
-        title={`${teacherProfile?.name || 'Teacher'}'s Yoga Schedule`}
-        description={`Check out ${teacherProfile?.name || 'Teacher'}'s upcoming yoga classes and join for a session!`}
+        title={teacherProfile?.name 
+          ? t('pages.publicSchedule.hero.shareTitle', { name: teacherProfile.name })
+          : t('pages.publicSchedule.hero.shareDefaultTitle')
+        }
+        description={teacherProfile?.name 
+          ? t('pages.publicSchedule.hero.shareDescription', { name: teacherProfile.name })
+          : t('pages.publicSchedule.hero.shareDefaultDescription')
+        }
       />
 
       {/* Custom CSS for morphing animation */}

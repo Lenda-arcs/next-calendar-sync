@@ -11,7 +11,8 @@ const translations: Translations = {
       studios: 'Studios',
       profile: 'Profile',
       addCalendar: 'Add Calendar',
-      signOut: 'Sign Out'
+      signOut: 'Sign Out',
+      appName: 'avara.'
     },
     actions: {
       save: 'Save',
@@ -968,6 +969,30 @@ const translations: Translations = {
           required: '• At least one keyword type is required',
           immediate: '• Changes are applied to existing events immediately'
         }
+      }
+    },
+    publicSchedule: {
+      navbar: {
+        home: 'Home',
+        closeProfile: 'Close profile'
+      },
+      hero: {
+        yogaTeacher: 'Yoga Teacher',
+        specialties: 'Specialties',
+        email: 'Email',
+        instagram: 'Instagram',
+        website: 'Website',
+        share: 'Share',
+        shareSchedule: 'Share Schedule',
+        export: 'Export',
+        exportEvents: 'Export Events',
+        exporting: 'Exporting...',
+        defaultBio: 'Join {name} for yoga classes and mindful movement. Check out my upcoming sessions and book your spot.',
+        defaultBioNoName: 'Welcome to my schedule',
+        shareTitle: '{name}\'s Yoga Schedule',
+        shareDescription: 'Check out {name}\'s upcoming yoga classes and join for a session!',
+        shareDefaultTitle: 'Teacher\'s Yoga Schedule',
+        shareDefaultDescription: 'Check out upcoming yoga classes and join for a session!'
       }
     }
   },

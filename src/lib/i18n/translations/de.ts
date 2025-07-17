@@ -11,7 +11,8 @@ const translations: Translations = {
       studios: 'Studios',
       profile: 'Profil',
       addCalendar: 'Kalender hinzufügen',
-      signOut: 'Abmelden'
+      signOut: 'Abmelden',
+      appName: 'avara.'
     },
     actions: {
       save: 'Speichern',
@@ -968,6 +969,30 @@ const translations: Translations = {
           required: '• Mindestens ein Stichwort-Typ ist erforderlich',
           immediate: '• Änderungen werden sofort auf bestehende Veranstaltungen angewendet'
         }
+      }
+    },
+    publicSchedule: {
+      navbar: {
+        home: 'Startseite',
+        closeProfile: 'Profil schließen'
+      },
+      hero: {
+        yogaTeacher: 'Yoga-Lehrer',
+        specialties: 'Spezialisierungen',
+        email: 'E-Mail',
+        instagram: 'Instagram',
+        website: 'Website',
+        share: 'Teilen',
+        shareSchedule: 'Stundenplan teilen',
+        export: 'Exportieren',
+        exportEvents: 'Events exportieren',
+        exporting: 'Exportiere...',
+        defaultBio: 'Schließen Sie sich {name} für Yoga-Kurse und achtsame Bewegung an. Schauen Sie sich meine kommenden Stunden an und sichern Sie sich Ihren Platz.',
+        defaultBioNoName: 'Willkommen zu meinem Stundenplan',
+        shareTitle: '{name}s Yoga-Stundenplan',
+        shareDescription: 'Schauen Sie sich {name}s kommende Yoga-Kurse an und machen Sie mit!',
+        shareDefaultTitle: 'Lehrer Yoga-Stundenplan',
+        shareDefaultDescription: 'Schauen Sie sich kommende Yoga-Kurse an und machen Sie mit!'
       }
     }
   },

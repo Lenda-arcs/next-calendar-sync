@@ -68,7 +68,16 @@ export function LanguageProvider({ children, initialLanguage }: LanguageProvider
   // Translation function with interpolation support
   const t = (key: string, values?: Record<string, string>): string => {
     if (!translations) {
-      return key
+      // During initial load, return a fallback based on the key's last segment
+      // This prevents showing full translation keys while maintaining some meaning
+      const keyParts = key.split('.')
+      const lastPart = keyParts[keyParts.length - 1]
+      
+      // Convert camelCase to readable text as fallback
+      return lastPart
+        .replace(/([A-Z])/g, ' $1')
+        .replace(/^./, str => str.toUpperCase())
+        .trim()
     }
 
     let translation = getNestedTranslation(translations, key)

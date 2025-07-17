@@ -41,6 +41,7 @@ export interface CommonTranslations {
     profile: string
     addCalendar: string
     signOut: string
+    appName: string
   }
   
   // Common actions
@@ -1099,6 +1100,30 @@ export interface PagesTranslations {
         required: string
         immediate: string
       }
+    }
+  }
+  publicSchedule: {
+    navbar: {
+      home: string
+      closeProfile: string
+    }
+    hero: {
+      yogaTeacher: string
+      specialties: string
+      email: string
+      instagram: string
+      website: string
+      share: string
+      shareSchedule: string
+      export: string
+      exportEvents: string
+      exporting: string
+      defaultBio: string
+      defaultBioNoName: string
+      shareTitle: string
+      shareDescription: string
+      shareDefaultTitle: string
+      shareDefaultDescription: string
     }
   }
 }

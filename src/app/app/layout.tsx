@@ -12,18 +12,25 @@ import {
 import { ActiveProfileLink } from './components/ActiveProfileLink'
 import { ActiveNavLinks } from './components/ActiveNavLinks'
 import { ActiveHomeLink } from './components/ActiveHomeLink'
+import { cookies } from 'next/headers'
+import { getServerTranslation } from '@/lib/i18n/server'
+import { Language, SUPPORTED_LANGUAGES, DEFAULT_LANGUAGE } from '@/lib/i18n/types'
 
-// Base navigation items available to all users
-const baseNavigation = [
-  { name: 'Manage Events', href: PATHS.APP.MANAGE_EVENTS, icon: Calendar, iconName: 'Calendar' },
-  { name: 'Manage Tags', href: PATHS.APP.MANAGE_TAGS, icon: Tags, iconName: 'Tags' },
-  { name: 'Invoices', href: PATHS.APP.MANAGE_INVOICES, icon: Receipt, iconName: 'Receipt' },
-]
-
-// Admin-only navigation items
-const adminNavigation = [
-  { name: 'Studios', href: PATHS.APP.STUDIOS, icon: Building, iconName: 'Building' },
-]
+// Helper function to get current language from cookies
+async function getCurrentLanguage(): Promise<Language> {
+  try {
+    const cookieStore = await cookies()
+    const languageCookie = cookieStore.get('language')?.value
+    
+    if (languageCookie && SUPPORTED_LANGUAGES.includes(languageCookie as Language)) {
+      return languageCookie as Language
+    }
+  } catch (error) {
+    console.log('Could not access cookies for language detection:', error)
+  }
+  
+  return DEFAULT_LANGUAGE
+}
 
 interface AppLayoutProps {
   children: React.ReactNode
@@ -37,6 +44,34 @@ export default async function AppLayout({ children }: AppLayoutProps) {
   if (!user) {
     redirect('/auth/sign-in')
   }
+
+  // Get current language for translations
+  const language = await getCurrentLanguage()
+
+  // Get translated navigation labels
+  const [
+    manageEventsLabel,
+    manageTagsLabel,
+    invoicesLabel,
+    studiosLabel
+  ] = await Promise.all([
+    getServerTranslation(language, 'common.nav.manageEvents'),
+    getServerTranslation(language, 'common.nav.manageTags'),
+    getServerTranslation(language, 'common.nav.invoices'),
+    getServerTranslation(language, 'common.nav.studios')
+  ])
+
+  // Base navigation items available to all users (now with translations)
+  const baseNavigation = [
+    { name: manageEventsLabel, href: PATHS.APP.MANAGE_EVENTS, icon: Calendar, iconName: 'Calendar' },
+    { name: manageTagsLabel, href: PATHS.APP.MANAGE_TAGS, icon: Tags, iconName: 'Tags' },
+    { name: invoicesLabel, href: PATHS.APP.MANAGE_INVOICES, icon: Receipt, iconName: 'Receipt' },
+  ]
+
+  // Admin-only navigation items (now with translations)
+  const adminNavigation = [
+    { name: studiosLabel, href: PATHS.APP.STUDIOS, icon: Building, iconName: 'Building' },
+  ]
 
   // Get user role from the database
   const { data: userData } = await supabase
