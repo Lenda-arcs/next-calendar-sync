@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Select } from '@/components/ui/select'
 import { PatternInput } from './PatternInput'
 import { Loader2, Plus, Edit2 } from 'lucide-react'
+import { useTranslation } from '@/lib/i18n/context'
 
 interface KeywordSuggestion {
   keyword: string
@@ -59,10 +60,12 @@ export const TagRuleFormDialog: React.FC<Props> = ({
   isUpdating = false,
   userId,
 }) => {
-  const title = isEditing ? 'Edit Tag Rule' : 'Create Tag Rule'
+  const { t } = useTranslation()
+  
+  const title = isEditing ? t('pages.manageTags.tagRuleForm.editTitle') : t('pages.manageTags.tagRuleForm.createTitle')
   const description = isEditing 
-    ? 'Update this rule to change how events are automatically tagged.'
-    : 'Create a new rule to automatically tag events based on keywords in their title, description, or location.'
+    ? t('pages.manageTags.tagRuleForm.editDescription')
+    : t('pages.manageTags.tagRuleForm.createDescription')
 
   // Use the correct data source based on editing state
   const currentKeywords = isEditing ? (editingRule?.keywords || []) : (Array.isArray(keywords) ? keywords : [])
@@ -105,7 +108,7 @@ export const TagRuleFormDialog: React.FC<Props> = ({
         onClick={onClose}
         disabled={isLoading}
       >
-        Cancel
+        {t('pages.manageTags.tagRuleForm.cancel')}
       </Button>
       <Button
         onClick={onSave}
@@ -115,19 +118,19 @@ export const TagRuleFormDialog: React.FC<Props> = ({
         {isLoading ? (
           <>
             <Loader2 className="h-4 w-4 animate-spin mr-2" />
-            {isEditing ? 'Updating...' : 'Creating...'}
+            {isEditing ? t('pages.manageTags.tagRuleForm.updating') : t('pages.manageTags.tagRuleForm.creating')}
           </>
         ) : (
           <>
             {isEditing ? (
               <>
                 <Edit2 className="h-4 w-4 mr-2" />
-                Update Rule
+                {t('pages.manageTags.tagRuleForm.updateRule')}
               </>
             ) : (
               <>
                 <Plus className="h-4 w-4 mr-2" />
-                Create Rule
+                {t('pages.manageTags.tagRuleForm.createRule')}
               </>
             )}
           </>
@@ -148,10 +151,10 @@ export const TagRuleFormDialog: React.FC<Props> = ({
       <div className="space-y-6">
         {/* Keywords for title/description using PatternInput */}
         <PatternInput
-          label="Keywords (Title/Description)"
+          label={t('pages.manageTags.tagRuleForm.keywordsLabel')}
           patterns={currentKeywords}
           onChange={handleKeywordsChange}
-          placeholder="e.g., Flow, Vinyasa, Meditation"
+          placeholder={t('pages.manageTags.tagRuleForm.keywordsPlaceholder')}
           userId={userId}
           mode="keywords"
           maxPatterns={5}
@@ -163,15 +166,15 @@ export const TagRuleFormDialog: React.FC<Props> = ({
           required={!hasLocationKeywords}
         />
         <p className="text-xs text-muted-foreground -mt-3">
-          Match these keywords in event titles or descriptions (max 5)
+          {t('pages.manageTags.tagRuleForm.keywordsHelp')}
         </p>
 
         {/* Keywords for location using PatternInput */}
         <PatternInput
-          label="Location Keywords"
+          label={t('pages.manageTags.tagRuleForm.locationLabel')}
           patterns={currentLocationKeywords}
           onChange={handleLocationKeywordsChange}
-          placeholder="e.g., Studio A, Flow Room, Main Hall"
+          placeholder={t('pages.manageTags.tagRuleForm.locationPlaceholder')}
           userId={userId}
           mode="location"
           maxPatterns={15}
@@ -182,36 +185,36 @@ export const TagRuleFormDialog: React.FC<Props> = ({
           }))}
         />
         <p className="text-xs text-muted-foreground -mt-3">
-          Match these keywords in event locations (max 5)
+          {t('pages.manageTags.tagRuleForm.locationHelp')}
         </p>
 
         {/* Tag selection - remains the same */}
         <div>
           <Select
-            label="Select Tag"
+            label={t('pages.manageTags.tagRuleForm.selectTag')}
             options={tags.map((tag) => ({
               value: tag.id,
-              label: tag.name || 'Unnamed Tag'
+              label: tag.name || t('pages.manageTags.tagLibraryComponent.unnamedTag')
             }))}
             value={currentSelectedTag}
             onChange={handleTagChange}
-            placeholder="Select Tag..."
+            placeholder={t('pages.manageTags.tagRuleForm.selectTagPlaceholder')}
             disabled={isLoading}
           />
           <p className="text-xs text-muted-foreground mt-1">
-            Events matching the keywords will be tagged with this tag
+            {t('pages.manageTags.tagRuleForm.tagHelp')}
           </p>
         </div>
 
         {/* Rules info - remains the same */}
         <div className="bg-blue-50/50 border border-blue-200/50 rounded-lg p-4">
-          <h4 className="text-sm font-medium text-blue-900 mb-2">How Tag Rules Work</h4>
+          <h4 className="text-sm font-medium text-blue-900 mb-2">{t('pages.manageTags.tagRuleForm.howItWorksTitle')}</h4>
           <ul className="text-xs text-blue-700 space-y-1">
-            <li>• Events are automatically tagged when they match any of the specified keywords</li>
-            <li>• Title/description keywords search in event titles and descriptions</li>
-            <li>• Location keywords search only in event locations</li>
-            <li>• At least one keyword type is required</li>
-            <li>• Changes are applied to existing events immediately</li>
+            <li>{t('pages.manageTags.tagRuleForm.howItWorksBullets.autoTag')}</li>
+            <li>{t('pages.manageTags.tagRuleForm.howItWorksBullets.titleSearch')}</li>
+            <li>{t('pages.manageTags.tagRuleForm.howItWorksBullets.locationSearch')}</li>
+            <li>{t('pages.manageTags.tagRuleForm.howItWorksBullets.required')}</li>
+            <li>{t('pages.manageTags.tagRuleForm.howItWorksBullets.immediate')}</li>
           </ul>
         </div>
       </div>

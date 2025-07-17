@@ -46,7 +46,7 @@ export default async function DashboardPage() {
   return (
     <DashboardContent
       user={user}
-      userId={userId}
+                    userId={userId}
       hasFeeds={hasFeeds}
       feeds={feeds}
       publicPath={publicPath}

@@ -403,6 +403,126 @@ const translations: Translations = {
       }
     }
   },
+  pages: {
+    manageEvents: {
+      title: 'Manage Events',
+      subtitle: 'Edit tags, manage visibility, and organize your classes',
+      authRequired: 'Authentication required',
+      authRequiredDesc: 'Please sign in to manage your events.',
+      loadError: 'Failed to load events',
+      tryAgain: 'Try Again',
+      noEventsForFilter: 'No events found for the current filters',
+      changeFilters: 'Try changing your filters to see more events',
+      pendingChanges: '{count} pending changes',
+      saveChanges: 'Save Changes',
+      discardChanges: 'Discard Changes',
+      savingChanges: 'Saving changes...',
+      syncingCalendar: 'Syncing calendar...',
+      refreshEvents: 'Refresh Events',
+      createTag: 'Create Tag',
+      manageTag: 'Manage Tags',
+      filterControls: {
+        timeFilter: 'Time Filter',
+        visibilityFilter: 'Visibility Filter',
+        allTime: 'All Time',
+        futureOnly: 'Future Only',
+        allVisibility: 'All',
+        publicOnly: 'Public Only',
+        privateOnly: 'Private Only'
+      },
+      stats: {
+        totalEvents: 'Total Events',
+        publicEvents: 'Public Events',
+        privateEvents: 'Private Events'
+      }
+    },
+    manageTags: {
+      title: 'Tag Management',
+      subtitle: 'Organize your calendar events with smart tagging. Set up automatic rules to tag events based on keywords, and manage your tag library to keep everything organized.',
+      manageRules: 'Manage Tag Rules',
+      createTag: 'Create New Tag',
+      tagLibrary: 'Tag Library',
+      automationRules: 'Automation Rules',
+      noTags: 'No tags created yet',
+      createFirstTag: 'Create your first tag to start organizing your events',
+      noRules: 'No automation rules set up',
+      createFirstRule: 'Create your first rule to automatically tag events',
+      tagRuleManager: {
+        creating: 'Creating Rule',
+        updating: 'Updating Rule',
+        creatingDesc: 'Adding new tag rule...',
+        updatingDesc: 'Updating tag rule...',
+        noTagsAvailable: 'No tags available. Create some tags first to set up tag rules.',
+        toasts: {
+          ruleCreated: 'Tag Rule Created!',
+          ruleUpdated: 'Tag Rule Updated!',
+          ruleDeleted: 'Tag Rule Deleted!',
+          ruleCreatedDesc: '{count} out of {total} events were re-tagged with your new rule.',
+          ruleUpdatedDesc: '{count} out of {total} events were re-tagged with your updated rule.',
+          ruleDeletedDesc: '{count} out of {total} events were re-tagged after removing the rule.',
+          applyError: 'Failed to apply new tag rule',
+          applyErrorDesc: 'The rule was created but could not be applied to existing events.',
+          updateError: 'Failed to apply updated tag rule',
+          updateErrorDesc: 'The rule was updated but could not be applied to existing events.',
+          deleteError: 'Failed to apply tag changes',
+          deleteErrorDesc: 'The rule was deleted but changes could not be applied to existing events.'
+        }
+      },
+      tagLibraryComponent: {
+        creating: 'Creating tag...',
+        updating: 'Updating tag...',
+        deleting: 'Deleting tag...',
+        noTagsFound: 'No tags found. Create your first tag!',
+        globalTags: 'Global Tags',
+        customTags: 'Your Custom Tags',
+        noCustomTags: 'No custom tags yet',
+        createFirstCustomTag: 'Create your first custom tag to get started',
+        unnamedTag: 'Unnamed Tag',
+        moreItems: '+{count} more'
+      },
+      tagRules: {
+        title: 'Tag Rules',
+        createRule: 'Create Rule',
+        activeRules: 'Active Rules',
+        pending: ' + 1 pending',
+        inTitleDescription: 'in title/description',
+        inLocation: 'in location',
+        inTitleDescriptionLegacy: 'in title or description (legacy)',
+        applies: 'applies',
+        unknownTag: 'Unknown Tag',
+        noRulesConfigured: 'No tag rules configured',
+        createFirstRuleDesc: 'Create your first rule to automatically tag events based on keywords'
+      },
+      tagRuleForm: {
+        editTitle: 'Edit Tag Rule',
+        createTitle: 'Create Tag Rule',
+        editDescription: 'Update this rule to change how events are automatically tagged.',
+        createDescription: 'Create a new rule to automatically tag events based on keywords in their title, description, or location.',
+        cancel: 'Cancel',
+        updating: 'Updating...',
+        creating: 'Creating...',
+        updateRule: 'Update Rule',
+        createRule: 'Create Rule',
+        keywordsLabel: 'Keywords (Title/Description)',
+        keywordsPlaceholder: 'e.g., Flow, Vinyasa, Meditation',
+        keywordsHelp: 'Match these keywords in event titles or descriptions (max 5)',
+        locationLabel: 'Location Keywords',
+        locationPlaceholder: 'e.g., Studio A, Flow Room, Main Hall',
+        locationHelp: 'Match these keywords in event locations (max 5)',
+        selectTag: 'Select Tag',
+        selectTagPlaceholder: 'Select Tag...',
+        tagHelp: 'Events matching the keywords will be tagged with this tag',
+        howItWorksTitle: 'How Tag Rules Work',
+        howItWorksBullets: {
+          autoTag: '• Events are automatically tagged when they match any of the specified keywords',
+          titleSearch: '• Title/description keywords search in event titles and descriptions',
+          locationSearch: '• Location keywords search only in event locations',
+          required: '• At least one keyword type is required',
+          immediate: '• Changes are applied to existing events immediately'
+        }
+      }
+    }
+  },
   seo: {
     home: {
       title: 'SyncIt - Beautiful Yoga Schedule Management Platform',

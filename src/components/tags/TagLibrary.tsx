@@ -9,6 +9,7 @@ import { AlertCircle } from 'lucide-react'
 import DataLoader from '@/components/ui/data-loader'
 import { TagLibraryGridSkeleton } from '@/components/ui/skeleton'
 import { TagLibraryGrid } from './TagLibraryGrid'
+import { useTranslation } from '@/lib/i18n/context'
 
 interface TagOperations {
   onTagClick: (tag: EventTag) => void
@@ -35,6 +36,8 @@ export const TagLibrary: React.FC<Props> = ({
   customTags: propCustomTags,
   tagOperations 
 }) => {
+  const { t } = useTranslation()
+  
   // Fetch global tags (only if not provided as props)
   const { 
     data: fetchedGlobalTags, 
@@ -111,7 +114,7 @@ export const TagLibrary: React.FC<Props> = ({
       {error && (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Error</AlertTitle>
+          <AlertTitle>{t('common.messages.error')}</AlertTitle>
           <AlertDescription>{errorMessage}</AlertDescription>
         </Alert>
       )}
@@ -119,9 +122,9 @@ export const TagLibrary: React.FC<Props> = ({
       {(operations.creating || operations.updating || operations.deleting) && (
         <Alert>
           <AlertDescription>
-            {operations.creating && 'Creating tag...'}
-            {operations.updating && 'Updating tag...'}
-            {operations.deleting && 'Deleting tag...'}
+            {operations.creating && t('pages.manageTags.tagLibraryComponent.creating')}
+            {operations.updating && t('pages.manageTags.tagLibraryComponent.updating')}
+            {operations.deleting && t('pages.manageTags.tagLibraryComponent.deleting')}
           </AlertDescription>
         </Alert>
       )}
@@ -134,7 +137,7 @@ export const TagLibrary: React.FC<Props> = ({
         skeletonCount={1}
         empty={
           <p className="text-muted-foreground text-center">
-            No tags found. Create your first tag!
+            {t('pages.manageTags.tagLibraryComponent.noTagsFound')}
           </p>
         }
       >

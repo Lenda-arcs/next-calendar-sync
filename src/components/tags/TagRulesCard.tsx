@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { TagBadge } from '@/components/ui/tag-badge'
 import { Button } from '@/components/ui/button'
 import { X, ArrowRight, Search, Plus, Edit2 } from 'lucide-react'
+import { useTranslation } from '@/lib/i18n/context'
 
 // Extended TagRule interface to handle new fields until database types are regenerated
 interface ExtendedTagRule extends TagRule {
@@ -32,11 +33,13 @@ export const TagRulesCard: React.FC<Props> = ({
   isCreating = false,
   isUpdating = false,
 }) => {
+  const { t } = useTranslation()
+  
   return (
     <Card variant="default">
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle className="text-foreground">Tag Rules</CardTitle>
+          <CardTitle className="text-foreground">{t('pages.manageTags.tagRules.title')}</CardTitle>
           <Button
             onClick={onCreateRule}
             variant="secondary"
@@ -44,7 +47,7 @@ export const TagRulesCard: React.FC<Props> = ({
             disabled={isCreating}
           >
             <Plus className="h-4 w-4 mr-2" />
-            Create Rule
+            {t('pages.manageTags.tagRules.createRule')}
           </Button>
         </div>
       </CardHeader>
@@ -54,7 +57,7 @@ export const TagRulesCard: React.FC<Props> = ({
           <div className="flex items-center gap-2 mb-4">
             <Search className="h-4 w-4 text-muted-foreground" />
             <h3 className="text-sm font-medium text-foreground">
-              Active Rules ({rules.length}{isCreating ? ' + 1 pending' : ''})
+              {t('pages.manageTags.tagRules.activeRules')} ({rules.length}{isCreating ? t('pages.manageTags.tagRules.pending') : ''})
             </h3>
           </div>
           
@@ -100,10 +103,10 @@ export const TagRulesCard: React.FC<Props> = ({
                         )}
                       </div>
                       <span className="text-xs text-muted-foreground hidden sm:block">
-                        {rule.keywords && rule.keywords.length > 0 && "in title/description"}
+                        {rule.keywords && rule.keywords.length > 0 && t('pages.manageTags.tagRules.inTitleDescription')}
                         {rule.keywords && rule.keywords.length > 0 && rule.location_keywords && rule.location_keywords.length > 0 && " • "}
-                        {rule.location_keywords && rule.location_keywords.length > 0 && "in location"}
-                        {rule.keyword && "in title or description (legacy)"}
+                        {rule.location_keywords && rule.location_keywords.length > 0 && t('pages.manageTags.tagRules.inLocation')}
+                        {rule.keyword && t('pages.manageTags.tagRules.inTitleDescriptionLegacy')}
                       </span>
                     </div>
                   </div>
@@ -113,13 +116,13 @@ export const TagRulesCard: React.FC<Props> = ({
 
                   {/* Tag section */}
                   <div className="flex items-center gap-1 sm:gap-2">
-                    <span className="text-xs text-muted-foreground hidden sm:inline">applies</span>
+                    <span className="text-xs text-muted-foreground hidden sm:inline">{t('pages.manageTags.tagRules.applies')}</span>
                     <TagBadge 
                       variant="safe"
                       color={tag?.color}
                       className="font-medium text-xs"
                     >
-                      {tag?.name || 'Unknown Tag'}
+                      {tag?.name || t('pages.manageTags.tagRules.unknownTag')}
                     </TagBadge>
                   </div>
 
@@ -150,9 +153,9 @@ export const TagRulesCard: React.FC<Props> = ({
             {rules.length === 0 && !isCreating && (
               <div className="text-center py-6 sm:py-8 text-muted-foreground">
                 <Search className="h-6 w-6 sm:h-8 sm:w-8 mx-auto mb-2 text-muted/50" />
-                <p className="text-sm">No tag rules configured</p>
+                <p className="text-sm">{t('pages.manageTags.tagRules.noRulesConfigured')}</p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Create your first rule to automatically tag events based on keywords
+                  {t('pages.manageTags.tagRules.createFirstRuleDesc')}
                 </p>
               </div>
             )}

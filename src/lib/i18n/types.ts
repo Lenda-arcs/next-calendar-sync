@@ -534,6 +534,127 @@ export interface SeoTranslations {
   }
 }
 
+export interface PagesTranslations {
+  manageEvents: {
+    title: string
+    subtitle: string
+    authRequired: string
+    authRequiredDesc: string
+    loadError: string
+    tryAgain: string
+    noEventsForFilter: string
+    changeFilters: string
+    pendingChanges: string
+    saveChanges: string
+    discardChanges: string
+    savingChanges: string
+    syncingCalendar: string
+    refreshEvents: string
+    createTag: string
+    manageTag: string
+    filterControls: {
+      timeFilter: string
+      visibilityFilter: string
+      allTime: string
+      futureOnly: string
+      allVisibility: string
+      publicOnly: string
+      privateOnly: string
+    }
+    stats: {
+      totalEvents: string
+      publicEvents: string
+      privateEvents: string
+    }
+  }
+  manageTags: {
+    title: string
+    subtitle: string
+    manageRules: string
+    createTag: string
+    tagLibrary: string
+    automationRules: string
+    noTags: string
+    createFirstTag: string
+    noRules: string
+    createFirstRule: string
+    tagRuleManager: {
+      creating: string
+      updating: string
+      creatingDesc: string
+      updatingDesc: string
+      noTagsAvailable: string
+      toasts: {
+        ruleCreated: string
+        ruleUpdated: string
+        ruleDeleted: string
+        ruleCreatedDesc: string
+        ruleUpdatedDesc: string
+        ruleDeletedDesc: string
+        applyError: string
+        applyErrorDesc: string
+        updateError: string
+        updateErrorDesc: string
+        deleteError: string
+        deleteErrorDesc: string
+      }
+    }
+    tagLibraryComponent: {
+      creating: string
+      updating: string
+      deleting: string
+      noTagsFound: string
+      globalTags: string
+      customTags: string
+      noCustomTags: string
+      createFirstCustomTag: string
+      unnamedTag: string
+      moreItems: string
+    }
+    tagRules: {
+      title: string
+      createRule: string
+      activeRules: string
+      pending: string
+      inTitleDescription: string
+      inLocation: string
+      inTitleDescriptionLegacy: string
+      applies: string
+      unknownTag: string
+      noRulesConfigured: string
+      createFirstRuleDesc: string
+    }
+    tagRuleForm: {
+      editTitle: string
+      createTitle: string
+      editDescription: string
+      createDescription: string
+      cancel: string
+      updating: string
+      creating: string
+      updateRule: string
+      createRule: string
+      keywordsLabel: string
+      keywordsPlaceholder: string
+      keywordsHelp: string
+      locationLabel: string
+      locationPlaceholder: string
+      locationHelp: string
+      selectTag: string
+      selectTagPlaceholder: string
+      tagHelp: string
+      howItWorksTitle: string
+      howItWorksBullets: {
+        autoTag: string
+        titleSearch: string
+        locationSearch: string
+        required: string
+        immediate: string
+      }
+    }
+  }
+}
+
 export interface Translations {
   common: CommonTranslations
   auth: AuthTranslations
@@ -542,6 +663,7 @@ export interface Translations {
   studios: StudioTranslations
   invoices: InvoiceTranslations
   dashboard: DashboardTranslations
+  pages: PagesTranslations
   seo: SeoTranslations
 }
 

@@ -32,10 +32,10 @@ export default function RootLayout({
     <html lang="en" className={`${dmSerifDisplay.variable} ${outfit.variable}`}>
       <body className="min-h-screen bg-background font-sans antialiased">
         <LanguageProvider>
-          <SupabaseProvider>
-            {children}
-          </SupabaseProvider>
-          <Toaster />
+        <SupabaseProvider>
+        {children}
+        </SupabaseProvider>
+        <Toaster />
         </LanguageProvider>
       </body>
     </html>

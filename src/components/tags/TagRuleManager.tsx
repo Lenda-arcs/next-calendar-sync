@@ -14,6 +14,7 @@ import { TagRulesSkeleton } from '@/components/ui/skeleton'
 import { TagRulesCard } from './TagRulesCard'
 import { TagRuleFormDialog } from './TagRuleFormDialog'
 import { clearTagMapCache } from '@/lib/event-utils'
+import { useTranslation } from '@/lib/i18n/context'
 
 // Extended TagRule interface to handle new fields until database types are regenerated
 interface ExtendedTagRule extends TagRule {
@@ -49,6 +50,7 @@ interface Props {
 }
 
 export const TagRuleManager: React.FC<Props> = ({ userId, availableTags: propTags }) => {
+  const { t } = useTranslation()
   const [state, setState] = useState<TagRuleState>(initialState)
   const [optimisticRules, setOptimisticRules] = useState<ExtendedTagRule[]>([])
   const [deletedRuleIds, setDeletedRuleIds] = useState<Set<string>>(new Set())
@@ -137,14 +139,17 @@ export const TagRuleManager: React.FC<Props> = ({ userId, availableTags: propTag
         const rematchResult = await rematchUserTags(userId)
         
         // Show success toast
-        toast.success('Tag Rule Created!', {
-          description: `${rematchResult.updated_count} out of ${rematchResult.total_events_processed} events were re-tagged with your new rule.`,
+        toast.success(t('pages.manageTags.tagRuleManager.toasts.ruleCreated'), {
+          description: t('pages.manageTags.tagRuleManager.toasts.ruleCreatedDesc', {
+            count: rematchResult.updated_count.toString(),
+            total: rematchResult.total_events_processed.toString()
+          }),
           duration: 4000,
         })
       } catch (error) {
         console.error('Failed to rematch tags after rule creation:', error)
-        toast.error('Failed to apply new tag rule', {
-          description: 'The rule was created but could not be applied to existing events.',
+        toast.error(t('pages.manageTags.tagRuleManager.toasts.applyError'), {
+          description: t('pages.manageTags.tagRuleManager.toasts.applyErrorDesc'),
           duration: 5000,
         })
       }
@@ -202,14 +207,17 @@ export const TagRuleManager: React.FC<Props> = ({ userId, availableTags: propTag
         const rematchResult = await rematchUserTags(userId)
         
         // Show success toast
-        toast.success('Tag Rule Updated!', {
-          description: `${rematchResult.updated_count} out of ${rematchResult.total_events_processed} events were re-tagged with your updated rule.`,
+        toast.success(t('pages.manageTags.tagRuleManager.toasts.ruleUpdated'), {
+          description: t('pages.manageTags.tagRuleManager.toasts.ruleUpdatedDesc', {
+            count: rematchResult.updated_count.toString(),
+            total: rematchResult.total_events_processed.toString()
+          }),
           duration: 4000,
         })
       } catch (error) {
         console.error('Failed to rematch tags after rule update:', error)
-        toast.error('Failed to apply updated tag rule', {
-          description: 'The rule was updated but could not be applied to existing events.',
+        toast.error(t('pages.manageTags.tagRuleManager.toasts.updateError'), {
+          description: t('pages.manageTags.tagRuleManager.toasts.updateErrorDesc'),
           duration: 5000,
         })
       }
@@ -246,14 +254,17 @@ export const TagRuleManager: React.FC<Props> = ({ userId, availableTags: propTag
         const rematchResult = await rematchUserTags(userId)
         
         // Show success toast
-        toast.success('Tag Rule Deleted!', {
-          description: `${rematchResult.updated_count} out of ${rematchResult.total_events_processed} events were re-tagged after removing the rule.`,
+        toast.success(t('pages.manageTags.tagRuleManager.toasts.ruleDeleted'), {
+          description: t('pages.manageTags.tagRuleManager.toasts.ruleDeletedDesc', {
+            count: rematchResult.updated_count.toString(),
+            total: rematchResult.total_events_processed.toString()
+          }),
           duration: 4000,
         })
       } catch (error) {
         console.error('Failed to rematch tags after rule deletion:', error)
-        toast.error('Failed to apply tag changes', {
-          description: 'The rule was deleted but changes could not be applied to existing events.',
+        toast.error(t('pages.manageTags.tagRuleManager.toasts.deleteError'), {
+          description: t('pages.manageTags.tagRuleManager.toasts.deleteErrorDesc'),
           duration: 5000,
         })
       }
@@ -326,8 +337,6 @@ export const TagRuleManager: React.FC<Props> = ({ userId, availableTags: propTag
     })
   }
 
-
-
   const handleDeleteRule = async (ruleId: string) => {
     // Optimistically mark as deleted
     setDeletedRuleIds(prev => new Set([...prev, ruleId]))
@@ -364,10 +373,10 @@ export const TagRuleManager: React.FC<Props> = ({ userId, availableTags: propTag
         <Alert variant={error ? "destructive" : "default"}>
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>
-            {error ? "Error" : creating ? "Creating Rule" : "Updating Rule"}
+            {error ? t('common.messages.error') : creating ? t('pages.manageTags.tagRuleManager.creating') : t('pages.manageTags.tagRuleManager.updating')}
           </AlertTitle>
           <AlertDescription>
-            {error ? errorMessage : creating ? "Adding new tag rule..." : "Updating tag rule..."}
+            {error ? errorMessage : creating ? t('pages.manageTags.tagRuleManager.creatingDesc') : t('pages.manageTags.tagRuleManager.updatingDesc')}
           </AlertDescription>
         </Alert>
       )}
@@ -380,7 +389,7 @@ export const TagRuleManager: React.FC<Props> = ({ userId, availableTags: propTag
         skeletonCount={1}
         empty={
           <div className="text-center py-8 text-muted-foreground">
-            <p>No tags available. Create some tags first to set up tag rules.</p>
+            <p>{t('pages.manageTags.tagRuleManager.noTagsAvailable')}</p>
           </div>
         }
       >

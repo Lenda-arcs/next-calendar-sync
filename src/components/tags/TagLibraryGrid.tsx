@@ -6,7 +6,7 @@ import { UserRole } from '@/lib/types'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Edit, Trash2, Globe, Plus } from 'lucide-react'
-
+import { useTranslation } from '@/lib/i18n/context'
 
 interface Props {
   globalTags: EventTag[]
@@ -36,6 +36,8 @@ const TagLibraryItem: React.FC<TagLibraryItemProps> = ({
   onDelete,
   canEdit,
 }) => {
+  const { t } = useTranslation()
+  
   return (
     <div
       className="p-4 rounded-lg cursor-pointer backdrop-blur-sm bg-white/50 border border-white/40 hover:bg-white/60 hover:border-white/50 hover:shadow-md transition-all duration-200"
@@ -51,7 +53,7 @@ const TagLibraryItem: React.FC<TagLibraryItemProps> = ({
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 mb-1">
               <span className="text-sm font-medium text-foreground truncate">
-                {tag.name || 'Unnamed Tag'}
+                {tag.name || t('pages.manageTags.tagLibraryComponent.unnamedTag')}
               </span>
               {isGlobal && (
                 <Globe className="h-3 w-3 text-muted-foreground flex-shrink-0" />
@@ -60,7 +62,7 @@ const TagLibraryItem: React.FC<TagLibraryItemProps> = ({
             {(tag.classType && tag.classType.length > 0) && (
               <p className="text-xs text-muted-foreground">
                 {tag.classType.slice(0, 3).join(', ')}
-                {tag.classType.length > 3 && ` +${tag.classType.length - 3} more`}
+                {tag.classType.length > 3 && ` ${t('pages.manageTags.tagLibraryComponent.moreItems', { count: (tag.classType.length - 3).toString() })}`}
               </p>
             )}
             {tag.audience && tag.audience.length > 0 && (
@@ -73,11 +75,11 @@ const TagLibraryItem: React.FC<TagLibraryItemProps> = ({
 
         {/* Action buttons */}
         {canEdit && (
-          <div className="flex gap-1 flex-shrink-0">
+          <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
             <Button
               variant="ghost"
               size="sm"
-              className="text-muted-foreground hover:text-foreground h-7 w-7 p-0"
+              className="h-6 w-6 p-0 text-muted-foreground hover:text-blue-600"
               onClick={(e) => {
                 e.stopPropagation()
                 onEdit(tag)
@@ -88,7 +90,7 @@ const TagLibraryItem: React.FC<TagLibraryItemProps> = ({
             <Button
               variant="ghost"
               size="sm"
-              className="text-muted-foreground hover:text-destructive h-7 w-7 p-0"
+              className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
               onClick={(e) => {
                 e.stopPropagation()
                 onDelete(tag.id)
@@ -103,8 +105,6 @@ const TagLibraryItem: React.FC<TagLibraryItemProps> = ({
   )
 }
 
-
-
 export const TagLibraryGrid: React.FC<Props> = ({
   globalTags,
   customTags,
@@ -115,18 +115,20 @@ export const TagLibraryGrid: React.FC<Props> = ({
   userId,
   userRole = 'user',
 }) => {
+  const { t } = useTranslation()
+  
   return (
     <Card variant="default">
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle className="text-foreground">Tag Library</CardTitle>
+          <CardTitle className="text-foreground">{t('pages.manageTags.tagLibrary')}</CardTitle>
           <Button
             onClick={onCreateNew}
             variant="secondary"
             size="sm"
           >
             <Plus className="h-4 w-4 mr-2" />
-            Create Tag
+            {t('pages.manageTags.createTag')}
           </Button>
         </div>
       </CardHeader>
@@ -136,7 +138,7 @@ export const TagLibraryGrid: React.FC<Props> = ({
           <div>
             <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
               <Globe className="h-4 w-4" />
-              Global Tags
+              {t('pages.manageTags.tagLibraryComponent.globalTags')}
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
               {globalTags.map((tag) => (
@@ -161,7 +163,7 @@ export const TagLibraryGrid: React.FC<Props> = ({
 
         {/* Custom Tags Section */}
         <div>
-          <h3 className="text-lg font-semibold text-foreground mb-4">Your Custom Tags</h3>
+          <h3 className="text-lg font-semibold text-foreground mb-4">{t('pages.manageTags.tagLibraryComponent.customTags')}</h3>
           {customTags.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
               {customTags.map((tag) => (
@@ -184,9 +186,9 @@ export const TagLibraryGrid: React.FC<Props> = ({
           ) : (
             <div className="text-center py-8 text-muted-foreground">
               <Plus className="h-8 w-8 mx-auto mb-2 text-muted-foreground/50" />
-              <p className="text-sm">No custom tags yet</p>
+              <p className="text-sm">{t('pages.manageTags.tagLibraryComponent.noCustomTags')}</p>
               <p className="text-xs text-muted-foreground mt-1">
-                Create your first custom tag to get started
+                {t('pages.manageTags.tagLibraryComponent.createFirstCustomTag')}
               </p>
             </div>
           )}

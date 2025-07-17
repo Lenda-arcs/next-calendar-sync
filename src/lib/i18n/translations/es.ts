@@ -403,6 +403,126 @@ const translations: Translations = {
       }
     }
   },
+  pages: {
+    manageEvents: {
+      title: 'Gestionar Eventos',
+      subtitle: 'Editar etiquetas, gestionar visibilidad y organizar tus clases',
+      authRequired: 'Autenticación requerida',
+      authRequiredDesc: 'Por favor inicia sesión para gestionar tus eventos.',
+      loadError: 'Error al cargar eventos',
+      tryAgain: 'Intentar de nuevo',
+      noEventsForFilter: 'No se encontraron eventos para los filtros actuales',
+      changeFilters: 'Intenta cambiar tus filtros para ver más eventos',
+      pendingChanges: '{count} cambios pendientes',
+      saveChanges: 'Guardar Cambios',
+      discardChanges: 'Descartar Cambios',
+      savingChanges: 'Guardando cambios...',
+      syncingCalendar: 'Sincronizando calendario...',
+      refreshEvents: 'Actualizar Eventos',
+      createTag: 'Crear Etiqueta',
+      manageTag: 'Gestionar Etiquetas',
+      filterControls: {
+        timeFilter: 'Filtro de Tiempo',
+        visibilityFilter: 'Filtro de Visibilidad',
+        allTime: 'Todo el Tiempo',
+        futureOnly: 'Solo Futuros',
+        allVisibility: 'Todos',
+        publicOnly: 'Solo Públicos',
+        privateOnly: 'Solo Privados'
+      },
+      stats: {
+        totalEvents: 'Total de Eventos',
+        publicEvents: 'Eventos Públicos',
+        privateEvents: 'Eventos Privados'
+      }
+    },
+    manageTags: {
+      title: 'Gestión de Etiquetas',
+      subtitle: 'Organiza tus eventos de calendario con etiquetado inteligente. Configura reglas automáticas para etiquetar eventos basándose en palabras clave, y gestiona tu biblioteca de etiquetas de manera organizada.',
+      manageRules: 'Gestionar Reglas de Etiquetas',
+      createTag: 'Crear Nueva Etiqueta',
+      tagLibrary: 'Biblioteca de Etiquetas',
+      automationRules: 'Reglas de Automatización',
+      noTags: 'Aún no se han creado etiquetas',
+      createFirstTag: 'Crea tu primera etiqueta para comenzar a organizar tus eventos',
+      noRules: 'No se han configurado reglas de automatización',
+      createFirstRule: 'Crea tu primera regla para etiquetar eventos automáticamente',
+      tagRuleManager: {
+        creating: 'Creando Regla',
+        updating: 'Actualizando Regla',
+        creatingDesc: 'Agregando nueva regla de etiqueta...',
+        updatingDesc: 'Actualizando regla de etiqueta...',
+        noTagsAvailable: 'No hay etiquetas disponibles. Crea algunas etiquetas primero para configurar reglas de etiquetas.',
+        toasts: {
+          ruleCreated: '¡Regla de Etiqueta Creada!',
+          ruleUpdated: '¡Regla de Etiqueta Actualizada!',
+          ruleDeleted: '¡Regla de Etiqueta Eliminada!',
+          ruleCreatedDesc: '{count} de {total} eventos fueron re-etiquetados con tu nueva regla.',
+          ruleUpdatedDesc: '{count} de {total} eventos fueron re-etiquetados con tu regla actualizada.',
+          ruleDeletedDesc: '{count} de {total} eventos fueron re-etiquetados después de eliminar la regla.',
+          applyError: 'Error al aplicar nueva regla de etiqueta',
+          applyErrorDesc: 'La regla fue creada pero no pudo ser aplicada a eventos existentes.',
+          updateError: 'Error al aplicar regla de etiqueta actualizada',
+          updateErrorDesc: 'La regla fue actualizada pero no pudo ser aplicada a eventos existentes.',
+          deleteError: 'Error al aplicar cambios de etiquetas',
+          deleteErrorDesc: 'La regla fue eliminada pero los cambios no pudieron ser aplicados a eventos existentes.'
+        }
+      },
+      tagLibraryComponent: {
+        creating: 'Creando etiqueta...',
+        updating: 'Actualizando etiqueta...',
+        deleting: 'Eliminando etiqueta...',
+        noTagsFound: '¡No se encontraron etiquetas. Crea tu primera etiqueta!',
+        globalTags: 'Etiquetas Globales',
+        customTags: 'Tus Etiquetas Personalizadas',
+        noCustomTags: 'Aún no hay etiquetas personalizadas',
+        createFirstCustomTag: 'Crea tu primera etiqueta personalizada para comenzar',
+        unnamedTag: 'Etiqueta Sin Nombre',
+        moreItems: '+{count} más'
+      },
+      tagRules: {
+        title: 'Reglas de Etiquetas',
+        createRule: 'Crear Regla',
+        activeRules: 'Reglas Activas',
+        pending: ' + 1 pendiente',
+        inTitleDescription: 'en título/descripción',
+        inLocation: 'en ubicación',
+        inTitleDescriptionLegacy: 'en título o descripción (legado)',
+        applies: 'aplica',
+        unknownTag: 'Etiqueta Desconocida',
+        noRulesConfigured: 'No hay reglas de etiquetas configuradas',
+        createFirstRuleDesc: 'Crea tu primera regla para etiquetar eventos automáticamente basándose en palabras clave'
+      },
+      tagRuleForm: {
+        editTitle: 'Editar Regla de Etiqueta',
+        createTitle: 'Crear Regla de Etiqueta',
+        editDescription: 'Actualiza esta regla para cambiar cómo se etiquetan automáticamente los eventos.',
+        createDescription: 'Crea una nueva regla para etiquetar automáticamente eventos basándose en palabras clave en su título, descripción o ubicación.',
+        cancel: 'Cancelar',
+        updating: 'Actualizando...',
+        creating: 'Creando...',
+        updateRule: 'Actualizar Regla',
+        createRule: 'Crear Regla',
+        keywordsLabel: 'Palabras Clave (Título/Descripción)',
+        keywordsPlaceholder: 'ej., Flow, Vinyasa, Meditación',
+        keywordsHelp: 'Coincidir estas palabras clave en títulos o descripciones de eventos (máx. 5)',
+        locationLabel: 'Palabras Clave de Ubicación',
+        locationPlaceholder: 'ej., Estudio A, Sala Flow, Salón Principal',
+        locationHelp: 'Coincidir estas palabras clave en ubicaciones de eventos (máx. 5)',
+        selectTag: 'Seleccionar Etiqueta',
+        selectTagPlaceholder: 'Seleccionar Etiqueta...',
+        tagHelp: 'Los eventos que coincidan con las palabras clave serán etiquetados con esta etiqueta',
+        howItWorksTitle: 'Cómo Funcionan las Reglas de Etiquetas',
+        howItWorksBullets: {
+          autoTag: '• Los eventos se etiquetan automáticamente cuando coinciden con cualquiera de las palabras clave especificadas',
+          titleSearch: '• Las palabras clave de título/descripción buscan en títulos y descripciones de eventos',
+          locationSearch: '• Las palabras clave de ubicación buscan solo en ubicaciones de eventos',
+          required: '• Se requiere al menos un tipo de palabra clave',
+          immediate: '• Los cambios se aplican a eventos existentes inmediatamente'
+        }
+      }
+    }
+  },
   seo: {
     home: {
       title: 'SyncIt - Plataforma Hermosa de Gestión de Horarios de Yoga',

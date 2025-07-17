@@ -403,6 +403,126 @@ const translations: Translations = {
       }
     }
   },
+  pages: {
+    manageEvents: {
+      title: 'Veranstaltungen verwalten',
+      subtitle: 'Tags bearbeiten, Sichtbarkeit verwalten und Ihre Kurse organisieren',
+      authRequired: 'Anmeldung erforderlich',
+      authRequiredDesc: 'Bitte melden Sie sich an, um Ihre Veranstaltungen zu verwalten.',
+      loadError: 'Fehler beim Laden der Veranstaltungen',
+      tryAgain: 'Erneut versuchen',
+      noEventsForFilter: 'Keine Veranstaltungen für die aktuellen Filter gefunden',
+      changeFilters: 'Versuchen Sie, Ihre Filter zu ändern, um mehr Veranstaltungen zu sehen',
+      pendingChanges: '{count} ausstehende Änderungen',
+      saveChanges: 'Änderungen speichern',
+      discardChanges: 'Änderungen verwerfen',
+      savingChanges: 'Änderungen werden gespeichert...',
+      syncingCalendar: 'Kalender wird synchronisiert...',
+      refreshEvents: 'Veranstaltungen aktualisieren',
+      createTag: 'Tag erstellen',
+      manageTag: 'Tags verwalten',
+      filterControls: {
+        timeFilter: 'Zeitfilter',
+        visibilityFilter: 'Sichtbarkeitsfilter',
+        allTime: 'Alle Zeit',
+        futureOnly: 'Nur zukünftige',
+        allVisibility: 'Alle',
+        publicOnly: 'Nur öffentliche',
+        privateOnly: 'Nur private'
+      },
+      stats: {
+        totalEvents: 'Gesamt Veranstaltungen',
+        publicEvents: 'Öffentliche Veranstaltungen',
+        privateEvents: 'Private Veranstaltungen'
+      }
+    },
+    manageTags: {
+      title: 'Tag-Verwaltung',
+      subtitle: 'Organisieren Sie Ihre Kalendertermine mit intelligenter Kennzeichnung. Richten Sie automatische Regeln ein, um Termine basierend auf Stichwörtern zu kennzeichnen, und verwalten Sie Ihre Tag-Bibliothek übersichtlich.',
+      manageRules: 'Tag-Regeln verwalten',
+      createTag: 'Neuen Tag erstellen',
+      tagLibrary: 'Tag-Bibliothek',
+      automationRules: 'Automatisierungsregeln',
+      noTags: 'Noch keine Tags erstellt',
+      createFirstTag: 'Erstellen Sie Ihren ersten Tag, um Ihre Veranstaltungen zu organisieren',
+      noRules: 'Keine Automatisierungsregeln eingerichtet',
+      createFirstRule: 'Erstellen Sie Ihre erste Regel, um Veranstaltungen automatisch zu kennzeichnen',
+      tagRuleManager: {
+        creating: 'Regel erstellen',
+        updating: 'Regel aktualisieren',
+        creatingDesc: 'Neue Tag-Regel wird hinzugefügt...',
+        updatingDesc: 'Tag-Regel wird aktualisiert...',
+        noTagsAvailable: 'Keine Tags verfügbar. Erstellen Sie zuerst einige Tags, um Tag-Regeln einzurichten.',
+        toasts: {
+          ruleCreated: 'Tag-Regel erstellt!',
+          ruleUpdated: 'Tag-Regel aktualisiert!',
+          ruleDeleted: 'Tag-Regel gelöscht!',
+          ruleCreatedDesc: '{count} von {total} Veranstaltungen wurden mit Ihrer neuen Regel neu getaggt.',
+          ruleUpdatedDesc: '{count} von {total} Veranstaltungen wurden mit Ihrer aktualisierten Regel neu getaggt.',
+          ruleDeletedDesc: '{count} von {total} Veranstaltungen wurden nach dem Entfernen der Regel neu getaggt.',
+          applyError: 'Fehler beim Anwenden der neuen Tag-Regel',
+          applyErrorDesc: 'Die Regel wurde erstellt, konnte aber nicht auf bestehende Veranstaltungen angewendet werden.',
+          updateError: 'Fehler beim Anwenden der aktualisierten Tag-Regel',
+          updateErrorDesc: 'Die Regel wurde aktualisiert, konnte aber nicht auf bestehende Veranstaltungen angewendet werden.',
+          deleteError: 'Fehler beim Anwenden der Tag-Änderungen',
+          deleteErrorDesc: 'Die Regel wurde gelöscht, aber Änderungen konnten nicht auf bestehende Veranstaltungen angewendet werden.'
+        }
+      },
+      tagLibraryComponent: {
+        creating: 'Tag wird erstellt...',
+        updating: 'Tag wird aktualisiert...',
+        deleting: 'Tag wird gelöscht...',
+        noTagsFound: 'Keine Tags gefunden. Erstellen Sie Ihren ersten Tag!',
+        globalTags: 'Globale Tags',
+        customTags: 'Ihre benutzerdefinierten Tags',
+        noCustomTags: 'Noch keine benutzerdefinierten Tags',
+        createFirstCustomTag: 'Erstellen Sie Ihren ersten benutzerdefinierten Tag, um loszulegen',
+        unnamedTag: 'Unbenannter Tag',
+        moreItems: '+{count} weitere'
+      },
+      tagRules: {
+        title: 'Tag-Regeln',
+        createRule: 'Regel erstellen',
+        activeRules: 'Aktive Regeln',
+        pending: ' + 1 ausstehend',
+        inTitleDescription: 'in Titel/Beschreibung',
+        inLocation: 'in Standort',
+        inTitleDescriptionLegacy: 'in Titel oder Beschreibung (Legacy)',
+        applies: 'gilt',
+        unknownTag: 'Unbekannter Tag',
+        noRulesConfigured: 'Keine Tag-Regeln konfiguriert',
+        createFirstRuleDesc: 'Erstellen Sie Ihre erste Regel, um Veranstaltungen automatisch basierend auf Stichwörtern zu taggen'
+      },
+      tagRuleForm: {
+        editTitle: 'Tag-Regel bearbeiten',
+        createTitle: 'Tag-Regel erstellen',
+        editDescription: 'Aktualisieren Sie diese Regel, um zu ändern, wie Veranstaltungen automatisch getaggt werden.',
+        createDescription: 'Erstellen Sie eine neue Regel, um Veranstaltungen automatisch basierend auf Stichwörtern in ihrem Titel, ihrer Beschreibung oder ihrem Standort zu taggen.',
+        cancel: 'Abbrechen',
+        updating: 'Wird aktualisiert...',
+        creating: 'Wird erstellt...',
+        updateRule: 'Regel aktualisieren',
+        createRule: 'Regel erstellen',
+        keywordsLabel: 'Stichwörter (Titel/Beschreibung)',
+        keywordsPlaceholder: 'z.B. Flow, Vinyasa, Meditation',
+        keywordsHelp: 'Diese Stichwörter in Veranstaltungstiteln oder -beschreibungen abgleichen (max. 5)',
+        locationLabel: 'Standort-Stichwörter',
+        locationPlaceholder: 'z.B. Studio A, Flow-Raum, Haupthalle',
+        locationHelp: 'Diese Stichwörter in Veranstaltungsstandorten abgleichen (max. 5)',
+        selectTag: 'Tag auswählen',
+        selectTagPlaceholder: 'Tag auswählen...',
+        tagHelp: 'Veranstaltungen, die den Stichwörtern entsprechen, werden mit diesem Tag versehen',
+        howItWorksTitle: 'Wie Tag-Regeln funktionieren',
+        howItWorksBullets: {
+          autoTag: '• Veranstaltungen werden automatisch getaggt, wenn sie einem der angegebenen Stichwörter entsprechen',
+          titleSearch: '• Titel/Beschreibung-Stichwörter suchen in Veranstaltungstiteln und -beschreibungen',
+          locationSearch: '• Standort-Stichwörter suchen nur in Veranstaltungsstandorten',
+          required: '• Mindestens ein Stichwort-Typ ist erforderlich',
+          immediate: '• Änderungen werden sofort auf bestehende Veranstaltungen angewendet'
+        }
+      }
+    }
+  },
   seo: {
     home: {
       title: 'SyncIt - Schöne Yoga-Terminplanung Plattform',
