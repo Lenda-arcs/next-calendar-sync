@@ -63,7 +63,7 @@ export default function LandingPage() {
           </h2>
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <Button asChild size="lg" className="text-lg px-8 py-4">
-                                <Link href="mailto:hello@avara.app?subject=Beta%20Access%20Request">Request Beta Access</Link>
+                                <Link href="mailto:hello@avara.studio?subject=Beta%20Access%20Request">Request Beta Access</Link>
             </Button>
             <Button asChild variant="outline" size="lg" className="text-lg px-8 py-4">
               <Link href="#featured">See Example</Link>
@@ -177,7 +177,7 @@ export default function LandingPage() {
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
                 <Button asChild size="lg" className="text-lg px-8 py-4">
-                  <Link href="mailto:hello@avara.app?subject=Beta%20Access%20Request">Request Beta Access</Link>
+                  <Link href="mailto:hello@avara.studio?subject=Beta%20Access%20Request">Request Beta Access</Link>
                 </Button>
                 <Button asChild variant="outline" size="lg" className="text-lg px-8 py-4">
                   <Link href={PATHS.AUTH.SIGN_IN}>Sign In</Link>

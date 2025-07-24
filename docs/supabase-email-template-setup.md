@@ -11,13 +11,13 @@
 Replace the default template with this customized version:
 
 ```html
-<h2>Welcome to Calendar Sync!</h2>
+<h2>Welcome to avara.!</h2>
 
 <p>Hi there,</p>
 
-<p>Thanks for signing up for Calendar Sync! We're excited to help you manage your yoga classes and calendar events.</p>
+<p>Thanks for signing up for avara.! We're excited to help you manage your yoga classes and calendar events.</p>
 
-<p>To complete your registration and start using Calendar Sync, please confirm your email address by clicking the button below:</p>
+<p>To complete your registration and start using avara., please confirm your email address by clicking the button below:</p>
 
 <div style="text-align: center; margin: 30px 0;">
   <a href="{{ .ConfirmationURL }}" 
@@ -36,14 +36,14 @@ Replace the default template with this customized version:
   <li>✅ Start managing your schedule effortlessly</li>
 </ul>
 
-<p>If you didn't create an account with Calendar Sync, you can safely ignore this email.</p>
+<p>If you didn't create an account with avara., you can safely ignore this email.</p>
 
 <p>Best regards,<br>
-The Calendar Sync Team</p>
+The avara. Team</p>
 
 <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
 <p style="font-size: 12px; color: #6b7280;">
-  This email was sent from Calendar Sync. If you have any questions, please contact us at support@calendarsync.com
+  This email was sent from avara. If you have any questions, please contact us at support@avara.studio
 </p>
 ```
 

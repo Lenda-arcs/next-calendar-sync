@@ -395,7 +395,7 @@ export function generateOrganizationStructuredData(language: Language = DEFAULT_
     contactPoint: {
       '@type': 'ContactPoint',
       contactType: 'customer service',
-      email: 'support@avara.app'
+              email: 'support@avara.studio'
     },
     sameAs: [
       'https://twitter.com/avarayoga',

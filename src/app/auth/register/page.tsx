@@ -56,7 +56,7 @@ export default async function RegisterPage() {
               <Link href={PATHS.AUTH.SIGN_IN}>Sign In</Link>
             </Button>
             <Button asChild variant="outline" size="lg">
-              <Link href="mailto:hello@avara.app?subject=Beta%20Access%20Request">
+              <Link href="mailto:hello@avara.studio?subject=Beta%20Access%20Request">
                 Request Beta Access
               </Link>
             </Button>
