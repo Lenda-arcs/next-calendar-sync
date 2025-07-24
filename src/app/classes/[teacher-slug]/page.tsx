@@ -31,7 +31,13 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   const teacherName = profile?.name || 'Yoga Teacher'
   
-  return generateTeacherScheduleMetadata(teacherName, teacherSlug, undefined, undefined)
+  return generateTeacherScheduleMetadata(
+    teacherName, 
+    teacherSlug, 
+    undefined, 
+    undefined, 
+    profile?.profile_image_url
+  )
 }
 
 export default async function PublicSchedulePage({ params }: PageProps) {
@@ -59,7 +65,9 @@ export default async function PublicSchedulePage({ params }: PageProps) {
     teacherSlug,
     teacherBio,
     undefined, // location not available in profile
-    teacherSpecialties
+    teacherSpecialties,
+    undefined, // use default language
+    profile?.profile_image_url
   )
 
   return (

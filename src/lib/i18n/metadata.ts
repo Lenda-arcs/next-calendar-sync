@@ -239,7 +239,8 @@ export async function generateTeacherScheduleMetadata(
   teacherName: string,
   teacherSlug: string,
   language?: Language,
-  location?: string
+  location?: string,
+  profileImageUrl?: string | null
 ): Promise<Metadata> {
   const currentLanguage = language || await getCurrentLanguage()
   const variables = {
@@ -247,9 +248,13 @@ export async function generateTeacherScheduleMetadata(
     location: location || `${teacherName}'s Studio`
   }
   
+  // Use profile image if available, otherwise fallback to dummy logo
+  const baseURL = process.env.NEXT_PUBLIC_APP_URL || 'https://yoga-sync.com'
+  const imageUrl = profileImageUrl || `${baseURL}/dummy_logo.png`
+  
   const images = [
     {
-      url: `/api/og/teacher/${teacherSlug}`,
+      url: imageUrl,
       width: 1200,
       height: 630,
       alt: `${teacherName} - Yoga Class Schedule`
@@ -258,10 +263,10 @@ export async function generateTeacherScheduleMetadata(
   
   return generateSEOMetadata({
     page: 'teacherSchedule',
-          language: currentLanguage,
-      variables,
-      basePath: PATHS.DYNAMIC.TEACHER_SCHEDULE(teacherSlug),
-      images
+    language: currentLanguage,
+    variables,
+    basePath: PATHS.DYNAMIC.TEACHER_SCHEDULE(teacherSlug),
+    images
   })
 }
 
@@ -304,19 +309,23 @@ export function generateYogaInstructorStructuredData(
   bio?: string,
   location?: string,
   specialties?: string[],
-  language: Language = DEFAULT_LANGUAGE
+  language: Language = DEFAULT_LANGUAGE,
+  profileImageUrl?: string | null
 ) {
   const baseURL = process.env.NEXT_PUBLIC_APP_URL || 'https://yoga-sync.com'
+  
+  // Use profile image if available, otherwise fallback to dummy logo
+  const imageUrl = profileImageUrl || `${baseURL}/dummy_logo.png`
   
   return {
     '@context': 'https://schema.org',
     '@type': 'Person',
-          '@id': `${baseURL}${PATHS.DYNAMIC.TEACHER_SCHEDULE(teacherSlug)}#person`,
+    '@id': `${baseURL}${PATHS.DYNAMIC.TEACHER_SCHEDULE(teacherSlug)}#person`,
     name: teacherName,
     jobTitle: language === 'de' ? 'Yoga-Lehrer' : language === 'es' ? 'Instructor de Yoga' : 'Yoga Instructor',
     description: bio,
-          url: `${baseURL}${PATHS.DYNAMIC.TEACHER_SCHEDULE(teacherSlug)}`,
-    image: `${baseURL}/api/og/teacher/${teacherSlug}`,
+    url: `${baseURL}${PATHS.DYNAMIC.TEACHER_SCHEDULE(teacherSlug)}`,
+    image: imageUrl,
     sameAs: [],
     knowsAbout: specialties,
     worksFor: {
