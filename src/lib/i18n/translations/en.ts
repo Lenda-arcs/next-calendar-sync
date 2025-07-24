@@ -998,42 +998,42 @@ const translations: Translations = {
   },
   seo: {
     home: {
-      title: 'SyncIt - Beautiful Yoga Schedule Management Platform',
+      title: 'avara. - Beautiful Yoga Schedule Management Platform',
       description: 'Connect your calendar and create beautiful shareable schedules for your yoga classes. Trusted by 500+ yoga instructors worldwide. Free to start.',
       keywords: 'yoga schedule, calendar sync, class management, instructor platform, yoga teacher, schedule sharing, calendar integration'
     },
     dashboard: {
-      title: 'Dashboard - Manage Your Yoga Schedule | SyncIt',
+      title: 'Dashboard - Manage Your Yoga Schedule | avara.',
       description: 'Manage your yoga classes, calendar feeds, and share your schedule with students. View upcoming classes, manage events, and track your teaching schedule.',
       keywords: 'yoga dashboard, class management, schedule management, instructor dashboard, calendar management'
     },
     profile: {
-      title: 'Profile Settings - Customize Your Yoga Profile | SyncIt',
+      title: 'Profile Settings - Customize Your Yoga Profile | avara.',
       description: 'Customize your public yoga instructor profile. Add your bio, specialties, contact information, and create a beautiful page for your students.',
       keywords: 'yoga profile, instructor profile, yoga teacher profile, public profile, yoga bio'
     },
     addCalendar: {
-      title: 'Add Calendar - Connect Your Yoga Schedule | SyncIt',
+      title: 'Add Calendar - Connect Your Yoga Schedule | avara.',
       description: 'Connect your Google Calendar, iCloud, or any calendar feed to automatically sync your yoga classes. Easy setup in under 2 minutes.',
       keywords: 'calendar sync, Google calendar, iCloud sync, calendar integration, yoga calendar'
     },
     manageEvents: {
-      title: 'Manage Events - Your Yoga Classes | SyncIt',
+      title: 'Manage Events - Your Yoga Classes | avara.',
       description: 'View and manage all your yoga classes and events. Edit class details, add tags, and organize your teaching schedule.',
       keywords: 'yoga events, class management, event management, yoga schedule, class organization'
     },
     manageTags: {
-      title: 'Manage Tags - Organize Your Yoga Classes | SyncIt',
+      title: 'Manage Tags - Organize Your Yoga Classes | avara.',
       description: 'Create and manage tags for your yoga classes. Automatically categorize classes by type, level, and location.',
       keywords: 'yoga tags, class categories, yoga class types, event organization, class labeling'
     },
     studios: {
-      title: 'Studios - Your Teaching Locations | SyncIt',
+      title: 'Studios - Your Teaching Locations | avara.',
       description: 'Manage your yoga studio relationships and teaching locations. Connect with studios and track your teaching opportunities.',
       keywords: 'yoga studios, teaching locations, studio management, yoga teacher network'
     },
     invoices: {
-      title: 'Invoices - Yoga Teaching Income Management | SyncIt',
+      title: 'Invoices - Yoga Teaching Income Management | avara.',
       description: 'Generate professional invoices for your yoga teaching. Track income, create billing reports, and manage your teaching revenue.',
       keywords: 'yoga invoices, teaching income, yoga billing, instructor payments, teaching revenue'
     },
@@ -1044,24 +1044,24 @@ const translations: Translations = {
     },
     auth: {
       signIn: {
-        title: 'Sign In - Access Your Yoga Dashboard | SyncIt',
-        description: 'Sign in to your SyncIt account to manage your yoga schedule, calendar feeds, and share your classes with students.',
+            title: 'Sign In - Access Your Yoga Dashboard | avara.',
+    description: 'Sign in to your avara. account to manage your yoga schedule, calendar feeds, and share your classes with students.',
         keywords: 'sign in, login, yoga dashboard, instructor login, account access'
       },
       signUp: {
-        title: 'Create Account - Start Your Yoga Schedule | SyncIt',
-        description: 'Create your free SyncIt account and start sharing your yoga schedule with students. Connect your calendar and build your online presence.',
+            title: 'Create Account - Start Your Yoga Schedule | avara.',
+    description: 'Create your free avara. account and start sharing your yoga schedule with students. Connect your calendar and build your online presence.',
         keywords: 'create account, sign up, yoga instructor, free account, schedule sharing'
       }
     },
     errors: {
       notFound: {
-        title: 'Page Not Found - SyncIt',
+        title: 'Page Not Found - avara.',
         description: 'The page you are looking for could not be found. Return to your yoga schedule dashboard or browse our yoga instructor platform.',
         keywords: 'page not found, 404, yoga schedule, instructor platform'
       },
       serverError: {
-        title: 'Server Error - SyncIt',
+        title: 'Server Error - avara.',
         description: 'We are experiencing technical difficulties. Please try again later or contact support for assistance with your yoga schedule.',
         keywords: 'server error, technical support, yoga platform support'
       }

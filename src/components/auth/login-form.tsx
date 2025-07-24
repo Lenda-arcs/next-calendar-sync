@@ -237,12 +237,12 @@ export function LoginForm({ redirectTo = '/app', className }: LoginFormProps) {
       </Form>
 
       <div className="mt-6 text-center text-sm">
-        <span className="text-muted-foreground">Don&apos;t have an account? </span>
+        <span className="text-muted-foreground">Need access? </span>
         <Link 
-          href="/auth/register"
+          href="mailto:hello@avara.app?subject=Beta%20Access%20Request"
           className="text-primary hover:text-primary/80 font-medium transition-colors"
         >
-          Sign up here
+          Request beta access
         </Link>
       </div>
     </div>

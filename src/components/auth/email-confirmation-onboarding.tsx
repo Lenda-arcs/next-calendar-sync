@@ -90,7 +90,7 @@ export function EmailConfirmationOnboarding({
               <div>
                 <p className="font-medium">Check your inbox</p>
                 <p className="text-sm text-muted-foreground">
-                  Look for an email from Calendar Sync with the subject &quot;Confirm your email&quot;
+                  Look for an email from avara. with the subject &quot;Confirm your email&quot;
                 </p>
               </div>
             </div>

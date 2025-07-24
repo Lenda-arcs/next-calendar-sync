@@ -101,7 +101,7 @@ export async function generateSEOMetadata(options: MetadataOptions): Promise<Met
       title,
       description,
       url: fullURL,
-      siteName: 'SyncIt',
+      siteName: 'avara.',
       locale: getLocaleString(language),
       type: 'website',
       images: ogImages
@@ -116,7 +116,7 @@ export async function generateSEOMetadata(options: MetadataOptions): Promise<Met
     },
     
     // Additional metadata
-    authors: [{ name: 'SyncIt Team' }],
+    authors: [{ name: 'avara. Team' }],
     category: 'Health & Fitness',
     
     // Language and locale
@@ -320,7 +320,7 @@ export function generateYogaInstructorStructuredData(
     knowsAbout: specialties,
     worksFor: {
       '@type': 'Organization',
-      name: 'SyncIt',
+      name: 'avara.',
       url: baseURL
     },
     ...(location && {
@@ -375,7 +375,7 @@ export function generateYogaClassStructuredData(
 }
 
 /**
- * Generate structured data for the SyncIt organization
+ * Generate structured data for the avara. organization
  */
 export function generateOrganizationStructuredData(language: Language = DEFAULT_LANGUAGE) {
   const baseURL = process.env.NEXT_PUBLIC_APP_URL || 'https://yoga-sync.com'
@@ -384,7 +384,7 @@ export function generateOrganizationStructuredData(language: Language = DEFAULT_
     '@context': 'https://schema.org',
     '@type': 'Organization',
     '@id': `${baseURL}#organization`,
-    name: 'SyncIt',
+    name: 'avara.',
     url: baseURL,
     logo: `${baseURL}/logo.png`,
     description: language === 'de' 
@@ -395,12 +395,12 @@ export function generateOrganizationStructuredData(language: Language = DEFAULT_
     contactPoint: {
       '@type': 'ContactPoint',
       contactType: 'customer service',
-      email: 'support@syncit.com'
+      email: 'support@avara.app'
     },
     sameAs: [
-      'https://twitter.com/syncityoga',
-      'https://facebook.com/syncityoga',
-      'https://instagram.com/syncityoga'
+      'https://twitter.com/avarayoga',
+      'https://facebook.com/avarayoga',
+      'https://instagram.com/avarayoga'
     ],
     foundingDate: '2024',
     numberOfEmployees: '1-10',
