@@ -11,6 +11,7 @@ import { convertEventToCardProps } from '@/lib/event-utils'
 import { ExternalLink, Instagram, Globe } from 'lucide-react'
 import { createServerClient } from '@/lib/supabase-server'
 import { Tag } from '@/lib/types'
+import { PATHS } from '@/lib/paths'
 
 interface FeaturedTeacherProps {
   data: FeaturedTeacherData
@@ -139,7 +140,7 @@ export async function FeaturedTeacher({ data }: FeaturedTeacherProps) {
               </p>
               <Button asChild size="lg">
                 <Link 
-                  href={`/schedule/${teacher.public_url}`}
+                  href={PATHS.DYNAMIC.TEACHER_SCHEDULE(teacher.public_url)}
                   className="inline-flex items-center gap-2"
                 >
                   View Full Schedule

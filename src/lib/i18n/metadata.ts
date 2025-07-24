@@ -9,6 +9,7 @@ import {
   generateLanguageAlternates,
   getServerLanguageSafe
 } from './server'
+import { PATHS } from '@/lib/paths'
 
 export interface MetadataOptions {
   page: string
@@ -257,10 +258,10 @@ export async function generateTeacherScheduleMetadata(
   
   return generateSEOMetadata({
     page: 'teacherSchedule',
-    language: currentLanguage,
-    variables,
-    basePath: `/schedule/${teacherSlug}`,
-    images
+          language: currentLanguage,
+      variables,
+      basePath: PATHS.DYNAMIC.TEACHER_SCHEDULE(teacherSlug),
+      images
   })
 }
 
@@ -310,11 +311,11 @@ export function generateYogaInstructorStructuredData(
   return {
     '@context': 'https://schema.org',
     '@type': 'Person',
-    '@id': `${baseURL}/schedule/${teacherSlug}#person`,
+          '@id': `${baseURL}${PATHS.DYNAMIC.TEACHER_SCHEDULE(teacherSlug)}#person`,
     name: teacherName,
     jobTitle: language === 'de' ? 'Yoga-Lehrer' : language === 'es' ? 'Instructor de Yoga' : 'Yoga Instructor',
     description: bio,
-    url: `${baseURL}/schedule/${teacherSlug}`,
+          url: `${baseURL}${PATHS.DYNAMIC.TEACHER_SCHEDULE(teacherSlug)}`,
     image: `${baseURL}/api/og/teacher/${teacherSlug}`,
     sameAs: [],
     knowsAbout: specialties,
@@ -362,14 +363,14 @@ export function generateYogaClassStructuredData(
     organizer: {
       '@type': 'Person',
       name: teacherName,
-      url: `${baseURL}/schedule/${teacherSlug}`
+      url: `${baseURL}${PATHS.DYNAMIC.TEACHER_SCHEDULE(teacherSlug)}`
     },
     offers: {
       '@type': 'Offer',
       availability: 'https://schema.org/InStock',
       price: '0',
       priceCurrency: 'USD',
-      url: `${baseURL}/schedule/${teacherSlug}`
+      url: `${baseURL}${PATHS.DYNAMIC.TEACHER_SCHEDULE(teacherSlug)}`
     }
   }
 }

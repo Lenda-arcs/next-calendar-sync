@@ -13,7 +13,7 @@ This application is a web-based platform for **yoga teachers and movement instru
 - Small studios or collectives
 
 ## 💡 Core Use Case
-Teachers connect their personal calendar (via .ics feed or manual input). The system parses and displays their upcoming classes on a **shareable public page**, such as `/schedule/[teacher-slug]`.
+Teachers connect their personal calendar (via .ics feed or manual input). The system parses and displays their upcoming classes on a **shareable public page**, such as `/classes/[teacher-slug]`.
 
 ## 🔐 Authenticated Features
 Teachers log in to manage:

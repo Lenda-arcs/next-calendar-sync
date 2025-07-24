@@ -19,6 +19,7 @@ import { useSupabaseUpdate } from '@/lib/hooks/useSupabaseMutation'
 import ImageUpload from '@/components/ui/image-upload'
 import { YogaStylesSelect } from '@/components/ui/yoga-styles-select'
 import { cn, urlValidation } from '@/lib/utils'
+import { PATHS } from '@/lib/paths'
 
 interface ProfileFormProps {
   user: User
@@ -261,8 +262,8 @@ export function ProfileForm({ user, onUpdate }: ProfileFormProps) {
 
   // Update public URL preview
   useEffect(() => {
-    if (values.public_url && typeof window !== 'undefined') {
-      setPublicUrlPreview(`${window.location.origin}/schedule/${values.public_url}`)
+    if (values.public_url && typeof values.public_url === 'string' && typeof window !== 'undefined') {
+              setPublicUrlPreview(`${window.location.origin}${PATHS.DYNAMIC.TEACHER_SCHEDULE(values.public_url)}`)
     } else {
       setPublicUrlPreview('')
     }

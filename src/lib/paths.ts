@@ -30,7 +30,7 @@ export const PATHS = {
 
   // Dynamic routes
   DYNAMIC: {
-    TEACHER_SCHEDULE: (slug: string) => `/schedule/${slug}`,
+    TEACHER_SCHEDULE: (slug: string) => `/classes/${slug}`,
   },
 
   // Test routes (development)

@@ -2,6 +2,7 @@ import { createServerClient } from '@/lib/supabase-server'
 import { getUserCalendarFeeds } from '@/lib/calendar-feeds'
 import DashboardContent from './DashboardContent'
 import { generateDashboardMetadata } from '@/lib/i18n/metadata'
+import { PATHS } from '@/lib/paths'
 import type { Metadata } from 'next'
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -37,10 +38,10 @@ export default async function DashboardPage() {
   const hasFeeds = userFeedCount > 0
   const feeds = calendarFeeds || []
 
-  // Generate public schedule URL
-  const publicPath = user?.public_url ?
-      `/schedule/${user.public_url}`
-    : null
+      // Generate public schedule URL
+    const publicPath = user?.public_url ?
+        PATHS.DYNAMIC.TEACHER_SCHEDULE(user.public_url)
+      : null
   const hasCustomUrl = !!user?.public_url
 
   return (

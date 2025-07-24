@@ -65,7 +65,7 @@ export default async function RegisterPage() {
           <div className="pt-4 border-t border-border/50">
             <p className="text-sm text-foreground/60">
               Want to see how it works? Check out our{' '}
-              <Link href="/schedule/demo" className="text-primary hover:text-primary/80 font-medium">
+              <Link href={PATHS.DYNAMIC.TEACHER_SCHEDULE('demo')} className="text-primary hover:text-primary/80 font-medium">
                 example schedule page
               </Link>
             </p>

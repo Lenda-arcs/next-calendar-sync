@@ -14,6 +14,7 @@ import { ExportPreview } from '@/components/schedule/ExportPreview'
 import { ExportOptionsDialog } from '@/components/schedule/ExportOptionsDialog'
 import { ShareDialog } from '@/components/schedule/ShareDialog'
 import { useTranslation } from '@/lib/i18n/context'
+import { PATHS } from '@/lib/paths'
 
 interface TeacherHeroContentProps {
   teacherProfile: PublicProfile
@@ -42,7 +43,7 @@ export default function TeacherHeroContent({
   const { t } = useTranslation()
 
   // Generate the share URL
-  const shareUrl = teacherSlug ? `${origin}/schedule/${teacherSlug}` : (typeof window !== 'undefined' ? window.location.href : '')
+  const shareUrl = teacherSlug ? `${origin}${PATHS.DYNAMIC.TEACHER_SCHEDULE(teacherSlug)}` : (typeof window !== 'undefined' ? window.location.href : '')
 
   const handleExportClick = () => {
     setShowExportDialog(true)
