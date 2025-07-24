@@ -4,6 +4,7 @@ import "./globals.css";
 import SupabaseProvider from '@/components/providers/supabase-provider'
 import { LanguageProvider } from '@/lib/i18n/context'
 import { Toaster } from "@/components/ui/sonner"
+import { CookieNotice } from "@/components/ui/cookie-notice"
 import { generateHomeMetadata } from '@/lib/i18n/metadata'
 
 const dmSerifDisplay = DM_Serif_Display({
@@ -36,6 +37,7 @@ export default function RootLayout({
         {children}
         </SupabaseProvider>
         <Toaster />
+        <CookieNotice />
         </LanguageProvider>
       </body>
     </html>
