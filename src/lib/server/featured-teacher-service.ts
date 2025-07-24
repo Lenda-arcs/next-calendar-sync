@@ -19,16 +19,14 @@ export async function getFeaturedTeacher(): Promise<FeaturedTeacherData | null> 
   try {
     const supabase = await createServerClient()
     
-    // Get the featured teacher
+    // Get the featured teacher from public_profiles view
     const { data: featuredUser, error: userError } = await supabase
-      .from('users')
+      .from('public_profiles')
       .select('id, name, bio, profile_image_url, public_url, yoga_styles, instagram_url, website_url')
       .eq('is_featured', true)
-      .not('public_url', 'is', null)
-      .not('name', 'is', null)
       .single()
 
-    if (userError || !featuredUser) {
+    if (userError || !featuredUser || !featuredUser.id || !featuredUser.name || !featuredUser.public_url) {
       return null
     }
 
@@ -37,7 +35,7 @@ export async function getFeaturedTeacher(): Promise<FeaturedTeacherData | null> 
     const { data: events, error: eventsError } = await supabase
       .from('public_events')
       .select('*')
-      .eq('user_id', featuredUser.id)
+      .eq('user_id', featuredUser.id as string)
       .gte('start_time', now)
       .order('start_time', { ascending: true })
       .limit(10)
@@ -54,11 +52,11 @@ export async function getFeaturedTeacher(): Promise<FeaturedTeacherData | null> 
 
     return {
       teacher: {
-        id: featuredUser.id,
-        name: featuredUser.name!,
+        id: featuredUser.id as string,
+        name: featuredUser.name as string, // Safe due to null check above
         bio: featuredUser.bio,
         profile_image_url: featuredUser.profile_image_url,
-        public_url: featuredUser.public_url!,
+        public_url: featuredUser.public_url as string, // Safe due to null check above
         yoga_styles: featuredUser.yoga_styles,
         instagram_url: featuredUser.instagram_url,
         website_url: featuredUser.website_url,
