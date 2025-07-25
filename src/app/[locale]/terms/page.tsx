@@ -7,7 +7,7 @@ import {
   CompanyInfo, 
   ContactCard 
 } from '@/components/legal'
-import { getValidLocale } from '@/lib/i18n/config'
+import { getValidLocale, getTranslations, createTranslator } from '@/lib/i18n/config'
 import type { Metadata } from 'next'
 
 interface TermsPageProps {
@@ -18,14 +18,12 @@ export async function generateMetadata({ params }: TermsPageProps): Promise<Meta
   const { locale: localeParam } = await params
   const locale = getValidLocale(localeParam)
   
-  // You can add locale-specific SEO metadata here if needed
+  const translations = await getTranslations(locale)
+  const t = createTranslator(translations)
+  
   return {
-    title: locale === 'de' ? 'Allgemeine Geschäftsbedingungen - avara.' : 
-           locale === 'es' ? 'Términos y Condiciones - avara.' : 
-           'Terms and Conditions - avara.',
-    description: locale === 'de' ? 'Nutzungsbedingungen der avara-Plattform für Yoga-Lehrerinnen und -Lehrer.' :
-                 locale === 'es' ? 'Términos y condiciones de la plataforma avara para profesores de yoga.' :
-                 'Terms and conditions for the avara platform for yoga instructors.'
+    title: t('terms.title') + ' - avara.',
+    description: t('terms.description')
   }
 }
 
@@ -33,8 +31,9 @@ export default async function TermsPage({ params }: TermsPageProps) {
   const { locale: localeParam } = await params
   const locale = getValidLocale(localeParam)
   
-  // Note: This page is currently German-only legal content
-  // Translations could be added later if needed
+  // Load translations server-side
+  const translations = await getTranslations(locale)
+  const t = createTranslator(translations)
   
   // Create localized privacy link
   const privacyPath = locale === 'en' ? '/privacy' : `/${locale}/privacy`
@@ -43,9 +42,9 @@ export default async function TermsPage({ params }: TermsPageProps) {
     <LegalPageLayout>
       <LegalPageHeader
         icon={Scale}
-        title="Allgemeine Geschäftsbedingungen"
-        description="Diese Nutzungsbedingungen regeln die Verwendung der avara-Plattform für Yoga-Lehrerinnen und -Lehrer."
-        lastUpdated="1. Januar 2024"
+        title={t('terms.title')}
+        description={t('terms.description')}
+        lastUpdated={t('terms.lastUpdated')}
       />
 
       <div className="space-y-8">
@@ -54,19 +53,18 @@ export default async function TermsPage({ params }: TermsPageProps) {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <FileText className="h-5 w-5" />
-              1. Anbieter und Geltungsbereich
+              {t('terms.sections.provider.title')}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <h4 className="font-semibold mb-2">1.1 Anbieter</h4>
+              <h4 className="font-semibold mb-2">{t('terms.sections.provider.provider.title')}</h4>
               <CompanyInfo />
             </div>
             <div>
-              <h4 className="font-semibold mb-2">1.2 Geltungsbereich</h4>
+              <h4 className="font-semibold mb-2">{t('terms.sections.provider.scope.title')}</h4>
               <p className="text-foreground/80">
-                Diese Allgemeinen Geschäftsbedingungen (AGB) gelten für alle Leistungen der avara-Plattform. 
-                Mit der Registrierung und Nutzung unserer Dienste erkennen Sie diese AGB als verbindlich an.
+                {t('terms.sections.provider.scope.description')}
               </p>
             </div>
           </CardContent>
@@ -75,28 +73,24 @@ export default async function TermsPage({ params }: TermsPageProps) {
         {/* 2. Leistungsbeschreibung */}
         <Card variant="glass">
           <CardHeader>
-            <CardTitle>2. Leistungsbeschreibung</CardTitle>
+            <CardTitle>{t('terms.sections.services.title')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <h4 className="font-semibold mb-2">2.1 Plattform-Dienste</h4>
+              <h4 className="font-semibold mb-2">{t('terms.sections.services.platform.title')}</h4>
               <p className="text-foreground/80 mb-3">
-                avara stellt eine webbasierte Plattform zur Verfügung, die Yoga-Lehrenden folgende Funktionen bietet:
+                {t('terms.sections.services.platform.description')}
               </p>
               <ul className="list-disc list-inside space-y-1 text-foreground/80">
-                <li>Kalender-Synchronisation mit externen Kalenderdiensten</li>
-                <li>Erstellung und Verwaltung öffentlicher Klassenseiten</li>
-                <li>Automatische Kategorisierung und Tag-Verwaltung</li>
-                <li>Rechnungserstellung und Abrechnungsfunktionen</li>
-                <li>Profil- und Kontaktverwaltung</li>
-                <li>Studio-Integration und Standort-Verwaltung</li>
+                {translations.terms.sections.services.platform.features.map((feature: string, index: number) => (
+                  <li key={index}>{feature}</li>
+                ))}
               </ul>
             </div>
             <div>
-              <h4 className="font-semibold mb-2">2.2 Beta-Status</h4>
+              <h4 className="font-semibold mb-2">{t('terms.sections.services.beta.title')}</h4>
               <p className="text-foreground/80">
-                Die Plattform befindet sich derzeit im geschlossenen Beta-Stadium. Funktionen können sich ändern, 
-                und der Zugang ist auf ausgewählte Nutzer beschränkt.
+                {t('terms.sections.services.beta.description')}
               </p>
             </div>
           </CardContent>
@@ -105,30 +99,27 @@ export default async function TermsPage({ params }: TermsPageProps) {
         {/* 3. Registrierung und Nutzerkonto */}
         <Card variant="glass">
           <CardHeader>
-            <CardTitle>3. Registrierung und Nutzerkonto</CardTitle>
+            <CardTitle>{t('terms.sections.registration.title')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <h4 className="font-semibold mb-2">3.1 Voraussetzungen</h4>
+              <h4 className="font-semibold mb-2">{t('terms.sections.registration.requirements.title')}</h4>
               <ul className="list-disc list-inside space-y-1 text-foreground/80">
-                <li>Mindestalter: 18 Jahre</li>
-                <li>Gültige E-Mail-Adresse</li>
-                <li>Tätigkeit als Yoga-Lehrerin oder -Lehrer</li>
-                <li>Einwilligung zu diesen AGB und der Datenschutzerklärung</li>
+                {translations.terms.sections.registration.requirements.items.map((item: string, index: number) => (
+                  <li key={index}>{item}</li>
+                ))}
               </ul>
             </div>
             <div>
-              <h4 className="font-semibold mb-2">3.2 Kontosicherheit</h4>
+              <h4 className="font-semibold mb-2">{t('terms.sections.registration.security.title')}</h4>
               <p className="text-foreground/80">
-                Sie sind verpflichtet, Ihre Zugangsdaten vertraulich zu behandeln und uns unverzüglich über 
-                verdächtige Aktivitäten oder Sicherheitsverletzungen zu informieren.
+                {t('terms.sections.registration.security.description')}
               </p>
             </div>
             <div>
-              <h4 className="font-semibold mb-2">3.3 Konto-Kündigung</h4>
+              <h4 className="font-semibold mb-2">{t('terms.sections.registration.termination.title')}</h4>
               <p className="text-foreground/80">
-                Sie können Ihr Konto jederzeit löschen. Wir behalten uns das Recht vor, Konten bei Verstößen 
-                gegen diese AGB zu sperren oder zu löschen.
+                {t('terms.sections.registration.termination.description')}
               </p>
             </div>
           </CardContent>
@@ -137,26 +128,23 @@ export default async function TermsPage({ params }: TermsPageProps) {
         {/* 4. Nutzerpflichten */}
         <Card variant="glass">
           <CardHeader>
-            <CardTitle>4. Nutzerpflichten und Verbote</CardTitle>
+            <CardTitle>{t('terms.sections.obligations.title')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <h4 className="font-semibold mb-2">4.1 Erlaubte Nutzung</h4>
+              <h4 className="font-semibold mb-2">{t('terms.sections.obligations.permitted.title')}</h4>
               <ul className="list-disc list-inside space-y-1 text-foreground/80">
-                <li>Ausschließlich für eigene Yoga-Klassen und -Kurse</li>
-                <li>Wahrheitsgemäße Angaben in Profil und Klassenbeschreibungen</li>
-                <li>Respektvoller Umgang mit der Plattform und anderen Nutzern</li>
-                <li>Einhaltung aller geltenden Gesetze</li>
+                {translations.terms.sections.obligations.permitted.items.map((item: string, index: number) => (
+                  <li key={index}>{item}</li>
+                ))}
               </ul>
             </div>
             <div>
-              <h4 className="font-semibold mb-2">4.2 Verbotene Aktivitäten</h4>
+              <h4 className="font-semibold mb-2">{t('terms.sections.obligations.prohibited.title')}</h4>
               <ul className="list-disc list-inside space-y-1 text-foreground/80">
-                <li>Hochladen rechtsverletzender, beleidigender oder schädlicher Inhalte</li>
-                <li>Verletzung von Urheberrechten oder anderen Rechten Dritter</li>
-                <li>Spam, automatisierte Anfragen oder Missbrauch der Dienste</li>
-                <li>Reverse Engineering oder Sicherheitstests ohne Genehmigung</li>
-                <li>Kommerzielle Nutzung außerhalb des vorgesehenen Zwecks</li>
+                {translations.terms.sections.obligations.prohibited.items.map((item: string, index: number) => (
+                  <li key={index}>{item}</li>
+                ))}
               </ul>
             </div>
           </CardContent>
@@ -165,29 +153,25 @@ export default async function TermsPage({ params }: TermsPageProps) {
         {/* 5. Urheberrecht und Inhalte */}
         <Card variant="glass">
           <CardHeader>
-            <CardTitle>5. Inhalte und Urheberrecht</CardTitle>
+            <CardTitle>{t('terms.sections.content.title')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <h4 className="font-semibold mb-2">5.1 Ihre Inhalte</h4>
+              <h4 className="font-semibold mb-2">{t('terms.sections.content.userContent.title')}</h4>
               <p className="text-foreground/80">
-                Sie behalten alle Rechte an den von Ihnen hochgeladenen Inhalten (Texte, Bilder, Kalenderdaten). 
-                Sie gewähren uns eine nicht-exklusive Lizenz zur Anzeige und Verarbeitung dieser Inhalte 
-                für die Bereitstellung unserer Dienste.
+                {t('terms.sections.content.userContent.description')}
               </p>
             </div>
             <div>
-              <h4 className="font-semibold mb-2">5.2 Unsere Inhalte</h4>
+              <h4 className="font-semibold mb-2">{t('terms.sections.content.ourContent.title')}</h4>
               <p className="text-foreground/80">
-                Alle Texte, Grafiken, Software und sonstigen Inhalte der Plattform sind urheberrechtlich 
-                geschützt und dürfen nicht ohne unsere Zustimmung kopiert oder verwendet werden.
+                {t('terms.sections.content.ourContent.description')}
               </p>
             </div>
             <div>
-              <h4 className="font-semibold mb-2">5.3 Rechtsverletzungen</h4>
+              <h4 className="font-semibold mb-2">{t('terms.sections.content.violations.title')}</h4>
               <p className="text-foreground/80">
-                Bei Urheberrechtsverletzungen oder anderen Rechtsverstößen entfernen wir die entsprechenden 
-                Inhalte unverzüglich nach Benachrichtigung.
+                {t('terms.sections.content.violations.description')}
               </p>
             </div>
           </CardContent>
@@ -196,22 +180,21 @@ export default async function TermsPage({ params }: TermsPageProps) {
         {/* 6. Verfügbarkeit */}
         <Card variant="glass">
           <CardHeader>
-            <CardTitle>6. Verfügbarkeit und technische Anforderungen</CardTitle>
+            <CardTitle>{t('terms.sections.availability.title')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <h4 className="font-semibold mb-2">6.1 Verfügbarkeit</h4>
+              <h4 className="font-semibold mb-2">{t('terms.sections.availability.uptime.title')}</h4>
               <p className="text-foreground/80">
-                Wir streben eine hohe Verfügbarkeit der Plattform an, können aber keine 100%ige Verfügbarkeit 
-                garantieren. Wartungsarbeiten werden nach Möglichkeit angekündigt.
+                {t('terms.sections.availability.uptime.description')}
               </p>
             </div>
             <div>
-              <h4 className="font-semibold mb-2">6.2 Technische Anforderungen</h4>
+              <h4 className="font-semibold mb-2">{t('terms.sections.availability.requirements.title')}</h4>
               <ul className="list-disc list-inside space-y-1 text-foreground/80">
-                <li>Moderner Webbrowser mit JavaScript-Unterstützung</li>
-                <li>Stabile Internetverbindung</li>
-                <li>Unterstützte Kalenderdienste (Google Calendar, Outlook, iCloud)</li>
+                {translations.terms.sections.availability.requirements.items.map((item: string, index: number) => (
+                  <li key={index}>{item}</li>
+                ))}
               </ul>
             </div>
           </CardContent>
@@ -220,24 +203,22 @@ export default async function TermsPage({ params }: TermsPageProps) {
         {/* 7. Datenschutz */}
         <Card variant="glass">
           <CardHeader>
-            <CardTitle>7. Datenschutz und Drittanbieter</CardTitle>
+            <CardTitle>{t('terms.sections.privacy.title')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <h4 className="font-semibold mb-2">7.1 Datenschutz</h4>
+              <h4 className="font-semibold mb-2">{t('terms.sections.privacy.dataProcessing.title')}</h4>
               <p className="text-foreground/80">
-                Die Verarbeitung Ihrer personenbezogenen Daten erfolgt gemäß unserer 
+                {t('terms.sections.privacy.dataProcessing.description')}
                 <Link href={privacyPath} className="text-primary hover:text-primary/80 font-medium underline ml-1">
-                  Datenschutzerklärung
+                  {t('landing.footer.privacy')}
                 </Link>
-                , die DSGVO-konform gestaltet ist.
               </p>
             </div>
             <div>
-              <h4 className="font-semibold mb-2">7.2 Drittanbieter-Integration</h4>
+              <h4 className="font-semibold mb-2">{t('terms.sections.privacy.thirdParty.title')}</h4>
               <p className="text-foreground/80">
-                Bei der Nutzung von Drittanbieter-Diensten (Google Calendar, etc.) gelten zusätzlich 
-                deren Nutzungsbedingungen und Datenschutzrichtlinien.
+                {t('terms.sections.privacy.thirdParty.description')}
               </p>
             </div>
           </CardContent>
@@ -246,28 +227,25 @@ export default async function TermsPage({ params }: TermsPageProps) {
         {/* 8. Haftung */}
         <Card variant="glass">
           <CardHeader>
-            <CardTitle>8. Haftung und Gewährleistung</CardTitle>
+            <CardTitle>{t('terms.sections.liability.title')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <h4 className="font-semibold mb-2">8.1 Haftungsbeschränkung</h4>
+              <h4 className="font-semibold mb-2">{t('terms.sections.liability.limitation.title')}</h4>
               <p className="text-foreground/80">
-                Unsere Haftung ist auf Vorsatz und grobe Fahrlässigkeit beschränkt. Bei leichter Fahrlässigkeit 
-                haften wir nur bei Verletzung wesentlicher Vertragspflichten und nur bis zur Höhe des 
-                vorhersehbaren, vertragstypischen Schadens.
+                {t('terms.sections.liability.limitation.description')}
               </p>
             </div>
             <div>
-              <h4 className="font-semibold mb-2">8.2 Ausgeschlossene Haftung</h4>
+              <h4 className="font-semibold mb-2">{t('terms.sections.liability.excluded.title')}</h4>
               <p className="text-foreground/80">
-                Wir haften nicht für Datenverluste durch externe Faktoren, Probleme mit Drittanbieter-Diensten 
-                oder Schäden durch unsachgemäße Nutzung der Plattform.
+                {t('terms.sections.liability.excluded.description')}
               </p>
             </div>
             <div>
-              <h4 className="font-semibold mb-2">8.3 Verjährung</h4>
+              <h4 className="font-semibold mb-2">{t('terms.sections.liability.limitation_period.title')}</h4>
               <p className="text-foreground/80">
-                Ansprüche gegen uns verjähren innerhalb eines Jahres ab Kenntnis des Schadens und unserer Person.
+                {t('terms.sections.liability.limitation_period.description')}
               </p>
             </div>
           </CardContent>
@@ -276,28 +254,25 @@ export default async function TermsPage({ params }: TermsPageProps) {
         {/* 9. Kündigung */}
         <Card variant="glass">
           <CardHeader>
-            <CardTitle>9. Vertragslaufzeit und Kündigung</CardTitle>
+            <CardTitle>{t('terms.sections.termination.title')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <h4 className="font-semibold mb-2">9.1 Laufzeit</h4>
+              <h4 className="font-semibold mb-2">{t('terms.sections.termination.duration.title')}</h4>
               <p className="text-foreground/80">
-                Der Nutzungsvertrag läuft auf unbestimmte Zeit und kann von beiden Seiten 
-                jederzeit ohne Einhaltung einer Frist gekündigt werden.
+                {t('terms.sections.termination.duration.description')}
               </p>
             </div>
             <div>
-              <h4 className="font-semibold mb-2">9.2 Außerordentliche Kündigung</h4>
+              <h4 className="font-semibold mb-2">{t('terms.sections.termination.extraordinary.title')}</h4>
               <p className="text-foreground/80">
-                Wir können den Vertrag fristlos kündigen bei schwerwiegenden Verstößen gegen diese AGB, 
-                Missbrauch der Plattform oder rechtsverletzenden Aktivitäten.
+                {t('terms.sections.termination.extraordinary.description')}
               </p>
             </div>
             <div>
-              <h4 className="font-semibold mb-2">9.3 Folgen der Kündigung</h4>
+              <h4 className="font-semibold mb-2">{t('terms.sections.termination.consequences.title')}</h4>
               <p className="text-foreground/80">
-                Nach Vertragsende werden Ihre Daten gemäß unserer Datenschutzerklärung gelöscht. 
-                Öffentliche Klassenseiten werden deaktiviert.
+                {t('terms.sections.termination.consequences.description')}
               </p>
             </div>
           </CardContent>
@@ -306,21 +281,19 @@ export default async function TermsPage({ params }: TermsPageProps) {
         {/* 10. Preise */}
         <Card variant="glass">
           <CardHeader>
-            <CardTitle>10. Preise und Zahlungsbedingungen</CardTitle>
+            <CardTitle>{t('terms.sections.pricing.title')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <h4 className="font-semibold mb-2">10.1 Aktuelle Preisstruktur</h4>
+              <h4 className="font-semibold mb-2">{t('terms.sections.pricing.current.title')}</h4>
               <p className="text-foreground/80">
-                Während der Beta-Phase ist die Nutzung der Plattform kostenlos. 
-                Zukünftige Preisänderungen werden rechtzeitig kommuniziert.
+                {t('terms.sections.pricing.current.description')}
               </p>
             </div>
             <div>
-              <h4 className="font-semibold mb-2">10.2 Preisänderungen</h4>
+              <h4 className="font-semibold mb-2">{t('terms.sections.pricing.changes.title')}</h4>
               <p className="text-foreground/80">
-                Preisänderungen werden mindestens 30 Tage im Voraus angekündigt. 
-                Sie haben das Recht, bei erheblichen Preiserhöhungen außerordentlich zu kündigen.
+                {t('terms.sections.pricing.changes.description')}
               </p>
             </div>
           </CardContent>
@@ -329,42 +302,37 @@ export default async function TermsPage({ params }: TermsPageProps) {
         {/* 11. Schlussbestimmungen */}
         <Card variant="glass">
           <CardHeader>
-            <CardTitle>11. Schlussbestimmungen</CardTitle>
+            <CardTitle>{t('terms.sections.final.title')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <h4 className="font-semibold mb-2">11.1 Anwendbares Recht</h4>
+              <h4 className="font-semibold mb-2">{t('terms.sections.final.law.title')}</h4>
               <p className="text-foreground/80">
-                Es gilt das Recht der Bundesrepublik Deutschland unter Ausschluss des UN-Kaufrechts.
+                {t('terms.sections.final.law.description')}
               </p>
             </div>
             <div>
-              <h4 className="font-semibold mb-2">11.2 Gerichtsstand</h4>
+              <h4 className="font-semibold mb-2">{t('terms.sections.final.jurisdiction.title')}</h4>
               <p className="text-foreground/80">
-                Gerichtsstand für alle Streitigkeiten ist unser Geschäftssitz, 
-                sofern Sie Kaufmann, juristische Person des öffentlichen Rechts oder 
-                öffentlich-rechtliches Sondervermögen sind.
+                {t('terms.sections.final.jurisdiction.description')}
               </p>
             </div>
             <div>
-              <h4 className="font-semibold mb-2">11.3 Streitbeilegung</h4>
+              <h4 className="font-semibold mb-2">{t('terms.sections.final.dispute.title')}</h4>
               <p className="text-foreground/80">
-                Bei Verbraucherstreitigkeiten können Sie sich an die Allgemeine Verbraucherschlichtungsstelle 
-                wenden. Wir sind zur Teilnahme an Streitbeilegungsverfahren nicht verpflichtet, aber bereit.
+                {t('terms.sections.final.dispute.description')}
               </p>
             </div>
             <div>
-              <h4 className="font-semibold mb-2">11.4 Salvatorische Klausel</h4>
+              <h4 className="font-semibold mb-2">{t('terms.sections.final.severability.title')}</h4>
               <p className="text-foreground/80">
-                Sollten einzelne Bestimmungen dieser AGB unwirksam sein, bleibt die Wirksamkeit 
-                der übrigen Bestimmungen davon unberührt.
+                {t('terms.sections.final.severability.description')}
               </p>
             </div>
             <div>
-              <h4 className="font-semibold mb-2">11.5 Änderungen der AGB</h4>
+              <h4 className="font-semibold mb-2">{t('terms.sections.final.changes.title')}</h4>
               <p className="text-foreground/80">
-                Änderungen dieser AGB werden Ihnen mindestens 30 Tage vor Inkrafttreten per E-Mail mitgeteilt. 
-                Widersprechen Sie nicht innerhalb von 30 Tagen, gelten die Änderungen als angenommen.
+                {t('terms.sections.final.changes.description')}
               </p>
             </div>
           </CardContent>
@@ -372,9 +340,9 @@ export default async function TermsPage({ params }: TermsPageProps) {
 
         {/* Kontakt */}
         <ContactCard
-          title="Fragen zu den AGB?"
-          description="Bei Fragen zu diesen Geschäftsbedingungen oder rechtlichen Aspekten der Plattform stehen wir Ihnen gerne zur Verfügung."
-          buttonText="Kontakt aufnehmen"
+          title={t('terms.contact.title')}
+          description={t('terms.contact.description')}
+          buttonText={t('terms.contact.button')}
           icon={Users}
         />
       </div>
