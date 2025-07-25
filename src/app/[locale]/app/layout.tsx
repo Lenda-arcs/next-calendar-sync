@@ -9,50 +9,57 @@ import {
   Receipt,
   Building
 } from 'lucide-react'
-import { ActiveProfileLink } from './components/ActiveProfileLink'
-import { ActiveNavLinks } from './components/ActiveNavLinks'
-import { ActiveHomeLink } from './components/ActiveHomeLink'
-import { getServerTranslation, getServerLanguageSafe } from '@/lib/i18n/server'
+import { ActiveProfileLink } from '../../app/components/ActiveProfileLink'
+import { ActiveNavLinks } from '../../app/components/ActiveNavLinks'
+import { ActiveHomeLink } from '../../app/components/ActiveHomeLink'
+import { getValidLocale, getTranslations, createTranslator } from '@/lib/i18n/config'
 
 interface AppLayoutProps {
   children: React.ReactNode
+  params: Promise<{ locale: string }>
 }
 
-export default async function AppLayout({ children }: AppLayoutProps) {
+export default async function LocalizedAppLayout({ children, params }: AppLayoutProps) {
+  const { locale: localeParam } = await params
+  const locale = getValidLocale(localeParam)
+  
+  // Load translations server-side
+  const translations = await getTranslations(locale)
+  const t = createTranslator(translations)
+  
   const supabase = await createServerClient()
 
   const { data: { user } } = await supabase.auth.getUser()
 
+  // Note: Auth is handled by middleware, so user should always exist here
   if (!user) {
-    redirect('/auth/sign-in')
+    // This should rarely happen due to middleware, but kept as failsafe
+    const signInPath = locale === 'en' ? '/auth/sign-in' : `/${locale}/auth/sign-in`
+    redirect(signInPath)
   }
 
-  // Get current language for translations
-  const language = await getServerLanguageSafe()
+  // Create localized path helper
+  const getLocalizedPath = (path: string) => {
+    if (locale === 'en') return path
+    return `/${locale}${path}`
+  }
 
   // Get translated navigation labels
-  const [
-    manageEventsLabel,
-    manageTagsLabel,
-    invoicesLabel,
-    studiosLabel
-  ] = await Promise.all([
-    getServerTranslation(language, 'common.nav.manageEvents'),
-    getServerTranslation(language, 'common.nav.manageTags'),
-    getServerTranslation(language, 'common.nav.invoices'),
-    getServerTranslation(language, 'common.nav.studios')
-  ])
+  const manageEventsLabel = t('common.nav.manageEvents')
+  const manageTagsLabel = t('common.nav.manageTags')
+  const invoicesLabel = t('common.nav.invoices')
+  const studiosLabel = t('common.nav.studios')
 
-  // Base navigation items available to all users (now with translations)
+  // Base navigation items available to all users (now with localized paths)
   const baseNavigation = [
-    { name: manageEventsLabel, href: PATHS.APP.MANAGE_EVENTS, icon: Calendar, iconName: 'Calendar' },
-    { name: manageTagsLabel, href: PATHS.APP.MANAGE_TAGS, icon: Tags, iconName: 'Tags' },
-    { name: invoicesLabel, href: PATHS.APP.MANAGE_INVOICES, icon: Receipt, iconName: 'Receipt' },
+    { name: manageEventsLabel, href: getLocalizedPath(PATHS.APP.MANAGE_EVENTS), icon: Calendar, iconName: 'Calendar' },
+    { name: manageTagsLabel, href: getLocalizedPath(PATHS.APP.MANAGE_TAGS), icon: Tags, iconName: 'Tags' },
+    { name: invoicesLabel, href: getLocalizedPath(PATHS.APP.MANAGE_INVOICES), icon: Receipt, iconName: 'Receipt' },
   ]
 
-  // Admin-only navigation items (now with translations)
+  // Admin-only navigation items (now with localized paths)
   const adminNavigation = [
-    { name: studiosLabel, href: PATHS.APP.STUDIOS, icon: Building, iconName: 'Building' },
+    { name: studiosLabel, href: getLocalizedPath(PATHS.APP.STUDIOS), icon: Building, iconName: 'Building' },
   ]
 
   // Get user role from the database

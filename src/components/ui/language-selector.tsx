@@ -8,7 +8,7 @@ import {
   PopoverContent, 
   PopoverTrigger 
 } from './popover'
-import { useLanguage } from '@/lib/i18n/context'
+import { usePathname, useRouter } from 'next/navigation'
 import { Language, LOCALES, DEFAULT_LANGUAGE } from '@/lib/i18n/types'
 
 interface LanguageSelectorProps {
@@ -22,7 +22,8 @@ export function LanguageSelector({
   showLabel = false, 
   variant = 'ghost' 
 }: LanguageSelectorProps) {
-  const { language, setLanguage } = useLanguage()
+  const pathname = usePathname()
+  const router = useRouter()
   const [isOpen, setIsOpen] = React.useState(false)
   const [isMounted, setIsMounted] = React.useState(false)
   
@@ -31,13 +32,57 @@ export function LanguageSelector({
     setIsMounted(true)
   }, [])
 
+  // Extract current locale from pathname
+  const getCurrentLocale = (): Language => {
+    const segments = pathname.split('/')
+    const firstSegment = segments[1]
+    
+    if (firstSegment && ['de', 'es'].includes(firstSegment)) {
+      return firstSegment as Language
+    }
+    return 'en' // Default to English
+  }
+
   const handleLanguageChange = (newLanguage: Language) => {
-    setLanguage(newLanguage)
+    const currentLocale = getCurrentLocale()
+    
+    if (currentLocale === newLanguage) {
+      setIsOpen(false)
+      return
+    }
+
+    // Build new pathname with the new locale
+    let newPathname = pathname
+    
+    if (currentLocale === 'en') {
+      // Currently on English route (no locale prefix or /en prefix)
+      if (pathname.startsWith('/en/')) {
+        // Replace /en/ with new locale
+        newPathname = pathname.replace('/en/', `/${newLanguage}/`)
+      } else {
+        // Add locale prefix
+        newPathname = `/${newLanguage}${pathname}`
+      }
+    } else {
+      // Currently on a non-English route, replace the locale
+      newPathname = pathname.replace(`/${currentLocale}/`, `/${newLanguage}/`)
+    }
+    
+    // Handle special case for English (remove prefix if needed)
+    if (newLanguage === 'en') {
+      // For English, we can either go to /en/... or remove the prefix entirely
+      // Based on your redirects, let's use /en/... for consistency
+      if (!newPathname.startsWith('/en/')) {
+        newPathname = newPathname.replace(/^\/[a-z]{2}\//, '/en/')
+      }
+    }
+
+    router.push(newPathname)
     setIsOpen(false)
   }
 
   // Show default language during SSR and initial hydration
-  const displayLanguage = isMounted ? language : DEFAULT_LANGUAGE
+  const displayLanguage = isMounted ? getCurrentLocale() : DEFAULT_LANGUAGE
   const currentLocale = LOCALES[displayLanguage]
 
   return (
@@ -87,7 +132,8 @@ export function LanguageSelector({
 
 // Compact version for mobile or space-constrained areas
 export function CompactLanguageSelector({ className }: { className?: string }) {
-  const { language, setLanguage } = useLanguage()
+  const pathname = usePathname()
+  const router = useRouter()
   const [isOpen, setIsOpen] = React.useState(false)
   const [isMounted, setIsMounted] = React.useState(false)
   
@@ -95,14 +141,54 @@ export function CompactLanguageSelector({ className }: { className?: string }) {
   React.useEffect(() => {
     setIsMounted(true)
   }, [])
+
+  // Extract current locale from pathname
+  const getCurrentLocale = (): Language => {
+    const segments = pathname.split('/')
+    const firstSegment = segments[1]
+    
+    if (firstSegment && ['de', 'es'].includes(firstSegment)) {
+      return firstSegment as Language
+    }
+    return 'en' // Default to English
+  }
   
   const handleLanguageChange = (newLanguage: Language) => {
-    setLanguage(newLanguage)
+    const currentLocale = getCurrentLocale()
+    
+    if (currentLocale === newLanguage) {
+      setIsOpen(false)
+      return
+    }
+
+    // Build new pathname with the new locale
+    let newPathname = pathname
+    
+    if (currentLocale === 'en') {
+      // Currently on English route
+      if (pathname.startsWith('/en/')) {
+        newPathname = pathname.replace('/en/', `/${newLanguage}/`)
+      } else {
+        newPathname = `/${newLanguage}${pathname}`
+      }
+    } else {
+      // Currently on a non-English route, replace the locale
+      newPathname = pathname.replace(`/${currentLocale}/`, `/${newLanguage}/`)
+    }
+    
+    // Handle special case for English
+    if (newLanguage === 'en') {
+      if (!newPathname.startsWith('/en/')) {
+        newPathname = newPathname.replace(/^\/[a-z]{2}\//, '/en/')
+      }
+    }
+
+    router.push(newPathname)
     setIsOpen(false)
   }
 
   // Show default flag during SSR and initial hydration
-  const displayLanguage = isMounted ? language : DEFAULT_LANGUAGE
+  const displayLanguage = isMounted ? getCurrentLocale() : DEFAULT_LANGUAGE
 
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
@@ -147,10 +233,46 @@ export function InlineLanguageSelector({
   className?: string
   label?: string 
 }) {
-  const { language, setLanguage } = useLanguage()
+  const pathname = usePathname()
+  const router = useRouter()
+
+  // Extract current locale from pathname
+  const getCurrentLocale = (): Language => {
+    const segments = pathname.split('/')
+    const firstSegment = segments[1]
+    
+    if (firstSegment && ['de', 'es'].includes(firstSegment)) {
+      return firstSegment as Language
+    }
+    return 'en' // Default to English
+  }
 
   const handleLanguageChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    setLanguage(event.target.value as Language)
+    const newLanguage = event.target.value as Language
+    const currentLocale = getCurrentLocale()
+    
+    if (currentLocale === newLanguage) return
+
+    // Build new pathname with the new locale
+    let newPathname = pathname
+    
+    if (currentLocale === 'en') {
+      if (pathname.startsWith('/en/')) {
+        newPathname = pathname.replace('/en/', `/${newLanguage}/`)
+      } else {
+        newPathname = `/${newLanguage}${pathname}`
+      }
+    } else {
+      newPathname = pathname.replace(`/${currentLocale}/`, `/${newLanguage}/`)
+    }
+    
+    if (newLanguage === 'en') {
+      if (!newPathname.startsWith('/en/')) {
+        newPathname = newPathname.replace(/^\/[a-z]{2}\//, '/en/')
+      }
+    }
+
+    router.push(newPathname)
   }
 
   return (
@@ -162,7 +284,7 @@ export function InlineLanguageSelector({
       )}
       <select
         id="language-select"
-        value={language}
+        value={getCurrentLocale()}
         onChange={handleLanguageChange}
         className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary bg-background"
       >

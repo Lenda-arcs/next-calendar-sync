@@ -123,6 +123,19 @@ const translations: Translations = {
         november: 'November',
         december: 'December'
       }
+    },
+    errors: {
+      notFound: {
+        title: 'Page Not Found',
+        description: 'Oops! The page you\'re looking for seems to have wandered off. Don\'t worry, even the best yoga poses require some adjustments.',
+        goHome: 'Go Home',
+        goBack: 'Go Back',
+        helpfulLinks: 'Looking for something specific? Try these popular pages:',
+        stillTrouble: 'Still having trouble?',
+        contactSupport: 'If you believe this is an error, please',
+        supportTeam: 'contact our support team',
+        findHelp: 'and we\'ll help you find what you\'re looking for.'
+      }
     }
   },
   auth: {
@@ -1065,6 +1078,381 @@ const translations: Translations = {
         description: 'We are experiencing technical difficulties. Please try again later or contact support for assistance with your yoga schedule.',
         keywords: 'server error, technical support, yoga platform support'
       }
+    }
+  },
+  landing: {
+    hero: {
+      betaBadge: 'Closed Beta',
+      title: 'Beautiful yoga schedules for teachers.',
+      subtitle: 'Connect your calendar and create stunning, shareable pages for your yoga classes. Trusted by yoga instructors worldwide.',
+      requestAccess: 'Request Beta Access',
+      seeExample: 'See Example',
+      hasAccess: 'Already have access?',
+      signInHere: 'Sign in here'
+    },
+    features: {
+      title: 'Everything you need to share your schedule',
+      subtitle: 'Streamline your teaching workflow with powerful yet simple tools.',
+      sync: {
+        title: 'Calendar Sync',
+        description: 'Automatically sync with Google Calendar, iCloud, and other popular calendar services. Your schedule stays up-to-date without manual work.'
+      },
+      pages: {
+        title: 'Beautiful Pages',
+        description: 'Create stunning, professional pages that showcase your classes and make it easy for students to find and book sessions.'
+      },
+      sharing: {
+        title: 'Easy Sharing',
+        description: 'Share your schedule via custom links, export to various formats, and integrate with your existing website or social media.'
+      }
+    },
+    socialProof: {
+      title: 'Trusted by yoga teachers everywhere',
+      betaTesting: {
+        value: 'Beta',
+        description: 'Currently in testing'
+      },
+      realTime: {
+        value: 'Real-time',
+        description: 'Automatic sync'
+      },
+      beautiful: {
+        value: 'Beautiful',
+        description: 'Professional design'
+      }
+    },
+    cta: {
+      title: 'Ready to transform your teaching workflow?',
+      description: 'Join hundreds of yoga teachers who have simplified their schedule management with avara.',
+      requestAccess: 'Request Beta Access',
+      signIn: 'Sign In'
+    },
+    footer: {
+      tagline: 'Beautiful yoga schedules for teachers.',
+      privacy: 'Privacy',
+      terms: 'Terms',
+      support: 'Support',
+      copyright: '© 2024 avara. All rights reserved.'
+    }
+  },
+  privacy: {
+    title: 'Privacy Policy',
+    description: 'Your privacy is important to us. This policy explains how we collect, use, and protect your personal information.',
+    lastUpdated: 'Last updated: January 1, 2024',
+    sections: {
+      responsible: {
+        title: 'Data Controller',
+        description: 'The following entity is responsible for the processing of your personal data:'
+      },
+      dataCollection: {
+        title: 'Data Collection',
+        accountData: {
+          title: 'Account Data',
+          email: 'Email address for login and communication',
+          name: 'Name and profile information',
+          url: 'Custom URL for your public schedule page',
+          profile: 'Profile photo and bio',
+          contact: 'Contact information (phone, website, social media)'
+        },
+        calendarData: {
+          title: 'Calendar Data',
+          classes: 'Yoga class information from connected calendars',
+          events: 'Event titles, descriptions, and locations',
+          times: 'Class schedules and time zones',
+          participants: 'Student count (not personal student data)',
+          tokens: 'Calendar access tokens (encrypted)'
+        },
+        automaticData: {
+          title: 'Automatic Data',
+          ip: 'IP address and browser information',
+          sync: 'Calendar sync logs and error reports',
+          usage: 'Platform usage statistics',
+          logs: 'Application logs for debugging'
+        },
+        billingData: {
+          title: 'Billing Data',
+          studios: 'Studio relationships and payment information',
+          classes: 'Class attendance and payment records',
+          rates: 'Teaching rates and invoice data'
+        }
+      },
+      legalBasis: {
+        title: 'Legal Basis for Processing',
+        contract: {
+          title: 'Contract Performance',
+          description: 'Processing is necessary to provide our calendar sync and schedule management services.'
+        },
+        consent: {
+          title: 'Consent',
+          description: 'For optional features like public profile pages and marketing communications.'
+        },
+        interest: {
+          title: 'Legitimate Interest',
+          description: 'For platform security, fraud prevention, and service improvements.'
+        }
+      }
+    },
+    contact: {
+      title: 'Privacy Questions?',
+      description: 'If you have questions about how we handle your data or want to exercise your privacy rights, please contact us.',
+      button: 'Contact Us'
+    }
+  },
+  support: {
+    title: 'Support & Help',
+    description: 'We\'re here to help you get the most out of the avara platform. Find answers to common questions and get in touch with our support team.',
+    contact: {
+      title: 'Direct Contact',
+      description: 'Have a specific question or need personal assistance? We typically respond within 24 hours.',
+      button: 'Contact Support'
+    },
+    faq: {
+      title: 'Frequently Asked Questions',
+      howToConnect: {
+        question: 'How do I connect my calendar?',
+        answer: 'You can connect your calendar through three methods: OAuth integration with Google Calendar, email invitation system, or manual .ics feed URL entry. The easiest method is OAuth integration in the dashboard.'
+      },
+      createPublicPage: {
+        question: 'How do I create my public page?',
+        answer: 'After connecting your calendar, you can set your public URL and complete your profile under "Profile". Your classes will automatically appear on the public page.'
+      },
+      supportedCalendars: {
+        question: 'Which calendar services are supported?',
+        answer: 'We support Google Calendar (full), Outlook/Office 365, Apple iCloud Calendar, and any calendar service that provides .ics feeds.'
+      },
+      invoicing: {
+        question: 'How does invoice generation work?',
+        answer: 'You can add studios and have your classes automatically matched. The system then creates PDF invoices based on your hourly rates and completed classes.'
+      },
+      dataSecurity: {
+        question: 'Is my data secure?',
+        answer: 'Yes, all data is stored GDPR-compliant in the EU. Calendar access tokens are stored encrypted and you have full control over your data at all times.'
+      }
+    },
+    categories: {
+      calendar: {
+        title: 'Calendar Integration',
+        description: 'Help with connecting and syncing your calendars'
+      },
+      profile: {
+        title: 'Profile & Settings',
+        description: 'Support with setting up your profile and page'
+      },
+      invoicing: {
+        title: 'Invoices & Billing',
+        description: 'Help with invoice creation and studio management'
+      }
+    },
+    beta: {
+      title: 'Beta Phase Information',
+      description: 'avara is currently in closed beta phase. This means:',
+      features: [
+        'Usage is currently free',
+        'New features are added regularly',
+        'Your feedback helps us improve',
+        'We provide especially fast support for issues'
+      ],
+      feedback: 'As a beta tester, your experiences and suggestions are very important to us. Please send us your feedback!'
+    },
+    technical: {
+      title: 'Report Technical Issues',
+      description: 'If you encounter technical problems or bugs, please help us with the following information:',
+      requirements: [
+        'Description of the problem',
+        'Steps to reproduce',
+        'Browser and operating system used',
+        'Screenshots or error messages (if available)'
+      ],
+      button: 'Report Issue'
+    }
+  },
+  terms: {
+    title: 'Terms and Conditions',
+    description: 'These terms of service govern your use of the avara platform for yoga instructors.',
+    lastUpdated: 'Last updated: January 1, 2024',
+    sections: {
+      provider: {
+        title: 'Service Provider and Scope',
+        provider: {
+          title: 'Provider',
+          description: 'The following entity provides the avara platform:'
+        },
+        scope: {
+          title: 'Scope',
+          description: 'These Terms and Conditions apply to all services of the avara platform. By registering and using our services, you accept these terms as binding.'
+        }
+      },
+      services: {
+        title: 'Service Description',
+        platform: {
+          title: 'Platform Services',
+          description: 'avara provides a web-based platform that offers yoga instructors the following features:',
+          features: [
+            'Calendar synchronization with external calendar services',
+            'Creation and management of public class pages',
+            'Automatic categorization and tag management',
+            'Invoice creation and billing functions',
+            'Profile and contact management',
+            'Studio integration and location management'
+          ]
+        },
+        beta: {
+          title: 'Beta Status',
+          description: 'The platform is currently in closed beta stage. Features may change, and access is limited to selected users.'
+        }
+      },
+      registration: {
+        title: 'Registration and User Account',
+        requirements: {
+          title: 'Requirements',
+          items: [
+            'Minimum age: 18 years',
+            'Valid email address',
+            'Activity as a yoga instructor',
+            'Consent to these Terms and Privacy Policy'
+          ]
+        },
+        security: {
+          title: 'Account Security',
+          description: 'You are required to keep your access credentials confidential and to notify us immediately of suspicious activities or security breaches.'
+        },
+        termination: {
+          title: 'Account Termination',
+          description: 'You can delete your account at any time. We reserve the right to suspend or delete accounts for violations of these Terms.'
+        }
+      },
+      obligations: {
+        title: 'User Obligations and Prohibitions',
+        permitted: {
+          title: 'Permitted Use',
+          items: [
+            'Exclusively for your own yoga classes and courses',
+            'Truthful information in profile and class descriptions',
+            'Respectful use of the platform and interaction with other users',
+            'Compliance with all applicable laws'
+          ]
+        },
+        prohibited: {
+          title: 'Prohibited Activities',
+          items: [
+            'Uploading content that violates rights, is offensive, or harmful',
+            'Violation of copyrights or other third-party rights',
+            'Spam, automated requests, or abuse of services',
+            'Reverse engineering or security testing without permission',
+            'Commercial use outside the intended purpose'
+          ]
+        }
+      },
+      content: {
+        title: 'Content and Copyright',
+        userContent: {
+          title: 'Your Content',
+          description: 'You retain all rights to content you upload (texts, images, calendar data). You grant us a non-exclusive license to display and process this content for providing our services.'
+        },
+        ourContent: {
+          title: 'Our Content',
+          description: 'All texts, graphics, software, and other content of the platform are protected by copyright and may not be copied or used without our consent.'
+        },
+        violations: {
+          title: 'Rights Violations',
+          description: 'In case of copyright violations or other legal violations, we will remove the relevant content immediately upon notification.'
+        }
+      },
+      availability: {
+        title: 'Availability and Technical Requirements',
+        uptime: {
+          title: 'Availability',
+          description: 'We strive for high platform availability but cannot guarantee 100% uptime. Maintenance work will be announced when possible.'
+        },
+        requirements: {
+          title: 'Technical Requirements',
+          items: [
+            'Modern web browser with JavaScript support',
+            'Stable internet connection',
+            'Supported calendar services (Google Calendar, Outlook, iCloud)'
+          ]
+        }
+      },
+      privacy: {
+        title: 'Privacy and Third Parties',
+        dataProcessing: {
+          title: 'Privacy',
+          description: 'The processing of your personal data is carried out in accordance with our Privacy Policy, which is designed to be GDPR compliant.'
+        },
+        thirdParty: {
+          title: 'Third-Party Integration',
+          description: 'When using third-party services (Google Calendar, etc.), their terms of service and privacy policies also apply.'
+        }
+      },
+      liability: {
+        title: 'Liability and Warranty',
+        limitation: {
+          title: 'Liability Limitation',
+          description: 'Our liability is limited to intent and gross negligence. For slight negligence, we only liable for breach of essential contractual obligations and only up to the amount of foreseeable, contract-typical damage.'
+        },
+        excluded: {
+          title: 'Excluded Liability',
+          description: 'We are not liable for data loss due to external factors, problems with third-party services, or damage from improper use of the platform.'
+        },
+        limitation_period: {
+          title: 'Limitation Period',
+          description: 'Claims against us become time-barred within one year of knowledge of the damage and our person.'
+        }
+      },
+      termination: {
+        title: 'Contract Term and Termination',
+        duration: {
+          title: 'Duration',
+          description: 'The usage contract runs for an indefinite period and can be terminated by either party at any time without notice.'
+        },
+        extraordinary: {
+          title: 'Extraordinary Termination',
+          description: 'We may terminate the contract without notice for serious violations of these Terms, abuse of the platform, or illegal activities.'
+        },
+        consequences: {
+          title: 'Consequences of Termination',
+          description: 'After contract termination, your data will be deleted according to our Privacy Policy. Public class pages will be deactivated.'
+        }
+      },
+      pricing: {
+        title: 'Prices and Payment Terms',
+        current: {
+          title: 'Current Pricing Structure',
+          description: 'During the beta phase, use of the platform is free. Future price changes will be communicated in advance.'
+        },
+        changes: {
+          title: 'Price Changes',
+          description: 'Price changes will be announced at least 30 days in advance. You have the right to terminate extraordinarily in case of significant price increases.'
+        }
+      },
+      final: {
+        title: 'Final Provisions',
+        law: {
+          title: 'Applicable Law',
+          description: 'The law of the Federal Republic of Germany applies, excluding the UN Convention on Contracts for the International Sale of Goods.'
+        },
+        jurisdiction: {
+          title: 'Jurisdiction',
+          description: 'The place of jurisdiction for all disputes is our business location, provided you are a merchant, legal entity under public law, or special fund under public law.'
+        },
+        dispute: {
+          title: 'Dispute Resolution',
+          description: 'For consumer disputes, you can contact the General Consumer Arbitration Board. We are not obligated to participate in dispute resolution procedures, but are willing to do so.'
+        },
+        severability: {
+          title: 'Severability Clause',
+          description: 'Should individual provisions of these Terms be invalid, the validity of the remaining provisions remains unaffected.'
+        },
+        changes: {
+          title: 'Changes to Terms',
+          description: 'Changes to these Terms will be communicated to you at least 30 days before they take effect by email. If you do not object within 30 days, the changes are deemed accepted.'
+        }
+      }
+    },
+    contact: {
+      title: 'Questions about the Terms?',
+      description: 'If you have questions about these terms of service or legal aspects of the platform, we are happy to help.',
+      button: 'Contact Us'
     }
   },
   tags: {

@@ -7,8 +7,38 @@ import {
   CompanyInfo, 
   ContactCard 
 } from '@/components/legal'
+import { getValidLocale } from '@/lib/i18n/config'
+import type { Metadata } from 'next'
 
-export default function TermsPage() {
+interface TermsPageProps {
+  params: Promise<{ locale: string }>
+}
+
+export async function generateMetadata({ params }: TermsPageProps): Promise<Metadata> {
+  const { locale: localeParam } = await params
+  const locale = getValidLocale(localeParam)
+  
+  // You can add locale-specific SEO metadata here if needed
+  return {
+    title: locale === 'de' ? 'Allgemeine Geschäftsbedingungen - avara.' : 
+           locale === 'es' ? 'Términos y Condiciones - avara.' : 
+           'Terms and Conditions - avara.',
+    description: locale === 'de' ? 'Nutzungsbedingungen der avara-Plattform für Yoga-Lehrerinnen und -Lehrer.' :
+                 locale === 'es' ? 'Términos y condiciones de la plataforma avara para profesores de yoga.' :
+                 'Terms and conditions for the avara platform for yoga instructors.'
+  }
+}
+
+export default async function TermsPage({ params }: TermsPageProps) {
+  const { locale: localeParam } = await params
+  const locale = getValidLocale(localeParam)
+  
+  // Note: This page is currently German-only legal content
+  // Translations could be added later if needed
+  
+  // Create localized privacy link
+  const privacyPath = locale === 'en' ? '/privacy' : `/${locale}/privacy`
+
   return (
     <LegalPageLayout>
       <LegalPageHeader
@@ -197,7 +227,7 @@ export default function TermsPage() {
               <h4 className="font-semibold mb-2">7.1 Datenschutz</h4>
               <p className="text-foreground/80">
                 Die Verarbeitung Ihrer personenbezogenen Daten erfolgt gemäß unserer 
-                <Link href="/privacy" className="text-primary hover:text-primary/80 font-medium underline ml-1">
+                <Link href={privacyPath} className="text-primary hover:text-primary/80 font-medium underline ml-1">
                   Datenschutzerklärung
                 </Link>
                 , die DSGVO-konform gestaltet ist.

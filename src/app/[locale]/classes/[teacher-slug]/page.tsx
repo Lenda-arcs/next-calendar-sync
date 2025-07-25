@@ -7,16 +7,19 @@ import {
 import { createServerClient } from '@/lib/supabase-server'
 import { generateTeacherScheduleMetadata, generateYogaInstructorStructuredData } from '@/lib/i18n/metadata'
 import { StructuredData } from '@/components/seo/StructuredData'
+import { getValidLocale } from '@/lib/i18n/config'
 import type { Metadata } from 'next'
 
 interface PageProps {
   params: Promise<{
+    locale: string
     'teacher-slug': string
   }>
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const resolvedParams = await params
+  const locale = getValidLocale(resolvedParams.locale)
   const teacherSlug = resolvedParams['teacher-slug']
   
   // Create supabase client to fetch profile data for metadata
@@ -30,50 +33,49 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     .single()
 
   const teacherName = profile?.name || 'Yoga Teacher'
-  
   return generateTeacherScheduleMetadata(
-    teacherName, 
-    teacherSlug, 
-    undefined, 
-    undefined, 
+    teacherName,
+    teacherSlug,
+    locale,
+    undefined,
     profile?.profile_image_url
   )
 }
 
-export default async function PublicSchedulePage({ params }: PageProps) {
-  // Resolve params to get the teacher slug
+export default async function TeacherSchedulePage({ params }: PageProps) {
   const resolvedParams = await params
+  const locale = getValidLocale(resolvedParams.locale)
   const teacherSlug = resolvedParams['teacher-slug']
 
-  // Create supabase client to fetch profile data for the content
+  // Create supabase client
   const supabase = await createServerClient()
-  
-  // Fetch profile data for the schedule content
+
+  // Fetch profile data
   const { data: profile } = await supabase
     .from('public_profiles')
     .select('*')
     .eq('public_url', teacherSlug)
     .single()
 
-  // Generate structured data for the teacher
-  const teacherName = profile?.name || 'Yoga Teacher'
-  const teacherBio = profile?.bio || undefined
-  const teacherSpecialties = profile?.yoga_styles || undefined
-  
-  const instructorStructuredData = generateYogaInstructorStructuredData(
-    teacherName,
+  if (!profile) {
+    return null // Layout will handle 404
+  }
+
+  // Generate structured data for SEO
+  const structuredData = generateYogaInstructorStructuredData(
+    profile.name || 'Yoga Teacher',
     teacherSlug,
-    teacherBio,
-    undefined, // location not available in profile
-    teacherSpecialties,
-    undefined, // use default language
-    profile?.profile_image_url
+    profile.bio || undefined,
+    undefined,
+    profile.yoga_styles || undefined,
+    locale,
+    profile.profile_image_url
   )
 
   return (
     <Container>
       {/* Add structured data for SEO */}
-      <StructuredData data={instructorStructuredData} />
+      <StructuredData data={structuredData} />
       
       <div className="space-y-6">
         {/* Header with Filter Statistics */}
@@ -88,8 +90,6 @@ export default async function PublicSchedulePage({ params }: PageProps) {
           variant={profile?.event_display_variant || 'compact'}
           className="filtered-events"
         />
-
-
       </div>
     </Container>
   )

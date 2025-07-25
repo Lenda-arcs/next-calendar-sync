@@ -3,8 +3,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Container } from '@/components/layout/container'
 import { PageSection } from '@/components/layout/page-section'
-import { PATHS } from '@/lib/paths'
-import { Home, ArrowLeft, Calendar, Search } from 'lucide-react'
+import { Home, ArrowLeft, Search } from 'lucide-react'
 
 export default function NotFound() {
   return (
@@ -38,7 +37,7 @@ export default function NotFound() {
               <div className="space-y-6">
                 <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
                   <Button asChild size="lg" className="text-lg px-8 py-4">
-                    <Link href={PATHS.HOME}>
+                    <Link href="/">
                       <Home className="mr-2 h-5 w-5" />
                       Go Home
                     </Link>
@@ -58,19 +57,13 @@ export default function NotFound() {
                   </p>
                   <div className="flex flex-wrap gap-2 justify-center">
                     <Button asChild variant="ghost" size="sm">
-                      <Link href={PATHS.AUTH.SIGN_IN}>Sign In</Link>
+                      <Link href="/">Home</Link>
                     </Button>
                     <Button asChild variant="ghost" size="sm">
-                      <Link href={PATHS.APP.DASHBOARD}>Dashboard</Link>
+                      <Link href="/auth/sign-in">Sign In</Link>
                     </Button>
                     <Button asChild variant="ghost" size="sm">
-                      <Link href={PATHS.APP.ADD_CALENDAR}>
-                        <Calendar className="mr-1 h-3 w-3" />
-                        Add Calendar
-                      </Link>
-                    </Button>
-                    <Button asChild variant="ghost" size="sm">
-                      <Link href={PATHS.APP.PROFILE}>Profile</Link>
+                      <Link href="/app">Dashboard</Link>
                     </Button>
                   </div>
                 </div>

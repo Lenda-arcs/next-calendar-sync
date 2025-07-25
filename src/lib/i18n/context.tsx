@@ -23,17 +23,25 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 export interface LanguageProviderProps {
   children: ReactNode
   initialLanguage?: Language
+  serverTranslations?: Record<string, unknown>
 }
 
-export function LanguageProvider({ children, initialLanguage }: LanguageProviderProps) {
+export function LanguageProvider({ children, initialLanguage, serverTranslations }: LanguageProviderProps) {
   const [language, setLanguageState] = useState<Language>(
     initialLanguage || getInitialLanguage()
   )
-  const [translations, setTranslations] = useState<Translations | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const [translations, setTranslations] = useState<Translations | null>(
+    serverTranslations ? serverTranslations as unknown as Translations : null
+  )
+  const [isLoading, setIsLoading] = useState(!serverTranslations)
 
-  // Load translations when language changes
+  // Load translations when language changes (only if no server translations provided)
   useEffect(() => {
+    // If we have server translations, don't load new ones
+    if (serverTranslations) {
+      return
+    }
+
     const loadLanguageTranslations = async () => {
       setIsLoading(true)
       try {
@@ -56,7 +64,7 @@ export function LanguageProvider({ children, initialLanguage }: LanguageProvider
     }
 
     loadLanguageTranslations()
-  }, [language])
+  }, [language, serverTranslations])
 
   // Set language with validation and persistence
   const setLanguage = (newLanguage: Language) => {

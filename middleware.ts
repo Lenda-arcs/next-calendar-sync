@@ -125,8 +125,10 @@ export async function middleware(req: NextRequest) {
     // Handle protected routes (require authentication)
     if (isProtectedRoute(pathname)) {
       if (!user) {
-        // Store the original URL for redirect after login
-        const signInUrl = new URL(AUTH_PATHS.SIGN_IN, req.url)
+        // Get locale-aware sign-in URL
+        const { getSignInUrl } = await import('./src/lib/auth')
+        const signInPath = getSignInUrl(pathname)
+        const signInUrl = new URL(signInPath, req.url)
         signInUrl.searchParams.set('returnTo', pathname)
         return NextResponse.redirect(signInUrl)
       }

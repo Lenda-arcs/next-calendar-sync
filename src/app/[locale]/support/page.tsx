@@ -7,8 +7,34 @@ import {
   ContactCard,
   ContactEmailLink 
 } from '@/components/legal'
+import { getValidLocale } from '@/lib/i18n/config'
+import type { Metadata } from 'next'
 
-export default function SupportPage() {
+interface SupportPageProps {
+  params: Promise<{ locale: string }>
+}
+
+export async function generateMetadata({ params }: SupportPageProps): Promise<Metadata> {
+  const { locale: localeParam } = await params
+  const locale = getValidLocale(localeParam)
+  
+  return {
+    title: locale === 'de' ? 'Support & Hilfe - avara.' : 
+           locale === 'es' ? 'Soporte y Ayuda - avara.' : 
+           'Support & Help - avara.',
+    description: locale === 'de' ? 'Hilfe und Support für die avara-Plattform. Häufige Fragen und Kontaktmöglichkeiten.' :
+                 locale === 'es' ? 'Ayuda y soporte para la plataforma avara. Preguntas frecuentes y opciones de contacto.' :
+                 'Help and support for the avara platform. Frequently asked questions and contact options.'
+  }
+}
+
+export default async function SupportPage({ params }: SupportPageProps) {
+  const { locale: localeParam } = await params
+  getValidLocale(localeParam) // Validate locale
+  
+  // Note: This page is currently German-only content
+  // Translations could be added later if needed
+
   return (
     <LegalPageLayout>
       <LegalPageHeader

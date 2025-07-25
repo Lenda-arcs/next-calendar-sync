@@ -1,19 +1,15 @@
+import { generateAddCalendarMetadata } from '@/lib/i18n/metadata'
+import type { Metadata } from 'next'
+import AddCalendarContent from '../../../app/(dashboard)/add-calendar/AddCalendarContent'
 import { EnhancedCalendarOnboarding, CalendarSelectionPage } from '@/components/calendar-feeds'
 import { createServerClient } from '@/lib/supabase-server'
 import { redirect } from 'next/navigation'
+import { getValidLocale } from '@/lib/i18n/config'
 import { getUserCalendarFeeds } from '@/lib/calendar-feeds'
 import { fetchOAuthCalendars } from '@/lib/server/oauth-calendar-service'
-import AddCalendarContent from './AddCalendarContent'
-import { generateAddCalendarMetadata } from '@/lib/i18n/metadata'
-import type { Metadata } from 'next'
 
-export async function generateMetadata(): Promise<Metadata> {
-  return generateAddCalendarMetadata()
-}
-
-export default async function AddCalendarPage({
-  searchParams
-}: {
+interface AddCalendarPageProps {
+  params: Promise<{ locale: string }>
   searchParams: Promise<{ 
     force_onboarding?: string 
     success?: string
@@ -21,14 +17,27 @@ export default async function AddCalendarPage({
     step?: string
     message?: string
   }>
-}) {
+}
+
+export async function generateMetadata({ params }: AddCalendarPageProps): Promise<Metadata> {
+  const { locale: localeParam } = await params
+  const locale = getValidLocale(localeParam)
+  return generateAddCalendarMetadata(locale)
+}
+
+export default async function AddCalendarPage({ params, searchParams }: AddCalendarPageProps) {
+  const { locale: localeParam } = await params
+  const locale = getValidLocale(localeParam)
+  
   const supabase = await createServerClient()
 
-  // Get the current user
+  // Get the current user (guaranteed by middleware)
   const { data: { user: authUser }, error: authError } = await supabase.auth.getUser()
   
   if (authError || !authUser) {
-    redirect('/auth/sign-in')
+    // This should rarely happen due to middleware, but kept as failsafe
+    const signInPath = locale === 'en' ? '/auth/sign-in' : `/${locale}/auth/sign-in`
+    redirect(signInPath)
   }
 
   // Fetch user profile and existing calendar feeds

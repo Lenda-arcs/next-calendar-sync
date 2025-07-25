@@ -1,10 +1,12 @@
 import { notFound } from 'next/navigation'
 import { createServerClient } from '@/lib/supabase-server'
+import { getValidLocale } from '@/lib/i18n/config'
 import TeacherScheduleLayout from './TeacherScheduleLayout'
 
 interface LayoutProps {
   children: React.ReactNode
   params: Promise<{
+    locale: string
     'teacher-slug': string
   }>
 }
@@ -12,6 +14,7 @@ interface LayoutProps {
 export default async function Layout({ children, params }: LayoutProps) {
   // Resolve params
   const resolvedParams = await params
+  getValidLocale(resolvedParams.locale) // Validate locale
   const teacherSlug = resolvedParams['teacher-slug']
 
   // Create supabase client
@@ -33,7 +36,7 @@ export default async function Layout({ children, params }: LayoutProps) {
 
   return (
     <TeacherScheduleLayout 
-      profile={profile}
+      profile={profile} 
       user={user}
       teacherSlug={teacherSlug}
     >

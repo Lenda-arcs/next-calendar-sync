@@ -30,7 +30,8 @@ export const PATHS = {
 
   // Dynamic routes
   DYNAMIC: {
-    TEACHER_SCHEDULE: (slug: string) => `/classes/${slug}`,
+    TEACHER_SCHEDULE: (slug: string, locale?: string) => 
+      locale && locale !== 'en' ? `/${locale}/classes/${slug}` : `/classes/${slug}`,
   },
 
   // Test routes (development)

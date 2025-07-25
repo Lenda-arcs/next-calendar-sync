@@ -123,6 +123,19 @@ const translations: Translations = {
         november: 'November',
         december: 'Dezember'
       }
+    },
+    errors: {
+      notFound: {
+        title: 'Seite nicht gefunden',
+        description: 'Hoppla! Die Seite, die Sie suchen, scheint sich verirrt zu haben. Keine Sorge, auch die besten Yoga-Haltungen erfordern manchmal Anpassungen.',
+        goHome: 'Zur Startseite',
+        goBack: 'Zurück',
+        helpfulLinks: 'Suchen Sie etwas Bestimmtes? Probieren Sie diese beliebten Seiten:',
+        stillTrouble: 'Haben Sie immer noch Probleme?',
+        contactSupport: 'Wenn Sie glauben, dass dies ein Fehler ist, wenden Sie sich bitte an',
+        supportTeam: 'unser Support-Team',
+        findHelp: 'und wir helfen Ihnen, das zu finden, was Sie suchen.'
+      }
     }
   },
   auth: {
@@ -1065,6 +1078,381 @@ const translations: Translations = {
         description: 'Wir haben technische Schwierigkeiten. Bitte versuchen Sie es später noch einmal oder kontaktieren Sie den Support für Hilfe mit Ihrem Yoga-Terminplan.',
         keywords: 'Server-Fehler, technischer Support, Yoga-Plattform-Support'
       }
+    }
+  },
+  landing: {
+    hero: {
+      betaBadge: 'Geschlossene Beta',
+      title: 'Schöne Yoga-Stundenpläne für Lehrer.',
+      subtitle: 'Verbinden Sie Ihren Kalender und erstellen Sie beeindruckende, teilbare Seiten für Ihre Yoga-Kurse. Vertraut von Yoga-Lehrern weltweit.',
+      requestAccess: 'Beta-Zugang anfordern',
+      seeExample: 'Beispiel ansehen',
+      hasAccess: 'Bereits Zugang?',
+      signInHere: 'Hier anmelden'
+    },
+    features: {
+      title: 'Alles was Sie brauchen, um Ihren Stundenplan zu teilen',
+      subtitle: 'Optimieren Sie Ihren Unterrichtsworkflow mit leistungsstarken und dennoch einfachen Tools.',
+      sync: {
+        title: 'Kalender-Sync',
+        description: 'Automatische Synchronisation mit Google Calendar, iCloud und anderen beliebten Kalenderdiensten. Ihr Stundenplan bleibt ohne manuelle Arbeit aktuell.'
+      },
+      pages: {
+        title: 'Schöne Seiten',
+        description: 'Erstellen Sie beeindruckende, professionelle Seiten, die Ihre Kurse präsentieren und es Schülern leicht machen, Stunden zu finden und zu buchen.'
+      },
+      sharing: {
+        title: 'Einfaches Teilen',
+        description: 'Teilen Sie Ihren Stundenplan über individuelle Links, exportieren Sie in verschiedene Formate und integrieren Sie in Ihre bestehende Website oder Social Media.'
+      }
+    },
+    socialProof: {
+      title: 'Vertraut von Yoga-Lehrern überall',
+      betaTesting: {
+        value: 'Beta',
+        description: 'Derzeit im Test'
+      },
+      realTime: {
+        value: 'Echtzeit',
+        description: 'Automatische Sync'
+      },
+      beautiful: {
+        value: 'Schön',
+        description: 'Professionelles Design'
+      }
+    },
+    cta: {
+      title: 'Bereit, Ihren Unterrichtsworkflow zu transformieren?',
+      description: 'Schließen Sie sich Hunderten von Yoga-Lehrern an, die ihre Stundenplan-Verwaltung mit avara vereinfacht haben.',
+      requestAccess: 'Beta-Zugang anfordern',
+      signIn: 'Anmelden'
+    },
+    footer: {
+      tagline: 'Schöne Yoga-Stundenpläne für Lehrer.',
+      privacy: 'Datenschutz',
+      terms: 'AGB',
+      support: 'Support',
+      copyright: '© 2024 avara. Alle Rechte vorbehalten.'
+    }
+  },
+  privacy: {
+    title: 'Datenschutzerklärung',
+    description: 'Ihr Datenschutz ist uns wichtig. Diese Richtlinie erklärt, wie wir Ihre persönlichen Daten sammeln, verwenden und schützen.',
+    lastUpdated: 'Zuletzt aktualisiert: 1. Januar 2024',
+    sections: {
+      responsible: {
+        title: 'Verantwortlicher',
+        description: 'Die folgende Stelle ist für die Verarbeitung Ihrer personenbezogenen Daten verantwortlich:'
+      },
+      dataCollection: {
+        title: 'Datenerhebung',
+        accountData: {
+          title: 'Kontodaten',
+          email: 'E-Mail-Adresse für Anmeldung und Kommunikation',
+          name: 'Name und Profilinformationen',
+          url: 'Individuelle URL für Ihre öffentliche Stundenplanseite',
+          profile: 'Profilbild und Biografie',
+          contact: 'Kontaktinformationen (Telefon, Website, Social Media)'
+        },
+        calendarData: {
+          title: 'Kalenderdaten',
+          classes: 'Yoga-Kurs-Informationen aus verbundenen Kalendern',
+          events: 'Event-Titel, Beschreibungen und Orte',
+          times: 'Kursstundenpläne und Zeitzonen',
+          participants: 'Teilnehmerzahl (keine persönlichen Schülerdaten)',
+          tokens: 'Kalender-Zugriffstoken (verschlüsselt)'
+        },
+        automaticData: {
+          title: 'Automatische Daten',
+          ip: 'IP-Adresse und Browser-Informationen',
+          sync: 'Kalender-Sync-Logs und Fehlerberichte',
+          usage: 'Plattform-Nutzungsstatistiken',
+          logs: 'Anwendungslogs für Debugging'
+        },
+        billingData: {
+          title: 'Abrechnungsdaten',
+          studios: 'Studio-Beziehungen und Zahlungsinformationen',
+          classes: 'Kurs-Anwesenheit und Zahlungsaufzeichnungen',
+          rates: 'Unterrichtstarife und Rechnungsdaten'
+        }
+      },
+      legalBasis: {
+        title: 'Rechtsgrundlagen für die Verarbeitung',
+        contract: {
+          title: 'Vertragserfüllung',
+          description: 'Die Verarbeitung ist notwendig, um unsere Kalender-Sync- und Stundenplanverwaltungsdienste bereitzustellen.'
+        },
+        consent: {
+          title: 'Einwilligung',
+          description: 'Für optionale Funktionen wie öffentliche Profilseiten und Marketing-Kommunikation.'
+        },
+        interest: {
+          title: 'Berechtigtes Interesse',
+          description: 'Für Plattformsicherheit, Betrugsprävention und Serviceverbesserungen.'
+        }
+      }
+    },
+    contact: {
+      title: 'Datenschutz-Fragen?',
+      description: 'Wenn Sie Fragen zum Umgang mit Ihren Daten haben oder Ihre Datenschutzrechte ausüben möchten, kontaktieren Sie uns bitte.',
+      button: 'Kontakt'
+    }
+  },
+  support: {
+    title: 'Support & Hilfe',
+    description: 'Wir helfen Ihnen gerne dabei, das Beste aus der avara-Plattform herauszuholen. Hier finden Sie Antworten auf häufige Fragen und Kontaktmöglichkeiten.',
+    contact: {
+      title: 'Direkter Kontakt',
+      description: 'Haben Sie eine spezifische Frage oder benötigen persönliche Unterstützung? Wir antworten normalerweise innerhalb von 24 Stunden.',
+      button: 'Support kontaktieren'
+    },
+    faq: {
+      title: 'Häufig gestellte Fragen',
+      howToConnect: {
+        question: 'Wie verbinde ich meinen Kalender?',
+        answer: 'Sie können Ihren Kalender über drei Wege verbinden: OAuth-Integration mit Google Calendar, E-Mail-Einladungssystem oder manuelle Eingabe der .ics-Feed-URL. Die einfachste Methode ist die OAuth-Integration im Dashboard.'
+      },
+      createPublicPage: {
+        question: 'Wie erstelle ich meine öffentliche Seite?',
+        answer: 'Nach der Kalenderverbindung können Sie unter "Profil" Ihre öffentliche URL festlegen und Ihr Profil vervollständigen. Ihre Klassen werden automatisch auf der öffentlichen Seite angezeigt.'
+      },
+      supportedCalendars: {
+        question: 'Welche Kalenderdienste werden unterstützt?',
+        answer: 'Wir unterstützen Google Calendar (vollständig), Outlook/Office 365, Apple iCloud Calendar und jeden Kalenderdienst, der .ics-Feeds bereitstellt.'
+      },
+      invoicing: {
+        question: 'Wie funktioniert die Rechnungserstellung?',
+        answer: 'Sie können Studios hinzufügen und Ihre Klassen automatisch zuordnen lassen. Das System erstellt dann PDF-Rechnungen basierend auf Ihren Stundensätzen und gehaltenen Klassen.'
+      },
+      dataSecurity: {
+        question: 'Sind meine Daten sicher?',
+        answer: 'Ja, alle Daten werden DSGVO-konform in der EU gehostet. Kalender-Zugriffstoken werden verschlüsselt gespeichert und Sie haben jederzeit volle Kontrolle über Ihre Daten.'
+      }
+    },
+    categories: {
+      calendar: {
+        title: 'Kalender-Integration',
+        description: 'Hilfe beim Verbinden und Synchronisieren Ihrer Kalender'
+      },
+      profile: {
+        title: 'Profil & Einstellungen',
+        description: 'Unterstützung bei der Einrichtung Ihres Profils und Ihrer Seite'
+      },
+      invoicing: {
+        title: 'Rechnungen & Abrechnung',
+        description: 'Hilfe bei der Rechnungserstellung und Studio-Verwaltung'
+      }
+    },
+    beta: {
+      title: 'Beta-Phase Information',
+      description: 'avara befindet sich derzeit in der geschlossenen Beta-Phase. Das bedeutet:',
+      features: [
+        'Die Nutzung ist derzeit kostenlos',
+        'Neue Funktionen werden regelmäßig hinzugefügt',
+        'Ihr Feedback hilft uns bei der Weiterentwicklung',
+        'Bei Problemen sind wir besonders schnell beim Support'
+      ],
+      feedback: 'Beta-Tester: Ihre Erfahrungen und Verbesserungsvorschläge sind uns sehr wichtig. Schreiben Sie uns gerne Ihr Feedback!'
+    },
+    technical: {
+      title: 'Technische Probleme melden',
+      description: 'Falls Sie technische Probleme oder Fehler feststellen, helfen Sie uns mit folgenden Informationen:',
+      requirements: [
+        'Beschreibung des Problems',
+        'Schritte zur Reproduktion',
+        'Verwendeter Browser und Betriebssystem',
+        'Screenshots oder Fehlermeldungen (falls vorhanden)'
+      ],
+      button: 'Problem melden'
+    }
+  },
+  terms: {
+    title: 'Allgemeine Geschäftsbedingungen',
+    description: 'Diese Nutzungsbedingungen regeln die Verwendung der avara-Plattform für Yoga-Lehrerinnen und -Lehrer.',
+    lastUpdated: 'Zuletzt aktualisiert: 1. Januar 2024',
+    sections: {
+      provider: {
+        title: 'Anbieter und Geltungsbereich',
+        provider: {
+          title: 'Anbieter',
+          description: 'Die folgende Stelle stellt die avara-Plattform bereit:'
+        },
+        scope: {
+          title: 'Geltungsbereich',
+          description: 'Diese Allgemeinen Geschäftsbedingungen (AGB) gelten für alle Leistungen der avara-Plattform. Mit der Registrierung und Nutzung unserer Dienste erkennen Sie diese AGB als verbindlich an.'
+        }
+      },
+      services: {
+        title: 'Leistungsbeschreibung',
+        platform: {
+          title: 'Plattform-Dienste',
+          description: 'avara stellt eine webbasierte Plattform zur Verfügung, die Yoga-Lehrenden folgende Funktionen bietet:',
+          features: [
+            'Kalender-Synchronisation mit externen Kalenderdiensten',
+            'Erstellung und Verwaltung öffentlicher Klassenseiten',
+            'Automatische Kategorisierung und Tag-Verwaltung',
+            'Rechnungserstellung und Abrechnungsfunktionen',
+            'Profil- und Kontaktverwaltung',
+            'Studio-Integration und Standort-Verwaltung'
+          ]
+        },
+        beta: {
+          title: 'Beta-Status',
+          description: 'Die Plattform befindet sich derzeit im geschlossenen Beta-Stadium. Funktionen können sich ändern, und der Zugang ist auf ausgewählte Nutzer beschränkt.'
+        }
+      },
+      registration: {
+        title: 'Registrierung und Nutzerkonto',
+        requirements: {
+          title: 'Voraussetzungen',
+          items: [
+            'Mindestalter: 18 Jahre',
+            'Gültige E-Mail-Adresse',
+            'Tätigkeit als Yoga-Lehrerin oder -Lehrer',
+            'Einwilligung zu diesen AGB und der Datenschutzerklärung'
+          ]
+        },
+        security: {
+          title: 'Kontosicherheit',
+          description: 'Sie sind verpflichtet, Ihre Zugangsdaten vertraulich zu behandeln und uns unverzüglich über verdächtige Aktivitäten oder Sicherheitsverletzungen zu informieren.'
+        },
+        termination: {
+          title: 'Konto-Kündigung',
+          description: 'Sie können Ihr Konto jederzeit löschen. Wir behalten uns das Recht vor, Konten bei Verstößen gegen diese AGB zu sperren oder zu löschen.'
+        }
+      },
+      obligations: {
+        title: 'Nutzerpflichten und Verbote',
+        permitted: {
+          title: 'Erlaubte Nutzung',
+          items: [
+            'Ausschließlich für eigene Yoga-Klassen und -Kurse',
+            'Wahrheitsgemäße Angaben in Profil und Klassenbeschreibungen',
+            'Respektvoller Umgang mit der Plattform und anderen Nutzern',
+            'Einhaltung aller geltenden Gesetze'
+          ]
+        },
+        prohibited: {
+          title: 'Verbotene Aktivitäten',
+          items: [
+            'Hochladen rechtsverletzender, beleidigender oder schädlicher Inhalte',
+            'Verletzung von Urheberrechten oder anderen Rechten Dritter',
+            'Spam, automatisierte Anfragen oder Missbrauch der Dienste',
+            'Reverse Engineering oder Sicherheitstests ohne Genehmigung',
+            'Kommerzielle Nutzung außerhalb des vorgesehenen Zwecks'
+          ]
+        }
+      },
+      content: {
+        title: 'Inhalte und Urheberrecht',
+        userContent: {
+          title: 'Ihre Inhalte',
+          description: 'Sie behalten alle Rechte an den von Ihnen hochgeladenen Inhalten (Texte, Bilder, Kalenderdaten). Sie gewähren uns eine nicht-exklusive Lizenz zur Anzeige und Verarbeitung dieser Inhalte für die Bereitstellung unserer Dienste.'
+        },
+        ourContent: {
+          title: 'Unsere Inhalte',
+          description: 'Alle Texte, Grafiken, Software und sonstigen Inhalte der Plattform sind urheberrechtlich geschützt und dürfen nicht ohne unsere Zustimmung kopiert oder verwendet werden.'
+        },
+        violations: {
+          title: 'Rechtsverletzungen',
+          description: 'Bei Urheberrechtsverletzungen oder anderen Rechtsverstößen entfernen wir die entsprechenden Inhalte unverzüglich nach Benachrichtigung.'
+        }
+      },
+      availability: {
+        title: 'Verfügbarkeit und technische Anforderungen',
+        uptime: {
+          title: 'Verfügbarkeit',
+          description: 'Wir streben eine hohe Verfügbarkeit der Plattform an, können aber keine 100%ige Verfügbarkeit garantieren. Wartungsarbeiten werden nach Möglichkeit angekündigt.'
+        },
+        requirements: {
+          title: 'Technische Anforderungen',
+          items: [
+            'Moderner Webbrowser mit JavaScript-Unterstützung',
+            'Stabile Internetverbindung',
+            'Unterstützte Kalenderdienste (Google Calendar, Outlook, iCloud)'
+          ]
+        }
+      },
+      privacy: {
+        title: 'Datenschutz und Drittanbieter',
+        dataProcessing: {
+          title: 'Datenschutz',
+          description: 'Die Verarbeitung Ihrer personenbezogenen Daten erfolgt gemäß unserer Datenschutzerklärung, die DSGVO-konform gestaltet ist.'
+        },
+        thirdParty: {
+          title: 'Drittanbieter-Integration',
+          description: 'Bei der Nutzung von Drittanbieter-Diensten (Google Calendar, etc.) gelten zusätzlich deren Nutzungsbedingungen und Datenschutzrichtlinien.'
+        }
+      },
+      liability: {
+        title: 'Haftung und Gewährleistung',
+        limitation: {
+          title: 'Haftungsbeschränkung',
+          description: 'Unsere Haftung ist auf Vorsatz und grobe Fahrlässigkeit beschränkt. Bei leichter Fahrlässigkeit haften wir nur bei Verletzung wesentlicher Vertragspflichten und nur bis zur Höhe des vorhersehbaren, vertragstypischen Schadens.'
+        },
+        excluded: {
+          title: 'Ausgeschlossene Haftung',
+          description: 'Wir haften nicht für Datenverluste durch externe Faktoren, Probleme mit Drittanbieter-Diensten oder Schäden durch unsachgemäße Nutzung der Plattform.'
+        },
+        limitation_period: {
+          title: 'Verjährung',
+          description: 'Ansprüche gegen uns verjähren innerhalb eines Jahres ab Kenntnis des Schadens und unserer Person.'
+        }
+      },
+      termination: {
+        title: 'Vertragslaufzeit und Kündigung',
+        duration: {
+          title: 'Laufzeit',
+          description: 'Der Nutzungsvertrag läuft auf unbestimmte Zeit und kann von beiden Seiten jederzeit ohne Einhaltung einer Frist gekündigt werden.'
+        },
+        extraordinary: {
+          title: 'Außerordentliche Kündigung',
+          description: 'Wir können den Vertrag fristlos kündigen bei schwerwiegenden Verstößen gegen diese AGB, Missbrauch der Plattform oder rechtsverletzenden Aktivitäten.'
+        },
+        consequences: {
+          title: 'Folgen der Kündigung',
+          description: 'Nach Vertragsende werden Ihre Daten gemäß unserer Datenschutzerklärung gelöscht. Öffentliche Klassenseiten werden deaktiviert.'
+        }
+      },
+      pricing: {
+        title: 'Preise und Zahlungsbedingungen',
+        current: {
+          title: 'Aktuelle Preisstruktur',
+          description: 'Während der Beta-Phase ist die Nutzung der Plattform kostenlos. Zukünftige Preisänderungen werden rechtzeitig kommuniziert.'
+        },
+        changes: {
+          title: 'Preisänderungen',
+          description: 'Preisänderungen werden mindestens 30 Tage im Voraus angekündigt. Sie haben das Recht, bei erheblichen Preiserhöhungen außerordentlich zu kündigen.'
+        }
+      },
+      final: {
+        title: 'Schlussbestimmungen',
+        law: {
+          title: 'Anwendbares Recht',
+          description: 'Es gilt das Recht der Bundesrepublik Deutschland unter Ausschluss des UN-Kaufrechts.'
+        },
+        jurisdiction: {
+          title: 'Gerichtsstand',
+          description: 'Gerichtsstand für alle Streitigkeiten ist unser Geschäftssitz, sofern Sie Kaufmann, juristische Person des öffentlichen Rechts oder öffentlich-rechtliches Sondervermögen sind.'
+        },
+        dispute: {
+          title: 'Streitbeilegung',
+          description: 'Bei Verbraucherstreitigkeiten können Sie sich an die Allgemeine Verbraucherschlichtungsstelle wenden. Wir sind zur Teilnahme an Streitbeilegungsverfahren nicht verpflichtet, aber bereit.'
+        },
+        severability: {
+          title: 'Salvatorische Klausel',
+          description: 'Sollten einzelne Bestimmungen dieser AGB unwirksam sein, bleibt die Wirksamkeit der übrigen Bestimmungen davon unberührt.'
+        },
+        changes: {
+          title: 'Änderungen der AGB',
+          description: 'Änderungen dieser AGB werden Ihnen mindestens 30 Tage vor Inkrafttreten per E-Mail mitgeteilt. Widersprechen Sie nicht innerhalb von 30 Tagen, gelten die Änderungen als angenommen.'
+        }
+      }
+    },
+    contact: {
+      title: 'Fragen zu den AGB?',
+      description: 'Bei Fragen zu diesen Geschäftsbedingungen oder rechtlichen Aspekten der Plattform stehen wir Ihnen gerne zur Verfügung.',
+      button: 'Kontakt aufnehmen'
     }
   },
   tags: {

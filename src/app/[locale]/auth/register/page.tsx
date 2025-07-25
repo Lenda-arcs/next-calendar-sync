@@ -7,24 +7,40 @@ import { PATHS } from '@/lib/paths'
 import { ArrowLeft, Lock } from 'lucide-react'
 import { generateAuthMetadata } from '@/lib/i18n/metadata'
 import type { Metadata } from 'next'
+import { getValidLocale } from '@/lib/i18n/config'
 
-export async function generateMetadata(): Promise<Metadata> {
-  return generateAuthMetadata('signUp')
+interface RegisterPageProps {
+  params: Promise<{ locale: string }>
 }
 
-export default async function RegisterPage() {
+export async function generateMetadata({ params }: RegisterPageProps): Promise<Metadata> {
+  const { locale: localeParam } = await params
+  const locale = getValidLocale(localeParam)
+  return generateAuthMetadata('signUp', locale)
+}
+
+export default async function RegisterPage({ params }: RegisterPageProps) {
+  const { locale: localeParam } = await params
+  const locale = getValidLocale(localeParam)
+  
   // Check if user is already authenticated
   const supabase = await createServerClient()
   const { data: { user } } = await supabase.auth.getUser()
 
   if (user) {
-    redirect('/app')
+    // Redirect to localized app
+    const appPath = locale === 'en' ? '/app' : `/${locale}/app`
+    redirect(appPath)
   }
+
+  // Create localized paths
+  const homePath = locale === 'en' ? PATHS.HOME : `/${locale}`
+  const signInPath = locale === 'en' ? PATHS.AUTH.SIGN_IN : `/${locale}/auth/sign-in`
 
   return (
     <>
       <div className="text-center mb-8">
-        <Link href={PATHS.HOME} className="inline-flex items-center text-sm text-foreground/70 hover:text-foreground font-sans transition-colors">
+        <Link href={homePath} className="inline-flex items-center text-sm text-foreground/70 hover:text-foreground font-sans transition-colors">
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back to home
         </Link>
@@ -53,7 +69,7 @@ export default async function RegisterPage() {
 
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Button asChild size="lg">
-              <Link href={PATHS.AUTH.SIGN_IN}>Sign In</Link>
+              <Link href={signInPath}>Sign In</Link>
             </Button>
             <Button asChild variant="outline" size="lg">
               <Link href="mailto:hello@avara.studio?subject=Beta%20Access%20Request">

@@ -163,6 +163,21 @@ export interface CommonTranslations {
       december: string
     }
   }
+  
+  // Error pages
+  errors: {
+    notFound: {
+      title: string
+      description: string
+      goHome: string
+      goBack: string
+      helpfulLinks: string
+      stillTrouble: string
+      contactSupport: string
+      supportTeam: string
+      findHelp: string
+    }
+  }
 }
 
 export interface AuthTranslations {
@@ -1140,6 +1155,348 @@ export interface TagTranslations {
   }
 }
 
+export interface LandingTranslations {
+  hero: {
+    betaBadge: string
+    title: string
+    subtitle: string
+    requestAccess: string
+    seeExample: string
+    hasAccess: string
+    signInHere: string
+  }
+  features: {
+    title: string
+    subtitle: string
+    sync: {
+      title: string
+      description: string
+    }
+    pages: {
+      title: string
+      description: string
+    }
+    sharing: {
+      title: string
+      description: string
+    }
+  }
+  socialProof: {
+    title: string
+    betaTesting: {
+      value: string
+      description: string
+    }
+    realTime: {
+      value: string
+      description: string
+    }
+    beautiful: {
+      value: string
+      description: string
+    }
+  }
+  cta: {
+    title: string
+    description: string
+    requestAccess: string
+    signIn: string
+  }
+  footer: {
+    tagline: string
+    privacy: string
+    terms: string
+    support: string
+    copyright: string
+  }
+}
+
+export interface PrivacyTranslations {
+  title: string
+  description: string
+  lastUpdated: string
+  sections: {
+    responsible: {
+      title: string
+      description: string
+    }
+    dataCollection: {
+      title: string
+      accountData: {
+        title: string
+        email: string
+        name: string
+        url: string
+        profile: string
+        contact: string
+      }
+      calendarData: {
+        title: string
+        classes: string
+        events: string
+        times: string
+        participants: string
+        tokens: string
+      }
+      automaticData: {
+        title: string
+        ip: string
+        sync: string
+        usage: string
+        logs: string
+      }
+      billingData: {
+        title: string
+        studios: string
+        classes: string
+        rates: string
+      }
+    }
+    legalBasis: {
+      title: string
+      contract: {
+        title: string
+        description: string
+      }
+      consent: {
+        title: string
+        description: string
+      }
+      interest: {
+        title: string
+        description: string
+      }
+    }
+  }
+  contact: {
+    title: string
+    description: string
+    button: string
+  }
+}
+
+export interface SupportTranslations {
+  title: string
+  description: string
+  contact: {
+    title: string
+    description: string
+    button: string
+  }
+  faq: {
+    title: string
+    howToConnect: {
+      question: string
+      answer: string
+    }
+    createPublicPage: {
+      question: string
+      answer: string
+    }
+    supportedCalendars: {
+      question: string
+      answer: string
+    }
+    invoicing: {
+      question: string
+      answer: string
+    }
+    dataSecurity: {
+      question: string
+      answer: string
+    }
+  }
+  categories: {
+    calendar: {
+      title: string
+      description: string
+    }
+    profile: {
+      title: string
+      description: string
+    }
+    invoicing: {
+      title: string
+      description: string
+    }
+  }
+  beta: {
+    title: string
+    description: string
+    features: string[]
+    feedback: string
+  }
+  technical: {
+    title: string
+    description: string
+    requirements: string[]
+    button: string
+  }
+}
+
+export interface TermsTranslations {
+  title: string
+  description: string
+  lastUpdated: string
+  sections: {
+    provider: {
+      title: string
+      provider: {
+        title: string
+        description: string
+      }
+      scope: {
+        title: string
+        description: string
+      }
+    }
+    services: {
+      title: string
+      platform: {
+        title: string
+        description: string
+        features: string[]
+      }
+      beta: {
+        title: string
+        description: string
+      }
+    }
+    registration: {
+      title: string
+      requirements: {
+        title: string
+        items: string[]
+      }
+      security: {
+        title: string
+        description: string
+      }
+      termination: {
+        title: string
+        description: string
+      }
+    }
+    obligations: {
+      title: string
+      permitted: {
+        title: string
+        items: string[]
+      }
+      prohibited: {
+        title: string
+        items: string[]
+      }
+    }
+    content: {
+      title: string
+      userContent: {
+        title: string
+        description: string
+      }
+      ourContent: {
+        title: string
+        description: string
+      }
+      violations: {
+        title: string
+        description: string
+      }
+    }
+    availability: {
+      title: string
+      uptime: {
+        title: string
+        description: string
+      }
+      requirements: {
+        title: string
+        items: string[]
+      }
+    }
+    privacy: {
+      title: string
+      dataProcessing: {
+        title: string
+        description: string
+      }
+      thirdParty: {
+        title: string
+        description: string
+      }
+    }
+    liability: {
+      title: string
+      limitation: {
+        title: string
+        description: string
+      }
+      excluded: {
+        title: string
+        description: string
+      }
+      limitation_period: {
+        title: string
+        description: string
+      }
+    }
+    termination: {
+      title: string
+      duration: {
+        title: string
+        description: string
+      }
+      extraordinary: {
+        title: string
+        description: string
+      }
+      consequences: {
+        title: string
+        description: string
+      }
+    }
+    pricing: {
+      title: string
+      current: {
+        title: string
+        description: string
+      }
+      changes: {
+        title: string
+        description: string
+      }
+    }
+    final: {
+      title: string
+      law: {
+        title: string
+        description: string
+      }
+      jurisdiction: {
+        title: string
+        description: string
+      }
+      dispute: {
+        title: string
+        description: string
+      }
+      severability: {
+        title: string
+        description: string
+      }
+      changes: {
+        title: string
+        description: string
+      }
+    }
+  }
+  contact: {
+    title: string
+    description: string
+    button: string
+  }
+}
+
 export interface Translations {
   common: CommonTranslations
   auth: AuthTranslations
@@ -1150,6 +1507,10 @@ export interface Translations {
   dashboard: DashboardTranslations
   pages: PagesTranslations
   seo: SeoTranslations
+  landing: LandingTranslations
+  privacy: PrivacyTranslations
+  support: SupportTranslations
+  terms: TermsTranslations
   tags: TagTranslations
 }
 

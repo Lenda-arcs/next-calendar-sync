@@ -1,19 +1,27 @@
 import { NextRequest } from 'next/server'
 
 /**
- * Routes that require authentication
+ * Routes that require authentication (including locale variants)
  */
 export const PROTECTED_ROUTES = [
   '/app',
+  '/de/app',
+  '/es/app',
 ] as const
 
 /**
- * Routes that should redirect authenticated users
+ * Routes that should redirect authenticated users (including locale variants)
  */
 export const AUTH_ROUTES = [
   '/auth/sign-in',
   '/auth/register',
   '/auth/forgot-password',
+  '/de/auth/sign-in',
+  '/de/auth/register', 
+  '/de/auth/forgot-password',
+  '/es/auth/sign-in',
+  '/es/auth/register',
+  '/es/auth/forgot-password',
 ] as const
 
 /**
@@ -47,7 +55,21 @@ export function isPublicRoute(pathname: string): boolean {
 }
 
 /**
- * Get the redirect URL after successful authentication
+ * Extract locale from pathname
+ */
+export function extractLocale(pathname: string): { locale: string; cleanPath: string } {
+  const localeMatch = pathname.match(/^\/([a-z]{2})(\/.*)?$/)
+  if (localeMatch && ['de', 'es'].includes(localeMatch[1])) {
+    return {
+      locale: localeMatch[1],
+      cleanPath: localeMatch[2] || '/'
+    }
+  }
+  return { locale: 'en', cleanPath: pathname }
+}
+
+/**
+ * Get locale-aware auth redirect URL
  */
 export function getAuthRedirectUrl(request: NextRequest): string {
   const returnTo = request.nextUrl.searchParams.get('returnTo')
@@ -57,7 +79,17 @@ export function getAuthRedirectUrl(request: NextRequest): string {
     return returnTo
   }
   
-  return '/app'
+  // Extract locale from current path
+  const { locale } = extractLocale(request.nextUrl.pathname)
+  return locale === 'en' ? '/app' : `/${locale}/app`
+}
+
+/**
+ * Get locale-aware sign-in URL
+ */
+export function getSignInUrl(pathname: string): string {
+  const { locale } = extractLocale(pathname)
+  return locale === 'en' ? '/auth/sign-in' : `/${locale}/auth/sign-in`
 }
 
 /**

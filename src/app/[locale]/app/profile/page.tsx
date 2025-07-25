@@ -1,22 +1,34 @@
-import { createServerClient } from '@/lib/supabase-server'
-import { redirect } from 'next/navigation'
-import { User } from '@/lib/types'
-import ProfileContent from './ProfileContent'
 import { generateProfileMetadata } from '@/lib/i18n/metadata'
 import type { Metadata } from 'next'
+import ProfileContent from '../../../app/(dashboard)/profile/ProfileContent'
+import { createServerClient } from '@/lib/supabase-server'
+import { redirect } from 'next/navigation'
+import { getValidLocale } from '@/lib/i18n/config'
 
-export async function generateMetadata(): Promise<Metadata> {
-  return generateProfileMetadata()
+
+interface ProfilePageProps {
+  params: Promise<{ locale: string }>
 }
 
-export default async function ProfilePage() {
+export async function generateMetadata({ params }: ProfilePageProps): Promise<Metadata> {
+  const { locale: localeParam } = await params
+  const locale = getValidLocale(localeParam)
+  return generateProfileMetadata(locale)
+}
+
+export default async function ProfilePage({ params }: ProfilePageProps) {
+  const { locale: localeParam } = await params
+  const locale = getValidLocale(localeParam)
+  
   const supabase = await createServerClient()
 
-  // Get the current user
+  // Get the current user (guaranteed by middleware)
   const { data: { user: authUser }, error: authError } = await supabase.auth.getUser()
   
   if (authError || !authUser) {
-    redirect('/auth/sign-in')
+    // This should rarely happen due to middleware, but kept as failsafe
+    const signInPath = locale === 'en' ? '/auth/sign-in' : `/${locale}/auth/sign-in`
+    redirect(signInPath)
   }
 
   // Fetch user profile data
@@ -29,7 +41,7 @@ export default async function ProfilePage() {
   if (userError || !userData) {
     console.error('Error fetching user data:', userError)
     // Fallback to auth user data if profile doesn't exist yet
-    const fallbackUser: User = {
+    const fallbackUser = {
       id: authUser.id,
       email: authUser.email || '',
       name: null,
@@ -41,7 +53,7 @@ export default async function ProfilePage() {
       website_url: null,
       yoga_styles: null,
       event_display_variant: null,
-      role: 'user',
+      role: 'user' as const,
       calendar_feed_count: 0,
       is_featured: null,
       created_at: null

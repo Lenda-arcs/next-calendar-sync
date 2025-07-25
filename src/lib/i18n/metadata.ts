@@ -1,19 +1,15 @@
 import { Metadata } from 'next/types'
-import { 
-  Language, 
-  DEFAULT_LANGUAGE
-} from './types'
+import { Locale, defaultLocale } from './config'
 import { 
   getServerTranslation, 
   getLocaleString, 
-  generateLanguageAlternates,
   getServerLanguageSafe
 } from './server'
 import { PATHS } from '@/lib/paths'
 
 export interface MetadataOptions {
   page: string
-  language?: Language
+  language?: Locale
   variables?: Record<string, string>
   basePath?: string
   canonical?: string
@@ -38,7 +34,7 @@ const getCurrentLanguage = getServerLanguageSafe
 export async function generateSEOMetadata(options: MetadataOptions): Promise<Metadata> {
   const {
     page,
-    language = DEFAULT_LANGUAGE,
+    language = defaultLocale,
     variables = {},
     basePath = '',
     canonical,
@@ -52,11 +48,23 @@ export async function generateSEOMetadata(options: MetadataOptions): Promise<Met
   const keywords = await getServerTranslation(language, `seo.${page}.keywords`, variables)
   
   // Generate base URL (you might want to get this from environment)
-  const baseURL = process.env.NEXT_PUBLIC_APP_URL || 'https://yoga-sync.com'
-  const fullURL = canonical || `${baseURL}${basePath}`
+  const baseURL = process.env.NEXT_PUBLIC_APP_URL || 'https://avara.studio'
   
-  // Generate language alternates
-  const languageAlternates = generateLanguageAlternates(basePath)
+  // Handle basePath for new [locale] structure
+  let fullBasePath = basePath
+  if (basePath && !basePath.startsWith('/')) {
+    fullBasePath = `/${basePath}`
+  }
+  
+  // For non-default locales, prefix with locale
+  if (language !== defaultLocale) {
+    fullBasePath = `/${language}${fullBasePath}`
+  }
+  
+  const fullURL = canonical || `${baseURL}${fullBasePath}`
+  
+  // Generate language alternates for new structure
+  const languageAlternates = generateLanguageAlternatesForPage(basePath)
   
   // Convert relative alternate URLs to absolute
   const absoluteAlternates = Object.entries(languageAlternates).reduce(
@@ -141,94 +149,148 @@ export async function generateSEOMetadata(options: MetadataOptions): Promise<Met
 }
 
 /**
+ * Generate language alternates for the new [locale] structure
+ */
+function generateLanguageAlternatesForPage(basePath: string): Record<string, string> {
+  const alternates: Record<string, string> = {}
+  const locales: Locale[] = ['en', 'de', 'es']
+  
+  // Ensure basePath starts with /
+  const normalizedPath = basePath.startsWith('/') ? basePath : `/${basePath}`
+  
+  // Add each supported language
+  for (const locale of locales) {
+    if (locale === defaultLocale) {
+      // Default language uses root path
+      alternates[locale] = normalizedPath || '/'
+    } else {
+      // Other languages use /locale/path
+      alternates[locale] = `/${locale}${normalizedPath}`
+    }
+  }
+  
+  // Add x-default for default language
+  alternates['x-default'] = normalizedPath || '/'
+  
+  return alternates
+}
+
+/**
  * Generate metadata for home page
  */
-export async function generateHomeMetadata(language?: Language): Promise<Metadata> {
+export async function generateHomeMetadata(language?: Locale): Promise<Metadata> {
   const currentLanguage = language || await getCurrentLanguage()
   return generateSEOMetadata({
     page: 'home',
     language: currentLanguage,
-    basePath: currentLanguage === DEFAULT_LANGUAGE ? '/' : `/${currentLanguage}/`
+    basePath: ''
   })
 }
 
 /**
  * Generate metadata for dashboard page
  */
-export async function generateDashboardMetadata(language?: Language): Promise<Metadata> {
+export async function generateDashboardMetadata(language?: Locale): Promise<Metadata> {
   const currentLanguage = language || await getCurrentLanguage()
   return generateSEOMetadata({
     page: 'dashboard',
     language: currentLanguage,
-    basePath: currentLanguage === DEFAULT_LANGUAGE ? '/app' : `/${currentLanguage}/app`
+    basePath: '/app'
   })
 }
 
 /**
  * Generate metadata for profile page
  */
-export async function generateProfileMetadata(language?: Language): Promise<Metadata> {
+export async function generateProfileMetadata(language?: Locale): Promise<Metadata> {
   const currentLanguage = language || await getCurrentLanguage()
   return generateSEOMetadata({
     page: 'profile',
     language: currentLanguage,
-    basePath: currentLanguage === DEFAULT_LANGUAGE ? '/app/profile' : `/${currentLanguage}/app/profile`
+    basePath: '/app/profile'
   })
 }
 
 /**
  * Generate metadata for add calendar page
  */
-export async function generateAddCalendarMetadata(language?: Language): Promise<Metadata> {
+export async function generateAddCalendarMetadata(language?: Locale): Promise<Metadata> {
   const currentLanguage = language || await getCurrentLanguage()
   return generateSEOMetadata({
     page: 'addCalendar',
     language: currentLanguage,
-    basePath: currentLanguage === DEFAULT_LANGUAGE ? '/app/add-calendar' : `/${currentLanguage}/app/add-calendar`
+    basePath: '/app/add-calendar'
   })
 }
 
 /**
  * Generate metadata for manage events page
  */
-export async function generateManageEventsMetadata(language: Language = DEFAULT_LANGUAGE): Promise<Metadata> {
+export async function generateManageEventsMetadata(language: Locale = defaultLocale): Promise<Metadata> {
   return generateSEOMetadata({
     page: 'manageEvents',
     language,
-    basePath: language === DEFAULT_LANGUAGE ? '/app/manage-events' : `/${language}/app/manage-events`
+    basePath: '/app/manage-events'
   })
 }
 
 /**
  * Generate metadata for manage tags page
  */
-export async function generateManageTagsMetadata(language: Language = DEFAULT_LANGUAGE): Promise<Metadata> {
+export async function generateManageTagsMetadata(language: Locale = defaultLocale): Promise<Metadata> {
   return generateSEOMetadata({
     page: 'manageTags',
     language,
-    basePath: language === DEFAULT_LANGUAGE ? '/app/manage-tags' : `/${language}/app/manage-tags`
+    basePath: '/app/manage-tags'
   })
 }
 
 /**
  * Generate metadata for studios page
  */
-export async function generateStudiosMetadata(language: Language = DEFAULT_LANGUAGE): Promise<Metadata> {
+export async function generateStudiosMetadata(language: Locale = defaultLocale): Promise<Metadata> {
   return generateSEOMetadata({
     page: 'studios',
     language,
-    basePath: language === DEFAULT_LANGUAGE ? '/app/studios' : `/${language}/app/studios`
+    basePath: '/app/studios'
   })
 }
 
 /**
  * Generate metadata for invoices page
  */
-export async function generateInvoicesMetadata(language: Language = DEFAULT_LANGUAGE): Promise<Metadata> {
+export async function generateInvoicesMetadata(language: Locale = defaultLocale): Promise<Metadata> {
   return generateSEOMetadata({
     page: 'invoices',
     language,
-    basePath: language === DEFAULT_LANGUAGE ? '/app/invoices' : `/${language}/app/invoices`
+    basePath: '/app/invoices'
+  })
+}
+
+/**
+ * Generate metadata for legal pages
+ */
+export async function generatePrivacyMetadata(language: Locale = defaultLocale): Promise<Metadata> {
+  return generateSEOMetadata({
+    page: 'privacy',
+    language,
+    basePath: '/privacy'
+  })
+}
+
+export async function generateTermsMetadata(language: Locale = defaultLocale): Promise<Metadata> {
+  return generateSEOMetadata({
+    page: 'terms',
+    language,
+    basePath: '/terms'
+  })
+}
+
+export async function generateSupportMetadata(language: Locale = defaultLocale): Promise<Metadata> {
+  return generateSEOMetadata({
+    page: 'support',
+    language,
+    basePath: '/support'
   })
 }
 
@@ -238,7 +300,7 @@ export async function generateInvoicesMetadata(language: Language = DEFAULT_LANG
 export async function generateTeacherScheduleMetadata(
   teacherName: string,
   teacherSlug: string,
-  language?: Language,
+  language?: Locale,
   location?: string,
   profileImageUrl?: string | null
 ): Promise<Metadata> {
@@ -249,7 +311,7 @@ export async function generateTeacherScheduleMetadata(
   }
   
   // Use profile image if available, otherwise fallback to dummy logo
-  const baseURL = process.env.NEXT_PUBLIC_APP_URL || 'https://yoga-sync.com'
+  const baseURL = process.env.NEXT_PUBLIC_APP_URL || 'https://avara.studio'
   const imageUrl = profileImageUrl || `${baseURL}/dummy_logo.png`
   
   const images = [
@@ -275,13 +337,13 @@ export async function generateTeacherScheduleMetadata(
  */
 export async function generateAuthMetadata(
   authType: 'signIn' | 'signUp',
-  language?: Language
+  language?: Locale
 ): Promise<Metadata> {
   const currentLanguage = language || await getCurrentLanguage()
   return generateSEOMetadata({
     page: `auth.${authType}`,
     language: currentLanguage,
-    basePath: currentLanguage === DEFAULT_LANGUAGE ? `/auth/${authType === 'signIn' ? 'sign-in' : 'register'}` : `/${currentLanguage}/auth/${authType === 'signIn' ? 'sign-in' : 'register'}`
+    basePath: `/auth/${authType === 'signIn' ? 'sign-in' : 'register'}`
   })
 }
 
@@ -290,7 +352,7 @@ export async function generateAuthMetadata(
  */
 export async function generateErrorMetadata(
   errorType: 'notFound' | 'serverError',
-  language: Language = DEFAULT_LANGUAGE
+  language: Locale = defaultLocale
 ): Promise<Metadata> {
   return generateSEOMetadata({
     page: `errors.${errorType}`,
@@ -309,10 +371,10 @@ export function generateYogaInstructorStructuredData(
   bio?: string,
   location?: string,
   specialties?: string[],
-  language: Language = DEFAULT_LANGUAGE,
+  language: Locale = defaultLocale,
   profileImageUrl?: string | null
 ) {
-  const baseURL = process.env.NEXT_PUBLIC_APP_URL || 'https://yoga-sync.com'
+  const baseURL = process.env.NEXT_PUBLIC_APP_URL || 'https://avara.studio'
   
   // Use profile image if available, otherwise fallback to dummy logo
   const imageUrl = profileImageUrl || `${baseURL}/dummy_logo.png`
@@ -354,7 +416,7 @@ export function generateYogaClassStructuredData(
   location: string,
   description?: string
 ) {
-  const baseURL = process.env.NEXT_PUBLIC_APP_URL || 'https://yoga-sync.com'
+  const baseURL = process.env.NEXT_PUBLIC_APP_URL || 'https://avara.studio'
   
   return {
     '@context': 'https://schema.org',
@@ -387,8 +449,8 @@ export function generateYogaClassStructuredData(
 /**
  * Generate structured data for the avara. organization
  */
-export function generateOrganizationStructuredData(language: Language = DEFAULT_LANGUAGE) {
-  const baseURL = process.env.NEXT_PUBLIC_APP_URL || 'https://yoga-sync.com'
+export function generateOrganizationStructuredData(language: Locale = defaultLocale) {
+  const baseURL = process.env.NEXT_PUBLIC_APP_URL || 'https://avara.studio'
   
   return {
     '@context': 'https://schema.org',
@@ -405,7 +467,7 @@ export function generateOrganizationStructuredData(language: Language = DEFAULT_
     contactPoint: {
       '@type': 'ContactPoint',
       contactType: 'customer service',
-              email: 'support@avara.studio'
+      email: 'support@avara.studio'
     },
     sameAs: [
       'https://twitter.com/avarayoga',
