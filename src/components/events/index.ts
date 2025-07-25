@@ -34,5 +34,4 @@ export {
 // Utility components
 export { ColorPicker } from '@/components/tags/ColorPicker'
 
-// Shared event components
-export * from './shared'; 
+export { InfoCardSection, colorSchemes } from './InfoCardSection' 

@@ -1,1 +1,0 @@
-export { InfoCardSection, colorSchemes } from './InfoCardSection' 
