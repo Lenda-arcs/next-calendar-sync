@@ -11,7 +11,7 @@ import { EventCard } from './EventCard'
 import { Event } from '@/lib/types'
 import { markEventAsExcluded } from '@/lib/invoice-utils'
 import { rematchEvents } from '@/lib/rematch-utils'
-import { InfoCardSection, colorSchemes } from './shared'
+import { colorSchemes, InfoCardSection } from './InfoCardSection'
 
 type UnmatchedEvent = Event
 
@@ -23,7 +23,7 @@ interface UnmatchedEventsSectionProps {
   userId: string
 }
 
-export function UnmatchedEventsSection({ 
+export function UnmatchedEventsSection({
   unmatchedEvents, 
   isLoading, 
   onRefresh, 

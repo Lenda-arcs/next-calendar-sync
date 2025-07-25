@@ -5,7 +5,7 @@ import { History, RefreshCw } from 'lucide-react'
 import { toast } from 'sonner'
 import { useCalendarFeedActions } from '@/lib/hooks/useCalendarFeeds'
 import { rematchEvents } from '@/lib/rematch-utils'
-import { InfoCardSection, colorSchemes } from './shared'
+import { colorSchemes, InfoCardSection } from './InfoCardSection'
 
 interface CalendarFeed {
   id: string

@@ -10,7 +10,7 @@ import { Event } from '@/lib/types'
 import { toggleEventExclusion } from '@/lib/invoice-utils'
 import { rematchEvents } from '@/lib/rematch-utils'
 import { toast } from 'sonner'
-import { InfoCardSection, colorSchemes } from './shared'
+import { colorSchemes, InfoCardSection } from './InfoCardSection'
 
 interface ExcludedEventsSectionProps {
   excludedEvents: Event[]
