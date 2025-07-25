@@ -107,6 +107,96 @@ const nextConfig: NextConfig = {
         destination: '/en/classes/:path*',
         permanent: false,
       },
+      
+      // Redirect legal pages to new [locale] structure
+      {
+        source: '/privacy',
+        has: [
+          {
+            type: 'header',
+            key: 'accept-language',
+            value: '^de.*',
+          },
+        ],
+        destination: '/de/privacy',
+        permanent: false,
+      },
+      {
+        source: '/privacy',
+        has: [
+          {
+            type: 'header',
+            key: 'accept-language',
+            value: '^es.*',
+          },
+        ],
+        destination: '/es/privacy',
+        permanent: false,
+      },
+      {
+        source: '/privacy',
+        destination: '/en/privacy',
+        permanent: false,
+      },
+      {
+        source: '/terms',
+        has: [
+          {
+            type: 'header',
+            key: 'accept-language',
+            value: '^de.*',
+          },
+        ],
+        destination: '/de/terms',
+        permanent: false,
+      },
+      {
+        source: '/terms',
+        has: [
+          {
+            type: 'header',
+            key: 'accept-language',
+            value: '^es.*',
+          },
+        ],
+        destination: '/es/terms',
+        permanent: false,
+      },
+      {
+        source: '/terms',
+        destination: '/en/terms',
+        permanent: false,
+      },
+      {
+        source: '/support',
+        has: [
+          {
+            type: 'header',
+            key: 'accept-language',
+            value: '^de.*',
+          },
+        ],
+        destination: '/de/support',
+        permanent: false,
+      },
+      {
+        source: '/support',
+        has: [
+          {
+            type: 'header',
+            key: 'accept-language',
+            value: '^es.*',
+          },
+        ],
+        destination: '/es/support',
+        permanent: false,
+      },
+      {
+        source: '/support',
+        destination: '/en/support',
+        permanent: false,
+      },
+      
       // Redirect root with language detection to new [locale] structure
       {
         source: '/',
