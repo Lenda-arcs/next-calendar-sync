@@ -146,3 +146,114 @@ export function formatDate(date: string | null): string {
   
   return new Date(date).toLocaleString("en-US", options)
 } 
+
+/**
+ * Fetch studio information for events that have studio_ids
+ * Falls back to location strings when studio data isn't accessible (e.g., RLS policies)
+ */
+export async function getStudiosForEvents(supabase: ReturnType<typeof createBrowserClient<Database>>, events: Array<{ studio_id: string | null; location?: string | null }>): Promise<Array<{
+  id: string
+  name: string
+  address?: string
+}>> {
+  try {
+    // Get unique studio IDs from events (these are actually billing_entity IDs)
+    const billingEntityIds = [...new Set(
+      events
+        .map(event => event.studio_id)
+        .filter((id): id is string => id !== null)
+    )]
+
+    if (billingEntityIds.length === 0) {
+      // Fallback: create studio info from location strings
+      return createStudioInfoFromLocations(events)
+    }
+
+    try {
+      // Try to get billing entities to find the actual studio IDs
+      const { data: billingEntities, error: billingError } = await supabase
+        .from('billing_entities')
+        .select('id, studio_id')
+        .in('id', billingEntityIds)
+        .eq('entity_type', 'studio')
+
+      if (billingError) {
+        console.warn('Cannot access billing entities (likely RLS policy), falling back to location strings:', billingError.message)
+        return createStudioInfoFromLocations(events)
+      }
+
+      // Get unique actual studio IDs
+      const actualStudioIds = [...new Set(
+        (billingEntities || [])
+          .map(be => be.studio_id)
+          .filter((id): id is string => id !== null)
+      )]
+
+      if (actualStudioIds.length === 0) {
+        return createStudioInfoFromLocations(events)
+      }
+
+      // Now fetch the actual studios for clean names and addresses
+      const { data: studios, error: studiosError } = await supabase
+        .from('studios')
+        .select('id, name, address')
+        .in('id', actualStudioIds)
+
+      if (studiosError) {
+        console.warn('Cannot access studios (likely RLS policy), falling back to location strings:', studiosError.message)
+        return createStudioInfoFromLocations(events)
+      }
+
+      // Create a mapping from billing_entity_id to studio data
+      const billingToStudioMap = new Map<string, { id: string; name: string; address?: string }>()
+      
+      billingEntities.forEach(be => {
+        if (be.studio_id) {
+          const studio = studios?.find(s => s.id === be.studio_id)
+          if (studio) {
+            billingToStudioMap.set(be.id, {
+              id: be.id, // Use billing entity ID as the filter ID
+              name: studio.name,
+              address: studio.address || undefined
+            })
+          }
+        }
+      })
+
+      const studioData = Array.from(billingToStudioMap.values())
+      
+      // If we got some studio data, return it; otherwise fallback to locations
+      return studioData.length > 0 ? studioData : createStudioInfoFromLocations(events)
+
+    } catch (error) {
+      console.warn('Error accessing studio data, falling back to location strings:', error)
+      return createStudioInfoFromLocations(events)
+    }
+  } catch (error) {
+    console.error('Error fetching studios:', error)
+    return []
+  }
+}
+
+/**
+ * Fallback function to create studio info from location strings
+ */
+function createStudioInfoFromLocations(events: Array<{ studio_id: string | null; location?: string | null }>): Array<{
+  id: string
+  name: string
+  address?: string
+}> {
+  const locationMap = new Map<string, { id: string; name: string; address?: string }>()
+  
+  events.forEach(event => {
+    if (event.location && event.studio_id) {
+      locationMap.set(event.studio_id, {
+        id: event.studio_id,
+        name: event.location, // Use location as the display name
+        address: undefined
+      })
+    }
+  })
+  
+  return Array.from(locationMap.values())
+} 

@@ -973,6 +973,7 @@ export type Database = {
           location: string | null
           start_time: string | null
           status: string | null
+          studio_id: string | null
           tags: string[] | null
           title: string | null
           user_id: string | null
@@ -987,6 +988,7 @@ export type Database = {
           location?: string | null
           start_time?: string | null
           status?: string | null
+          studio_id?: string | null
           tags?: string[] | null
           title?: string | null
           user_id?: string | null
@@ -1001,6 +1003,7 @@ export type Database = {
           location?: string | null
           start_time?: string | null
           status?: string | null
+          studio_id?: string | null
           tags?: string[] | null
           title?: string | null
           user_id?: string | null

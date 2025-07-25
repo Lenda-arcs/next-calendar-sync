@@ -5,6 +5,7 @@ import { Filter, MapPin, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Skeleton } from '@/components/ui/skeleton'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 import { Select, MultiSelect } from '@/components/ui'
 import { useScheduleFilters } from './FilterProvider'
@@ -229,12 +230,10 @@ function WhenFilter({ options }: { options: Array<{ key: string; label: string }
   )
 }
 
-// Desktop Studio Filter Component
+// Desktop Studio Filter Component - Compact Version
 function StudioFilter() {
-  const { filters, filterStats, availableStudios, toggleStudio } = useScheduleFilters()
+  const { filters, availableStudioInfo, toggleStudio } = useScheduleFilters()
   const { t } = useTranslation()
-
-  if (availableStudios.length === 0) return null
 
   return (
     <div className="space-y-3">
@@ -243,21 +242,40 @@ function StudioFilter() {
         {t('pages.publicSchedule.schedule.filters.studio.label')}
       </h4>
       <div className="flex flex-wrap gap-2">
-        {availableStudios.map(studio => (
-          <Button
-            key={studio}
-            variant={filters.studios.includes(studio) ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => toggleStudio(studio)}
-          >
-            {studio}
-            {filterStats.byStudio[studio] && (
-              <span className="ml-1 text-xs">({filterStats.byStudio[studio]})</span>
-            )}
-          </Button>
-        ))}
+        {availableStudioInfo === undefined ? (
+          // Loading skeleton
+          <StudioFilterSkeleton />
+        ) : availableStudioInfo.length === 0 ? null : (
+          // Actual studio buttons - compact version
+          availableStudioInfo.map(studio => (
+            <Button
+              key={studio.id}
+              variant={filters.studios.includes(studio.id) ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => toggleStudio(studio.id)}
+              className="h-8 px-3 text-sm"
+              title={studio.address ? `${studio.name} - ${studio.address}` : studio.name}
+            >
+              {studio.name}
+              {studio.eventCount && (
+                <span className="ml-1 text-xs opacity-70">({studio.eventCount})</span>
+              )}
+            </Button>
+          ))
+        )}
       </div>
     </div>
+  )
+}
+
+// Loading skeleton for studio filter
+function StudioFilterSkeleton() {
+  return (
+    <>
+      <Skeleton className="h-8 w-24" />
+      <Skeleton className="h-8 w-20" />
+      <Skeleton className="h-8 w-28" />
+    </>
   )
 }
 
@@ -314,15 +332,17 @@ function MobileWhenFilter({ options }: { options: Array<{ key: string; label: st
 }
 
 function MobileStudioFilter() {
-  const { filters, filterStats, availableStudios, updateFilter } = useScheduleFilters()
+  const { filters, availableStudioInfo, updateFilter } = useScheduleFilters()
   const { t } = useTranslation()
 
-  if (availableStudios.length === 0) return null
+  if (!availableStudioInfo || availableStudioInfo.length === 0) return null
 
-  const studioOptions = availableStudios.map(studio => ({
-    value: studio,
-    label: studio,
-    count: filterStats.byStudio[studio]
+  const studioOptions = availableStudioInfo.map(studio => ({
+    value: studio.id,
+    label: studio.address 
+      ? `${studio.name} • ${studio.address}` 
+      : studio.name,
+    count: studio.eventCount
   }))
 
   return (

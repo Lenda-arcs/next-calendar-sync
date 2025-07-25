@@ -1,11 +1,19 @@
 'use client'
 
 import React, { createContext, useContext, useState, useCallback, useMemo } from 'react'
+import { format, addDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns'
 import { PublicEvent, Tag } from '@/lib/types'
-import { addDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth, format } from 'date-fns'
 
-// Types for filtering
+// Types
 export type WhenFilter = 'all' | 'today' | 'tomorrow' | 'weekend' | 'week' | 'month' | 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday'
+
+// Simplified studio interface
+export interface StudioInfo {
+  id: string
+  name: string
+  address?: string
+  eventCount?: number
+}
 
 export interface FilterState {
   when: WhenFilter
@@ -13,7 +21,7 @@ export interface FilterState {
   yogaStyles: string[]
 }
 
-export interface FilterStats {
+interface FilterStats {
   total: number
   byStudio: Record<string, number>
   byYogaStyle: Record<string, number>
@@ -26,33 +34,34 @@ interface FilterContextValue {
   filteredEvents: PublicEvent[]
   totalEvents: number
   filterStats: FilterStats
-  availableStudios: string[]
+  availableStudioInfo: StudioInfo[] | undefined
   availableYogaStyles: string[]
   hasActiveFilters: boolean
   
   // Actions
   updateFilter: (key: keyof FilterState, value: WhenFilter | string[] | string) => void
-  toggleStudio: (studio: string) => void
+  toggleStudio: (studioId: string) => void
   toggleYogaStyle: (style: string) => void
   clearAllFilters: () => void
   
   // Data setters (called by parent components)
   setEvents: (events: PublicEvent[]) => void
   setTags: (tags: Tag[]) => void
-}
-
-const FilterContext = createContext<FilterContextValue | null>(null)
-
-export function useScheduleFilters() {
-  const context = useContext(FilterContext)
-  if (!context) {
-    throw new Error('useScheduleFilters must be used within a FilterProvider')
-  }
-  return context
+  setStudioInfo: (studios: StudioInfo[]) => void
 }
 
 interface FilterProviderProps {
   children: React.ReactNode
+}
+
+const FilterContext = createContext<FilterContextValue | undefined>(undefined)
+
+export function useScheduleFilters() {
+  const context = useContext(FilterContext)
+  if (context === undefined) {
+    throw new Error('useScheduleFilters must be used within a FilterProvider')
+  }
+  return context
 }
 
 export function FilterProvider({ children }: FilterProviderProps) {
@@ -65,17 +74,18 @@ export function FilterProvider({ children }: FilterProviderProps) {
   
   const [events, setEvents] = useState<PublicEvent[]>([])
   const [allTags, setTags] = useState<Tag[]>([])
+  const [studioInfo, setStudioInfo] = useState<StudioInfo[] | undefined>(undefined) // Start with undefined for loading state
 
   // ==================== COMPUTED DATA ====================
-  // Get unique studios from events
-  const availableStudios = useMemo(() => {
-    if (!events.length) return []
-    const studios = events
-      .map(event => event.location)
-      .filter((location): location is string => Boolean(location))
-      .filter((location, index, array) => array.indexOf(location) === index)
-    return studios.sort()
-  }, [events])
+  // Enhanced studio info with event counts
+  const availableStudioInfo = useMemo(() => {
+    if (!studioInfo) return undefined // Return undefined during loading
+    
+    return studioInfo.map(studio => ({
+      ...studio,
+      eventCount: events.filter(event => event.studio_id === studio.id).length
+    })).filter(studio => studio.eventCount && studio.eventCount > 0)
+  }, [studioInfo, events])
 
   // Get yoga styles from tags
   const availableYogaStyles = useMemo(() => {
@@ -132,9 +142,9 @@ export function FilterProvider({ children }: FilterProviderProps) {
         }
       }
 
-      // Studio filter
-      if (filters.studios.length > 0 && event.location) {
-        if (!filters.studios.includes(event.location)) {
+      // Simple studio filter using studio_id
+      if (filters.studios.length > 0 && event.studio_id) {
+        if (!filters.studios.includes(event.studio_id)) {
           return false
         }
       }
@@ -174,9 +184,11 @@ export function FilterProvider({ children }: FilterProviderProps) {
     const byWeekday: Record<string, number> = {}
 
     filtered.forEach(event => {
-      // Studio stats
-      if (event.location) {
-        byStudio[event.location] = (byStudio[event.location] || 0) + 1
+      // Studio stats using studio name
+      if (event.studio_id && availableStudioInfo) {
+        const studio = availableStudioInfo.find(s => s.id === event.studio_id)
+        const studioKey = studio ? studio.name : event.studio_id
+        byStudio[studioKey] = (byStudio[studioKey] || 0) + 1
       }
 
       // Weekday stats
@@ -202,19 +214,19 @@ export function FilterProvider({ children }: FilterProviderProps) {
       byYogaStyle,
       byWeekday
     }
-  }, [events, applyFilters, allTags])
+  }, [events, applyFilters, allTags, availableStudioInfo])
 
   // ==================== EVENT HANDLERS ====================
   const updateFilter = useCallback((key: keyof FilterState, value: WhenFilter | string[] | string) => {
     setFilters(prev => ({ ...prev, [key]: value }))
   }, [])
 
-  const toggleStudio = useCallback((studio: string) => {
+  const toggleStudio = useCallback((studioId: string) => {
     setFilters(prev => ({
       ...prev,
-      studios: prev.studios.includes(studio)
-        ? prev.studios.filter(s => s !== studio)
-        : [...prev.studios, studio]
+      studios: prev.studios.includes(studioId)
+        ? prev.studios.filter(s => s !== studioId)
+        : [...prev.studios, studioId]
     }))
   }, [])
 
@@ -235,16 +247,17 @@ export function FilterProvider({ children }: FilterProviderProps) {
     })
   }, [])
 
+  // Computed values
   const hasActiveFilters = filters.when !== 'all' || filters.studios.length > 0 || filters.yogaStyles.length > 0
+  const totalEvents = events.length
 
-  // ==================== CONTEXT VALUE ====================
-  const contextValue: FilterContextValue = {
+  const value: FilterContextValue = {
     // State
     filters,
     filteredEvents,
-    totalEvents: events.length,
+    totalEvents,
     filterStats,
-    availableStudios,
+    availableStudioInfo,
     availableYogaStyles,
     hasActiveFilters,
     
@@ -256,11 +269,12 @@ export function FilterProvider({ children }: FilterProviderProps) {
     
     // Data setters
     setEvents,
-    setTags
+    setTags,
+    setStudioInfo
   }
 
   return (
-    <FilterContext.Provider value={contextValue}>
+    <FilterContext.Provider value={value}>
       {children}
     </FilterContext.Provider>
   )
