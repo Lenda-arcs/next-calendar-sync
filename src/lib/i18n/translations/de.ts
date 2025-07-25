@@ -1011,7 +1011,7 @@ const translations: Translations = {
   },
   seo: {
     home: {
-      title: 'avara. - Schöne Yoga-Terminplanung Plattform',
+      title: 'avara. - Schöne Yoga-Termine Plattform',
       description: 'Verbinden Sie Ihren Kalender und erstellen Sie schöne, teilbare Terminpläne für Ihre Yoga-Kurse. Vertrauen von 500+ Yoga-Lehrern weltweit. Kostenlos starten.',
       keywords: 'Yoga-Terminplan, Kalender-Sync, Kursverwaltung, Lehrer-Plattform, Yoga-Lehrer, Terminplan-Sharing, Kalender-Integration'
     },
@@ -1052,7 +1052,7 @@ const translations: Translations = {
     },
     teacherSchedule: {
       title: '{teacherName} - Yoga-Kursterminplan',
-      description: 'Buchen Sie Yoga-Kurse mit {teacherName}. Sehen Sie kommende Stunden, Kurstypen, Spezialisierungen und Kontaktinformationen. {location}',
+      description: 'Finde Yoga-Kurse mit {teacherName}. Sehen Sie kommende Stunden, Kurstypen, Spezialisierungen und Kontaktinformationen. {location}',
       keywords: 'Yoga-Kurse, {teacherName}, Yoga buchen, Yoga-Terminplan, Yoga-Lehrer, {location}'
     },
     auth: {

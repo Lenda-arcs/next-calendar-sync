@@ -1052,7 +1052,7 @@ const translations: Translations = {
     },
     teacherSchedule: {
       title: '{teacherName} - Yoga Class Schedule',
-      description: 'Book yoga classes with {teacherName}. View upcoming sessions, class types, specialties, and contact information. {location}',
+      description: 'Find yoga classes with {teacherName}. View upcoming sessions, class types, specialties, and contact information. {location}',
       keywords: 'yoga classes, {teacherName}, book yoga, yoga schedule, yoga instructor, {location}'
     },
     auth: {
