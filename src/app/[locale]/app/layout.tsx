@@ -9,9 +9,9 @@ import {
   Receipt,
   Building
 } from 'lucide-react'
-import { ActiveProfileLink } from '../../app/components/ActiveProfileLink'
-import { ActiveNavLinks } from '../../app/components/ActiveNavLinks'
-import { ActiveHomeLink } from '../../app/components/ActiveHomeLink'
+import { ActiveProfileLink } from '@/components/navigation/ActiveProfileLink'
+import { ActiveNavLinks } from '@/components/navigation/ActiveNavLinks'
+import { ActiveHomeLink } from '@/components/navigation/ActiveHomeLink'
 import { getValidLocale, getTranslations, createTranslator } from '@/lib/i18n/config'
 
 interface AppLayoutProps {

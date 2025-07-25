@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Calendar, Plus } from 'lucide-react'
@@ -56,10 +57,10 @@ export default function EventsEmptyState({
           </p>
           {isNoEventsAtAll ? (
             <Button asChild>
-              <a href="/app/add-calendar">
+              <Link href="/app/add-calendar">
                 <Plus className="h-4 w-4 mr-2" />
                 {t('pages.manageEvents.emptyState.addCalendarFeed')}
-              </a>
+              </Link>
             </Button>
           ) : (
             <div className="flex gap-2 justify-center">

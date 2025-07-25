@@ -1,6 +1,6 @@
 import { generateAddCalendarMetadata } from '@/lib/i18n/metadata'
 import type { Metadata } from 'next'
-import AddCalendarContent from '../../../app/(dashboard)/add-calendar/AddCalendarContent'
+import AddCalendarContent from '@/components/dashboard/add-calendar/AddCalendarContent'
 import { EnhancedCalendarOnboarding, CalendarSelectionPage } from '@/components/calendar-feeds'
 import { createServerClient } from '@/lib/supabase-server'
 import { redirect } from 'next/navigation'

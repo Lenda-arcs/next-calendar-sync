@@ -4,7 +4,6 @@ import type { NextRequest } from 'next/server'
 import type { Database } from './database-generated.types'
 import { isProtectedRoute, isAuthRoute, getAuthRedirectUrl, AUTH_PATHS } from './src/lib/auth'
 import { authRateLimiter, generalRateLimiter, getClientIdentifier } from './src/lib/rate-limit'
-import { getServerLanguage } from '@/lib/i18n/server'
 
 export async function middleware(req: NextRequest) {
   let supabaseResponse = NextResponse.next({
@@ -36,19 +35,7 @@ export async function middleware(req: NextRequest) {
     const { pathname } = req.nextUrl
     const clientId = getClientIdentifier(req)
 
-    // Detect and set user language preference for SEO metadata
-    const detectedLanguage = getServerLanguage(req)
-    const currentLanguageCookie = req.cookies.get('language')?.value
-    
-    // Set language cookie if not already set or if detected language is different
-    if (!currentLanguageCookie || currentLanguageCookie !== detectedLanguage) {
-      supabaseResponse.cookies.set('language', detectedLanguage, {
-        maxAge: 60 * 60 * 24 * 365, // 1 year
-        httpOnly: false, // Allow client-side access
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax'
-      })
-    }
+    // Language is now handled via URL-based routing
 
     // Apply rate limiting for auth routes
     if (pathname.startsWith('/auth/') || pathname.startsWith('/api/auth/')) {

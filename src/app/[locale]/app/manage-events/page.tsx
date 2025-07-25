@@ -1,6 +1,6 @@
 import { generateManageEventsMetadata } from '@/lib/i18n/metadata'
 import type { Metadata } from 'next'
-import { ManageEventsClient } from '../../../app/(dashboard)/manage-events/ManageEventsClient'
+import { ManageEventsClient } from '@/components/dashboard/manage-events/ManageEventsClient'
 import { createServerClient } from '@/lib/supabase-server'
 import { getValidLocale } from '@/lib/i18n/config'
 

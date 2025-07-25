@@ -1,6 +1,6 @@
 import { createServerClient } from '@/lib/supabase-server'
 import { getUserCalendarFeeds } from '@/lib/calendar-feeds'
-import DashboardContent from '../../app/(dashboard)/DashboardContent'
+import DashboardContent from '@/components/dashboard/DashboardContent'
 import { generateDashboardMetadata } from '@/lib/i18n/metadata'
 import { getValidLocale } from '@/lib/i18n/config'
 import { PATHS } from '@/lib/paths'

@@ -1,6 +1,6 @@
 import { generateProfileMetadata } from '@/lib/i18n/metadata'
 import type { Metadata } from 'next'
-import ProfileContent from '../../../app/(dashboard)/profile/ProfileContent'
+import ProfileContent from '@/components/dashboard/profile/ProfileContent'
 import { createServerClient } from '@/lib/supabase-server'
 import { redirect } from 'next/navigation'
 import { getValidLocale } from '@/lib/i18n/config'

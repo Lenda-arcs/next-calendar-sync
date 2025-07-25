@@ -1,7 +1,7 @@
 import { Container } from '@/components/layout/container'
 import { generateManageTagsMetadata } from '@/lib/i18n/metadata'
 import type { Metadata } from 'next'
-import { ManageTagsClient } from '../../../app/(dashboard)/manage-tags/ManageTagsClient'
+import { ManageTagsClient } from '@/components/dashboard/manage-tags/ManageTagsClient'
 import { createServerClient } from '@/lib/supabase-server'
 import { getValidLocale, getTranslations, createTranslator } from '@/lib/i18n/config'
 

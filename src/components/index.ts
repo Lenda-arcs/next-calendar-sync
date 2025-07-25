@@ -31,5 +31,11 @@ export * from './ui';
 // Layout components
 export * from './layout';
 
+// Navigation components
+export * from './navigation';
+
+// Dashboard components  
+export * from './dashboard';
+
 // Provider components
 export * from './providers'; 
