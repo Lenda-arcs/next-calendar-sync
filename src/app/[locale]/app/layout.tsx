@@ -13,6 +13,7 @@ import { ActiveProfileLink } from '@/components/navigation/ActiveProfileLink'
 import { ActiveNavLinks } from '@/components/navigation/ActiveNavLinks'
 import { ActiveHomeLink } from '@/components/navigation/ActiveHomeLink'
 import { getValidLocale, getTranslations, createTranslator } from '@/lib/i18n/config'
+import { getLocalizedPath } from '@/lib/paths'
 
 interface AppLayoutProps {
   children: React.ReactNode
@@ -38,11 +39,7 @@ export default async function LocalizedAppLayout({ children, params }: AppLayout
     redirect(signInPath)
   }
 
-  // Create localized path helper
-  const getLocalizedPath = (path: string) => {
-    if (locale === 'en') return path
-    return `/${locale}${path}`
-  }
+  // Use the centralized getLocalizedPath function
 
   // Get translated navigation labels
   const manageEventsLabel = t('common.nav.manageEvents')
@@ -52,14 +49,14 @@ export default async function LocalizedAppLayout({ children, params }: AppLayout
 
   // Base navigation items available to all users (now with localized paths)
   const baseNavigation = [
-    { name: manageEventsLabel, href: getLocalizedPath(PATHS.APP.MANAGE_EVENTS), icon: Calendar, iconName: 'Calendar' },
-    { name: manageTagsLabel, href: getLocalizedPath(PATHS.APP.MANAGE_TAGS), icon: Tags, iconName: 'Tags' },
-    { name: invoicesLabel, href: getLocalizedPath(PATHS.APP.MANAGE_INVOICES), icon: Receipt, iconName: 'Receipt' },
+    { name: manageEventsLabel, href: getLocalizedPath(PATHS.APP.MANAGE_EVENTS, locale), icon: Calendar, iconName: 'Calendar' },
+    { name: manageTagsLabel, href: getLocalizedPath(PATHS.APP.MANAGE_TAGS, locale), icon: Tags, iconName: 'Tags' },
+    { name: invoicesLabel, href: getLocalizedPath(PATHS.APP.MANAGE_INVOICES, locale), icon: Receipt, iconName: 'Receipt' },
   ]
 
   // Admin-only navigation items (now with localized paths)
   const adminNavigation = [
-    { name: studiosLabel, href: getLocalizedPath(PATHS.APP.STUDIOS), icon: Building, iconName: 'Building' },
+    { name: studiosLabel, href: getLocalizedPath(PATHS.APP.STUDIOS, locale), icon: Building, iconName: 'Building' },
   ]
 
   // Get user role from the database
@@ -141,8 +138,8 @@ export default async function LocalizedAppLayout({ children, params }: AppLayout
 
       {/* Main Content */}
       <main className="flex-1 pt-8 pb-16">
-        {children}
-      </main>
-    </div>
-  )
+              {children}
+    </main>
+  </div>
+)
 } 

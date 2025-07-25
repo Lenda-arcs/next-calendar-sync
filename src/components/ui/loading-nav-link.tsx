@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils'
 import { NavLink } from './nav-link'
 import { useNavLoading } from '@/lib/hooks/useNavLoading'
 
+
 interface LoadingNavLinkProps {
   href: string
   text: string
@@ -33,12 +34,16 @@ export const LoadingNavLink = memo(function LoadingNavLink({
   const pathname = usePathname()
   const { isLoading, setLoading } = useNavLoading()
   
+  // Simple exact match - href should already be localized by layout
   const isActive = pathname === href
   const itemIsLoading = isLoading(href)
 
   const handleClick = useCallback(() => {
-    setLoading(href)
-  }, [setLoading, href])
+    // Don't set loading if we're clicking on the current page
+    if (pathname !== href) {
+      setLoading(href)
+    }
+  }, [setLoading, href, pathname])
 
   return (
     <div onClick={handleClick}>

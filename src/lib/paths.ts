@@ -55,6 +55,36 @@ export const PATHS = {
 // Type for all available paths
 export type AppPath = typeof PATHS[keyof typeof PATHS]
 
+/**
+ * Generate a locale-aware path
+ * @param path - The base path (e.g., '/app/profile')
+ * @param locale - The locale (e.g., 'de', 'es', 'en')
+ * @returns Localized path (e.g., '/de/app/profile' or '/en/app/profile')
+ */
+export const getLocalizedPath = (path: string, locale?: string): string => {
+  // Remove leading slash for consistency
+  const cleanPath = path.startsWith('/') ? path.slice(1) : path
+  
+  // Default to 'en' if no locale provided
+  const actualLocale = locale || 'en'
+  
+  // Always prepend the locale (including for English)
+  return `/${actualLocale}/${cleanPath}`
+}
+
+/**
+ * Extract locale from current pathname
+ * @param pathname - Current pathname from usePathname()
+ * @returns The locale ('de', 'es', 'en') or 'en' as fallback
+ */
+export const extractLocaleFromPath = (pathname: string): string => {
+  const match = pathname.match(/^\/([a-z]{2})(\/.*)?$/)
+  if (match && ['de', 'es'].includes(match[1])) {
+    return match[1]
+  }
+  return 'en'
+}
+
 // Helper function to get all static paths as an array
 export const getAllPaths = (): string[] => {
   const paths: string[] = []
