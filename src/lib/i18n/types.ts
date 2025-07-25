@@ -1140,6 +1140,50 @@ export interface PagesTranslations {
       shareDefaultTitle: string
       shareDefaultDescription: string
     }
+    schedule: {
+      header: {
+        title: string
+        classesCount: string
+        classesCountFiltered: string
+        clearFilters: string
+      }
+      filters: {
+        when: {
+          label: string
+          placeholder: string
+          options: {
+            all: string
+            today: string
+            tomorrow: string
+            weekend: string
+            week: string
+            month: string
+            monday: string
+            tuesday: string
+            wednesday: string
+            thursday: string
+            friday: string
+            saturday: string
+            sunday: string
+          }
+        }
+        studio: {
+          label: string
+          placeholder: string
+        }
+        yogaStyle: {
+          label: string
+          placeholder: string
+        }
+      }
+      emptyState: {
+        noUpcomingClasses: string
+        noMatchingClasses: string
+        noUpcomingDescription: string
+        noMatchingDescription: string
+        clearAllFilters: string
+      }
+    }
   }
 }
 

@@ -11,6 +11,7 @@ import { useSupabaseQuery } from '@/lib/hooks/useSupabaseQuery'
 import { useAllTags } from '@/lib/hooks/useAllTags'
 import DataLoader from '@/components/ui/data-loader'
 import { PublicEventListSkeleton } from '@/components/ui/skeleton'
+import { useTranslation } from '@/lib/i18n/context'
 
 
 
@@ -29,7 +30,7 @@ export function FilteredEventList({ userId, variant = 'compact', className }: Fi
     setTags 
   } = useScheduleFilters()
   
-
+  const { t } = useTranslation()
 
   // Fetch events
   const {
@@ -87,19 +88,19 @@ export function FilteredEventList({ userId, variant = 'compact', className }: Fi
           <Calendar className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
           <h3 className="text-lg font-medium text-foreground mb-2">
             {(events?.length || 0) === 0 
-              ? "No upcoming classes" 
-              : "No classes match your filters"
+              ? t('pages.publicSchedule.schedule.emptyState.noUpcomingClasses')
+              : t('pages.publicSchedule.schedule.emptyState.noMatchingClasses')
             }
           </h3>
           <p className="text-muted-foreground mb-6">
             {(events?.length || 0) === 0 
-              ? "This teacher doesn't have any classes scheduled in the next 3 months."
-              : "Try adjusting your filters to see more classes."
+              ? t('pages.publicSchedule.schedule.emptyState.noUpcomingDescription')
+              : t('pages.publicSchedule.schedule.emptyState.noMatchingDescription')
             }
           </p>
           {hasActiveFilters && (
             <Button onClick={clearAllFilters} variant="outline">
-              Clear All Filters
+              {t('pages.publicSchedule.schedule.emptyState.clearAllFilters')}
             </Button>
           )}
         </div>

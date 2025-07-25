@@ -1006,6 +1006,50 @@ const translations: Translations = {
         shareDescription: 'Schauen Sie sich {name}s kommende Yoga-Kurse an und machen Sie mit!',
         shareDefaultTitle: 'Lehrer Yoga-Stundenplan',
         shareDefaultDescription: 'Schauen Sie sich kommende Yoga-Kurse an und machen Sie mit!'
+      },
+      schedule: {
+        header: {
+          title: 'Kommende Stunden',
+          classesCount: '{filtered} von {total} Stunden in den nächsten 3 Monaten',
+          classesCountFiltered: '{filtered} von {total} Stunden in den nächsten 3 Monaten (gefiltert)',
+          clearFilters: 'Filter löschen'
+        },
+        filters: {
+          when: {
+            label: 'Wann',
+            placeholder: 'Jederzeit',
+            options: {
+              all: 'Jederzeit',
+              today: 'Heute',
+              tomorrow: 'Morgen',
+              weekend: 'Wochenende',
+              week: 'Diese Woche',
+              month: 'Dieser Monat',
+              monday: 'Montags',
+              tuesday: 'Dienstags',
+              wednesday: 'Mittwochs',
+              thursday: 'Donnerstags',
+              friday: 'Freitags',
+              saturday: 'Samstags',
+              sunday: 'Sonntags'
+            }
+          },
+          studio: {
+            label: 'Studio-Standort',
+            placeholder: 'Jedes Studio'
+          },
+          yogaStyle: {
+            label: 'Yoga-Stil',
+            placeholder: 'Jeder Stil'
+          }
+        },
+        emptyState: {
+          noUpcomingClasses: 'Keine kommenden Stunden',
+          noMatchingClasses: 'Keine Stunden entsprechen Ihren Filtern',
+          noUpcomingDescription: 'Diese Lehrerin hat keine Stunden in den nächsten 3 Monaten geplant.',
+          noMatchingDescription: 'Versuchen Sie, Ihre Filter anzupassen, um mehr Stunden zu sehen.',
+          clearAllFilters: 'Alle Filter löschen'
+        }
       }
     }
   },

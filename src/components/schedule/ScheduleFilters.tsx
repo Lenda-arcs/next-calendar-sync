@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 import { Select, MultiSelect } from '@/components/ui'
 import { useScheduleFilters } from './FilterProvider'
+import { useTranslation } from '@/lib/i18n/context'
 
 export function ScheduleFilters() {
   const [isFloatingVisible, setIsFloatingVisible] = useState(false)
@@ -20,6 +21,8 @@ export function ScheduleFilters() {
     hasActiveFilters,
     clearAllFilters
   } = useScheduleFilters()
+
+  const { t } = useTranslation()
 
   // Show/hide floating button based on accordion visibility
   useEffect(() => {
@@ -55,22 +58,20 @@ export function ScheduleFilters() {
     }
   }, [accordionValue, preventAutoClose])
 
-
-
   const whenOptions = [
-    { key: 'all', label: 'Any Time' },
-    { key: 'today', label: 'Today' },
-    { key: 'tomorrow', label: 'Tomorrow' },
-    { key: 'weekend', label: 'Weekend' },
-    { key: 'week', label: 'This Week' },
-    { key: 'month', label: 'This Month' },
-    { key: 'monday', label: 'Mondays' },
-    { key: 'tuesday', label: 'Tuesdays' },
-    { key: 'wednesday', label: 'Wednesdays' },
-    { key: 'thursday', label: 'Thursdays' },
-    { key: 'friday', label: 'Fridays' },
-    { key: 'saturday', label: 'Saturdays' },
-    { key: 'sunday', label: 'Sundays' }
+    { key: 'all', label: t('pages.publicSchedule.schedule.filters.when.options.all') },
+    { key: 'today', label: t('pages.publicSchedule.schedule.filters.when.options.today') },
+    { key: 'tomorrow', label: t('pages.publicSchedule.schedule.filters.when.options.tomorrow') },
+    { key: 'weekend', label: t('pages.publicSchedule.schedule.filters.when.options.weekend') },
+    { key: 'week', label: t('pages.publicSchedule.schedule.filters.when.options.week') },
+    { key: 'month', label: t('pages.publicSchedule.schedule.filters.when.options.month') },
+    { key: 'monday', label: t('pages.publicSchedule.schedule.filters.when.options.monday') },
+    { key: 'tuesday', label: t('pages.publicSchedule.schedule.filters.when.options.tuesday') },
+    { key: 'wednesday', label: t('pages.publicSchedule.schedule.filters.when.options.wednesday') },
+    { key: 'thursday', label: t('pages.publicSchedule.schedule.filters.when.options.thursday') },
+    { key: 'friday', label: t('pages.publicSchedule.schedule.filters.when.options.friday') },
+    { key: 'saturday', label: t('pages.publicSchedule.schedule.filters.when.options.saturday') },
+    { key: 'sunday', label: t('pages.publicSchedule.schedule.filters.when.options.sunday') }
   ]
 
   const getActiveFiltersCount = () => {
@@ -99,128 +100,105 @@ export function ScheduleFilters() {
 
   return (
     <>
-      {/* Floating Filter Button - Show when accordion is out of view */}
-      <div 
-        className={`fixed bottom-6 right-6 z-50 transition-all duration-300 ease-in-out ${
-          isFloatingVisible 
-            ? 'opacity-100 translate-y-0 scale-100' 
-            : 'opacity-0 translate-y-4 scale-95 pointer-events-none'
-        }`}
-      >
-        <Button
-          size="lg"
-          onClick={handleFABClick}
-          className="rounded-full shadow-lg bg-primary hover:bg-primary/90 text-primary-foreground px-3 sm:px-4 py-3 h-auto min-w-[48px] sm:min-w-[120px] transition-all duration-200 hover:scale-105"
-        >
-          <Filter className="h-5 w-5 sm:mr-2" />
-          <span className="font-medium hidden sm:inline">Filters</span>
-          
-          {/* Compact badge positioned closer to icon - only show when there are active filters */}
-          {hasActiveFilters && (
-            <div className="ml-0.5 sm:ml-1 min-w-[20px] flex justify-center">
-              <Badge 
-                variant="secondary" 
-                className="px-1 py-0 text-[10px] leading-4 min-w-[16px] h-4 flex items-center justify-center transition-all duration-200 animate-pulse"
-              >
+      {/* Floating Action Button - Mobile */}
+      {isFloatingVisible && (
+        <div className="fixed bottom-6 right-6 z-50 md:hidden">
+          <Button
+            size="lg"
+            onClick={handleFABClick}
+            className="h-14 px-6 rounded-full shadow-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-200 ease-in-out transform hover:scale-105"
+          >
+            <Filter className="h-5 w-5 mr-2" />
+            <span className="text-sm font-medium">
+              {t('common.actions.filter')}
+            </span>
+            {hasActiveFilters && (
+              <Badge variant="secondary" className="ml-2 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs">
                 {getActiveFiltersCount()}
               </Badge>
-            </div>
-          )}
-        </Button>
-      </div>
+            )}
+          </Button>
+        </div>
+      )}
 
-      {/* Static Accordion Filters - Always visible, auto-closes when FAB is active */}
+      {/* Desktop Filters Bar & Mobile Accordion */}
       <div ref={accordionRef}>
-        <Card className="overflow-hidden transition-all duration-300 ease-in-out">
-                      <Accordion 
-              type="single" 
-              collapsible 
-              value={accordionValue} 
-              onValueChange={(value) => {
-                setAccordionValue(value)
-                // Clear prevent flag when manually closing accordion
-                if (value === '') {
-                  setPreventAutoClose(false)
-                }
-              }}
-              className="w-full"
-            >
-            <AccordionItem value="filters" className="border-none">
-              <AccordionTrigger className="px-2 sm:px-4 py-2 hover:no-underline cursor-pointer group text-sm min-h-[40px]">
-                <div className="flex items-center justify-between w-full">
-                  <div className="flex items-center gap-1 sm:gap-2 flex-1 min-w-0">
-                    <Filter className="h-4 w-4 flex-shrink-0" />
-                    <span className="text-sm font-normal truncate">Find Your Perfect Class</span>
-                    <div className="text-xs text-gray-400 group-hover:text-blue-500 transition-colors opacity-0 group-hover:opacity-100 hidden sm:block flex-shrink-0">
-                      Click to expand
-                    </div>
-                    
-                    {/* Responsive badge container - smaller on mobile */}
-                    <div className="flex items-center gap-1 min-w-[32px] sm:min-w-[80px] justify-end">
-                      {hasActiveFilters && (
-                        <Badge 
-                          variant="secondary" 
-                          className="px-1.5 py-0.5 text-xs flex-shrink-0 transition-all duration-200 opacity-100 scale-100 animate-pulse"
-                        >
-                          {getActiveFiltersCount()}
-                        </Badge>
-                      )}
-                      
-                      <Badge 
-                        variant="outline" 
-                        className={`px-1.5 py-0.5 text-xs flex-shrink-0 hidden sm:inline-flex transition-all duration-200 ${
-                          isFloatingVisible 
-                            ? 'opacity-60 scale-100' 
-                            : 'opacity-0 scale-95 pointer-events-none'
-                        }`}
-                      >
-                        Use floating filter below
-                      </Badge>
-                    </div>
-                  </div>
-                  
-                  {/* Responsive clear button container - smaller on mobile */}
-                  <div className="flex items-center ml-1 sm:ml-2 min-w-[24px] sm:min-w-[60px] justify-end">
-                    <div
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        clearAllFilters()
-                      }}
-                      className={`text-xs px-1 sm:px-2 py-0.5 h-6 hover:bg-destructive/10 hover:text-destructive transition-all duration-200 cursor-pointer rounded flex items-center justify-center flex-shrink-0 ${
-                        hasActiveFilters 
-                          ? 'opacity-100 scale-100' 
-                          : 'opacity-0 scale-95 pointer-events-none'
-                      }`}
-                    >
-                      <X className="h-3 w-3 sm:mr-1" />
-                      <span className="hidden sm:inline">Clear All</span>
-                    </div>
-                  </div>
+        {/* Desktop: Always visible filters bar */}
+        <div className="hidden md:block">
+          <Card className="p-6">
+            <div className="flex flex-wrap items-center gap-6">
+              {/* When Filter */}
+              <WhenFilter options={whenOptions} />
+              
+              {/* Studio Filter */}
+              <StudioFilter />
+              
+              {/* Yoga Style Filter */}
+              <YogaStyleFilter />
+              
+              {/* Clear All Button */}
+              {hasActiveFilters && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={clearAllFilters}
+                  className="ml-auto"
+                >
+                  <X className="h-4 w-4 mr-1" />
+                  {t('pages.publicSchedule.schedule.header.clearFilters')}
+                </Button>
+              )}
+            </div>
+          </Card>
+        </div>
+
+        {/* Mobile: Collapsible accordion */}
+        <div className="md:hidden">
+          <Accordion 
+            type="single" 
+            collapsible 
+            value={accordionValue} 
+            onValueChange={setAccordionValue}
+          >
+            <AccordionItem value="filters">
+              <AccordionTrigger className="text-base font-medium px-1">
+                <div className="flex items-center gap-2">
+                  <Filter className="h-4 w-4" />
+                  <span>{t('common.actions.filter')}</span>
+                  {hasActiveFilters && (
+                    <Badge variant="secondary" className="h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs">
+                      {getActiveFiltersCount()}
+                    </Badge>
+                  )}
                 </div>
               </AccordionTrigger>
-              <AccordionContent className="px-4 sm:px-6 pb-6">
-                <div className="space-y-6">
-                  {/* Desktop Filters - Button Layout */}
-                  <div className="hidden sm:block space-y-6">
-                    <WhenFilter options={whenOptions} />
-                    <StudioFilter />
-                    <YogaStyleFilter />
-                  </div>
-                  
-                  {/* Mobile Filters - Dropdown Layout */}
-                  <div className="block sm:hidden space-y-3">
+              <AccordionContent>
+                <Card className="mt-4">
+                  <div className="p-4 space-y-4">
+                    {/* Mobile Filters */}
                     <MobileWhenFilter options={whenOptions} />
                     <MobileStudioFilter />
                     <MobileYogaStyleFilter />
+                    
+                    {/* Clear All Button */}
+                    {hasActiveFilters && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={clearAllFilters}
+                        className="w-full"
+                      >
+                        <X className="h-4 w-4 mr-1" />
+                        {t('pages.publicSchedule.schedule.header.clearFilters')}
+                      </Button>
+                    )}
                   </div>
-                </div>
+                </Card>
               </AccordionContent>
             </AccordionItem>
           </Accordion>
-        </Card>
+        </div>
       </div>
-
-
     </>
   )
 }
@@ -228,19 +206,22 @@ export function ScheduleFilters() {
 // Desktop When Filter Component
 function WhenFilter({ options }: { options: Array<{ key: string; label: string }> }) {
   const { filters, updateFilter } = useScheduleFilters()
+  const { t } = useTranslation()
 
   return (
-    <div className="space-y-3">
-      <h4 className="font-medium text-sm text-muted-foreground">When</h4>
+    <div className="flex items-center gap-3">
+      <label className="text-sm font-medium text-muted-foreground">
+        {t('pages.publicSchedule.schedule.filters.when.label')}
+      </label>
       <div className="flex flex-wrap gap-2">
-        {options.map(({ key, label }) => (
+        {options.map(option => (
           <Button
-            key={key}
-            variant={filters.when === key ? 'default' : 'outline'}
+            key={option.key}
+            variant={filters.when === option.key ? 'default' : 'outline'}
             size="sm"
-            onClick={() => updateFilter('when', key)}
+            onClick={() => updateFilter('when', option.key)}
           >
-            {label}
+            {option.label}
           </Button>
         ))}
       </div>
@@ -251,14 +232,15 @@ function WhenFilter({ options }: { options: Array<{ key: string; label: string }
 // Desktop Studio Filter Component
 function StudioFilter() {
   const { filters, filterStats, availableStudios, toggleStudio } = useScheduleFilters()
+  const { t } = useTranslation()
 
   if (availableStudios.length === 0) return null
 
   return (
     <div className="space-y-3">
-      <h4 className="font-medium text-sm text-muted-foreground flex items-center gap-1">
+      <h4 className="font-medium text-sm text-muted-foreground flex items-center gap-2">
         <MapPin className="h-4 w-4" />
-        Studio Location
+        {t('pages.publicSchedule.schedule.filters.studio.label')}
       </h4>
       <div className="flex flex-wrap gap-2">
         {availableStudios.map(studio => (
@@ -282,12 +264,13 @@ function StudioFilter() {
 // Desktop Yoga Style Filter Component
 function YogaStyleFilter() {
   const { filters, filterStats, availableYogaStyles, toggleYogaStyle } = useScheduleFilters()
+  const { t } = useTranslation()
 
   if (availableYogaStyles.length === 0) return null
 
   return (
     <div className="space-y-3">
-      <h4 className="font-medium text-sm text-muted-foreground">Yoga Style</h4>
+      <h4 className="font-medium text-sm text-muted-foreground">{t('pages.publicSchedule.schedule.filters.yogaStyle.label')}</h4>
       <div className="flex flex-wrap gap-2">
         {availableYogaStyles.map(style => (
           <Button
@@ -312,6 +295,7 @@ function YogaStyleFilter() {
 // Mobile Accordion Filter Components (using dropdowns like floating filters)
 function MobileWhenFilter({ options }: { options: Array<{ key: string; label: string }> }) {
   const { filters, updateFilter } = useScheduleFilters()
+  const { t } = useTranslation()
 
   const selectOptions = options.map(({ key, label }) => ({
     value: key,
@@ -320,17 +304,18 @@ function MobileWhenFilter({ options }: { options: Array<{ key: string; label: st
 
   return (
     <Select
-      label="When"
+      label={t('pages.publicSchedule.schedule.filters.when.label')}
       value={filters.when}
       onChange={(value) => updateFilter('when', value)}
       options={selectOptions}
-      placeholder="Any time"
+      placeholder={t('pages.publicSchedule.schedule.filters.when.placeholder')}
     />
   )
 }
 
 function MobileStudioFilter() {
   const { filters, filterStats, availableStudios, updateFilter } = useScheduleFilters()
+  const { t } = useTranslation()
 
   if (availableStudios.length === 0) return null
 
@@ -342,11 +327,11 @@ function MobileStudioFilter() {
 
   return (
     <MultiSelect
-      label="Studio Location"
+      label={t('pages.publicSchedule.schedule.filters.studio.label')}
       value={filters.studios}
       onChange={(values) => updateFilter('studios', values)}
       options={studioOptions}
-      placeholder="Any studio"
+      placeholder={t('pages.publicSchedule.schedule.filters.studio.placeholder')}
       displayMode="compact"
       showCounts={true}
     />
@@ -355,6 +340,7 @@ function MobileStudioFilter() {
 
 function MobileYogaStyleFilter() {
   const { filters, filterStats, availableYogaStyles, updateFilter } = useScheduleFilters()
+  const { t } = useTranslation()
 
   if (availableYogaStyles.length === 0) return null
 
@@ -366,11 +352,11 @@ function MobileYogaStyleFilter() {
 
   return (
     <MultiSelect
-      label="Yoga Style"
+      label={t('pages.publicSchedule.schedule.filters.yogaStyle.label')}
       value={filters.yogaStyles}
       onChange={(values) => updateFilter('yogaStyles', values)}
       options={yogaStyleOptions}
-      placeholder="Any style"
+      placeholder={t('pages.publicSchedule.schedule.filters.yogaStyle.placeholder')}
       displayMode="compact"
       showCounts={true}
     />

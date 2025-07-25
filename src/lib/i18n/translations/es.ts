@@ -1006,6 +1006,50 @@ const translations: Translations = {
         shareDescription: '¡Echa un vistazo a las próximas clases de yoga de {name} y únete a una sesión!',
         shareDefaultTitle: 'Horario de Yoga del Profesor',
         shareDefaultDescription: '¡Echa un vistazo a las próximas clases de yoga y únete a una sesión!'
+      },
+      schedule: {
+        header: {
+          title: 'Próximas Clases',
+          classesCount: '{filtered} de {total} clases en los próximos 3 meses',
+          classesCountFiltered: '{filtered} de {total} clases en los próximos 3 meses (filtradas)',
+          clearFilters: 'Limpiar Filtros'
+        },
+        filters: {
+          when: {
+            label: 'Cuándo',
+            placeholder: 'Cualquier momento',
+            options: {
+              all: 'Cualquier Momento',
+              today: 'Hoy',
+              tomorrow: 'Mañana',
+              weekend: 'Fin de Semana',
+              week: 'Esta Semana',
+              month: 'Este Mes',
+              monday: 'Lunes',
+              tuesday: 'Martes',
+              wednesday: 'Miércoles',
+              thursday: 'Jueves',
+              friday: 'Viernes',
+              saturday: 'Sábados',
+              sunday: 'Domingos'
+            }
+          },
+          studio: {
+            label: 'Ubicación del Studio',
+            placeholder: 'Cualquier studio'
+          },
+          yogaStyle: {
+            label: 'Estilo de Yoga',
+            placeholder: 'Cualquier estilo'
+          }
+        },
+        emptyState: {
+          noUpcomingClasses: 'No hay próximas clases',
+          noMatchingClasses: 'Ninguna clase coincide con tus filtros',
+          noUpcomingDescription: 'Este profesor no tiene clases programadas en los próximos 3 meses.',
+          noMatchingDescription: 'Intenta ajustar tus filtros para ver más clases.',
+          clearAllFilters: 'Limpiar Todos los Filtros'
+        }
       }
     }
   },

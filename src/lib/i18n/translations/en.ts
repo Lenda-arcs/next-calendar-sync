@@ -1006,6 +1006,50 @@ const translations: Translations = {
         shareDescription: 'Check out {name}\'s upcoming yoga classes and join for a session!',
         shareDefaultTitle: 'Teacher\'s Yoga Schedule',
         shareDefaultDescription: 'Check out upcoming yoga classes and join for a session!'
+      },
+      schedule: {
+        header: {
+          title: 'Upcoming Classes',
+          classesCount: '{filtered} of {total} classes in the next 3 months',
+          classesCountFiltered: '{filtered} of {total} classes in the next 3 months (filtered)',
+          clearFilters: 'Clear Filters'
+        },
+        filters: {
+          when: {
+            label: 'When',
+            placeholder: 'Any time',
+            options: {
+              all: 'Any Time',
+              today: 'Today',
+              tomorrow: 'Tomorrow',
+              weekend: 'Weekend',
+              week: 'This Week',
+              month: 'This Month',
+              monday: 'Mondays',
+              tuesday: 'Tuesdays',
+              wednesday: 'Wednesdays',
+              thursday: 'Thursdays',
+              friday: 'Fridays',
+              saturday: 'Saturdays',
+              sunday: 'Sundays'
+            }
+          },
+          studio: {
+            label: 'Studio Location',
+            placeholder: 'Any studio'
+          },
+          yogaStyle: {
+            label: 'Yoga Style',
+            placeholder: 'Any style'
+          }
+        },
+        emptyState: {
+          noUpcomingClasses: 'No upcoming classes',
+          noMatchingClasses: 'No classes match your filters',
+          noUpcomingDescription: 'This teacher doesn\'t have any classes scheduled in the next 3 months.',
+          noMatchingDescription: 'Try adjusting your filters to see more classes.',
+          clearAllFilters: 'Clear All Filters'
+        }
       }
     }
   },

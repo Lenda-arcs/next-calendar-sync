@@ -4,19 +4,29 @@ import React from 'react'
 import { X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useScheduleFilters } from './FilterProvider'
+import { useTranslation } from '@/lib/i18n/context'
 
 export function ScheduleHeader() {
   const { filteredEvents, totalEvents, hasActiveFilters, clearAllFilters } = useScheduleFilters()
+  const { t } = useTranslation()
 
   return (
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
       <div>
         <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
-          Upcoming Classes
+          {t('pages.publicSchedule.schedule.header.title')}
         </h2>
         <p className="text-gray-600 dark:text-gray-300 mt-1">
-          {filteredEvents.length} of {totalEvents} classes in the next 3 months
-          {hasActiveFilters && ' (filtered)'}
+          {hasActiveFilters 
+            ? t('pages.publicSchedule.schedule.header.classesCountFiltered', { 
+                filtered: filteredEvents.length.toString(), 
+                total: totalEvents.toString() 
+              })
+            : t('pages.publicSchedule.schedule.header.classesCount', { 
+                filtered: filteredEvents.length.toString(), 
+                total: totalEvents.toString() 
+              })
+          }
         </p>
       </div>
       
@@ -29,7 +39,7 @@ export function ScheduleHeader() {
             className="text-sm"
           >
             <X className="h-4 w-4 mr-1" />
-            Clear Filters
+            {t('pages.publicSchedule.schedule.header.clearFilters')}
           </Button>
         </div>
       )}
