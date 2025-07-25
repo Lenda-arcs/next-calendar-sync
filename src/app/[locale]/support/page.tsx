@@ -41,6 +41,7 @@ export default async function SupportPage({ params }: SupportPageProps) {
         icon={LifeBuoy}
         title={t('support.title')}
         description={t('support.description')}
+        locale={locale}
       />
 
       <div className="space-y-8">

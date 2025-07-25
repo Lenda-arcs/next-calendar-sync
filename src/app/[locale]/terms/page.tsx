@@ -45,6 +45,7 @@ export default async function TermsPage({ params }: TermsPageProps) {
         title={t('terms.title')}
         description={t('terms.description')}
         lastUpdated={t('terms.lastUpdated')}
+        locale={locale}
       />
 
       <div className="space-y-8">

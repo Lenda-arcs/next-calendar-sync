@@ -37,6 +37,7 @@ export default async function LocalizedPrivacyPage({ params }: Props) {
         title={t('privacy.title')}
         description={t('privacy.description')}
         lastUpdated={t('privacy.lastUpdated')}
+        locale={locale}
       />
 
       <div className="space-y-8">
