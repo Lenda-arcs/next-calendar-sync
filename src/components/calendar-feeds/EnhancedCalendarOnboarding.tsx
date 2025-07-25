@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { Container } from '@/components/layout/container'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -195,15 +196,15 @@ export function EnhancedCalendarOnboarding({ user, success, error, message }: En
                 
           <div className="flex flex-col sm:flex-row gap-3">
             <Button asChild className="flex-1">
-                    <a href="/app">
+                    <Link href="/app">
                       <ArrowRight className="mr-2 h-4 w-4" />
                       Go to Dashboard
-                    </a>
+                    </Link>
                   </Button>
             <Button variant="outline" asChild>
-                    <a href="/app/profile">
+                    <Link href="/app/profile">
                       Complete Profile
-                    </a>
+                    </Link>
                   </Button>
                 </div>
           </div>

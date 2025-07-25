@@ -1,10 +1,21 @@
 import Link from 'next/link'
 
+// Extract domain from APP URL for display purposes
+function getWebsiteDomain() {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL
+  if (!appUrl) return 'avara.studio' // fallback for build-time
+  try {
+    return new URL(appUrl).hostname
+  } catch {
+    return 'avara.studio' // fallback for invalid URLs
+  }
+}
+
 // Centralized company information
 export const COMPANY_INFO = {
   name: 'avara',
   email: 'hello@avara.studio',
-  website: 'avara.studio',
+  website: getWebsiteDomain(),
   supportEmail: 'hello@avara.studio',
   dataProtectionOfficer: 'hello@avara.studio',
 } as const

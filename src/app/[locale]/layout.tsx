@@ -41,13 +41,15 @@ export default async function LocaleLayout({ children, params }: Props) {
   // Load translations server-side
   const translations = await getTranslations(locale)
 
+  const baseURL = process.env.NEXT_PUBLIC_APP_URL
+
   return (
     <>
       {/* SEO hreflang tags - these will be injected into <head> */}
-      <link rel="alternate" hrefLang="en" href="https://avara.studio/" />
-      <link rel="alternate" hrefLang="de" href="https://avara.studio/de" />
-      <link rel="alternate" hrefLang="es" href="https://avara.studio/es" />
-      <link rel="alternate" hrefLang="x-default" href="https://avara.studio/" />
+      <link rel="alternate" hrefLang="en" href={`${baseURL}/`} />
+      <link rel="alternate" hrefLang="de" href={`${baseURL}/de`} />
+      <link rel="alternate" hrefLang="es" href={`${baseURL}/es`} />
+      <link rel="alternate" hrefLang="x-default" href={`${baseURL}/`} />
       
       <LanguageProvider initialLanguage={locale} serverTranslations={translations}>
         <SupabaseProvider>

@@ -47,8 +47,8 @@ export async function generateSEOMetadata(options: MetadataOptions): Promise<Met
   const description = await getServerTranslation(language, `seo.${page}.description`, variables)
   const keywords = await getServerTranslation(language, `seo.${page}.keywords`, variables)
   
-  // Generate base URL (you might want to get this from environment)
-  const baseURL = process.env.NEXT_PUBLIC_APP_URL || 'https://avara.studio'
+  // Generate base URL from environment variable
+  const baseURL = process.env.NEXT_PUBLIC_APP_URL
   
   // Handle basePath for new [locale] structure
   let fullBasePath = basePath
@@ -311,7 +311,7 @@ export async function generateTeacherScheduleMetadata(
   }
   
   // Use profile image if available, otherwise fallback to dummy logo
-  const baseURL = process.env.NEXT_PUBLIC_APP_URL || 'https://avara.studio'
+  const baseURL = process.env.NEXT_PUBLIC_APP_URL
   const imageUrl = profileImageUrl || `${baseURL}/dummy_logo.png`
   
   const images = [
@@ -374,7 +374,7 @@ export function generateYogaInstructorStructuredData(
   language: Locale = defaultLocale,
   profileImageUrl?: string | null
 ) {
-  const baseURL = process.env.NEXT_PUBLIC_APP_URL || 'https://avara.studio'
+  const baseURL = process.env.NEXT_PUBLIC_APP_URL
   
   // Use profile image if available, otherwise fallback to dummy logo
   const imageUrl = profileImageUrl || `${baseURL}/dummy_logo.png`
@@ -416,7 +416,7 @@ export function generateYogaClassStructuredData(
   location: string,
   description?: string
 ) {
-  const baseURL = process.env.NEXT_PUBLIC_APP_URL || 'https://avara.studio'
+  const baseURL = process.env.NEXT_PUBLIC_APP_URL
   
   return {
     '@context': 'https://schema.org',
@@ -450,7 +450,7 @@ export function generateYogaClassStructuredData(
  * Generate structured data for the avara. organization
  */
 export function generateOrganizationStructuredData(language: Locale = defaultLocale) {
-  const baseURL = process.env.NEXT_PUBLIC_APP_URL || 'https://avara.studio'
+  const baseURL = process.env.NEXT_PUBLIC_APP_URL
   
   return {
     '@context': 'https://schema.org',
