@@ -61,17 +61,25 @@ export async function syncOAuthCalendar(options: OAuthCalendarSyncOptions) {
   let accessToken = oauthIntegration.access_token;
   
   if (expiresAt <= now && oauthIntegration.refresh_token) {
+    // Check for required environment variables
+    const googleClientId = Deno.env.get('GOOGLE_CLIENT_ID');
+    const googleClientSecret = Deno.env.get('GOOGLE_CLIENT_SECRET');
+    
+    if (!googleClientId || !googleClientSecret) {
+      throw new Error('Missing Google OAuth credentials (GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET)');
+    }
+    
     // Refresh the token
     const refreshResponse = await fetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
-      body: new URLSearchParams({
-        client_id: process.env.GOOGLE_CLIENT_ID!,
-        client_secret: process.env.GOOGLE_CLIENT_SECRET!,
-        refresh_token: oauthIntegration.refresh_token,
-        grant_type: 'refresh_token',
+              body: new URLSearchParams({
+          client_id: googleClientId,
+          client_secret: googleClientSecret,
+          refresh_token: oauthIntegration.refresh_token,
+          grant_type: 'refresh_token',
       }),
     });
     

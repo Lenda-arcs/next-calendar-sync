@@ -146,18 +146,63 @@ serve(async (req) => {
     
     console.log(`Fetching calendar feed from URL: ${feed.feed_url}`);
     
-    // Add specific headers for better compatibility with iCloud and other calendar providers
-    const icsRes = await fetch(feed.feed_url, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; CalendarSync/1.0)',
-        'Accept': 'text/calendar, application/calendar, text/plain, */*',
-        'Cache-Control': 'no-cache'
-      }
-    });
+    // Retry logic for temporary failures
+    let icsRes;
+    let lastError;
+    const maxRetries = 3;
+    const retryDelay = 1000; // 1 second
     
-    if (!icsRes.ok) {
-      console.error(`Failed to fetch calendar feed: ${icsRes.status} ${icsRes.statusText}`);
-      throw new Error(`Failed to fetch calendar feed: ${icsRes.status} ${icsRes.statusText}`);
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+                 // Add specific headers for better compatibility with different calendar providers
+         const headers: Record<string, string> = {
+           'Accept': 'text/calendar, application/calendar, text/plain, */*',
+           'Cache-Control': 'no-cache'
+         };
+         
+         // Use different User-Agent based on provider
+         if (feed.feed_url.includes('mailbox.org')) {
+           headers['User-Agent'] = 'curl/7.68.0'; // Mailbox.org seems to prefer curl-like requests
+         } else if (feed.feed_url.includes('icloud.com')) {
+           headers['User-Agent'] = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36';
+         } else {
+           headers['User-Agent'] = 'Mozilla/5.0 (compatible; CalendarSync/1.0)';
+         }
+         
+         icsRes = await fetch(feed.feed_url, { headers });
+        
+        if (icsRes.ok) {
+          break; // Success, exit retry loop
+        }
+        
+        // If it's a client error (4xx), don't retry
+        if (icsRes.status >= 400 && icsRes.status < 500) {
+          console.error(`Client error fetching calendar feed (attempt ${attempt}): ${icsRes.status} ${icsRes.statusText}`);
+          throw new Error(`Calendar feed returned client error: ${icsRes.status} ${icsRes.statusText}. Please check if the calendar URL is correct and publicly accessible.`);
+        }
+        
+        // For server errors (5xx), log and potentially retry
+        lastError = new Error(`Server error fetching calendar feed: ${icsRes.status} ${icsRes.statusText}`);
+        console.error(`Server error fetching calendar feed (attempt ${attempt}/${maxRetries}): ${icsRes.status} ${icsRes.statusText}`);
+        
+        if (attempt === maxRetries) {
+          throw lastError;
+        }
+        
+        // Wait before retrying
+        await new Promise(resolve => setTimeout(resolve, retryDelay * attempt));
+        
+      } catch (error) {
+        lastError = error;
+        console.error(`Error fetching calendar feed (attempt ${attempt}/${maxRetries}):`, error.message);
+        
+        if (attempt === maxRetries) {
+          throw new Error(`Failed to fetch calendar feed after ${maxRetries} attempts: ${error.message}`);
+        }
+        
+        // Wait before retrying
+        await new Promise(resolve => setTimeout(resolve, retryDelay * attempt));
+      }
     }
     
     const icsText = await icsRes.text();
