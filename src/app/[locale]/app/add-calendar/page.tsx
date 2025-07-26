@@ -2,6 +2,7 @@ import { generateAddCalendarMetadata } from '@/lib/i18n/metadata'
 import type { Metadata } from 'next'
 import AddCalendarContent from '@/components/dashboard/add-calendar/AddCalendarContent'
 import { EnhancedCalendarOnboarding, CalendarSelectionPage } from '@/components/calendar-feeds'
+import { YogaCalendarOnboarding } from '@/components/calendar-feeds/YogaCalendarOnboarding'
 import { createServerClient } from '@/lib/supabase-server'
 import { redirect } from 'next/navigation'
 import { getValidLocale } from '@/lib/i18n/config'
@@ -69,6 +70,7 @@ export default async function AddCalendarPage({ params, searchParams }: AddCalen
   
   const hasOAuthButNoFeeds = oauthIntegration && feeds.length === 0
   const showCalendarSelection = step === 'select_calendars' || hasOAuthButNoFeeds
+  const showYogaCalendarCreation = step === 'create_yoga_calendar' || isOnboarding
 
   // Fetch available calendars if showing calendar selection
   const { calendars: availableCalendars } = showCalendarSelection 
@@ -83,6 +85,15 @@ export default async function AddCalendarPage({ params, searchParams }: AddCalen
     )
   }
 
+  if (showYogaCalendarCreation) {
+    return (
+      <div className="min-h-screen">
+        <YogaCalendarOnboarding user={authUser} success={success} error={error} message={message} />
+      </div>
+    )
+  }
+
+  // Fallback to enhanced onboarding for existing users
   if (isOnboarding) {
     return (
       <div className="min-h-screen">

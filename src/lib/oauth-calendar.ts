@@ -45,7 +45,7 @@ export const OAUTH_PROVIDERS: Record<string, OAuthProvider> = {
     icon: '🔵',
     color: '#4285f4',
     authUrl: '/api/auth/google/calendar',
-    scopes: ['https://www.googleapis.com/auth/calendar.readonly']
+    scopes: ['https://www.googleapis.com/auth/calendar']
   },
   outlook: {
     id: 'outlook',

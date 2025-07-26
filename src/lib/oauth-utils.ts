@@ -1,4 +1,4 @@
-import { CalendarItem, OAuthIntegration } from '@/lib/types'
+import { CalendarItem } from '@/lib/types'
 
 export interface RefreshTokenResponse {
   access_token: string
@@ -89,13 +89,17 @@ export async function fetchGoogleCalendars(accessToken: string): Promise<Calenda
  * Gets a valid access token, refreshing if necessary
  */
 export async function getValidAccessToken(
-  integration: OAuthIntegration,
+  integration: {
+    access_token: string
+    refresh_token: string | null
+    expires_at: string | null
+  },
   clientId: string,
   clientSecret: string,
   updateCallback: (newToken: string, newExpiresAt: string) => Promise<void>
 ): Promise<string> {
   // Check if token needs refresh
-  if (isTokenExpired(integration.expires_at) && integration.refresh_token) {
+  if (integration.expires_at && isTokenExpired(integration.expires_at) && integration.refresh_token) {
     const refreshData = await refreshOAuthToken(
       integration.refresh_token,
       clientId,

@@ -153,10 +153,10 @@ export async function GET(request: NextRequest) {
     }
 
     // OAuth integration successful
-    // Don't create calendar_feeds entries yet - let user select which calendars to sync
+    // Now redirect to create the dedicated yoga calendar
 
-    // Redirect to calendar selection page
-    return NextResponse.redirect(`${baseUrl}/app/add-calendar?success=oauth_connected&step=select_calendars`)
+    // Redirect to yoga calendar creation
+    return NextResponse.redirect(`${baseUrl}/app/add-calendar?success=oauth_connected&step=create_yoga_calendar`)
   } catch (error) {
     console.error('Google OAuth callback error:', error)
     return NextResponse.redirect(`${baseUrl}/app/add-calendar?error=internal_error`)
