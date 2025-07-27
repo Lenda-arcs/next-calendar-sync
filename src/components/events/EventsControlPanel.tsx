@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { TagBadge } from '@/components/ui/tag-badge'
+import { TagLibraryItem } from '@/components/tags'
 import { Settings, Plus, ArrowLeftRight, RefreshCw, Zap, Tag } from 'lucide-react'
 import { Tag as TagType } from '@/lib/types'
 import { RematchTagsButton } from './RematchEventsButton'
@@ -51,7 +51,22 @@ export default function EventsControlPanel({
   onRefresh
 }: EventsControlPanelProps) {
   const { t } = useTranslation()
-  
+
+  // Transform database tags to EventTag format for TagLibraryItem
+  const transformToEventTag = (tag: TagType) => ({
+    id: tag.id,
+    slug: tag.slug,
+    name: tag.name,
+    color: tag.color,
+    chip: { color: tag.color || '#6B7280' },
+    classType: tag.class_type ? [tag.class_type] : null,
+    audience: tag.audience,
+    cta: tag.cta_label && tag.cta_url ? { label: tag.cta_label, url: tag.cta_url } : null,
+    priority: tag.priority,
+    userId: tag.user_id,
+    imageUrl: tag.image_url
+  })
+
   return (
     <Card>
       <CardHeader>
@@ -180,26 +195,25 @@ export default function EventsControlPanel({
           
           {/* Available Tags */}
           {(userTags?.length || globalTags?.length) && (
-            <div className="pt-4 border-t">
-              <p className="text-sm text-muted-foreground mb-2">{t('pages.manageEvents.controlPanel.availableTags')}</p>
+            <div className="space-y-3">
+              <h4 className="text-sm font-semibold text-foreground">{t('pages.manageEvents.controlPanel.availableTags')}</h4>
               <div className="flex flex-wrap gap-2">
                 {userTags?.map(tag => (
-                  <TagBadge 
+                  <TagLibraryItem 
                     key={tag.id} 
-                    variant="safe"
-                    color={tag.color}
-                  >
-                    {tag.name}
-                  </TagBadge>
+                    tag={transformToEventTag(tag)}
+                    variant="compact"
+                    onClick={() => {}} // No action needed for display-only tags
+                  />
                 ))}
                 {globalTags?.map(tag => (
-                  <TagBadge 
+                  <TagLibraryItem 
                     key={tag.id} 
-                    variant="safe"
-                    color={tag.color}
-                  >
-                    {tag.name}
-                  </TagBadge>
+                    tag={transformToEventTag(tag)}
+                    variant="compact"
+                    isGlobal={true}
+                    onClick={() => {}} // No action needed for display-only tags
+                  />
                 ))}
               </div>
             </div>
