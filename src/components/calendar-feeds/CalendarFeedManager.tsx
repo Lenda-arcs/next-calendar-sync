@@ -114,9 +114,9 @@ export function CalendarFeedManager({ feeds, isLoading, onRefetch, userId }: Cal
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold">Connected Calendars</h3>
+          <h3 className="text-lg font-semibold">Your Yoga Calendar</h3>
           <p className="text-sm text-muted-foreground">
-            Manage your calendar integrations and sync settings
+            Manage your dedicated yoga calendar and sync settings
           </p>
         </div>
         <div className="flex gap-2">
@@ -151,35 +151,31 @@ export function CalendarFeedManager({ feeds, isLoading, onRefetch, userId }: Cal
         </Alert>
       )}
 
-      {/* Calendar Feeds */}
+      {/* Yoga Calendar */}
       <DataLoader
         data={displayFeeds}
         loading={isLoading || false}
         error={null}
         skeleton={
-          <div className="grid gap-4">
-            {[1, 2].map((i) => (
-              <Card key={i} className="animate-pulse">
-                <CardContent className="p-6">
-                  <div className="h-4 bg-muted rounded w-1/3 mb-2" />
-                  <div className="h-3 bg-muted rounded w-1/2" />
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          <Card className="animate-pulse">
+            <CardContent className="p-6">
+              <div className="h-4 bg-muted rounded w-1/3 mb-2" />
+              <div className="h-3 bg-muted rounded w-1/2" />
+            </CardContent>
+          </Card>
         }
         empty={
           <Card>
             <CardContent className="text-center py-12">
               <Calendar className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-              <h3 className="text-lg font-medium mb-2">No calendars connected</h3>
+              <h3 className="text-lg font-medium mb-2">No yoga calendar connected</h3>
               <p className="text-muted-foreground mb-4">
-                Connect your first calendar to start syncing yoga events
+                Set up your dedicated yoga calendar to start syncing events
               </p>
               <Link href="/app/add-calendar">
                 <Button>
                   <Plus className="h-4 w-4 mr-2" />
-                  Connect Calendar
+                  Set Up Yoga Calendar
                 </Button>
               </Link>
             </CardContent>
@@ -187,8 +183,20 @@ export function CalendarFeedManager({ feeds, isLoading, onRefetch, userId }: Cal
         }
       >
         {(feeds: CalendarFeed[]) => (
-          <div className="grid gap-4">
-            {feeds.map((feed) => (
+          <div className="space-y-4">
+            {feeds.length > 1 && (
+              <Alert>
+                <Info className="h-4 w-4" />
+                <div>
+                  <p className="font-medium">Multiple Calendars Detected</p>
+                  <p className="text-sm">
+                    You have multiple calendar connections. We recommend using only your dedicated yoga calendar for the best experience.
+                  </p>
+                </div>
+              </Alert>
+            )}
+            
+            {feeds.map((feed, index) => (
               <CalendarFeedCard
                 key={feed.id}
                 feed={feed}
@@ -198,6 +206,7 @@ export function CalendarFeedManager({ feeds, isLoading, onRefetch, userId }: Cal
                 userId={userId}
                 onSync={() => handleSync(feed.id)}
                 onDelete={() => setConfirmDelete(feed.id)}
+                isPrimary={index === 0} // First calendar is considered primary
               />
             ))}
           </div>
@@ -208,8 +217,8 @@ export function CalendarFeedManager({ feeds, isLoading, onRefetch, userId }: Cal
       <UnifiedDialog
         open={!!confirmDelete}
         onOpenChange={(open) => !open && setConfirmDelete(null)}
-        title="Delete Calendar Feed"
-        description="Are you sure you want to delete this calendar feed? This action cannot be undone."
+        title="Remove Yoga Calendar"
+        description="Are you sure you want to remove this yoga calendar connection? This will stop syncing events but won't delete the calendar from your Google account."
       >
         <div className="flex justify-end gap-3 mt-6">
           <Button
@@ -227,10 +236,10 @@ export function CalendarFeedManager({ feeds, isLoading, onRefetch, userId }: Cal
             {isDeleting ? (
               <>
                 <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                Deleting...
+                Removing...
               </>
             ) : (
-              'Delete Feed'
+              'Remove Connection'
             )}
           </Button>
         </div>
@@ -247,6 +256,7 @@ interface CalendarFeedCardProps {
   userId?: string
   onSync: () => void
   onDelete: () => void
+  isPrimary?: boolean
 }
 
 function CalendarFeedCard({ 
@@ -256,7 +266,8 @@ function CalendarFeedCard({
   syncResult, 
   userId,
   onSync, 
-  onDelete
+  onDelete,
+  isPrimary
 }: CalendarFeedCardProps) {
   const isActive = !!feed.last_synced_at
   const syncDate = formatDate(feed.last_synced_at)
@@ -320,10 +331,15 @@ function CalendarFeedCard({
         <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
           <div className="flex items-center gap-2 text-sm">
             <Info className="h-4 w-4 text-blue-600" />
-            <span className="text-blue-800 font-medium">Dedicated Yoga Calendar</span>
+            <span className="text-blue-800 font-medium">
+              {isPrimary ? 'Primary Yoga Calendar' : 'Dedicated Yoga Calendar'}
+            </span>
           </div>
           <p className="text-xs text-blue-700 mt-1">
-            All events from this calendar are synced automatically
+            {isPrimary 
+              ? 'Your main yoga calendar - all events sync automatically'
+              : 'All events from this calendar are synced automatically'
+            }
           </p>
         </div>
 

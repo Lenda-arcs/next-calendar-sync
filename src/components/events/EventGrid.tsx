@@ -285,7 +285,7 @@ const EventGrid: React.FC<EventGridProps> = ({
             </h3>
             <p className="text-muted-foreground">
               {isInteractive 
-                ? "Connect your calendar feeds to import events."
+                ? "Set up your yoga calendar to start importing events."
                 : "Check back later for new classes and sessions."
               }
             </p>

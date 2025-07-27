@@ -87,7 +87,7 @@ export function UnmatchedEventsSection({
 
     setIsRefreshing(true)
     try {
-      // 🚀 STEP 1: Sync all calendar feeds in historical mode
+      // 🚀 STEP 1: Sync all yoga calendars in historical mode
       const syncPromises = calendarFeeds.map(feed => 
         syncFeed(feed.id, 'historical')
       )
@@ -120,7 +120,7 @@ export function UnmatchedEventsSection({
         })
       } else if (successfulSyncs > 0) {
         toast('Refresh Complete', {
-          description: 'No new events found. Calendar feeds were checked successfully.',
+          description: 'No new events found. Your yoga calendar was checked successfully.',
           duration: 3000,
         })
       }
@@ -130,7 +130,7 @@ export function UnmatchedEventsSection({
     } catch (error) {
       console.error('Failed to sync feeds during refresh:', error)
       toast.error('Refresh Failed', {
-        description: 'Unable to sync calendar feeds. Please try again.',
+        description: 'Unable to sync your yoga calendar. Please try again.',
         duration: 5000,
       })
       // Still call refresh even if sync fails

@@ -29,7 +29,7 @@ export const EventListEmptyState: React.FC<EventListEmptyStateProps> = ({
   
   const description = totalEventsCount === 0
     ? isInteractive
-      ? "Connect your calendar feeds to import events."
+      ? "Set up your yoga calendar to start importing events."
       : "Check back later for new classes and sessions."
     : "Try adjusting your filters to see more events."
 

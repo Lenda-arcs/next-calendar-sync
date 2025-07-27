@@ -25,8 +25,8 @@ export function HistoricalSyncCTA({ calendarFeeds, userId, onSyncComplete, layou
 
   const handleHistoricalSync = async () => {
     if (!calendarFeeds || calendarFeeds.length === 0) {
-      toast.error('No Calendar Feeds Found', {
-        description: 'Please connect your calendar feeds first before syncing historical events.',
+      toast.error('No Yoga Calendar Found', {
+        description: 'Please set up your yoga calendar first before syncing historical events.',
         duration: 5000,
       })
       return
@@ -34,7 +34,7 @@ export function HistoricalSyncCTA({ calendarFeeds, userId, onSyncComplete, layou
 
     setIsHistoricalSyncing(true)
     try {
-      // 🚀 STEP 1: Sync all calendar feeds in historical mode
+      // 🚀 STEP 1: Sync all yoga calendars in historical mode
       const syncPromises = calendarFeeds.map(feed => 
         syncFeed(feed.id, 'historical')
       )
@@ -64,14 +64,14 @@ export function HistoricalSyncCTA({ calendarFeeds, userId, onSyncComplete, layou
       // 🎉 Show success notification
       if (totalEventsSynced > 0) {
         toast.success('Historical Sync Complete!', {
-          description: `${totalEventsSynced} historical event${totalEventsSynced !== 1 ? 's' : ''} synced from ${successfulSyncs} calendar feed${successfulSyncs !== 1 ? 's' : ''}. ${
+          description: `${totalEventsSynced} historical event${totalEventsSynced !== 1 ? 's' : ''} synced from your yoga calendar${successfulSyncs > 1 ? 's' : ''}. ${
             rematchResult ? `${rematchResult.updated_count} event${rematchResult.updated_count !== 1 ? 's' : ''} were matched with tags and studios.` : ''
           }`.trim(),
           duration: 6000,
         })
       } else {
         toast('Historical Sync Complete', {
-          description: `No new historical events found. Your calendar feeds (${successfulSyncs}) were checked successfully.`,
+          description: `No new historical events found. Your yoga calendar was checked successfully.`,
           duration: 4000,
         })
       }
@@ -93,8 +93,8 @@ export function HistoricalSyncCTA({ calendarFeeds, userId, onSyncComplete, layou
     <InfoCardSection
       title="Missing older events"
       count={0}
-      description="Sync historical events from your connected calendar feeds to find uninvoiced classes from previous months."
-      mobileDescription="Sync historical events from calendar feeds"
+      description="Sync historical events from your yoga calendar to find uninvoiced classes from previous months."
+      mobileDescription="Sync historical events from yoga calendar"
       icon={History}
       colorScheme={colorSchemes.blue}
       layout={layout}

@@ -239,38 +239,38 @@ const translations: Translations = {
       syncNow: 'Sync Now'
     },
     feeds: {
-      title: 'Calendar Feeds',
-      addFeed: 'Add Feed',
-      feedUrl: 'Feed URL',
-      feedName: 'Feed Name',
-      feedDescription: 'Feed Description',
-      feedAdded: 'Feed added successfully',
-      feedUpdated: 'Feed updated successfully',
-      feedDeleted: 'Feed deleted successfully',
+      title: 'Yoga Calendar',
+      addFeed: 'Import Events',
+      feedUrl: 'Calendar URL',
+      feedName: 'Calendar Name',
+      feedDescription: 'Calendar Description',
+      feedAdded: 'Calendar connected successfully',
+      feedUpdated: 'Calendar updated successfully',
+      feedDeleted: 'Calendar connection removed successfully',
       testConnection: 'Test Connection',
       connectionSuccess: 'Connection successful',
       connectionError: 'Connection failed'
     },
     integration: {
-      title: 'Calendar Integration',
-      description: 'Manage your connected calendar feeds and sync settings.',
-      modalTitle: 'Calendar Feeds',
-      modalDescription: 'Manage your connected calendar feeds and sync settings.',
-      noFeeds: 'No calendar feeds connected yet.',
-      addCalendar: 'Add Calendar Feed',
+      title: 'Yoga Calendar',
+      description: 'Manage your dedicated yoga calendar and sync settings.',
+      modalTitle: 'Your Yoga Calendar',
+      modalDescription: 'Manage your dedicated yoga calendar and sync settings.',
+      noFeeds: 'No yoga calendar connected yet.',
+      addCalendar: 'Set Up Yoga Calendar',
       unnamedCalendar: 'Unnamed Calendar',
       active: 'Active',
       pending: 'Pending',
       lastSynced: 'Last synced:',
-      moreFeeds: '+{count} more feeds',
-      manageFeeds: 'Manage Feeds',
-      addMore: 'Add More'
+      moreFeeds: '+{count} more calendar{plural}',
+      manageFeeds: 'Manage Calendar',
+      addMore: 'Import More Events'
     },
     addCalendar: {
-      title: 'Add Calendar Feed',
-      subtitle: 'Connect another calendar to sync more events to your schedule.',
-      successTitle: 'Calendar Connected Successfully!',
-      successDescription: 'Your Google Calendar has been connected. Your events will now sync automatically.',
+      title: 'Set Up Yoga Calendar',
+      subtitle: 'Set up your dedicated yoga calendar or import more events to your existing calendar.',
+      successTitle: 'Yoga Calendar Connected!',
+      successDescription: 'Your dedicated yoga calendar has been connected. Your events will now sync automatically.',
       errorTitle: 'Connection Failed',
       errors: {
         oauth_denied: 'You denied access to your calendar.',
@@ -828,11 +828,11 @@ const translations: Translations = {
       emptyState: {
         noEvents: 'No events found',
         noEventsFiltered: 'No events match your filters',
-        connectCalendar: 'Connect your calendar feeds to start importing events.',
+        connectCalendar: 'Set up your yoga calendar to start importing events.',
         changeFiltersPublicPrivate: 'Try changing your filters to see {visibility} events or past events.',
         changeFiltersTime: 'Try changing the time filter to see all events including past ones.',
         changeFiltersVisibility: 'Try changing the visibility filter to see all events.',
-        addCalendarFeed: 'Add Calendar Feed',
+        addCalendarFeed: 'Set Up Yoga Calendar',
         showAllVisibility: 'Show All Visibility',
         showAllTime: 'Show All Time'
       },
@@ -859,16 +859,16 @@ const translations: Translations = {
       },
       historicalSync: {
         title: 'Missing older events',
-        description: 'Sync historical events from your connected calendar feeds to find uninvoiced classes from previous months.',
-        mobileDescription: 'Sync historical events from calendar feeds',
+        description: 'Sync historical events from your yoga calendar to find uninvoiced classes from previous months.',
+        mobileDescription: 'Sync historical events from yoga calendar',
         syncButton: 'Sync Historical Events',
         syncButtonMobile: 'Sync Historical',
         syncing: 'Syncing...',
-        noFeeds: 'No Calendar Feeds Found',
-        noFeedsDesc: 'Please connect your calendar feeds first before syncing historical events.',
+        noFeeds: 'No Yoga Calendar Found',
+        noFeedsDesc: 'Please set up your yoga calendar first before syncing historical events.',
         syncComplete: 'Historical Sync Complete!',
-        syncCompleteDesc: '{count} historical event{plural} synced from {feeds} calendar feed{feedsPlural}. {matched} event{matchedPlural} were matched with tags and studios.',
-        syncCompleteNoEvents: 'No new historical events found. Your calendar feeds ({feeds}) were checked successfully.',
+        syncCompleteDesc: '{count} historical event{plural} synced from your yoga calendar{feedsPlural}. {matched} event{matchedPlural} were matched with tags and studios.',
+        syncCompleteNoEvents: 'No new historical events found. Your yoga calendar was checked successfully.',
         syncFailed: 'Historical Sync Failed',
         syncFailedDesc: 'Unable to sync historical events. Please try again.'
       },
@@ -1061,7 +1061,7 @@ const translations: Translations = {
     },
     dashboard: {
       title: 'Dashboard - Manage Your Yoga Schedule | avara.',
-      description: 'Manage your yoga classes, calendar feeds, and share your schedule with students. View upcoming classes, manage events, and track your teaching schedule.',
+      description: 'Manage your yoga classes, calendar sync, and share your schedule with students. View upcoming classes, manage events, and track your teaching schedule.',
       keywords: 'yoga dashboard, class management, schedule management, instructor dashboard, calendar management'
     },
     profile: {
@@ -1070,9 +1070,9 @@ const translations: Translations = {
       keywords: 'yoga profile, instructor profile, yoga teacher profile, public profile, yoga bio'
     },
     addCalendar: {
-      title: 'Add Calendar - Connect Your Yoga Schedule | avara.',
-      description: 'Connect your Google Calendar, iCloud, or any calendar feed to automatically sync your yoga classes. Easy setup in under 2 minutes.',
-      keywords: 'calendar sync, Google calendar, iCloud sync, calendar integration, yoga calendar'
+      title: 'Yoga Calendar Setup - Connect Your Schedule | avara.',
+      description: 'Set up your dedicated yoga calendar and import events from Google Calendar, iCloud, or .ics files. Streamlined setup in under 2 minutes.',
+      keywords: 'yoga calendar, calendar setup, Google calendar, iCloud sync, calendar integration'
     },
     manageEvents: {
       title: 'Manage Events - Your Yoga Classes | avara.',
@@ -1102,12 +1102,12 @@ const translations: Translations = {
     auth: {
       signIn: {
             title: 'Sign In - Access Your Yoga Dashboard | avara.',
-    description: 'Sign in to your avara. account to manage your yoga schedule, calendar feeds, and share your classes with students.',
+    description: 'Sign in to your avara. account to manage your yoga schedule, calendar sync, and share your classes with students.',
         keywords: 'sign in, login, yoga dashboard, instructor login, account access'
       },
       signUp: {
             title: 'Create Account - Start Your Yoga Schedule | avara.',
-    description: 'Create your free avara. account and start sharing your yoga schedule with students. Connect your calendar and build your online presence.',
+    description: 'Create your free avara. account and start sharing your yoga schedule with students. Set up your yoga calendar and build your online presence.',
         keywords: 'create account, sign up, yoga instructor, free account, schedule sharing'
       }
     },
@@ -1253,16 +1253,16 @@ const translations: Translations = {
     faq: {
       title: 'Frequently Asked Questions',
       howToConnect: {
-        question: 'How do I connect my calendar?',
-        answer: 'You can connect your calendar through three methods: OAuth integration with Google Calendar, email invitation system, or manual .ics feed URL entry. The easiest method is OAuth integration in the dashboard.'
+        question: 'How do I set up my yoga calendar?',
+        answer: 'You can set up your yoga calendar through Google OAuth integration or by importing events from existing calendars. The easiest method is the OAuth integration that creates a dedicated yoga calendar in your Google account.'
       },
       createPublicPage: {
         question: 'How do I create my public page?',
-        answer: 'After connecting your calendar, you can set your public URL and complete your profile under "Profile". Your classes will automatically appear on the public page.'
+        answer: 'After setting up your yoga calendar, you can set your public URL and complete your profile under "Profile". Your classes will automatically appear on the public page.'
       },
       supportedCalendars: {
-        question: 'Which calendar services are supported?',
-        answer: 'We support Google Calendar (full), Outlook/Office 365, Apple iCloud Calendar, and any calendar service that provides .ics feeds.'
+        question: 'Which calendar services are supported for import?',
+        answer: 'You can import events from Google Calendar, Outlook/Office 365, Apple iCloud Calendar, and any calendar service that provides .ics files into your dedicated yoga calendar.'
       },
       invoicing: {
         question: 'How does invoice generation work?',
