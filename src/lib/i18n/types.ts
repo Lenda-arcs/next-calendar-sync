@@ -1053,9 +1053,15 @@ export interface PagesTranslations {
       publicVisibility: string
       privateVisibility: string
       createNewTag: string
+      createNewEvent: string
+      newEvent: string
+      newTag: string
       refresh: string
-      quickActions: string
+      createAndManage: string
+      systemTools: string
+      syncCalendar: string
       syncing: string
+      quickActions: string
       fullCalendarSync: string
       syncDescription: string
       availableTags: string

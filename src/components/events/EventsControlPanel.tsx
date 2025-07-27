@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { TagBadge } from '@/components/ui/tag-badge'
-import { Settings, Plus, ArrowLeftRight, RefreshCw, Zap } from 'lucide-react'
+import { Settings, Plus, ArrowLeftRight, RefreshCw, Zap, Tag } from 'lucide-react'
 import { Tag as TagType } from '@/lib/types'
 import { RematchTagsButton } from './RematchEventsButton'
 import { useTranslation } from '@/lib/i18n/context'
@@ -29,6 +29,7 @@ interface EventsControlPanelProps {
   onTimeFilterChange: (filter: TimeFilter) => void
   onVisibilityFilterChange: (filter: VisibilityFilter) => void
   onCreateTag: () => void
+  onCreateEvent: () => void
   onSyncFeeds: () => void
   onRefresh: () => void
 }
@@ -45,6 +46,7 @@ export default function EventsControlPanel({
   onTimeFilterChange,
   onVisibilityFilterChange,
   onCreateTag,
+  onCreateEvent,
   onSyncFeeds,
   onRefresh
 }: EventsControlPanelProps) {
@@ -109,36 +111,51 @@ export default function EventsControlPanel({
         </div>
 
         {/* Management Actions */}
-        <div className="pt-4 border-t border-border">
+        <div className="pt-4 border-t border-border space-y-4">
           
-          {/* Quick Actions Row */}
-          <div className="flex flex-wrap gap-2 mb-4">
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={onCreateTag}
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              {t('pages.manageEvents.controlPanel.createNewTag')}
-            </Button>
-            <Button 
-              onClick={onRefresh}
-              disabled={isLoading}
-              variant="outline"
-              size="sm"
-            >
-              <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-              {t('pages.manageEvents.controlPanel.refresh')}
-            </Button>
+          {/* Primary Actions */}
+          <div className="space-y-3">
+            <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
+              <Plus className="h-4 w-4" />
+              {t('pages.manageEvents.controlPanel.createAndManage')}
+            </h4>
+            <div className="flex flex-wrap gap-2">
+              <Button 
+                variant="default" 
+                size="sm"
+                onClick={onCreateEvent}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                {t('pages.manageEvents.controlPanel.newEvent')}
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={onCreateTag}
+              >
+                <Tag className="h-4 w-4 mr-2" />
+                {t('pages.manageEvents.controlPanel.newTag')}
+              </Button>
+              <Button 
+                onClick={onRefresh}
+                disabled={isLoading}
+                variant="outline"
+                size="sm"
+              >
+                <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+                {t('pages.manageEvents.controlPanel.refresh')}
+              </Button>
+            </div>
           </div>
 
-          {/* Quick Fix Actions */}
+          {/* System Actions */}
           {userId && (
-            <div className="border-t pt-3">
-              <p className="text-sm font-medium text-muted-foreground mb-2 flex items-center gap-1">
-                <Zap className="h-3 w-3" />
-                {t('pages.manageEvents.controlPanel.quickActions')}
-              </p>
+            <div className="space-y-3">
+              <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                <Zap className="h-4 w-4" />
+                {t('pages.manageEvents.controlPanel.systemTools')}
+              </h4>
               <div className="flex flex-wrap gap-2">
                 <RematchTagsButton 
                   userId={userId}
@@ -152,10 +169,10 @@ export default function EventsControlPanel({
                   size="sm"
                 >
                   <ArrowLeftRight className={`h-4 w-4 mr-2 ${isSyncing ? 'animate-pulse' : ''}`} />
-                  {isSyncing ? t('pages.manageEvents.controlPanel.syncing') : t('pages.manageEvents.controlPanel.fullCalendarSync')}
+                  {isSyncing ? t('pages.manageEvents.controlPanel.syncing') : t('pages.manageEvents.controlPanel.syncCalendar')}
                 </Button>
               </div>
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="text-xs text-muted-foreground">
                 {t('pages.manageEvents.controlPanel.syncDescription')}
               </p>
             </div>

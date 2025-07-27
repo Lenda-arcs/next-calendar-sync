@@ -440,6 +440,7 @@ export function ManageEventsClient({ userId }: ManageEventsClientProps) {
               onTimeFilterChange={setTimeFilter}
               onVisibilityFilterChange={setVisibilityFilter}
               onCreateTag={() => setIsCreateTagFormOpen(true)}
+              onCreateEvent={() => setIsCreateEventFormOpen(true)}
               onSyncFeeds={handleSyncFeeds}
               onRefresh={handleRefresh}
             />
