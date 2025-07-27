@@ -1,11 +1,14 @@
 'use client'
 
 import { useState } from 'react'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Container } from '@/components/layout/container'
+import { InfoSection, InfoItem } from '@/components/ui/info-section'
 import { Upload, Calendar, Download, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react'
 import { EventImportPreview } from './EventImportPreview'
 import { CalendarSource, ImportableEvent, ImportPreviewResult } from '@/lib/calendar-import-service'
@@ -45,7 +48,7 @@ export function CalendarImportStep({ onComplete, onSkip }: CalendarImportStepPro
       setAvailableCalendars(data.calendars)
       setStep('select-google')
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch calendars')
+      toast.error(err instanceof Error ? err.message : 'Failed to fetch calendars')
     } finally {
       setLoading(false)
     }
@@ -76,7 +79,7 @@ export function CalendarImportStep({ onComplete, onSkip }: CalendarImportStepPro
       setPreviewData(data.preview)
       setStep('preview')
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to preview events')
+      toast.error(err instanceof Error ? err.message : 'Failed to preview events')
     } finally {
       setLoading(false)
     }
@@ -111,7 +114,7 @@ export function CalendarImportStep({ onComplete, onSkip }: CalendarImportStepPro
       setPreviewData(data.preview)
       setStep('preview')
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to process ICS file')
+      toast.error(err instanceof Error ? err.message : 'Failed to process ICS file')
     } finally {
       setLoading(false)
     }
@@ -145,7 +148,7 @@ export function CalendarImportStep({ onComplete, onSkip }: CalendarImportStepPro
       })
       setStep('complete')
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to import events')
+      toast.error(err instanceof Error ? err.message : 'Failed to import events')
       setStep('preview') // Go back to preview on error
     }
   }
@@ -170,14 +173,11 @@ export function CalendarImportStep({ onComplete, onSkip }: CalendarImportStepPro
   }
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
-      <div className="text-center space-y-2">
-        <h2 className="text-2xl font-bold">Import Existing Events</h2>
-        <p className="text-muted-foreground">
-          Quickly populate your yoga calendar with events from your existing calendar
-        </p>
-      </div>
-
+    <Container 
+      title="Import Existing Events"
+      subtitle="Quickly populate your yoga calendar with events from your existing calendar"
+      maxWidth="2xl"
+    >
       {error && (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
@@ -187,206 +187,214 @@ export function CalendarImportStep({ onComplete, onSkip }: CalendarImportStepPro
 
       {step === 'choose' && (
         <div className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Calendar className="w-5 h-5" />
+                  Import from Google Calendar
+                </CardTitle>
+                <CardDescription>
+                  Import events from your other Google Calendars (recommended)
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button 
+                  onClick={handleChooseGoogle}
+                  disabled={loading}
+                  className="w-full"
+                  size="lg"
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Loading calendars...
+                    </>
+                  ) : (
+                    <>
+                      <Calendar className="w-4 h-4 mr-2" />
+                      Choose Google Calendar
+                    </>
+                  )}
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Upload className="w-5 h-5" />
+                  Upload ICS File
+                </CardTitle>
+                <CardDescription>
+                  Import from Apple Calendar, Outlook, or any calendar app that exports .ics files
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="ics-upload">Select .ics file</Label>
+                  <Input
+                    id="ics-upload"
+                    type="file"
+                    accept=".ics,.ical"
+                    onChange={handleICSUpload}
+                    disabled={loading}
+                  />
+                </div>
+                <InfoSection title="How to export your calendar">
+                  <InfoItem 
+                    label="Apple Calendar"
+                    value="File → Export → Export..."
+                  />
+                  <InfoItem 
+                    label="Outlook"
+                    value="File → Save Calendar → iCalendar Format"
+                  />
+                  <InfoItem 
+                    label="Google Calendar"
+                    value="Settings → Import & Export → Export"
+                  />
+                </InfoSection>
+              </CardContent>
+            </Card>
+
+            <div className="flex justify-between">
+              <Button variant="outline" onClick={onSkip}>
+                Skip for now
+              </Button>
+              <Button variant="ghost" onClick={onComplete}>
+                I&apos;ll add events manually
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {step === 'select-google' && (
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Calendar className="w-5 h-5" />
-                Import from Google Calendar
-              </CardTitle>
+              <CardTitle>Choose Calendar to Import From</CardTitle>
               <CardDescription>
-                Import events from your other Google Calendars (recommended)
+                Select one of your Google Calendars to import events from
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <Button 
-                onClick={handleChooseGoogle}
-                disabled={loading}
-                className="w-full"
-                size="lg"
-              >
-                {loading ? (
+            <CardContent className="space-y-3">
+              {availableCalendars.length === 0 ? (
+                <p className="text-center text-muted-foreground py-8">
+                  No additional calendars found to import from
+                </p>
+              ) : (
+                availableCalendars.map((calendar) => (
+                  <div
+                    key={calendar.id}
+                    className="border rounded-lg p-4 hover:bg-gray-50 cursor-pointer transition-colors"
+                    onClick={() => handleSelectGoogleCalendar(calendar)}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="font-medium">{calendar.name}</h4>
+                        {calendar.description && (
+                          <p className="text-sm text-muted-foreground">{calendar.description}</p>
+                        )}
+                        {calendar.primary && (
+                          <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                            Primary
+                          </span>
+                        )}
+                      </div>
+                      <Download className="w-4 h-4 text-muted-foreground" />
+                    </div>
+                  </div>
+                ))
+              )}
+              <div className="pt-4 border-t">
+                <Button variant="outline" onClick={() => setStep('choose')} className="w-full">
+                  Back to import options
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {step === 'importing' && (
+          <Card>
+            <CardContent className="pt-6">
+              <div className="text-center space-y-4">
+                <Loader2 className="w-8 h-8 animate-spin mx-auto" />
+                <div>
+                  <h3 className="font-medium">Importing Events</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Adding selected events to your yoga calendar...
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {step === 'complete' && importResult && (
+          <Card>
+            <CardContent className="pt-6">
+              <div className="text-center space-y-4">
+                {importResult.errors.length === 0 ? (
                   <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Loading calendars...
+                    <CheckCircle2 className="w-8 h-8 text-green-600 mx-auto" />
+                    <div>
+                      <h3 className="font-medium text-green-900">Import Complete!</h3>
+                      <p className="text-sm text-muted-foreground">
+                        All {importResult.imported} event{importResult.imported !== 1 ? 's' : ''} imported successfully
+                      </p>
+                    </div>
                   </>
                 ) : (
                   <>
-                    <Calendar className="w-4 h-4 mr-2" />
-                    Choose Google Calendar
-                  </>
-                )}
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Upload className="w-5 h-5" />
-                Upload ICS File
-              </CardTitle>
-              <CardDescription>
-                Import from Apple Calendar, Outlook, or any calendar app that exports .ics files
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="ics-upload">Select .ics file</Label>
-                <Input
-                  id="ics-upload"
-                  type="file"
-                  accept=".ics,.ical"
-                  onChange={handleICSUpload}
-                  disabled={loading}
-                />
-              </div>
-              <div className="text-sm text-muted-foreground space-y-1">
-                <p>📋 <strong>How to export:</strong></p>
-                <p>• <strong>Apple Calendar:</strong> File → Export → Export...</p>
-                <p>• <strong>Outlook:</strong> File → Save Calendar → iCalendar Format</p>
-                <p>• <strong>Google Calendar:</strong> Settings → Import & Export → Export</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          <div className="flex justify-between">
-            <Button variant="outline" onClick={onSkip}>
-              Skip for now
-            </Button>
-            <Button variant="ghost" onClick={onComplete}>
-              I&apos;ll add events manually
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {step === 'select-google' && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Choose Calendar to Import From</CardTitle>
-            <CardDescription>
-              Select one of your Google Calendars to import events from
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {availableCalendars.length === 0 ? (
-              <p className="text-center text-muted-foreground py-8">
-                No additional calendars found to import from
-              </p>
-            ) : (
-              availableCalendars.map((calendar) => (
-                <div
-                  key={calendar.id}
-                  className="border rounded-lg p-4 hover:bg-gray-50 cursor-pointer transition-colors"
-                  onClick={() => handleSelectGoogleCalendar(calendar)}
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="font-medium">{calendar.name}</h4>
-                      {calendar.description && (
-                        <p className="text-sm text-muted-foreground">{calendar.description}</p>
-                      )}
-                      {calendar.primary && (
-                        <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                          Primary
-                        </span>
-                      )}
+                    <div className="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center mx-auto">
+                      <CheckCircle2 className="w-5 h-5 text-yellow-600" />
                     </div>
-                    <Download className="w-4 h-4 text-muted-foreground" />
-                  </div>
-                </div>
-              ))
-            )}
-            <div className="pt-4 border-t">
-              <Button variant="outline" onClick={() => setStep('choose')} className="w-full">
-                Back to import options
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {step === 'importing' && (
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-center space-y-4">
-              <Loader2 className="w-8 h-8 animate-spin mx-auto" />
-              <div>
-                <h3 className="font-medium">Importing Events</h3>
-                <p className="text-sm text-muted-foreground">
-                  Adding selected events to your yoga calendar...
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {step === 'complete' && importResult && (
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-center space-y-4">
-              {importResult.errors.length === 0 ? (
-                <>
-                  <CheckCircle2 className="w-8 h-8 text-green-600 mx-auto" />
-                  <div>
-                    <h3 className="font-medium text-green-900">Import Complete!</h3>
-                    <p className="text-sm text-muted-foreground">
-                      All {importResult.imported} event{importResult.imported !== 1 ? 's' : ''} imported successfully
-                    </p>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center mx-auto">
-                    <CheckCircle2 className="w-5 h-5 text-yellow-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-medium text-yellow-900">Import Mostly Complete!</h3>
-                    <p className="text-sm text-muted-foreground">
-                      {importResult.imported} event{importResult.imported !== 1 ? 's' : ''} imported successfully
-                      {importResult.skipped > 0 && `, ${importResult.skipped} failed`}
-                    </p>
-                  </div>
-                </>
-              )}
-
-              {importResult.errors.length > 0 && (
-                <Alert className="text-left">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>
-                    <div className="space-y-2">
-                      <p className="font-medium">Events that couldn&apos;t be imported:</p>
-                      <ul className="text-sm space-y-1">
-                        {importResult.errors.slice(0, 3).map((error, index) => (
-                          <li key={index} className="text-muted-foreground">• {error}</li>
-                        ))}
-                        {importResult.errors.length > 3 && (
-                          <li className="text-muted-foreground">• ...and {importResult.errors.length - 3} more</li>
-                        )}
-                      </ul>
-                      <p className="text-xs text-muted-foreground mt-2">
-                        Common issues: missing timezone, duplicate events, or calendar permissions.
+                    <div>
+                      <h3 className="font-medium text-yellow-900">Import Mostly Complete!</h3>
+                      <p className="text-sm text-muted-foreground">
+                        {importResult.imported} event{importResult.imported !== 1 ? 's' : ''} imported successfully
+                        {importResult.skipped > 0 && `, ${importResult.skipped} failed`}
                       </p>
                     </div>
-                  </AlertDescription>
-                </Alert>
-              )}
-
-              <div className="flex flex-col gap-2">
-                <Button onClick={onComplete} size="lg">
-                  Continue to Dashboard
-                </Button>
-                {importResult.errors.length > 0 && (
-                  <Button variant="outline" onClick={() => setStep('choose')} size="sm">
-                    Import More Events
-                  </Button>
+                  </>
                 )}
+
+                {importResult.errors.length > 0 && (
+                  <Alert className="text-left">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>
+                      <div className="space-y-2">
+                        <p className="font-medium">Events that couldn&apos;t be imported:</p>
+                        <ul className="text-sm space-y-1">
+                          {importResult.errors.slice(0, 3).map((error, index) => (
+                            <li key={index} className="text-muted-foreground">• {error}</li>
+                          ))}
+                          {importResult.errors.length > 3 && (
+                            <li className="text-muted-foreground">• ...and {importResult.errors.length - 3} more</li>
+                          )}
+                        </ul>
+                        <p className="text-xs text-muted-foreground mt-2">
+                          Common issues: missing timezone, duplicate events, or calendar permissions.
+                        </p>
+                      </div>
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                <div className="flex flex-col gap-2">
+                  <Button onClick={onComplete} size="lg">
+                    Continue to Dashboard
+                  </Button>
+                  {importResult.errors.length > 0 && (
+                    <Button variant="outline" onClick={() => setStep('choose')} size="sm">
+                      Import More Events
+                    </Button>
+                  )}
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-    </div>
+            </CardContent>
+          </Card>
+        )}
+    </Container>
   )
 } 
