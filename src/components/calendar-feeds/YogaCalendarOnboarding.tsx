@@ -5,6 +5,8 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Container } from '@/components/layout/container'
+import { InfoSection, InfoItem } from '@/components/ui/info-section'
 import { CheckCircle2, Calendar, ExternalLink, Loader2 } from 'lucide-react'
 import { User } from '@supabase/supabase-js'
 import Link from 'next/link'
@@ -75,14 +77,11 @@ export function YogaCalendarOnboarding({ success, error, message, onCalendarCrea
   }
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
-      <div className="text-center space-y-2">
-        <h1 className="text-3xl font-bold">Set Up Your Yoga Calendar</h1>
-        <p className="text-muted-foreground">
-          We&apos;ll create a dedicated calendar in your Google account for managing your yoga classes.
-        </p>
-      </div>
-
+    <Container 
+      title="Set Up Your Yoga Calendar"
+      subtitle="We'll create a dedicated calendar in your Google account for managing your yoga classes."
+      maxWidth="2xl"
+    >
       {error && (
         <Alert variant="destructive">
           <AlertDescription>{error}</AlertDescription>
@@ -103,9 +102,9 @@ export function YogaCalendarOnboarding({ success, error, message, onCalendarCrea
               {oauthConnected ? (
                 <CheckCircle2 className="w-5 h-5 text-green-600" />
               ) : (
-                <span className="w-5 h-5 bg-blue-600 text-white rounded-full text-xs flex items-center justify-center">
-                  1
-                </span>
+                <div className="w-6 h-6 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
+                  <span className="text-sm font-medium text-primary">1</span>
+                </div>
               )}
               Connect Google Calendar
             </CardTitle>
@@ -147,11 +146,13 @@ export function YogaCalendarOnboarding({ success, error, message, onCalendarCrea
               {calendarCreated ? (
                 <CheckCircle2 className="w-5 h-5 text-green-600" />
               ) : (
-                <span className={`w-5 h-5 rounded-full text-xs flex items-center justify-center ${
-                  oauthConnected ? 'bg-blue-600 text-white' : 'bg-gray-300 text-gray-600'
+                <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${
+                  oauthConnected ? 'bg-primary/10' : 'bg-muted'
                 }`}>
-                  2
-                </span>
+                  <span className={`text-sm font-medium ${
+                    oauthConnected ? 'text-primary' : 'text-muted-foreground'
+                  }`}>2</span>
+                </div>
               )}
               Create Your Yoga Calendar
             </CardTitle>
@@ -225,36 +226,23 @@ export function YogaCalendarOnboarding({ success, error, message, onCalendarCrea
         <CardHeader>
           <CardTitle className="text-lg">How It Works</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="flex gap-3">
-            <div className="w-6 h-6 bg-blue-100 text-blue-600 rounded-full text-xs flex items-center justify-center font-medium">
-              1
-            </div>
-            <div>
-              <p className="font-medium">Create events in Google Calendar</p>
-              <p className="text-sm text-muted-foreground">Use your phone, web, or any calendar app</p>
-            </div>
-          </div>
-          <div className="flex gap-3">
-            <div className="w-6 h-6 bg-blue-100 text-blue-600 rounded-full text-xs flex items-center justify-center font-medium">
-              2
-            </div>
-            <div>
-              <p className="font-medium">Events sync automatically</p>
-              <p className="text-sm text-muted-foreground">Changes appear on your lenna.yoga profile within minutes</p>
-            </div>
-          </div>
-          <div className="flex gap-3">
-            <div className="w-6 h-6 bg-blue-100 text-blue-600 rounded-full text-xs flex items-center justify-center font-medium">
-              3
-            </div>
-            <div>
-              <p className="font-medium">Students discover your classes</p>
-              <p className="text-sm text-muted-foreground">Your schedule is visible on your public teacher profile</p>
-            </div>
-          </div>
+        <CardContent>
+          <InfoSection title="">
+            <InfoItem 
+              label="1. Create events in Google Calendar"
+              value="Use your phone, web, or any calendar app"
+            />
+            <InfoItem 
+              label="2. Events sync automatically" 
+              value="Changes appear on your lenna.yoga profile within minutes"
+            />
+            <InfoItem 
+              label="3. Students discover your classes"
+              value="Your schedule is visible on your public teacher profile"
+            />
+          </InfoSection>
         </CardContent>
       </Card>
-    </div>
+    </Container>
   )
 } 
