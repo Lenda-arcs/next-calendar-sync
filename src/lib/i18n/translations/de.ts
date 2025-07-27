@@ -283,6 +283,113 @@ const translations: Translations = {
         internal_error: 'Ein unerwarteter Fehler ist aufgetreten. Bitte versuchen Sie es erneut.',
         generic: 'Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.'
       }
+    },
+    yogaOnboarding: {
+      setup: {
+        title: 'Yoga-Kalender einrichten',
+        subtitle: 'Wir erstellen einen dedizierten Kalender in deinem Google-Konto für die Verwaltung deiner Yoga-Kurse.',
+        step1: {
+          title: 'Google Calendar verbinden',
+          description: 'Verbinde dein Google-Konto, um die Kalender-Synchronisation zu aktivieren',
+          successDescription: 'Google Calendar erfolgreich verbunden!',
+          button: 'Google Calendar verbinden',
+          connecting: 'Verbinden...'
+        },
+        step2: {
+          title: 'Deinen Yoga-Kalender erstellen',
+          description: 'Wir erstellen einen neuen Kalender speziell für deine Yoga-Kurse',
+          successDescription: 'Dein dedizierter Yoga-Kalender wurde erstellt!',
+          successMessage: 'Dein Yoga-Kalender ist bereit! Du kannst jetzt Termine direkt in Google Calendar erstellen und verwalten, und sie erscheinen automatisch in deinem öffentlichen Profil.',
+          button: 'Yoga-Kalender erstellen',
+          creating: 'Kalender wird erstellt...',
+          openGoogleCalendar: 'Google Calendar öffnen',
+          goToDashboard: 'Zum Dashboard'
+        },
+        whatWeCreate: {
+          title: 'Was wir erstellen werden:',
+          items: [
+            'Einen neuen Kalender namens "Mein Yoga-Zeitplan (synchronisiert mit lenna.yoga)"',
+            'Automatische bidirektionale Synchronisation zwischen Google Calendar und deinem Profil',
+            'Termine, die du erstellst, werden in deinem öffentlichen Zeitplan angezeigt'
+          ]
+        },
+        howItWorks: {
+          title: 'So funktioniert es',
+          step1: {
+            title: '1. Termine in Google Calendar erstellen',
+            description: 'Nutze dein Handy, Web oder jede Kalender-App'
+          },
+          step2: {
+            title: '2. Termine synchronisieren automatisch',
+            description: 'Änderungen erscheinen innerhalb von Minuten in deinem lenna.yoga-Profil'
+          },
+          step3: {
+            title: '3. Schüler entdecken deine Kurse',
+            description: 'Dein Zeitplan ist in deinem öffentlichen Lehrerprofil sichtbar'
+          }
+        }
+      },
+      import: {
+        title: 'Bestehende Termine importieren',
+        subtitle: 'Fülle deinen Yoga-Kalender schnell mit Terminen aus deinem bestehenden Kalender',
+        choose: {
+          googleCard: {
+            title: 'Aus Google Calendar importieren',
+            description: 'Importiere Termine aus deinen anderen Google Calendars (empfohlen)',
+            button: 'Google Calendar auswählen',
+            loading: 'Kalender werden geladen...'
+          },
+          icsCard: {
+            title: 'ICS-Datei hochladen',
+            description: 'Importiere aus Apple Calendar, Outlook oder jeder anderen Kalender-App, die .ics-Dateien exportiert',
+            fileLabel: '.ics-Datei auswählen',
+            exportGuide: {
+              title: 'So exportierst du deinen Kalender',
+              apple: 'Datei → Exportieren → Exportieren...',
+              outlook: 'Datei → Kalender speichern → iCalendar-Format',
+              google: 'Einstellungen → Import & Export → Exportieren'
+            }
+          },
+          actions: {
+            skip: 'Vorerst überspringen',
+            manual: 'Ich füge Termine manuell hinzu'
+          }
+        },
+        selectGoogle: {
+          title: 'Kalender zum Importieren auswählen',
+          description: 'Wähle einen deiner Google Calendars aus, aus dem Termine importiert werden sollen',
+          noCalendars: 'Keine zusätzlichen Kalender zum Importieren gefunden',
+          primaryBadge: 'Primär',
+          backButton: 'Zurück zu den Import-Optionen'
+        },
+        importing: {
+          title: 'Termine werden importiert',
+          description: 'Ausgewählte Termine werden zu deinem Yoga-Kalender hinzugefügt...'
+        },
+        complete: {
+          success: {
+            title: 'Import abgeschlossen!',
+            description: 'Alle {count} Termin{plural} erfolgreich importiert'
+          },
+          partial: {
+            title: 'Import größtenteils abgeschlossen!',
+            description: '{imported} Termin{importedPlural} erfolgreich importiert{skipped, select, 0 {} other {, {skipped} fehlgeschlagen}}'
+          },
+          errors: {
+            title: 'Termine, die nicht importiert werden konnten:',
+            moreCount: '...und {count} weitere',
+            commonIssues: 'Häufige Probleme: fehlende Zeitzone, doppelte Termine oder Kalender-Berechtigungen.'
+          },
+          actions: {
+            continue: 'Weiter zum Dashboard',
+            importMore: 'Weitere Termine importieren'
+          }
+        }
+      },
+      completion: {
+        success: 'Kalender erfolgreich importiert!',
+        skipped: 'Kalender-Import übersprungen.'
+      }
     }
   },
   studios: {

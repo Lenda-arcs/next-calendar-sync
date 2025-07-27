@@ -1,20 +1,19 @@
 'use client'
 
 import { useState } from 'react'
-import { User } from '@supabase/supabase-js'
 import { toast } from 'sonner'
 import { YogaCalendarOnboarding } from './YogaCalendarOnboarding'
 import { CalendarImportStep } from './CalendarImportStep'
+import { useTranslation } from '@/lib/i18n/context'
+import { User } from '@supabase/supabase-js'
 
 interface EnhancedYogaOnboardingProps {
-  user: User
+  user?: User
   success?: string
   error?: string
   message?: string
   forceImportStep?: boolean
 }
-
-type OnboardingStep = 'create-calendar' | 'import-events'
 
 export function EnhancedYogaOnboarding({ 
   user, 
@@ -23,26 +22,21 @@ export function EnhancedYogaOnboarding({
   message, 
   forceImportStep = false 
 }: EnhancedYogaOnboardingProps) {
-  const [step, setStep] = useState<OnboardingStep>(() => {
-    // If forceImportStep is true, go directly to import (for existing users)
-    if (forceImportStep) {
-      return 'import-events'
-    }
-    // If calendar creation is already successful, move to import
-    if (success === 'calendar_created') {
+  const { t } = useTranslation()
+  const [step, setStep] = useState<'create-calendar' | 'import-events'>(() => {
+    // If there's a success message, assume calendar is already created and force import step
+    if (success || forceImportStep) {
       return 'import-events'
     }
     return 'create-calendar'
   })
-
-
 
   const handleCalendarCreated = () => {
     setStep('import-events')
   }
 
   const handleImportComplete = () => {
-    toast.success('Calendar imported successfully!')
+    toast.success(t('calendar.yogaOnboarding.completion.success'))
     // Redirect to dashboard
     setTimeout(() => {
       window.location.href = '/app'
@@ -50,7 +44,7 @@ export function EnhancedYogaOnboarding({
   }
 
   const handleSkipImport = () => {
-    toast.info('Skipping calendar import.')
+    toast.info(t('calendar.yogaOnboarding.completion.skipped'))
     // Redirect to dashboard
     setTimeout(() => {
       window.location.href = '/app'

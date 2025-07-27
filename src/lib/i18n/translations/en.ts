@@ -266,6 +266,113 @@ const translations: Translations = {
       manageFeeds: 'Manage Calendar',
       addMore: 'Import More Events'
     },
+    yogaOnboarding: {
+      setup: {
+        title: 'Set Up Your Yoga Calendar',
+        subtitle: 'We\'ll create a dedicated calendar in your Google account for managing your yoga classes.',
+        step1: {
+          title: 'Connect Google Calendar',
+          description: 'Connect your Google account to enable calendar sync',
+          successDescription: 'Google Calendar connected successfully!',
+          button: 'Connect Google Calendar',
+          connecting: 'Connecting...'
+        },
+        step2: {
+          title: 'Create Your Yoga Calendar',
+          description: 'We\'ll create a new calendar specifically for your yoga classes',
+          successDescription: 'Your dedicated yoga calendar has been created!',
+          successMessage: 'Your yoga calendar is ready! You can now create and manage events directly in Google Calendar, and they\'ll automatically appear on your public profile.',
+          button: 'Create Yoga Calendar',
+          creating: 'Creating Calendar...',
+          openGoogleCalendar: 'Open Google Calendar',
+          goToDashboard: 'Go to Dashboard'
+        },
+        whatWeCreate: {
+          title: 'What we\'ll create:',
+          items: [
+            'A new calendar called "My Yoga Schedule (synced with lenna.yoga)"',
+            'Automatic two-way sync between Google Calendar and your profile',
+            'Events you create will appear on your public schedule'
+          ]
+        },
+        howItWorks: {
+          title: 'How It Works',
+          step1: {
+            title: '1. Create events in Google Calendar',
+            description: 'Use your phone, web, or any calendar app'
+          },
+          step2: {
+            title: '2. Events sync automatically',
+            description: 'Changes appear on your lenna.yoga profile within minutes'
+          },
+          step3: {
+            title: '3. Students discover your classes',
+            description: 'Your schedule is visible on your public teacher profile'
+          }
+        }
+      },
+      import: {
+        title: 'Import Existing Events',
+        subtitle: 'Quickly populate your yoga calendar with events from your existing calendar',
+        choose: {
+          googleCard: {
+            title: 'Import from Google Calendar',
+            description: 'Import events from your other Google Calendars (recommended)',
+            button: 'Choose Google Calendar',
+            loading: 'Loading calendars...'
+          },
+          icsCard: {
+            title: 'Upload ICS File',
+            description: 'Import from Apple Calendar, Outlook, or any calendar app that exports .ics files',
+            fileLabel: 'Select .ics file',
+            exportGuide: {
+              title: 'How to export your calendar',
+              apple: 'File → Export → Export...',
+              outlook: 'File → Save Calendar → iCalendar Format',
+              google: 'Settings → Import & Export → Export'
+            }
+          },
+          actions: {
+            skip: 'Skip for now',
+            manual: 'I\'ll add events manually'
+          }
+        },
+        selectGoogle: {
+          title: 'Choose Calendar to Import From',
+          description: 'Select one of your Google Calendars to import events from',
+          noCalendars: 'No additional calendars found to import from',
+          primaryBadge: 'Primary',
+          backButton: 'Back to import options'
+        },
+        importing: {
+          title: 'Importing Events',
+          description: 'Adding selected events to your yoga calendar...'
+        },
+        complete: {
+          success: {
+            title: 'Import Complete!',
+            description: 'All {count} event{plural} imported successfully'
+          },
+          partial: {
+            title: 'Import Mostly Complete!',
+            description: '{imported} event{importedPlural} imported successfully{skipped, select, 0 {} other {, {skipped} failed}}'
+          },
+          errors: {
+            title: 'Events that couldn\'t be imported:',
+            moreCount: '...and {count} more',
+            commonIssues: 'Common issues: missing timezone, duplicate events, or calendar permissions.'
+          },
+          actions: {
+            continue: 'Continue to Dashboard',
+            importMore: 'Import More Events'
+          }
+        }
+      },
+      completion: {
+        success: 'Calendar imported successfully!',
+        skipped: 'Skipping calendar import.'
+      }
+    },
     addCalendar: {
       title: 'Set Up Yoga Calendar',
       subtitle: 'Set up your dedicated yoga calendar or import more events to your existing calendar.',

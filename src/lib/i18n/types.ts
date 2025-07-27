@@ -336,6 +336,110 @@ export interface CalendarTranslations {
       generic: string
     }
   }
+
+  yogaOnboarding: {
+    setup: {
+      title: string
+      subtitle: string
+      step1: {
+        title: string
+        description: string
+        successDescription: string
+        button: string
+        connecting: string
+      }
+      step2: {
+        title: string
+        description: string
+        successDescription: string
+        successMessage: string
+        button: string
+        creating: string
+        openGoogleCalendar: string
+        goToDashboard: string
+      }
+      whatWeCreate: {
+        title: string
+        items: string[]
+      }
+      howItWorks: {
+        title: string
+        step1: {
+          title: string
+          description: string
+        }
+        step2: {
+          title: string
+          description: string
+        }
+        step3: {
+          title: string
+          description: string
+        }
+      }
+    }
+    import: {
+      title: string
+      subtitle: string
+      choose: {
+        googleCard: {
+          title: string
+          description: string
+          button: string
+          loading: string
+        }
+        icsCard: {
+          title: string
+          description: string
+          fileLabel: string
+          exportGuide: {
+            title: string
+            apple: string
+            outlook: string
+            google: string
+          }
+        }
+        actions: {
+          skip: string
+          manual: string
+        }
+      }
+      selectGoogle: {
+        title: string
+        description: string
+        noCalendars: string
+        primaryBadge: string
+        backButton: string
+      }
+      importing: {
+        title: string
+        description: string
+      }
+      complete: {
+        success: {
+          title: string
+          description: string
+        }
+        partial: {
+          title: string
+          description: string
+        }
+        errors: {
+          title: string
+          moreCount: string
+          commonIssues: string
+        }
+        actions: {
+          continue: string
+          importMore: string
+        }
+      }
+    }
+    completion: {
+      success: string
+      skipped: string
+    }
+  }
 }
 
 export interface StudioTranslations {
