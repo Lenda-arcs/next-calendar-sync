@@ -3,7 +3,8 @@
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { ExternalLink, Plus } from 'lucide-react'
-import { formatDate, type CalendarFeed } from '@/lib/calendar-feeds'
+import { formatDate, type CalendarFeed, getFriendlyCalendarName } from '@/lib/calendar-feeds'
+
 import { PATHS } from '@/lib/paths'
 import Link from 'next/link'
 import { useTranslationNamespace } from '@/lib/i18n/context'
@@ -52,7 +53,7 @@ export function ConnectedFeedsList({ feeds, isLoading, onViewDetails }: Connecte
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
               <h4 className="font-medium text-sm truncate">
-                {feed.calendar_name || t('integration.unnamedCalendar')}
+                {getFriendlyCalendarName(feed.calendar_name)}
               </h4>
               <Badge 
                 variant={feed.last_synced_at ? "default" : "secondary"}
@@ -76,21 +77,14 @@ export function ConnectedFeedsList({ feeds, isLoading, onViewDetails }: Connecte
         </div>
       )}
       
-      <div className="flex gap-2 pt-2">
-        <Button 
-          variant="outline" 
-          size="sm" 
-          className="flex-1"
+      <div className="flex gap-2">
+        <Button
+          size="sm"
+          variant="outline"
           onClick={onViewDetails}
         >
           <ExternalLink className="mr-2 h-4 w-4" />
           {t('integration.manageFeeds')}
-        </Button>
-        <Button asChild size="sm" variant="secondary">
-          <Link href={PATHS.APP.ADD_CALENDAR}>
-            <Plus className="mr-2 h-4 w-4" />
-            Import More Events
-          </Link>
         </Button>
       </div>
     </div>

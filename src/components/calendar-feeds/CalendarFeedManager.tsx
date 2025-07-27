@@ -7,19 +7,20 @@ import { Badge } from '@/components/ui/badge'
 import { Alert } from '@/components/ui/alert'
 import DataLoader from '@/components/ui/data-loader'
 import { UnifiedDialog } from '@/components/ui/unified-dialog'
-import { 
-  Calendar, 
-  RefreshCw, 
-  Trash2, 
-  ExternalLink, 
-  Plus,
-  Clock,
+import {
   AlertCircle,
+  Calendar,
   CheckCircle,
+  Clock,
+  ExternalLink,
+  Plus,
+  RefreshCw,
+  Trash2,
   Info
 } from 'lucide-react'
-import { formatDate, type CalendarFeed } from '@/lib/calendar-feeds'
+import { formatDate, type CalendarFeed, getFriendlyCalendarName } from '@/lib/calendar-feeds'
 import { useCalendarFeedActions } from '@/lib/hooks/useCalendarFeeds'
+
 import { RematchEventsButton } from '@/components/events/RematchEventsButton'
 import Link from 'next/link'
 
@@ -28,9 +29,16 @@ interface CalendarFeedManagerProps {
   isLoading?: boolean
   onRefetch?: () => void
   userId?: string
+  showHeader?: boolean // Add prop to control header visibility
 }
 
-export function CalendarFeedManager({ feeds, isLoading, onRefetch, userId }: CalendarFeedManagerProps) {
+export function CalendarFeedManager({ 
+  feeds, 
+  isLoading, 
+  onRefetch, 
+  userId,
+  showHeader = true 
+}: CalendarFeedManagerProps) {
   const [actionFeedId, setActionFeedId] = useState<string | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
   const [optimisticFeeds, setOptimisticFeeds] = useState<CalendarFeed[]>(feeds)
@@ -112,33 +120,29 @@ export function CalendarFeedManager({ feeds, isLoading, onRefetch, userId }: Cal
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-lg font-semibold">Your Yoga Calendar</h3>
-          <p className="text-sm text-muted-foreground">
-            Manage your dedicated yoga calendar and sync settings
-          </p>
+      {showHeader && (
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-semibold">Your Yoga Calendar</h3>
+            <p className="text-sm text-muted-foreground">
+              Manage your dedicated yoga calendar and sync settings
+            </p>
+          </div>
+          <div className="flex gap-2">
+            {onRefetch && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onRefetch}
+                disabled={isLoading}
+              >
+                <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+                Refresh
+              </Button>
+            )}
+          </div>
         </div>
-        <div className="flex gap-2">
-          {onRefetch && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onRefetch}
-              disabled={isLoading}
-            >
-              <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-              Refresh
-            </Button>
-          )}
-          <Link href="/app/add-calendar">
-            <Button size="sm">
-              <Plus className="h-4 w-4 mr-2" />
-              Import More Events
-            </Button>
-          </Link>
-        </div>
-      </div>
+      )}
 
       {/* Error Messages */}
       {(syncError || deleteError) && (
@@ -149,6 +153,18 @@ export function CalendarFeedManager({ feeds, isLoading, onRefetch, userId }: Cal
             <p className="text-sm">{(syncError || deleteError)?.message || 'An unknown error occurred'}</p>
           </div>
         </Alert>
+      )}
+
+      {/* Import More Events - Modal Context Only */}
+      {!showHeader && (
+        <div className="flex justify-end">
+          <Link href="/app/add-calendar">
+            <Button size="sm">
+              <Plus className="h-4 w-4 mr-2" />
+              Import More Events
+            </Button>
+          </Link>
+        </div>
       )}
 
       {/* Yoga Calendar */}
@@ -279,7 +295,7 @@ function CalendarFeedCard({
           <div className="space-y-1">
             <CardTitle className="text-base font-medium flex items-center gap-2">
               <Calendar className="h-4 w-4 text-primary" />
-              {feed.calendar_name || 'Unnamed Calendar'}
+              {getFriendlyCalendarName(feed.calendar_name)}
               {isActive && (
                 <Badge variant="secondary" className="text-xs">
                   Active

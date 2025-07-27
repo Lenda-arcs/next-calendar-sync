@@ -148,6 +148,27 @@ export function formatDate(date: string | null): string {
 } 
 
 /**
+ * Extracts user-friendly calendar name from technical calendar_name field
+ */
+export function getFriendlyCalendarName(calendarName: string | null): string {
+  if (!calendarName) {
+    return 'Yoga Calendar'
+  }
+  
+  // If it's an OAuth format (oauth:google:id:name), extract just the name part
+  if (calendarName.startsWith('oauth:google:')) {
+    const parts = calendarName.split(':')
+    if (parts.length >= 4) {
+      // Join everything after the third colon in case the name itself contains colons
+      return parts.slice(3).join(':') || 'Yoga Calendar'
+    }
+  }
+  
+  // For legacy feeds, return the calendar_name as-is
+  return calendarName
+}
+
+/**
  * Fetch studio information for events that have studio_ids
  * Falls back to location strings when studio data isn't accessible (e.g., RLS policies)
  */

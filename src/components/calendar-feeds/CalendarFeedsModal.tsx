@@ -36,6 +36,7 @@ export function CalendarFeedsModal({
           <CalendarFeedManager
             feeds={feeds}
             isLoading={false}
+            showHeader={false}
             onRefetch={() => {
               // Refetch logic can be added here
             }}
