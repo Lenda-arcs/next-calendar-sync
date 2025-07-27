@@ -59,16 +59,6 @@ export default async function AddCalendarPage({ params, searchParams }: AddCalen
   // Always show the new yoga onboarding flow for calendar setup
   const needsCalendarSetup = feeds.length === 0 || isOnboarding || step === 'create_yoga_calendar'
 
-  if (needsCalendarSetup) {
-    return (
-      <div className="min-h-screen">
-        <EnhancedYogaOnboarding user={authUser} success={success} error={error} message={message} />
-      </div>
-    )
-  }
-
-  // If user already has calendar setup, redirect to import more events into existing calendar
-  // No more multiple calendar feeds - just import additional events into the yoga calendar
   return (
     <div className="min-h-screen">
       <EnhancedYogaOnboarding 
@@ -76,7 +66,7 @@ export default async function AddCalendarPage({ params, searchParams }: AddCalen
         success={success} 
         error={error} 
         message={message}
-        forceImportStep={true}
+        forceImportStep={!needsCalendarSetup}
       />
     </div>
   )

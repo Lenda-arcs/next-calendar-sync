@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -67,7 +68,7 @@ export function YogaCalendarOnboarding({ success, error, message, onCalendarCrea
       }
     } catch (error) {
       console.error('Calendar creation error:', error)
-      alert(error instanceof Error ? error.message : 'Failed to create calendar')
+      toast.error(error instanceof Error ? error.message : 'Failed to create calendar')
     } finally {
       setIsCreatingCalendar(false)
     }

@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { User } from '@supabase/supabase-js'
+import { toast } from 'sonner'
 import { YogaCalendarOnboarding } from './YogaCalendarOnboarding'
 import { CalendarImportStep } from './CalendarImportStep'
 
@@ -13,7 +14,7 @@ interface EnhancedYogaOnboardingProps {
   forceImportStep?: boolean
 }
 
-type OnboardingStep = 'create-calendar' | 'import-events' | 'complete'
+type OnboardingStep = 'create-calendar' | 'import-events'
 
 export function EnhancedYogaOnboarding({ 
   user, 
@@ -41,7 +42,7 @@ export function EnhancedYogaOnboarding({
   }
 
   const handleImportComplete = () => {
-    setStep('complete')
+    toast.success('Calendar imported successfully!')
     // Redirect to dashboard
     setTimeout(() => {
       window.location.href = '/app'
@@ -49,7 +50,7 @@ export function EnhancedYogaOnboarding({
   }
 
   const handleSkipImport = () => {
-    setStep('complete')
+    toast.info('Skipping calendar import.')
     // Redirect to dashboard
     setTimeout(() => {
       window.location.href = '/app'
@@ -74,19 +75,6 @@ export function EnhancedYogaOnboarding({
         onComplete={handleImportComplete}
         onSkip={handleSkipImport}
       />
-    )
-  }
-
-  if (step === 'complete') {
-    return (
-      <div className="max-w-2xl mx-auto text-center space-y-6">
-        <div className="space-y-2">
-          <h1 className="text-3xl font-bold">🎉 You&apos;re All Set!</h1>
-          <p className="text-muted-foreground">
-            Your yoga calendar is ready. Redirecting to your dashboard...
-          </p>
-        </div>
-      </div>
     )
   }
 
