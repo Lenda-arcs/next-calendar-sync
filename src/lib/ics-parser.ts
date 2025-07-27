@@ -1,4 +1,5 @@
 import { ImportableEvent, ImportPreviewResult } from './calendar-import-service'
+import { getPublicYogaStudios, isEventYogaRelated } from './yoga-location-service'
 
 interface ICSEvent {
   uid: string
@@ -8,7 +9,10 @@ interface ICSEvent {
   dtend: string
   location?: string
   rrule?: string
+  exdate?: string[]
   status?: string
+  originalUid?: string
+  isRecurringInstance?: boolean
 }
 
 interface ICSParseResult {
@@ -110,52 +114,236 @@ export class ICSParser {
           case 'RRULE':
             currentEvent.rrule = value
             break
+          case 'EXDATE':
+            if (!currentEvent.exdate) currentEvent.exdate = []
+            // Handle multiple dates in EXDATE or multiple EXDATE lines
+            const dates = value.split(',').map(d => this.parseDateTime(d.trim()))
+            currentEvent.exdate.push(...dates)
+            break
           case 'STATUS':
             currentEvent.status = value
             break
         }
       }
-    } catch (error) {
-      result.errors.push(`Parse error: ${error instanceof Error ? error.message : 'Unknown error'}`)
+          } catch (error) {
+        result.errors.push(`Parse error: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      }
+
+      console.log(`ICS Parse complete: ${result.events.length} events parsed, ${result.errors.length} errors`)
+      return result
+  }
+
+  /**
+   * Expand recurring events based on RRULE
+   */
+  private static expandRecurringEvent(baseEvent: ICSEvent, maxDate: Date): ICSEvent[] {
+    if (!baseEvent.rrule) {
+      return [baseEvent]
     }
 
-    return result
+    const events: ICSEvent[] = []
+    const startDate = new Date(baseEvent.dtstart)
+    const endDate = new Date(baseEvent.dtend)
+    const duration = endDate.getTime() - startDate.getTime()
+
+    // Parse RRULE
+    const rruleParts = baseEvent.rrule.split(';').reduce((acc, part) => {
+      const [key, value] = part.split('=')
+      acc[key] = value
+      return acc
+    }, {} as Record<string, string>)
+
+    const freq = rruleParts.FREQ
+    const until = rruleParts.UNTIL ? new Date(this.parseDateTime(rruleParts.UNTIL)) : maxDate
+    const interval = parseInt(rruleParts.INTERVAL || '1')
+    const count = rruleParts.COUNT ? parseInt(rruleParts.COUNT) : null
+
+    // Excluded dates for comparison
+    const excludedDates = new Set(baseEvent.exdate || [])
+
+    // eslint-disable-next-line prefer-const
+    let currentDate = new Date(startDate)
+    let occurrenceCount = 0
+    const maxOccurrences = count || 1000 // Reasonable limit
+
+    while (currentDate <= until && currentDate <= maxDate && occurrenceCount < maxOccurrences) {
+      const currentDateStr = currentDate.toISOString()
+      const currentEndDate = new Date(currentDate.getTime() + duration)
+
+      // Check if this occurrence is excluded
+      if (!excludedDates.has(currentDateStr)) {
+        // Create event occurrence
+        events.push({
+          ...baseEvent,
+          uid: `${baseEvent.uid}-${currentDate.toISOString()}`,
+          dtstart: currentDateStr,
+          dtend: currentEndDate.toISOString(),
+          // Keep reference to original recurring event
+          originalUid: baseEvent.uid,
+          isRecurringInstance: true,
+          // Remove RRULE from individual occurrences
+          rrule: undefined,
+          exdate: undefined
+        })
+      }
+
+      occurrenceCount++
+
+      // Calculate next occurrence
+      switch (freq) {
+        case 'DAILY':
+          currentDate.setDate(currentDate.getDate() + interval)
+          break
+        case 'WEEKLY':
+          currentDate.setDate(currentDate.getDate() + (7 * interval))
+          break
+        case 'MONTHLY':
+          currentDate.setMonth(currentDate.getMonth() + interval)
+          break
+        case 'YEARLY':
+          currentDate.setFullYear(currentDate.getFullYear() + interval)
+          break
+        default:
+          // Unknown frequency, break to avoid infinite loop
+          break
+      }
+    }
+
+    console.log(`Expanded recurring event "${baseEvent.summary}": ${events.length} occurrences (FREQ=${freq}, UNTIL=${until.toDateString()})`)
+    return events
+  }
+
+  /**
+   * Group recurring events by their original UID
+   */
+  private static groupRecurringEvents(events: ImportableEvent[]): ImportableEvent[] {
+    const groupedEvents: ImportableEvent[] = []
+    const recurringGroups: Map<string, ImportableEvent[]> = new Map()
+    const singleEvents: ImportableEvent[] = []
+
+    // Separate single events from recurring instances
+    for (const event of events) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const originalUid = (event as any).originalUid
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      if (originalUid && (event as any).isRecurringInstance) {
+        if (!recurringGroups.has(originalUid)) {
+          recurringGroups.set(originalUid, [])
+        }
+        recurringGroups.get(originalUid)!.push(event)
+      } else {
+        singleEvents.push(event)
+      }
+    }
+
+    // Add single events
+    groupedEvents.push(...singleEvents)
+
+    // Create grouped recurring events
+    for (const [originalUid, instances] of recurringGroups) {
+      if (instances.length === 0) continue
+
+      const firstInstance = instances[0]
+      const lastInstance = instances[instances.length - 1]
+      
+      // Determine recurring pattern
+      let pattern = 'Unknown'
+      if (instances.length > 1) {
+        const firstDate = new Date(firstInstance.start.dateTime || firstInstance.start.date || 0)
+        const secondDate = new Date(instances[1]?.start.dateTime || instances[1]?.start.date || 0)
+        const daysDiff = Math.round((secondDate.getTime() - firstDate.getTime()) / (1000 * 60 * 60 * 24))
+        
+        if (daysDiff === 1) pattern = 'Daily'
+        else if (daysDiff === 7) pattern = 'Weekly'
+        else if (daysDiff >= 28 && daysDiff <= 31) pattern = 'Monthly'
+        else if (daysDiff >= 365 && daysDiff <= 366) pattern = 'Yearly'
+        else pattern = `Every ${daysDiff} days`
+      }
+
+      // Create group event
+      const groupEvent: ImportableEvent = {
+        id: originalUid,
+        title: firstInstance.title,
+        description: firstInstance.description,
+        start: firstInstance.start,
+        end: lastInstance.end,
+        location: firstInstance.location,
+        source: firstInstance.source,
+        sourceCalendarName: firstInstance.sourceCalendarName,
+        selected: firstInstance.selected,
+        isPrivate: firstInstance.isPrivate,
+        suggestedTags: firstInstance.suggestedTags,
+        isYogaLikely: firstInstance.isYogaLikely,
+        // Recurring group properties
+        isRecurringGroup: true,
+        recurringInstanceCount: instances.length,
+        recurringPattern: pattern,
+        originalInstances: instances
+      }
+
+      groupedEvents.push(groupEvent)
+    }
+
+    return groupedEvents
   }
 
   /**
    * Convert parsed ICS events to ImportableEvent format
    */
-  static convertToImportableEvents(
+  static async convertToImportableEvents(
     icsResult: ICSParseResult,
     maxDaysAhead: number = 90,
     maxDaysBack: number = 30
-  ): ImportPreviewResult {
+  ): Promise<ImportPreviewResult> {
     const now = new Date()
     const maxPastDate = new Date(now.getTime() - maxDaysBack * 24 * 60 * 60 * 1000)
     const maxFutureDate = new Date(now.getTime() + maxDaysAhead * 24 * 60 * 60 * 1000)
 
     const events: ImportableEvent[] = []
 
+    const totalEvents = icsResult.events.length
+    let dateFilteredCount = 0
+    let cancelledCount = 0
+    let expandedEventCount = 0
+
+    // First, expand all recurring events
+    const expandedEvents: ICSEvent[] = []
     for (const icsEvent of icsResult.events) {
+      const expanded = this.expandRecurringEvent(icsEvent, maxFutureDate)
+      expandedEvents.push(...expanded)
+      expandedEventCount += expanded.length
+    }
+
+    console.log(`Expanded ${icsResult.events.length} base events into ${expandedEventCount} total occurrences`)
+
+    // Fetch public yoga studios for enhanced location matching
+    const yogaStudios = await getPublicYogaStudios()
+    console.log(`Loaded ${yogaStudios.length} public yoga studios for location matching`)
+
+    for (const icsEvent of expandedEvents) {
       try {
         // Skip events that are too far in the past or future
         const startDate = new Date(icsEvent.dtstart)
         if (startDate < maxPastDate || startDate > maxFutureDate) {
+          dateFilteredCount++
           continue
         }
 
         // Skip cancelled events
         if (icsEvent.status?.toUpperCase() === 'CANCELLED') {
+          cancelledCount++
           continue
         }
 
         const eventTitle = icsEvent.summary?.toLowerCase() || ''
         const eventDescription = icsEvent.description?.toLowerCase() || ''
         
-        // Detect yoga-related events
-        const yogaKeywords = ['yoga', 'pilates', 'meditation', 'wellness', 'fitness', 'class', 'workshop', 'retreat']
-        const isYogaLikely = yogaKeywords.some(keyword => 
-          eventTitle.includes(keyword) || eventDescription.includes(keyword)
+        // Enhanced yoga detection with location matching
+        const isYogaLikely = isEventYogaRelated(
+          icsEvent.summary,
+          icsEvent.description,
+          icsEvent.location,
+          yogaStudios
         )
 
         // Detect private/personal events
@@ -182,25 +370,35 @@ export class ICSParser {
           selected: isYogaLikely && !isPrivateLikely,
           isPrivate: isPrivateLikely,
           suggestedTags,
+          isYogaLikely,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          ...(icsEvent.originalUid && { originalUid: icsEvent.originalUid } as any),
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          ...(icsEvent.isRecurringInstance && { isRecurringInstance: icsEvent.isRecurringInstance } as any),
         })
       } catch (error) {
         console.error(`Error processing ICS event ${icsEvent.uid}:`, error)
       }
     }
 
+    // Group recurring events
+    const groupedEvents = this.groupRecurringEvents(events)
+
     // Sort events by start time
-    events.sort((a, b) => {
+    groupedEvents.sort((a, b) => {
       const aTime = new Date(a.start.dateTime || a.start.date || 0).getTime()
       const bTime = new Date(b.start.dateTime || b.start.date || 0).getTime()
       return aTime - bTime
     })
 
-    const yogaLikelyCount = events.filter(e => e.selected).length
-    const privateLikelyCount = events.filter(e => e.isPrivate).length
+    const yogaLikelyCount = groupedEvents.filter(e => e.selected).length
+    const privateLikelyCount = groupedEvents.filter(e => e.isPrivate).length
+
+    console.log(`ICS Convert complete: ${totalEvents} base events → ${expandedEventCount} expanded → ${dateFilteredCount} date filtered, ${cancelledCount} cancelled → ${events.length} instances → ${groupedEvents.length} grouped events`)
 
     return {
-      events,
-      totalCount: events.length,
+      events: groupedEvents,
+      totalCount: groupedEvents.length,
       yogaLikelyCount,
       privateLikelyCount,
     }
@@ -265,9 +463,37 @@ export class ICSParser {
         end: { date: dtend }
       }
     } else {
+      // Add timezone if not already present in RFC3339 format
+      let startDateTime = dtstart
+      let endDateTime = dtend
+      
+      // If datetime doesn't end with Z or timezone offset, add UTC timezone
+      if (!startDateTime.endsWith('Z') && !startDateTime.match(/[+-]\d{2}:\d{2}$/)) {
+        // Convert to RFC3339 format with UTC timezone
+        if (!startDateTime.includes('T')) {
+          startDateTime = `${startDateTime}T00:00:00Z`
+        } else if (!startDateTime.endsWith('Z')) {
+          startDateTime = `${startDateTime}Z`
+        }
+      }
+      
+      if (!endDateTime.endsWith('Z') && !endDateTime.match(/[+-]\d{2}:\d{2}$/)) {
+        if (!endDateTime.includes('T')) {
+          endDateTime = `${endDateTime}T00:00:00Z`
+        } else if (!endDateTime.endsWith('Z')) {
+          endDateTime = `${endDateTime}Z`
+        }
+      }
+      
       return {
-        start: { dateTime: dtstart },
-        end: { dateTime: dtend }
+        start: { 
+          dateTime: startDateTime,
+          timeZone: 'UTC'
+        },
+        end: { 
+          dateTime: endDateTime,
+          timeZone: 'UTC'
+        }
       }
     }
   }
@@ -295,6 +521,10 @@ export class ICSParser {
       'hatha': ['hatha', 'gentle'],
       'yin': ['yin', 'restorative'],
       'power': ['power', 'strength', 'strong'],
+      'jivamukti': ['jivamukti', 'jiva'],
+      'ashtanga': ['ashtanga'],
+      'kundalini': ['kundalini'],
+      'bikram': ['bikram', 'hot'],
       'beginner': ['beginner', 'basics', 'intro'],
       'advanced': ['advanced', 'challenging'],
       'meditation': ['meditation', 'mindfulness'],

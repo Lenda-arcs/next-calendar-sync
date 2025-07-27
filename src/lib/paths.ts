@@ -26,6 +26,7 @@ export const PATHS = {
     MANAGE_TAGS: '/app/manage-tags',
     MANAGE_INVOICES: '/app/manage-invoices',
     STUDIOS: '/app/studios',
+    ADMIN: '/app/admin',
   },
 
   // Dynamic routes

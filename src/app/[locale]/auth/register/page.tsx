@@ -2,26 +2,30 @@ import { redirect } from 'next/navigation'
 import { createServerClient } from '@/lib/supabase-server'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { RegisterForm } from '@/components/auth/register-form'
 import Link from 'next/link'
 import { PATHS } from '@/lib/paths'
-import { ArrowLeft, Lock } from 'lucide-react'
+import { ArrowLeft, Lock, UserPlus } from 'lucide-react'
 import { generateAuthMetadata } from '@/lib/i18n/metadata'
-import type { Metadata } from 'next'
 import { getValidLocale } from '@/lib/i18n/config'
+import { validateInvitation } from '@/lib/server/invitation-service'
+import type { Metadata } from 'next'
 
 interface RegisterPageProps {
   params: Promise<{ locale: string }>
+  searchParams: Promise<{ token?: string }>
 }
 
-export async function generateMetadata({ params }: RegisterPageProps): Promise<Metadata> {
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale: localeParam } = await params
   const locale = getValidLocale(localeParam)
   return generateAuthMetadata('signUp', locale)
 }
 
-export default async function RegisterPage({ params }: RegisterPageProps) {
+export default async function RegisterPage({ params, searchParams }: RegisterPageProps) {
   const { locale: localeParam } = await params
   const locale = getValidLocale(localeParam)
+  const { token } = await searchParams
   
   // Check if user is already authenticated
   const supabase = await createServerClient()
@@ -37,6 +41,71 @@ export default async function RegisterPage({ params }: RegisterPageProps) {
   const homePath = locale === 'en' ? PATHS.HOME : `/${locale}`
   const signInPath = locale === 'en' ? PATHS.AUTH.SIGN_IN : `/${locale}/auth/sign-in`
 
+  // If there's a token, validate it
+  let validInvitation = null
+  if (token) {
+    const validationResult = await validateInvitation(token)
+    if (validationResult.valid) {
+      validInvitation = validationResult.invitation
+    }
+  }
+
+  // Show registration form if we have a valid invitation
+  if (validInvitation) {
+    const redirectTo = locale === 'en' ? '/app' : `/${locale}/app`
+    
+    return (
+      <>
+        <div className="text-center mb-8">
+          <Link href={homePath} className="inline-flex items-center text-sm text-foreground/70 hover:text-foreground font-sans transition-colors">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to home
+          </Link>
+        </div>
+
+        <Card variant="glass">
+          <CardHeader className="text-center">
+            <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+              <UserPlus className="h-8 w-8 text-primary" />
+            </div>
+            <CardTitle className="text-2xl">Welcome to avara.</CardTitle>
+            <CardDescription className="text-lg">
+              {validInvitation.invited_name 
+                ? `Hi ${validInvitation.invited_name}! You've been invited to join avara.`
+                : "You've been invited to join avara."
+              }
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {validInvitation.personal_message && (
+              <div className="mb-6 p-4 bg-muted/50 rounded-lg">
+                <p className="text-sm text-foreground/70 italic">
+                  &quot;{validInvitation.personal_message}&quot;
+                </p>
+              </div>
+            )}
+            
+            <RegisterForm 
+              redirectTo={redirectTo} 
+              invitationToken={token}
+            />
+            
+            <div className="mt-6 text-center text-sm">
+              <span className="text-muted-foreground">Already have an account? </span>
+              <Link
+                href={signInPath}
+                className="text-primary hover:text-primary/80 font-medium transition-colors"
+              >
+                Sign in
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+      </>
+    )
+  }
+
+  // Show closed beta message if no valid invitation
   return (
     <>
       <div className="text-center mb-8">

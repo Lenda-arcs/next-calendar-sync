@@ -13,9 +13,10 @@ interface YogaCalendarOnboardingProps {
   success?: string
   error?: string
   message?: string
+  onCalendarCreated?: () => void
 }
 
-export function YogaCalendarOnboarding({ success, error, message }: YogaCalendarOnboardingProps) {
+export function YogaCalendarOnboarding({ success, error, message, onCalendarCreated }: YogaCalendarOnboardingProps) {
   const [isConnecting, setIsConnecting] = useState(false)
   const [isCreatingCalendar, setIsCreatingCalendar] = useState(false)
   const [calendarCreated, setCalendarCreated] = useState(false)
@@ -50,10 +51,17 @@ export function YogaCalendarOnboarding({ success, error, message }: YogaCalendar
       if (result.success) {
         setCalendarCreated(true)
         setOauthConnected(true)
-        // Redirect to dashboard after successful setup
-        setTimeout(() => {
-          window.location.href = '/app'
-        }, 2000)
+        // Notify parent component that calendar was created
+        if (onCalendarCreated) {
+          setTimeout(() => {
+            onCalendarCreated()
+          }, 1000)
+        } else {
+          // Fallback: redirect to dashboard if no callback provided
+          setTimeout(() => {
+            window.location.href = '/app'
+          }, 2000)
+        }
       } else {
         throw new Error(result.error || 'Failed to create calendar')
       }

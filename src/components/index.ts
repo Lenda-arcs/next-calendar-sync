@@ -1,3 +1,6 @@
+// Admin components
+export * from './admin';
+
 // Auth components
 export * from './auth';
 

@@ -326,27 +326,63 @@ export function CalendarImportStep({ onComplete, onSkip }: CalendarImportStepPro
         <Card>
           <CardContent className="pt-6">
             <div className="text-center space-y-4">
-              <CheckCircle2 className="w-8 h-8 text-green-600 mx-auto" />
-              <div>
-                <h3 className="font-medium text-green-900">Import Complete!</h3>
-                <p className="text-sm text-muted-foreground">
-                  {importResult.imported} event{importResult.imported !== 1 ? 's' : ''} imported successfully
-                  {importResult.skipped > 0 && `, ${importResult.skipped} skipped`}
-                </p>
-              </div>
+              {importResult.errors.length === 0 ? (
+                <>
+                  <CheckCircle2 className="w-8 h-8 text-green-600 mx-auto" />
+                  <div>
+                    <h3 className="font-medium text-green-900">Import Complete!</h3>
+                    <p className="text-sm text-muted-foreground">
+                      All {importResult.imported} event{importResult.imported !== 1 ? 's' : ''} imported successfully
+                    </p>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center mx-auto">
+                    <CheckCircle2 className="w-5 h-5 text-yellow-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-medium text-yellow-900">Import Mostly Complete!</h3>
+                    <p className="text-sm text-muted-foreground">
+                      {importResult.imported} event{importResult.imported !== 1 ? 's' : ''} imported successfully
+                      {importResult.skipped > 0 && `, ${importResult.skipped} failed`}
+                    </p>
+                  </div>
+                </>
+              )}
 
               {importResult.errors.length > 0 && (
-                <Alert>
+                <Alert className="text-left">
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription>
-                    Some events couldn&apos;t be imported: {importResult.errors.join(', ')}
+                    <div className="space-y-2">
+                      <p className="font-medium">Events that couldn&apos;t be imported:</p>
+                      <ul className="text-sm space-y-1">
+                        {importResult.errors.slice(0, 3).map((error, index) => (
+                          <li key={index} className="text-muted-foreground">• {error}</li>
+                        ))}
+                        {importResult.errors.length > 3 && (
+                          <li className="text-muted-foreground">• ...and {importResult.errors.length - 3} more</li>
+                        )}
+                      </ul>
+                      <p className="text-xs text-muted-foreground mt-2">
+                        Common issues: missing timezone, duplicate events, or calendar permissions.
+                      </p>
+                    </div>
                   </AlertDescription>
                 </Alert>
               )}
 
-              <Button onClick={onComplete} size="lg">
-                Continue to Dashboard
-              </Button>
+              <div className="flex flex-col gap-2">
+                <Button onClick={onComplete} size="lg">
+                  Continue to Dashboard
+                </Button>
+                {importResult.errors.length > 0 && (
+                  <Button variant="outline" onClick={() => setStep('choose')} size="sm">
+                    Import More Events
+                  </Button>
+                )}
+              </div>
             </div>
           </CardContent>
         </Card>

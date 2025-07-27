@@ -1,4 +1,4 @@
-import { createGoogleCalendarService } from './google-calendar-service'
+import { createGoogleCalendarService, BatchCreateResult } from './google-calendar-service'
 import { getValidAccessToken } from './oauth-utils'
 
 export interface ImportableEvent {
@@ -22,6 +22,12 @@ export interface ImportableEvent {
   selected: boolean
   isPrivate?: boolean
   suggestedTags?: string[]
+  // Recurring event properties
+  isRecurringGroup?: boolean
+  recurringInstanceCount?: number
+  recurringPattern?: string
+  originalInstances?: ImportableEvent[]
+  isYogaLikely?: boolean
 }
 
 export interface CalendarSource {
@@ -153,7 +159,7 @@ export class CalendarImportService {
   }
 
   /**
-   * Import selected events into the yoga calendar
+   * Import selected events into the yoga calendar using batch API
    */
   async importSelectedEvents(
     events: ImportableEvent[],
@@ -170,40 +176,102 @@ export class CalendarImportService {
       importedEventIds: [],
     }
 
-    for (const event of selectedEvents) {
-      try {
-        // Create event in yoga calendar
-        const googleEvent = await calendarService.createEvent({
-          calendarId: this.yogaCalendarId,
-          summary: event.title,
-          description: this.enhanceEventDescription(event),
-          start: event.start,
-          end: event.end,
-          location: event.location,
-          extendedProperties: {
-            private: {
-              'lenna.yoga.imported': 'true',
-              'lenna.yoga.import_source': event.source,
-              'lenna.yoga.import_source_calendar': event.sourceCalendarId || '',
-              'lenna.yoga.import_date': new Date().toISOString(),
-              'lenna.yoga.imported_by': userId,
-              'lenna.yoga.tags': JSON.stringify(event.suggestedTags || []),
-            }
-          }
-        })
-
-        result.importedCount++
-        result.importedEventIds.push(googleEvent.id!)
-      } catch (error) {
-        console.error(`Failed to import event ${event.title}:`, error)
-        result.errors.push(`Failed to import "${event.title}": ${error instanceof Error ? error.message : 'Unknown error'}`)
-        result.skippedCount++
-      }
+    if (selectedEvents.length === 0) {
+      console.log('No events selected for import')
+      return result
     }
 
-    result.success = result.errors.length === 0
+    // Prepare batch events
+    const batchEvents = selectedEvents.map(event => ({
+      calendarId: this.yogaCalendarId,
+      summary: event.title,
+      description: this.enhanceEventDescription(event),
+      start: event.start,
+      end: event.end,
+      location: event.location,
+      extendedProperties: {
+        private: {
+          'lenna.yoga.imported': 'true',
+          'lenna.yoga.import_source': event.source,
+          'lenna.yoga.import_source_calendar': event.sourceCalendarId || '',
+          'lenna.yoga.import_date': new Date().toISOString(),
+          'lenna.yoga.imported_by': userId,
+          'lenna.yoga.tags': JSON.stringify(event.suggestedTags || []),
+        }
+      }
+    }))
+
+    try {
+      // Use batch import - single API call for all events!
+      console.log(`🚀 Starting batch import of ${selectedEvents.length} events...`)
+      const batchResult: BatchCreateResult = await calendarService.batchCreateEvents(batchEvents)
+      
+      // Process batch results
+      batchResult.results.forEach((eventResult, index) => {
+        const originalEvent = selectedEvents[index]
+        
+        if (eventResult.success && eventResult.event?.id) {
+          result.importedCount++
+          result.importedEventIds.push(eventResult.event.id)
+          console.log(`✅ Imported: ${originalEvent.title}`)
+        } else {
+          result.skippedCount++
+          const errorMsg = eventResult.error || 'Unknown error'
+          result.errors.push(`Failed to import "${originalEvent.title}": ${errorMsg}`)
+          console.error(`❌ Failed: ${originalEvent.title} - ${errorMsg}`)
+        }
+      })
+
+      // Consider it a success if majority of events were imported (>= 90% success rate)
+      const successRate = selectedEvents.length > 0 ? result.importedCount / selectedEvents.length : 0
+      result.success = successRate >= 0.9
+      
+      if (result.success && result.errors.length > 0) {
+        console.log(`🎉 Batch import mostly successful! ${result.importedCount} imported, ${result.skippedCount} failed (${Math.round(successRate * 100)}% success rate)`)
+      } else if (result.success) {
+        console.log(`🎉 Batch import complete! ${result.importedCount} imported, 0 failed (100% success rate)`)
+      } else {
+        console.log(`⚠️ Batch import had issues: ${result.importedCount} imported, ${result.skippedCount} failed (${Math.round(successRate * 100)}% success rate)`)
+      }
+
+      // If any events were successfully imported, trigger sync to pull them into our database
+      if (result.importedCount > 0) {
+        console.log('🔄 Triggering calendar sync to update dashboard...')
+        await this.triggerCalendarSync()
+      }
+      
+    } catch (error) {
+      console.error('❌ Batch import failed:', error)
+      result.success = false
+      result.errors.push(`Batch import failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      result.skippedCount = selectedEvents.length
+    }
 
     return result
+  }
+
+  /**
+   * Trigger calendar sync to pull imported events into our database
+   */
+  private async triggerCalendarSync(): Promise<void> {
+    try {
+      // Trigger sync to pull imported events into our database
+      const response = await fetch('/api/calendar/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      })
+
+      if (!response.ok) {
+        console.warn('Failed to trigger calendar sync:', response.statusText)
+        return
+      }
+
+      const result = await response.json()
+      console.log('✅ Calendar sync triggered successfully:', result.message)
+    } catch (error) {
+      console.warn('Failed to trigger calendar sync:', error)
+      // Don't throw - sync failure shouldn't block import success
+    }
   }
 
   /**

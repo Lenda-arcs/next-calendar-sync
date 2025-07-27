@@ -25,6 +25,10 @@ export function EnhancedYogaOnboarding({ user, success, error, message }: Enhanc
 
 
 
+  const handleCalendarCreated = () => {
+    setStep('import-events')
+  }
+
   const handleImportComplete = () => {
     setStep('complete')
     // Redirect to dashboard
@@ -48,6 +52,7 @@ export function EnhancedYogaOnboarding({ user, success, error, message }: Enhanc
         success={success}
         error={error}
         message={message}
+        onCalendarCreated={handleCalendarCreated}
       />
     )
   }

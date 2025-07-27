@@ -2,18 +2,18 @@ import { createServerClient } from '@/lib/supabase-server'
 import { redirect } from 'next/navigation'
 import { LogoutButton } from '@/components/auth'
 import { MobileNavMenu, CompactLanguageSelector } from '@/components/ui'
-import { PATHS } from '@/lib/paths'
+import { PATHS, getLocalizedPath } from '@/lib/paths'
 import { 
   Calendar, 
   Tags, 
   Receipt,
-  Building
+  Building,
+  Shield
 } from 'lucide-react'
 import { ActiveProfileLink } from '@/components/navigation/ActiveProfileLink'
 import { ActiveNavLinks } from '@/components/navigation/ActiveNavLinks'
 import { ActiveHomeLink } from '@/components/navigation/ActiveHomeLink'
 import { getValidLocale, getTranslations, createTranslator } from '@/lib/i18n/config'
-import { getLocalizedPath } from '@/lib/paths'
 
 interface AppLayoutProps {
   children: React.ReactNode
@@ -57,6 +57,7 @@ export default async function LocalizedAppLayout({ children, params }: AppLayout
   // Admin-only navigation items (now with localized paths)
   const adminNavigation = [
     { name: studiosLabel, href: getLocalizedPath(PATHS.APP.STUDIOS, locale), icon: Building, iconName: 'Building' },
+    { name: 'Admin Dashboard', href: getLocalizedPath(PATHS.APP.ADMIN, locale), icon: Shield, iconName: 'Shield' },
   ]
 
   // Get user role from the database

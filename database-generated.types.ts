@@ -831,6 +831,54 @@ export type Database = {
           },
         ]
       }
+      user_invitations: {
+        Row: {
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          invited_by: string | null
+          invited_name: string | null
+          notes: string | null
+          personal_message: string | null
+          status: string
+          token: string
+          updated_at: string
+          used_at: string | null
+          used_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          expires_at: string
+          id?: string
+          invited_by?: string | null
+          invited_name?: string | null
+          notes?: string | null
+          personal_message?: string | null
+          status?: string
+          token: string
+          updated_at?: string
+          used_at?: string | null
+          used_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          invited_by?: string | null
+          invited_name?: string | null
+          notes?: string | null
+          personal_message?: string | null
+          status?: string
+          token?: string
+          updated_at?: string
+          used_at?: string | null
+          used_by?: string | null
+        }
+        Relationships: []
+      }
       user_invoice_settings: {
         Row: {
           address: string | null
@@ -1100,6 +1148,10 @@ export type Database = {
           p_expiry_hours?: number
           p_base_domain?: string
         }
+        Returns: Json
+      }
+      delete_user_cascade: {
+        Args: { target_user_id: string }
         Returns: Json
       }
       generate_invitation_email: {

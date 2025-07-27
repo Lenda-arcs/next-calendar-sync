@@ -1,13 +1,13 @@
 import { generateAddCalendarMetadata } from '@/lib/i18n/metadata'
 import type { Metadata } from 'next'
 import AddCalendarContent from '@/components/dashboard/add-calendar/AddCalendarContent'
-import { EnhancedCalendarOnboarding, CalendarSelectionPage } from '@/components/calendar-feeds'
-import { YogaCalendarOnboarding } from '@/components/calendar-feeds/YogaCalendarOnboarding'
+// Removed legacy components - now only using EnhancedYogaOnboarding
+import { EnhancedYogaOnboarding } from '@/components/calendar-feeds/EnhancedYogaOnboarding'
 import { createServerClient } from '@/lib/supabase-server'
 import { redirect } from 'next/navigation'
 import { getValidLocale } from '@/lib/i18n/config'
 import { getUserCalendarFeeds } from '@/lib/calendar-feeds'
-import { fetchOAuthCalendars } from '@/lib/server/oauth-calendar-service'
+// Removed fetchOAuthCalendars - no longer needed for simplified flow
 
 interface AddCalendarPageProps {
   params: Promise<{ locale: string }>
@@ -61,47 +61,20 @@ export default async function AddCalendarPage({ params, searchParams }: AddCalen
   const message = resolvedSearchParams.message
   const isOnboarding = feeds.length === 0 || forceOnboarding
   
-  // Check if user has OAuth integration but no calendar feeds yet
-  const { data: oauthIntegration } = await supabase
-    .from('oauth_calendar_integrations')
-    .select('*')
-    .eq('user_id', authUser.id)
-    .single()
+  // Removed OAuth integration check - simplified to only check calendar feeds
   
-  const hasOAuthButNoFeeds = oauthIntegration && feeds.length === 0
-  const showCalendarSelection = step === 'select_calendars' || hasOAuthButNoFeeds
-  const showYogaCalendarCreation = step === 'create_yoga_calendar' || isOnboarding
+  // Always show the new yoga onboarding flow for calendar setup
+  const needsCalendarSetup = feeds.length === 0 || isOnboarding || step === 'create_yoga_calendar'
 
-  // Fetch available calendars if showing calendar selection
-  const { calendars: availableCalendars } = showCalendarSelection 
-    ? await fetchOAuthCalendars(authUser.id)
-    : { calendars: [] }
-
-  if (showCalendarSelection) {
+  if (needsCalendarSetup) {
     return (
       <div className="min-h-screen">
-        <CalendarSelectionPage user={user} success={success} error={error} availableCalendars={availableCalendars} />
+        <EnhancedYogaOnboarding user={authUser} success={success} error={error} message={message} />
       </div>
     )
   }
 
-  if (showYogaCalendarCreation) {
-    return (
-      <div className="min-h-screen">
-        <YogaCalendarOnboarding user={authUser} success={success} error={error} message={message} />
-      </div>
-    )
-  }
-
-  // Fallback to enhanced onboarding for existing users
-  if (isOnboarding) {
-    return (
-      <div className="min-h-screen">
-        <EnhancedCalendarOnboarding user={user} success={success} error={error} message={message} />
-      </div>
-    )
-  }
-
+  // If user already has calendar setup, show the management interface
   return (
     <AddCalendarContent
       user={user}

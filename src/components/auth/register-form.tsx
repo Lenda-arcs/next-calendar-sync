@@ -10,6 +10,7 @@ import { Mail, Lock, Eye, EyeOff, AlertCircle, Loader2, User } from 'lucide-reac
 interface RegisterFormProps {
   redirectTo?: string
   className?: string
+  invitationToken?: string
 }
 
 interface RegisterFormData {
@@ -19,7 +20,7 @@ interface RegisterFormData {
   fullName: string
 }
 
-export function RegisterForm({ redirectTo = '/app', className }: RegisterFormProps) {
+export function RegisterForm({ redirectTo = '/app', className, invitationToken }: RegisterFormProps) {
   const router = useRouter()
   const supabase = createClient()
   const [showPassword, setShowPassword] = React.useState(false)
@@ -98,6 +99,25 @@ export function RegisterForm({ redirectTo = '/app', className }: RegisterFormPro
         }
 
         if (data.user) {
+          // Mark invitation as used if we have an invitation token
+          if (invitationToken) {
+            try {
+              await fetch('/api/invitations/mark-used', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  token: invitationToken,
+                  userId: data.user.id
+                })
+              })
+            } catch (error) {
+              console.error('Failed to mark invitation as used:', error)
+              // Don't block the registration flow if this fails
+            }
+          }
+
           // Check if email confirmation is required
           if (!data.session) {
             // Redirect to email confirmation page

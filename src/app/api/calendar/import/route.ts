@@ -211,7 +211,8 @@ export async function POST(request: NextRequest) {
           }, { status: 400 })
         }
 
-        const previewResult = ICSParser.convertToImportableEvents(parseResult)
+        // Use extended date range for ICS imports (1 year back, 2 years ahead)
+        const previewResult = await ICSParser.convertToImportableEvents(parseResult, 730, 365)
         
         return NextResponse.json({
           success: true,

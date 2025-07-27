@@ -1,4 +1,4 @@
-interface GoogleCalendar {
+export interface GoogleCalendar {
   id: string
   summary: string
   description?: string
@@ -7,7 +7,7 @@ interface GoogleCalendar {
   backgroundColor?: string
 }
 
-interface GoogleEvent {
+export interface GoogleEvent {
   id?: string
   summary: string
   description?: string
@@ -55,10 +55,48 @@ interface EventCreationOptions {
   }
 }
 
+export interface BatchEventResult {
+  success: boolean
+  event?: GoogleEvent
+  error?: string
+  originalIndex: number
+}
+
+export interface BatchCreateResult {
+  results: BatchEventResult[]
+  successCount: number
+  errorCount: number
+}
+
 export class GoogleCalendarService {
   private baseUrl = 'https://www.googleapis.com/calendar/v3'
 
   constructor(private accessToken: string) {}
+
+  /**
+   * Retry function with exponential backoff for rate-limited requests
+   */
+  private async retryWithBackoff<T>(
+    operation: () => Promise<T>,
+    maxRetries: number = 3,
+    baseDelayMs: number = 1000
+  ): Promise<T> {
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        return await operation()
+      } catch (error) {
+        // Check if it's a rate limit error and we have retries left
+        if (attempt < maxRetries && error instanceof Error && error.message.includes('403')) {
+          const delayMs = baseDelayMs * Math.pow(2, attempt) // Exponential backoff
+          console.log(`Rate limit hit, retrying in ${delayMs}ms (attempt ${attempt + 1}/${maxRetries + 1})`)
+          await new Promise(resolve => setTimeout(resolve, delayMs))
+          continue
+        }
+        throw error
+      }
+    }
+    throw new Error('Max retries exceeded')
+  }
 
   /**
    * Create a new calendar in the user's Google account
@@ -127,28 +165,156 @@ export class GoogleCalendarService {
    * Create an event in a specific calendar
    */
   async createEvent(options: EventCreationOptions): Promise<GoogleEvent> {
-    const response = await fetch(`${this.baseUrl}/calendars/${encodeURIComponent(options.calendarId)}/events`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${this.accessToken}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        summary: options.summary,
-        description: options.description,
-        start: options.start,
-        end: options.end,
-        location: options.location,
-        extendedProperties: options.extendedProperties,
-      }),
-    })
+    return await this.retryWithBackoff(async () => {
+      const response = await fetch(`${this.baseUrl}/calendars/${encodeURIComponent(options.calendarId)}/events`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${this.accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          summary: options.summary,
+          description: options.description,
+          start: options.start,
+          end: options.end,
+          location: options.location,
+          extendedProperties: options.extendedProperties,
+        }),
+      })
 
-    if (!response.ok) {
-      const error = await response.text()
-      throw new Error(`Failed to create event: ${response.status} ${error}`)
+      if (!response.ok) {
+        const error = await response.text()
+        throw new Error(`Failed to create event: ${response.status} ${error}`)
+      }
+
+      return await response.json()
+    })
+  }
+
+  /**
+   * Create multiple events in batch (much more efficient than individual calls)
+   */
+  async batchCreateEvents(events: EventCreationOptions[]): Promise<BatchCreateResult> {
+    if (events.length === 0) {
+      return { results: [], successCount: 0, errorCount: 0 }
     }
 
-    return await response.json()
+    console.log(`🚀 Starting batch import of ${events.length} events...`)
+
+    // Google's batch API endpoint
+    const batchUrl = 'https://www.googleapis.com/batch/calendar/v3'
+    
+    // Create multipart body for batch request
+    const boundary = `batch_${Date.now()}_${Math.random().toString(36).substring(2)}`
+    let batchBody = ''
+
+    events.forEach((event, index) => {
+      const eventData = {
+        summary: event.summary,
+        description: event.description,
+        start: event.start,
+        end: event.end,
+        location: event.location,
+        extendedProperties: event.extendedProperties,
+      }
+
+      batchBody += `--${boundary}\r\n`
+      batchBody += `Content-Type: application/http\r\n`
+      batchBody += `Content-ID: ${index}\r\n\r\n`
+      batchBody += `POST /calendar/v3/calendars/${encodeURIComponent(event.calendarId)}/events\r\n`
+      batchBody += `Content-Type: application/json\r\n\r\n`
+      batchBody += JSON.stringify(eventData) + '\r\n'
+    })
+
+    batchBody += `--${boundary}--\r\n`
+
+    return await this.retryWithBackoff(async () => {
+      const response = await fetch(batchUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${this.accessToken}`,
+          'Content-Type': `multipart/mixed; boundary=${boundary}`,
+        },
+        body: batchBody,
+      })
+
+      if (!response.ok) {
+        const error = await response.text()
+        throw new Error(`Batch request failed: ${response.status} ${error}`)
+      }
+
+      return await this.parseBatchResponse(await response.text(), events.length)
+    })
+  }
+
+  /**
+   * Parse the multipart batch response from Google
+   */
+  private async parseBatchResponse(responseText: string, expectedCount: number): Promise<BatchCreateResult> {
+    const results: BatchEventResult[] = []
+    
+    // Split by batch boundaries
+    const parts = responseText.split(/--[a-zA-Z0-9_-]+/g).filter(part => part.trim())
+    
+    for (let i = 0; i < expectedCount; i++) {
+      const part = parts[i + 1] // Skip first empty part
+      
+      if (!part) {
+        results.push({
+          success: false,
+          error: 'No response received',
+          originalIndex: i
+        })
+        continue
+      }
+
+      try {
+        // Extract the JSON response from the HTTP response
+        const jsonMatch = part.match(/\{[\s\S]*\}/g)
+        if (!jsonMatch) {
+          results.push({
+            success: false,
+            error: 'Invalid response format',
+            originalIndex: i
+          })
+          continue
+        }
+
+        const jsonResponse = JSON.parse(jsonMatch[0])
+        
+        // Check for error response
+        if (jsonResponse.error) {
+          results.push({
+            success: false,
+            error: jsonResponse.error.message || 'Unknown error',
+            originalIndex: i
+          })
+        } else {
+          results.push({
+            success: true,
+            event: jsonResponse,
+            originalIndex: i
+          })
+        }
+      } catch (error) {
+        results.push({
+          success: false,
+          error: `Parse error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          originalIndex: i
+        })
+      }
+    }
+
+    const successCount = results.filter(r => r.success).length
+    const errorCount = results.filter(r => !r.success).length
+
+    console.log(`✅ Batch import complete: ${successCount} success, ${errorCount} errors`)
+
+    return {
+      results,
+      successCount,
+      errorCount
+    }
   }
 
   /**
