@@ -9,7 +9,7 @@ import { PageSection } from '@/components/layout/page-section'
 import { FeaturedTeacherData } from '@/lib/server/featured-teacher-service'
 import { convertEventToCardProps } from '@/lib/event-utils'
 import { ExternalLink, Instagram, Globe } from 'lucide-react'
-import { createServerClient } from '@/lib/supabase-server'
+import { createPublicClient } from '@/lib/supabase-server'
 import { Tag } from '@/lib/types'
 import { PATHS } from '@/lib/paths'
 
@@ -23,7 +23,7 @@ export async function FeaturedTeacher({ data }: FeaturedTeacherProps) {
   // Fetch tags for proper image processing (similar to PublicEventList)
   let allTags: Tag[] = []
   try {
-    const supabase = await createServerClient()
+    const supabase = createPublicClient()
     const { data: tagsData } = await supabase
       .from('tags')
       .select('*')

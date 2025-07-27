@@ -1,4 +1,4 @@
-import { createServerClient } from '@/lib/supabase-server'
+import { createPublicClient } from '@/lib/supabase-server'
 import { PublicEvent } from '@/lib/types'
 
 export interface FeaturedTeacherData {
@@ -17,7 +17,7 @@ export interface FeaturedTeacherData {
 
 export async function getFeaturedTeacher(): Promise<FeaturedTeacherData | null> {
   try {
-    const supabase = await createServerClient()
+    const supabase = createPublicClient()
     
     // Get the featured teacher from public_profiles view
     const { data: featuredUser, error: userError } = await supabase
