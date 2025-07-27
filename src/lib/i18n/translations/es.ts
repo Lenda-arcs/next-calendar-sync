@@ -922,8 +922,6 @@ const translations: Translations = {
         allVisibility: 'Todos ({count})',
         publicVisibility: 'Público ({count})',
         privateVisibility: 'Privado ({count})',
-        pendingChangesInfo: '{count} cambio{plural} sin guardar',
-        pendingChangesAction: 'Usa los botones de acción flotantes para guardar o descartar',
         createNewTag: 'Crear Nueva Etiqueta',
         refresh: 'Actualizar',
         quickActions: 'Acciones Rápidas (~1-3s)',

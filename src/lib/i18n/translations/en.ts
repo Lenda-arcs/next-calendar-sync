@@ -922,8 +922,6 @@ const translations: Translations = {
         allVisibility: 'All ({count})',
         publicVisibility: 'Public ({count})',
         privateVisibility: 'Private ({count})',
-        pendingChangesInfo: '{count} unsaved change{plural}',
-        pendingChangesAction: 'Use the floating action buttons to save or discard',
         createNewTag: 'Create New Tag',
         refresh: 'Refresh',
         quickActions: 'Quick Actions (~1-3s)',

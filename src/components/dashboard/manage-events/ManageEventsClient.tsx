@@ -50,7 +50,7 @@ export function ManageEventsClient({ userId }: ManageEventsClientProps) {
 
   // Filtering state
   const [visibilityFilter, setVisibilityFilter] = React.useState<VisibilityFilter>('all')
-  const [timeFilter, setTimeFilter] = React.useState<TimeFilter>('all')
+  const [timeFilter, setTimeFilter] = React.useState<TimeFilter>('future')
 
   // Create tag form state
   const [isCreateTagFormOpen, setIsCreateTagFormOpen] = React.useState(false)
@@ -434,8 +434,6 @@ export function ManageEventsClient({ userId }: ManageEventsClientProps) {
               eventStats={eventStats}
               userTags={allTags.filter(tag => tag.user_id) || undefined}
               globalTags={allTags.filter(tag => !tag.user_id) || undefined}
-              hasPendingChanges={false}
-              pendingChangesCount={0}
               isSyncing={isSyncing}
               isLoading={false}
               userId={userId}

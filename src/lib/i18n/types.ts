@@ -1052,8 +1052,6 @@ export interface PagesTranslations {
       allVisibility: string
       publicVisibility: string
       privateVisibility: string
-      pendingChangesInfo: string
-      pendingChangesAction: string
       createNewTag: string
       refresh: string
       quickActions: string

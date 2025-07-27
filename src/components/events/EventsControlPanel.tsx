@@ -23,8 +23,6 @@ interface EventsControlPanelProps {
   eventStats: EventStats
   userTags?: TagType[]
   globalTags?: TagType[]
-  hasPendingChanges: boolean
-  pendingChangesCount: number
   isSyncing: boolean
   isLoading: boolean
   userId?: string
@@ -41,8 +39,6 @@ export default function EventsControlPanel({
   eventStats,
   userTags,
   globalTags,
-  hasPendingChanges,
-  pendingChangesCount,
   isSyncing,
   isLoading,
   userId,
@@ -114,19 +110,6 @@ export default function EventsControlPanel({
 
         {/* Management Actions */}
         <div className="pt-4 border-t border-border">
-          {hasPendingChanges && (
-            <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-              <p className="text-sm text-amber-800">
-                <span className="font-medium">
-                  {t('pages.manageEvents.controlPanel.pendingChangesInfo', { 
-                    count: pendingChangesCount.toString(),
-                    plural: pendingChangesCount !== 1 ? 's' : ''
-                  })}
-                </span>
-                {' '}• {t('pages.manageEvents.controlPanel.pendingChangesAction')}
-              </p>
-            </div>
-          )}
           
           {/* Quick Actions Row */}
           <div className="flex flex-wrap gap-2 mb-4">
