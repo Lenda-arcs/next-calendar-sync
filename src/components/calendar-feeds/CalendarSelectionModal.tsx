@@ -3,24 +3,28 @@
 import { useState } from 'react'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Checkbox } from "@/components/ui/checkbox"
 import { UnifiedDialog } from "@/components/ui/unified-dialog"
 import { Badge } from "@/components/ui/badge"
 import { CalendarItemCard } from "./CalendarItemCard"
 import { useCalendarSelection } from "@/lib/hooks"
 import { CalendarItem } from "@/lib/types"
 import { toast } from "sonner"
-import { Calendar, Globe, Loader2 } from "lucide-react"
+import { Calendar, Loader2, Info } from "lucide-react"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 
 interface CalendarSelectionModalProps {
   isOpen: boolean
   onClose: () => void
   onSuccess: (selectedCount: number) => void
   calendars?: CalendarItem[]
-  syncApproach?: 'yoga_only' | 'mixed_calendar'
 }
 
-export function CalendarSelectionModal({ isOpen, onClose, onSuccess, calendars: propCalendars = [], syncApproach = 'yoga_only' }: CalendarSelectionModalProps) {
+export function CalendarSelectionModal({ 
+  isOpen, 
+  onClose, 
+  onSuccess, 
+  calendars: propCalendars = [] 
+}: CalendarSelectionModalProps) {
   const [saving, setSaving] = useState(false)
   const { state, actions } = useCalendarSelection({ 
     calendars: propCalendars, 
@@ -43,115 +47,113 @@ export function CalendarSelectionModal({ isOpen, onClose, onSuccess, calendars: 
         },
         body: JSON.stringify({ 
           selections: selectionArray,
-          sync_approach: syncApproach
+          sync_approach: 'yoga_only' // Always use yoga_only for legacy API compatibility
         })
       })
 
       if (!response.ok) {
-        throw new Error('Failed to save calendar selection')
+        const error = await response.text()
+        throw new Error(error || 'Failed to save calendar selection')
       }
 
-      const data = await response.json()
-      toast.success(data.message || 'Calendar selection saved successfully')
-      onSuccess(data.selectedCount)
+      const selectedCount = Object.values(state.selections).filter(Boolean).length
+      toast.success(`Successfully connected ${selectedCount} calendar${selectedCount !== 1 ? 's' : ''}`)
+      onSuccess(selectedCount)
       onClose()
     } catch (error) {
       console.error('Failed to save calendar selection:', error)
-      toast.error('Failed to save calendar selection')
+      toast.error('Failed to save calendar selection. Please try again.')
     } finally {
       setSaving(false)
     }
   }
 
-  const footerContent = (
-    <>
-      <Button variant="outline" onClick={onClose} disabled={saving}>
-        Cancel
-      </Button>
-      <Button 
-        onClick={handleSave} 
-        disabled={saving || !state.hasChanges}
-        className="min-w-[140px]"
-      >
-        {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-        {saving ? 'Saving...' : state.hasChanges ? `Save Selection (${state.selectedCount})` : 'No Changes'}
-      </Button>
-    </>
-  )
+  const selectedCount = Object.values(state.selections).filter(Boolean).length
+  const hasSelections = selectedCount > 0
 
   return (
     <UnifiedDialog
       open={isOpen}
-      onOpenChange={onClose}
-      size="lg"
-      title={
-        <div className="flex items-center gap-2">
-          <Calendar className="h-5 w-5" />
-          Select Calendars to Sync
-        </div>
-      }
-      description="Choose which Google calendars you want to sync with your schedule. Only events from selected calendars will appear in your app."
-      footer={footerContent}
+      onOpenChange={(open) => !open && onClose()}
+      title="Connect Your Calendars"
+      description="Select which calendars to sync with your yoga teaching profile"
     >
-      {propCalendars.length === 0 ? (
-        <Card variant="ghost" className="text-center py-8">
-          <CardContent>
-            <Calendar className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-            <p className="text-muted-foreground">
-              No calendars found. Please reconnect your Google account.
-            </p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="space-y-4">
-          {/* Select All / None */}
-          <Card variant="glass" className="p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  id="select-all"
-                  checked={state.allSelected}
-                  onCheckedChange={actions.toggleAll}
-                />
-                <label htmlFor="select-all" className="font-medium cursor-pointer">
-                  {state.allSelected ? 'Deselect All' : 'Select All'}
-                </label>
-              </div>
-              <Badge variant="secondary" className="backdrop-blur-sm">
-                {state.selectedCount} of {propCalendars.length} selected
-              </Badge>
-            </div>
-          </Card>
+      <div className="space-y-6">
+        
+        {/* Legacy Notice */}
+        <Alert>
+          <Info className="h-4 w-4" />
+          <AlertDescription>
+            <strong>Note:</strong> This is our legacy calendar connection method. 
+            For new setups, we recommend using our new <strong>Dedicated Yoga Calendar</strong> approach 
+            which is more reliable and easier to manage.
+          </AlertDescription>
+        </Alert>
 
-          {/* Calendar List */}
-          <div className="space-y-3">
-            {propCalendars.map((calendar) => (
+        {/* Calendar List */}
+        <div className="space-y-3">
+          {propCalendars.length === 0 ? (
+            <Card>
+              <CardContent className="pt-6 text-center">
+                <Calendar className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
+                <p className="text-sm text-muted-foreground">No calendars available</p>
+              </CardContent>
+            </Card>
+          ) : (
+            propCalendars.map((calendar) => (
               <CalendarItemCard
                 key={calendar.id}
                 calendar={calendar}
-                isSelected={state.selections[calendar.id] || false}
+                isSelected={!!state.selections[calendar.id]}
                 onToggle={actions.toggleSelection}
               />
-            ))}
-          </div>
+            ))
+          )}
+        </div>
 
-          {/* Info */}
-          <Card variant="glass" className="p-4 bg-blue-50/50 dark:bg-blue-950/30 border-blue-200/50">
-            <div className="flex items-start gap-3">
-              <Globe className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
-              <div className="text-sm">
-                <p className="font-medium text-blue-900 dark:text-blue-100 mb-1">
-                  About calendar sync
+        {/* Selection Summary */}
+        {hasSelections && (
+          <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-medium">
+                  {selectedCount} calendar{selectedCount !== 1 ? 's' : ''} selected
                 </p>
-                <p className="text-blue-700 dark:text-blue-300 leading-relaxed">
-                  Selected calendars will sync automatically. You can change this selection anytime. 
-                  Events will be processed with your existing tag rules and studio matching.
+                <p className="text-sm text-muted-foreground">
+                  Events will be synced to your yoga teaching profile
                 </p>
               </div>
+              <Badge variant="secondary">
+                Yoga Events Only
+              </Badge>
             </div>
-          </Card>
+          </div>
+        )}
+
+        {/* Actions */}
+        <div className="flex justify-between">
+          <Button
+            variant="outline"
+            onClick={onClose}
+            disabled={saving}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleSave}
+            disabled={!hasSelections || saving}
+          >
+            {saving ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Connecting...
+              </>
+            ) : (
+              `Connect ${selectedCount} Calendar${selectedCount !== 1 ? 's' : ''}`
+            )}
+          </Button>
         </div>
-      )}
+      </div>
     </UnifiedDialog>
   )
 } 

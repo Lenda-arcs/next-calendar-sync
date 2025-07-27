@@ -16,8 +16,7 @@ import {
   Clock,
   AlertCircle,
   CheckCircle,
-  Filter,
-  Settings2
+  Info
 } from 'lucide-react'
 import { formatDate, type CalendarFeed } from '@/lib/calendar-feeds'
 import { useCalendarFeedActions } from '@/lib/hooks/useCalendarFeeds'
@@ -37,7 +36,7 @@ export function CalendarFeedManager({ feeds, isLoading, onRefetch, userId }: Cal
   const [optimisticFeeds, setOptimisticFeeds] = useState<CalendarFeed[]>(feeds)
   const [recentlySynced, setRecentlySynced] = useState<Set<string>>(new Set())
   const [syncResults, setSyncResults] = useState<Map<string, { success: boolean; count: number }>>(new Map())
-  const { syncFeed, deleteFeed, updateSyncApproach, isSyncing, isDeleting, isUpdatingSyncApproach, syncError, deleteError, updateSyncApproachError } = useCalendarFeedActions()
+  const { syncFeed, deleteFeed, isSyncing, isDeleting, syncError, deleteError } = useCalendarFeedActions()
 
   // Update optimistic feeds when props change
   React.useEffect(() => {
@@ -48,32 +47,29 @@ export function CalendarFeedManager({ feeds, isLoading, onRefetch, userId }: Cal
     try {
       setActionFeedId(feedId)
       
-      // Optimistically update the last_synced_at timestamp
-      const now = new Date().toISOString()
-      setOptimisticFeeds(prev => 
-        prev.map(feed => 
-          feed.id === feedId 
-            ? { ...feed, last_synced_at: now }
-            : feed
-        )
-      )
-      
-      // Perform the actual sync
-      const result = await syncFeed(feedId)
-      
-      // Store sync results for display
-      setSyncResults(prev => new Map(prev).set(feedId, result))
-      
-      // Mark as recently synced for visual feedback
+      // Add to recently synced set for UI feedback
       setRecentlySynced(prev => new Set(prev).add(feedId))
       
-      // Remove the "recently synced" indicator after 3 seconds
+      const result = await syncFeed(feedId)
+      
+      // Update sync results
+      setSyncResults(prev => new Map(prev).set(feedId, {
+        success: result.success,
+        count: result.count || 0
+      }))
+      
+      if (onRefetch) {
+        onRefetch()
+      }
+      
+      // Remove from recently synced after delay
       setTimeout(() => {
         setRecentlySynced(prev => {
           const newSet = new Set(prev)
           newSet.delete(feedId)
           return newSet
         })
+        // Clear sync results after showing them
         setSyncResults(prev => {
           const newMap = new Map(prev)
           newMap.delete(feedId)
@@ -81,12 +77,8 @@ export function CalendarFeedManager({ feeds, isLoading, onRefetch, userId }: Cal
         })
       }, 3000)
       
-      // Refetch to get the latest data from server
-      onRefetch?.()
     } catch (error) {
-      console.error('Error syncing feed:', error)
-      // Revert optimistic update on error
-      setOptimisticFeeds(feeds)
+      console.error('Sync error:', error)
     } finally {
       setActionFeedId(null)
     }
@@ -96,169 +88,153 @@ export function CalendarFeedManager({ feeds, isLoading, onRefetch, userId }: Cal
     try {
       setActionFeedId(feedId)
       
-      // Optimistically remove the feed from the list
+      // Optimistically remove the feed
       setOptimisticFeeds(prev => prev.filter(feed => feed.id !== feedId))
       
-      // Perform the actual deletion
       await deleteFeed(feedId)
       
-      // Refetch to ensure consistency
-      onRefetch?.()
-      setConfirmDelete(null)
+      if (onRefetch) {
+        onRefetch()
+      }
+      
     } catch (error) {
-      console.error('Error deleting feed:', error)
+      console.error('Delete error:', error)
       // Revert optimistic update on error
       setOptimisticFeeds(feeds)
     } finally {
       setActionFeedId(null)
+      setConfirmDelete(null)
     }
   }
 
-  const handleSyncApproachChange = async (feedId: string, syncApproach: 'yoga_only' | 'mixed_calendar') => {
-    try {
-      setActionFeedId(feedId)
-      
-      // Optimistically update the sync approach
-      setOptimisticFeeds(prev => 
-        prev.map(feed => 
-          feed.id === feedId 
-            ? { ...feed, sync_approach: syncApproach } as CalendarFeed
-            : feed
-        )
-      )
-      
-      await updateSyncApproach(feedId, syncApproach)
-      onRefetch?.()
-    } catch (error) {
-      console.error('Failed to update sync approach:', error)
-      // Revert optimistic update
-      setOptimisticFeeds(feeds)
-    } finally {
-      setActionFeedId(null)
-    }
-  }
-
-  const isProcessing = (feedId: string) => actionFeedId === feedId && (isSyncing || isDeleting || isUpdatingSyncApproach)
+  const displayFeeds = optimisticFeeds.length > 0 ? optimisticFeeds : feeds
 
   return (
     <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-lg font-semibold">Connected Calendars</h3>
+          <p className="text-sm text-muted-foreground">
+            Manage your calendar integrations and sync settings
+          </p>
+        </div>
+        <div className="flex gap-2">
+          {onRefetch && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onRefetch}
+              disabled={isLoading}
+            >
+              <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
+          )}
+          <Link href="/app/add-calendar">
+            <Button size="sm">
+              <Plus className="h-4 w-4 mr-2" />
+              Add Calendar
+            </Button>
+          </Link>
+        </div>
+      </div>
+
       {/* Error Messages */}
-      {syncError && (
+      {(syncError || deleteError) && (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <div>
-            <strong>Sync Error:</strong> {syncError.message}
-          </div>
-        </Alert>
-      )}
-      
-      {deleteError && (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <div>
-            <strong>Delete Error:</strong> {deleteError.message}
+            <p className="font-medium">Action Failed</p>
+            <p className="text-sm">{(syncError || deleteError)?.message || 'An unknown error occurred'}</p>
           </div>
         </Alert>
       )}
 
-      {updateSyncApproachError && (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <div>
-            <strong>Sync Approach Error:</strong> {updateSyncApproachError.message}
-          </div>
-        </Alert>
-      )}
-
+      {/* Calendar Feeds */}
       <DataLoader
-        data={optimisticFeeds}
+        data={displayFeeds}
         loading={isLoading || false}
         error={null}
+        skeleton={
+          <div className="grid gap-4">
+            {[1, 2].map((i) => (
+              <Card key={i} className="animate-pulse">
+                <CardContent className="p-6">
+                  <div className="h-4 bg-muted rounded w-1/3 mb-2" />
+                  <div className="h-3 bg-muted rounded w-1/2" />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        }
         empty={
-          <Card variant="glass">
+          <Card>
             <CardContent className="text-center py-12">
-              <Calendar className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No Calendar Feeds Connected</h3>
-              <p className="text-muted-foreground mb-6 max-w-sm mx-auto">
-                Connect your first calendar feed to start syncing your events and building your schedule.
+              <Calendar className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+              <h3 className="text-lg font-medium mb-2">No calendars connected</h3>
+              <p className="text-muted-foreground mb-4">
+                Connect your first calendar to start syncing yoga events
               </p>
-              <Button asChild>
-                <Link href="/app/add-calendar">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add Your First Calendar Feed
-                </Link>
-              </Button>
+              <Link href="/app/add-calendar">
+                <Button>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Connect Calendar
+                </Button>
+              </Link>
             </CardContent>
           </Card>
         }
       >
-        {(calendarFeeds) => (
-          <>
-            {/* Header */}
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-2xl font-bold font-serif">Calendar Feeds</h2>
-                <p className="text-muted-foreground">
-                  Manage your connected calendar feeds and sync settings.
-                </p>
-              </div>
-              <Button asChild>
-                <Link href="/app/add-calendar">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add Calendar Feed
-                </Link>
-              </Button>
-            </div>
-
-            {/* Feeds List */}
-            <div className="grid gap-4">
-              {calendarFeeds.map((feed) => (
-                <CalendarFeedCard
-                  key={feed.id}
-                  feed={feed}
-                  isProcessing={isProcessing(feed.id)}
-                  isRecentlySynced={recentlySynced.has(feed.id)}
-                  syncResult={syncResults.get(feed.id)}
-                  userId={userId}
-                  onSync={() => handleSync(feed.id)}
-                  onDelete={() => setConfirmDelete(feed.id)}
-                  onSyncApproachChange={handleSyncApproachChange}
-                />
-              ))}
-            </div>
-
-            {/* Delete Confirmation Dialog */}
-            <UnifiedDialog
-              open={!!confirmDelete}
-              onOpenChange={() => setConfirmDelete(null)}
-              title="Delete Calendar Feed"
-              description="Are you sure you want to delete this calendar feed? This action cannot be undone, and all associated events will be removed from your schedule."
-              size="sm"
-              footer={
-                <>
-                  <Button variant="outline" onClick={() => setConfirmDelete(null)}>
-                    Cancel
-                  </Button>
-                  <Button 
-                    variant="destructive" 
-                    onClick={() => confirmDelete && handleDelete(confirmDelete)}
-                    disabled={isDeleting}
-                  >
-                    {isDeleting ? 'Deleting...' : 'Delete Feed'}
-                  </Button>
-                </>
-              }
-            >
-              <div className="text-center py-4">
-                <AlertCircle className="h-12 w-12 mx-auto text-destructive mb-4" />
-                <p className="text-sm text-muted-foreground">
-                  This action is permanent and cannot be reversed.
-                </p>
-              </div>
-            </UnifiedDialog>
-          </>
+        {(feeds: CalendarFeed[]) => (
+          <div className="grid gap-4">
+            {feeds.map((feed) => (
+              <CalendarFeedCard
+                key={feed.id}
+                feed={feed}
+                isProcessing={actionFeedId === feed.id && (isSyncing || isDeleting)}
+                isRecentlySynced={recentlySynced.has(feed.id)}
+                syncResult={syncResults.get(feed.id)}
+                userId={userId}
+                onSync={() => handleSync(feed.id)}
+                onDelete={() => setConfirmDelete(feed.id)}
+              />
+            ))}
+          </div>
         )}
       </DataLoader>
+
+      {/* Delete Confirmation Dialog */}
+      <UnifiedDialog
+        open={!!confirmDelete}
+        onOpenChange={(open) => !open && setConfirmDelete(null)}
+        title="Delete Calendar Feed"
+        description="Are you sure you want to delete this calendar feed? This action cannot be undone."
+      >
+        <div className="flex justify-end gap-3 mt-6">
+          <Button
+            variant="outline"
+            onClick={() => setConfirmDelete(null)}
+            disabled={isDeleting}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="destructive"
+            onClick={() => confirmDelete && handleDelete(confirmDelete)}
+            disabled={isDeleting}
+          >
+            {isDeleting ? (
+              <>
+                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                Deleting...
+              </>
+            ) : (
+              'Delete Feed'
+            )}
+          </Button>
+        </div>
+      </UnifiedDialog>
     </div>
   )
 }
@@ -266,12 +242,11 @@ export function CalendarFeedManager({ feeds, isLoading, onRefetch, userId }: Cal
 interface CalendarFeedCardProps {
   feed: CalendarFeed
   isProcessing: boolean
-  isRecentlySynced?: boolean
+  isRecentlySynced: boolean
   syncResult?: { success: boolean; count: number }
   userId?: string
   onSync: () => void
   onDelete: () => void
-  onSyncApproachChange?: (feedId: string, syncApproach: 'yoga_only' | 'mixed_calendar') => void
 }
 
 function CalendarFeedCard({ 
@@ -281,161 +256,123 @@ function CalendarFeedCard({
   syncResult, 
   userId,
   onSync, 
-  onDelete,
-  onSyncApproachChange 
+  onDelete
 }: CalendarFeedCardProps) {
   const isActive = !!feed.last_synced_at
   const syncDate = formatDate(feed.last_synced_at)
 
   return (
-    <Card variant="glass" className="overflow-hidden">
-      <CardHeader>
+    <Card className="relative overflow-hidden">
+      <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
-          <div className="flex-1 min-w-0">
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <Calendar className="h-5 w-5 text-primary" />
+          <div className="space-y-1">
+            <CardTitle className="text-base font-medium flex items-center gap-2">
+              <Calendar className="h-4 w-4 text-primary" />
               {feed.calendar_name || 'Unnamed Calendar'}
-              <Badge variant={isActive ? "default" : "secondary"} className="text-xs">
-                {isActive ? "Active" : "Pending"}
-              </Badge>
-              {isRecentlySynced && (
-                <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
-                  <CheckCircle className="h-3 w-3 mr-1" />
-                  Just Synced
+              {isActive && (
+                <Badge variant="secondary" className="text-xs">
+                  Active
                 </Badge>
               )}
             </CardTitle>
-            <CardDescription className="mt-1">
-              {feed.feed_url ? (
-                <span className="flex items-center gap-1 text-xs">
+            <CardDescription className="flex items-center gap-4 text-sm">
+              <span className="flex items-center gap-1">
+                <Clock className="h-3 w-3" />
+                {isActive ? `Last synced: ${syncDate}` : 'Never synced'}
+              </span>
+              {feed.feed_url && (
+                <span className="flex items-center gap-1">
                   <ExternalLink className="h-3 w-3" />
-                  {feed.feed_url.length > 60 
-                    ? `${feed.feed_url.substring(0, 60)}...` 
-                    : feed.feed_url
-                  }
+                  Calendar Feed
                 </span>
-              ) : (
-                <span className="text-xs text-muted-foreground">No URL provided</span>
               )}
             </CardDescription>
           </div>
         </div>
       </CardHeader>
-      
-      <CardContent>
-        <div className="space-y-4">
-          {/* Sync Information */}
-          <div className="flex items-center justify-between p-3 bg-white/20 rounded-lg">
-            <div className="flex items-center gap-2 text-sm">
-              <Clock className="h-4 w-4 text-muted-foreground" />
-              <span className="text-muted-foreground">Last synced:</span>
-              <span className="font-medium">{syncDate}</span>
-            </div>
-            {syncResult && (
-              <div className="text-xs text-green-700 bg-green-50 px-2 py-1 rounded">
-                {syncResult.count} events synced
-              </div>
+
+      <CardContent className="space-y-4">
+        {/* Sync Results */}
+        {syncResult && (
+          <Alert className={syncResult.success ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}>
+            {syncResult.success ? (
+              <CheckCircle className="h-4 w-4 text-green-600" />
+            ) : (
+              <AlertCircle className="h-4 w-4 text-red-600" />
             )}
-          </div>
-
-          {/* Sync Approach Controls */}
-          <div className="p-3 bg-white/10 rounded-lg border border-white/20">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2 text-sm">
-                <Settings2 className="h-4 w-4 text-muted-foreground" />
-                <span className="text-muted-foreground">Sync approach:</span>
-              </div>
-              <Badge variant="outline" className="text-xs">
-                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                {(feed as any).sync_approach === 'mixed_calendar' ? 'Mixed Calendar' : 'Yoga Only'}
-              </Badge>
+            <div className={syncResult.success ? 'text-green-800' : 'text-red-800'}>
+              <p className="font-medium">
+                {syncResult.success 
+                  ? `Sync completed successfully` 
+                  : 'Sync failed'
+                }
+              </p>
+              {syncResult.success && (
+                <p className="text-sm">
+                  {syncResult.count} events processed
+                </p>
+              )}
             </div>
+          </Alert>
+        )}
+
+        {/* Calendar Type Info */}
+        <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+          <div className="flex items-center gap-2 text-sm">
+            <Info className="h-4 w-4 text-blue-600" />
+            <span className="text-blue-800 font-medium">Dedicated Yoga Calendar</span>
+          </div>
+          <p className="text-xs text-blue-700 mt-1">
+            All events from this calendar are synced automatically
+          </p>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="space-y-3">
+          <div className="flex gap-2">
+            <Button
+              onClick={onSync}
+              disabled={isProcessing}
+              className="flex-1"
+              variant={isRecentlySynced ? 'secondary' : 'default'}
+            >
+              {isProcessing ? (
+                <>
+                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                  Syncing...
+                </>
+              ) : isRecentlySynced ? (
+                <>
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  Synced
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Sync Now
+                </>
+              )}
+            </Button>
             
-            <div className="flex gap-2">
-              <Button
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                variant={(feed as any).sync_approach === 'yoga_only' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => onSyncApproachChange?.(feed.id, 'yoga_only')}
-                disabled={isProcessing}
-                className="flex-1"
-              >
-                <Calendar className="mr-2 h-3 w-3" />
-                Yoga Only
-              </Button>
-              
-              <Button
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                variant={(feed as any).sync_approach === 'mixed_calendar' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => onSyncApproachChange?.(feed.id, 'mixed_calendar')}
-                disabled={isProcessing}
-                className="flex-1"
-              >
-                <Filter className="mr-2 h-3 w-3" />
-                Mixed Calendar
-              </Button>
-            </div>
-            
-            <p className="text-xs text-muted-foreground mt-2">
-              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-              {(feed as any).sync_approach === 'mixed_calendar' 
-                ? 'Events are filtered using your tag patterns' 
-                : 'All events are synced without filtering'
-              }
-            </p>
+            <Button
+              variant="outline"
+              onClick={onDelete}
+              disabled={isProcessing}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
           </div>
 
-          {/* Action Buttons */}
-          <div className="space-y-3">
-            {/* Primary Actions */}
-            <div className="flex gap-2">
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={onSync}
-                disabled={isProcessing}
-                className="flex-1"
-              >
-                {isProcessing ? (
-                  <>
-                    <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                    Syncing...
-                  </>
-                ) : (
-                  <>
-                    <RefreshCw className="mr-2 h-4 w-4" />
-                    Full Sync
-                  </>
-                )}
-              </Button>
-              
-              <Button 
-                variant="destructive" 
-                size="sm"
-                onClick={onDelete}
-                disabled={isProcessing}
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                Remove
-              </Button>
-            </div>
-
-            {/* Quick Rematch */}
-            {userId && (
-              <div className="flex gap-2">
-                                 <RematchEventsButton
-                   userId={userId}
-                   feedId={feed.id}
-                   variant="outline"
-                   size="sm"
-                 >
-                   Fix Matching Only
-                 </RematchEventsButton>
-                <span className="text-xs text-muted-foreground self-center">~1-3s</span>
-              </div>
-            )}
-          </div>
+          {/* Rematch Events Button */}
+          {userId && isActive && (
+            <RematchEventsButton 
+              feedId={feed.id} 
+              userId={userId}
+              variant="outline"
+              size="sm"
+              className="w-full"
+            />
+          )}
         </div>
       </CardContent>
     </Card>
