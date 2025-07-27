@@ -10,12 +10,23 @@ interface EnhancedYogaOnboardingProps {
   success?: string
   error?: string
   message?: string
+  forceImportStep?: boolean
 }
 
 type OnboardingStep = 'create-calendar' | 'import-events' | 'complete'
 
-export function EnhancedYogaOnboarding({ user, success, error, message }: EnhancedYogaOnboardingProps) {
+export function EnhancedYogaOnboarding({ 
+  user, 
+  success, 
+  error, 
+  message, 
+  forceImportStep = false 
+}: EnhancedYogaOnboardingProps) {
   const [step, setStep] = useState<OnboardingStep>(() => {
+    // If forceImportStep is true, go directly to import (for existing users)
+    if (forceImportStep) {
+      return 'import-events'
+    }
     // If calendar creation is already successful, move to import
     if (success === 'calendar_created') {
       return 'import-events'

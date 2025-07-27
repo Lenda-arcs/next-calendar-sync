@@ -134,7 +134,7 @@ export function CalendarFeedManager({ feeds, isLoading, onRefetch, userId }: Cal
           <Link href="/app/add-calendar">
             <Button size="sm">
               <Plus className="h-4 w-4 mr-2" />
-              Add Calendar
+              Import More Events
             </Button>
           </Link>
         </div>

@@ -89,7 +89,7 @@ export function ConnectedFeedsList({ feeds, isLoading, onViewDetails }: Connecte
         <Button asChild size="sm" variant="secondary">
           <Link href={PATHS.APP.ADD_CALENDAR}>
             <Plus className="mr-2 h-4 w-4" />
-            {t('integration.addMore')}
+            Import More Events
           </Link>
         </Button>
       </div>

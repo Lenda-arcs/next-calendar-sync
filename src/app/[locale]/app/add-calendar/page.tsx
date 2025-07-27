@@ -1,6 +1,5 @@
 import { generateAddCalendarMetadata } from '@/lib/i18n/metadata'
 import type { Metadata } from 'next'
-import AddCalendarContent from '@/components/dashboard/add-calendar/AddCalendarContent'
 // Removed legacy components - now only using EnhancedYogaOnboarding
 import { EnhancedYogaOnboarding } from '@/components/calendar-feeds/EnhancedYogaOnboarding'
 import { createServerClient } from '@/lib/supabase-server'
@@ -42,17 +41,11 @@ export default async function AddCalendarPage({ params, searchParams }: AddCalen
   }
 
   // Fetch user profile and existing calendar feeds
-  const [
-    { data: userData },
-    existingFeeds,
-    resolvedSearchParams
-  ] = await Promise.all([
-    supabase.from('users').select('*').eq('id', authUser.id).single(),
+  const [existingFeeds, resolvedSearchParams] = await Promise.all([
     getUserCalendarFeeds({ supabase, userId: authUser.id }).catch(() => []),
     searchParams
   ])
 
-  const user = userData || null
   const feeds = existingFeeds || []
   const forceOnboarding = resolvedSearchParams.force_onboarding === 'true'
   const success = resolvedSearchParams.success
@@ -74,12 +67,17 @@ export default async function AddCalendarPage({ params, searchParams }: AddCalen
     )
   }
 
-  // If user already has calendar setup, show the management interface
+  // If user already has calendar setup, redirect to import more events into existing calendar
+  // No more multiple calendar feeds - just import additional events into the yoga calendar
   return (
-    <AddCalendarContent
-      user={user}
-      success={success}
-      error={error}
-    />
+    <div className="min-h-screen">
+      <EnhancedYogaOnboarding 
+        user={authUser} 
+        success={success} 
+        error={error} 
+        message={message}
+        forceImportStep={true}
+      />
+    </div>
   )
 } 
