@@ -6,23 +6,22 @@ import { getValidAccessToken } from '@/lib/oauth-utils'
 interface CreateEventRequest {
   summary: string
   description?: string
-  start: {
-    dateTime?: string
-    date?: string
-    timeZone?: string
-  }
-  end: {
-    dateTime?: string
-    date?: string
-    timeZone?: string
-  }
+  start: { dateTime?: string; date?: string; timeZone?: string }
+  end: { dateTime?: string; date?: string; timeZone?: string }
   location?: string
-  tags?: string[]
+  custom_tags?: string[]
   visibility?: 'public' | 'private'
 }
 
-interface UpdateEventRequest extends Partial<CreateEventRequest> {
+interface UpdateEventRequest {
   eventId: string
+  summary?: string
+  description?: string
+  start?: { dateTime?: string; date?: string; timeZone?: string }
+  end?: { dateTime?: string; date?: string; timeZone?: string }
+  location?: string
+  custom_tags?: string[]
+  visibility?: 'public' | 'private'
 }
 
 // POST: Create a new event
@@ -123,7 +122,7 @@ export async function POST(request: NextRequest) {
       extendedProperties: {
         private: {
           'lenna.yoga.created': 'true',
-          'lenna.yoga.tags': JSON.stringify(eventData.tags || []),
+          'lenna.yoga.tags': JSON.stringify(eventData.custom_tags || []),
           'lenna.yoga.visibility': eventData.visibility || 'public'
         }
       }
@@ -140,7 +139,7 @@ export async function POST(request: NextRequest) {
         start_time: eventData.start.dateTime || eventData.start.date,
         end_time: eventData.end.dateTime || eventData.end.date,
         location: eventData.location,
-        tags: eventData.tags,
+        custom_tags: eventData.custom_tags,
         visibility: eventData.visibility || 'public',
         uid: googleEvent.id,
         recurrence_id: googleEvent.id || '',
@@ -289,11 +288,11 @@ export async function PUT(request: NextRequest) {
     if (updateData.end) googleUpdateData.end = updateData.end
     if (updateData.location !== undefined) googleUpdateData.location = updateData.location
     
-    if (updateData.tags || updateData.visibility) {
+    if (updateData.custom_tags || updateData.visibility) {
       googleUpdateData.extendedProperties = {
         private: {
           'lenna.yoga.created': 'true',
-          'lenna.yoga.tags': JSON.stringify(updateData.tags || existingEvent.tags || []),
+          'lenna.yoga.tags': JSON.stringify(updateData.custom_tags || existingEvent.custom_tags || []),
           'lenna.yoga.visibility': updateData.visibility || existingEvent.visibility || 'public'
         }
       }
@@ -314,7 +313,7 @@ export async function PUT(request: NextRequest) {
       start_time?: string
       end_time?: string
       location?: string
-      tags?: string[]
+      custom_tags?: string[]
       visibility?: string
     } = { updated_at: new Date().toISOString() }
     
@@ -323,7 +322,7 @@ export async function PUT(request: NextRequest) {
     if (updateData.start) dbUpdateData.start_time = updateData.start.dateTime || updateData.start.date
     if (updateData.end) dbUpdateData.end_time = updateData.end.dateTime || updateData.end.date
     if (updateData.location !== undefined) dbUpdateData.location = updateData.location
-    if (updateData.tags) dbUpdateData.tags = updateData.tags
+    if (updateData.custom_tags) dbUpdateData.custom_tags = updateData.custom_tags
     if (updateData.visibility) dbUpdateData.visibility = updateData.visibility
 
     // Update event in our database
@@ -337,6 +336,30 @@ export async function PUT(request: NextRequest) {
 
     if (updateError) {
       console.error('Database event update error:', updateError)
+      
+      // Try to rollback Google Calendar to original state
+      try {
+        const originalGoogleData = {
+          summary: existingEvent.title || undefined,
+          description: existingEvent.description || undefined,
+          start: { dateTime: existingEvent.start_time || undefined },
+          end: { dateTime: existingEvent.end_time || undefined },
+          location: existingEvent.location || undefined,
+          extendedProperties: {
+            private: {
+              'lenna.yoga.created': 'true',
+              'lenna.yoga.tags': JSON.stringify(existingEvent.custom_tags || []),
+              'lenna.yoga.visibility': existingEvent.visibility || 'public'
+            }
+          }
+        }
+        await calendarService.updateEvent(calendarId, existingEvent.uid!, originalGoogleData)
+        console.log('Successfully rolled back Google Calendar event')
+      } catch (rollbackError) {
+        console.error('Failed to rollback Google Calendar event:', rollbackError)
+        // Continue to return error even if rollback fails
+      }
+      
       return NextResponse.json({ error: 'Failed to update event' }, { status: 500 })
     }
 

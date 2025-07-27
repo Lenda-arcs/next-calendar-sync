@@ -6,14 +6,26 @@ import { FormField } from '@/components/ui/form-field'
 import { UnifiedDialog } from '@/components/ui/unified-dialog'
 import { Textarea } from '@/components/ui/textarea'
 import { Select } from '@/components/ui/select'
-import { Badge } from '@/components/ui/badge'
-import { X, Plus, Calendar, Clock } from 'lucide-react'
+import { TagLibraryItem } from '@/components/tags'
+import { Plus, Calendar, Clock, Trash2, Tag } from 'lucide-react'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 
 interface NewEventFormProps {
   isOpen: boolean
   onSave: (eventData: CreateEventData | (CreateEventData & { id: string })) => Promise<void>
   onCancel: () => void
-  availableTags?: Array<{ id: string; name: string; color: string }>
+  onDelete?: (eventId: string) => Promise<void>
+  availableTags?: Array<{ id: string; name: string; color: string; slug: string }>
+  onCreateTag?: () => void
   isSubmitting?: boolean
   editEvent?: EditEventData | null
 }
@@ -32,7 +44,7 @@ export interface CreateEventData {
     timeZone?: string
   }
   location?: string
-  tags?: string[]
+  custom_tags?: string[]
   visibility?: 'public' | 'private'
 }
 
@@ -79,15 +91,20 @@ const formatDateToISO = (dateTimeLocal: string): string => {
 export function NewEventForm({ 
   isOpen, 
   onSave, 
-  onCancel, 
+  onCancel,
+  onDelete,
   availableTags = [],
+  onCreateTag,
   isSubmitting = false,
   editEvent = null
 }: NewEventFormProps) {
   
   const isEditing = !!editEvent
   
-  // Form state
+  // State for deletion confirmation dialog
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+
+  // Initialize form data and reset on editEvent change
   const [formData, setFormData] = useState<CreateEventData>({
     summary: '',
     description: '',
@@ -100,7 +117,7 @@ export function NewEventForm({
       timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
     },
     location: '',
-    tags: [],
+    custom_tags: [],
     visibility: 'public'
   })
 
@@ -119,7 +136,7 @@ export function NewEventForm({
           timeZone: editEvent.end.timeZone || Intl.DateTimeFormat().resolvedOptions().timeZone
         },
         location: editEvent.location || '',
-        tags: editEvent.tags || [],
+        custom_tags: editEvent.custom_tags || [],
         visibility: editEvent.visibility || 'public'
       })
     } else {
@@ -136,11 +153,12 @@ export function NewEventForm({
           timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
         },
         location: '',
-        tags: [],
+        custom_tags: [],
         visibility: 'public'
       })
     }
-  }, [editEvent])
+    
+  }, [editEvent, isOpen])
 
   // Additional validation for date logic
   const isDateValid = () => {
@@ -179,20 +197,35 @@ export function NewEventForm({
     }
   }
 
-  const handleTagAdd = (tagId: string) => {
-    if (!formData.tags?.includes(tagId)) {
+  const handleTagAdd = (tagSlug: string) => {
+    if (!formData.custom_tags?.includes(tagSlug)) {
       setFormData(prev => ({
         ...prev,
-        tags: [...(prev.tags || []), tagId]
+        custom_tags: [...(prev.custom_tags || []), tagSlug]
       }))
     }
   }
 
-  const handleTagRemove = (tagId: string) => {
+  const handleTagRemove = (tagSlug: string) => {
     setFormData(prev => ({
       ...prev,
-      tags: prev.tags?.filter(id => id !== tagId) || []
+      custom_tags: prev.custom_tags?.filter(slug => slug !== tagSlug) || []
     }))
+  }
+
+  const handleDelete = async () => {
+    setIsDeleteDialogOpen(true)
+  }
+
+  const confirmDelete = async () => {
+    if (!isEditing || !editEvent || !onDelete) return
+
+    try {
+      await onDelete(editEvent.id)
+      setIsDeleteDialogOpen(false)
+    } catch (error) {
+      console.error('Failed to delete event:', error)
+    }
   }
 
   const handleSubmit = async () => {
@@ -234,7 +267,7 @@ export function NewEventForm({
             timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
           },
           location: '',
-          tags: [],
+          custom_tags: [],
           visibility: 'public'
         })
       }
@@ -245,21 +278,50 @@ export function NewEventForm({
 
   const footerContent = (
     <>
-      <Button variant="outline" onClick={onCancel} disabled={isSubmitting}>
-        Cancel
-      </Button>
-      <Button 
-        onClick={handleSubmit}
-        disabled={!isValid || isSubmitting}
-        className="min-w-[120px]"
-      >
-        {isSubmitting ? (isEditing ? 'Updating...' : 'Creating...') : (isEditing ? 'Update Event' : 'Create Event')}
-      </Button>
+      <div className="flex gap-2">
+        {isEditing && onDelete && (
+          <Button 
+            variant="destructive" 
+            onClick={handleDelete} 
+            disabled={isSubmitting}
+            className="mr-auto"
+          >
+            <Trash2 className="w-4 h-4 mr-2" />
+            Delete
+          </Button>
+        )}
+      </div>
+      <div className="flex gap-2">
+        <Button variant="outline" onClick={onCancel} disabled={isSubmitting}>
+          Cancel
+        </Button>
+        <Button 
+          onClick={handleSubmit}
+          disabled={!isValid || isSubmitting}
+          className="min-w-[120px]"
+        >
+          {isSubmitting ? (isEditing ? 'Updating...' : 'Creating...') : (isEditing ? 'Update Event' : 'Create Event')}
+        </Button>
+      </div>
     </>
   )
 
-  const selectedTags = availableTags.filter(tag => formData.tags?.includes(tag.id))
-  const unselectedTags = availableTags.filter(tag => !formData.tags?.includes(tag.id))
+  const selectedTags = availableTags.filter(tag => formData.custom_tags?.includes(tag.slug))
+  const unselectedTags = availableTags.filter(tag => !formData.custom_tags?.includes(tag.slug))
+
+  // Transform simple tags to EventTag format for TagLibraryItem
+  const transformToEventTag = (tag: { id: string; name: string; color: string; slug: string }) => ({
+    id: tag.id,
+    slug: tag.slug,
+    name: tag.name,
+    color: tag.color,
+    chip: { color: tag.color },
+    classType: null,
+    audience: null,
+    cta: null,
+    priority: null,
+    userId: null
+  })
 
   // Visibility options for the Select component
   const visibilityOptions = [
@@ -409,63 +471,72 @@ export function NewEventForm({
           )}
         </div>
 
-        {/* Tags */}
-        {availableTags.length > 0 && (
-          <div className="space-y-6">
-            <h3 className="text-lg font-semibold">Tags & Categories</h3>
-            
-            {/* Selected Tags */}
-            {selectedTags.length > 0 && (
-              <div className="space-y-3">
-                <p className="text-sm font-medium text-muted-foreground">Selected tags:</p>
-                <div className="flex flex-wrap gap-2">
-                  {selectedTags.map(tag => (
-                    <Badge
-                      key={tag.id}
-                      variant="default"
-                      style={{ backgroundColor: tag.color }}
-                      className="flex items-center gap-1 text-white"
-                    >
-                      {tag.name}
-                      <button
-                        type="button"
-                        onClick={() => handleTagRemove(tag.id)}
-                        disabled={isSubmitting}
-                        className="ml-1 hover:bg-white/20 rounded-full p-0.5 transition-colors"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </Badge>
-                  ))}
-                </div>
+        {/* Enhanced Tags Section */}
+        <div className="space-y-6">
+          <h3 className="text-lg font-semibold flex items-center gap-2">
+            <Tag className="w-5 h-5" />
+            Tags & Categories
+          </h3>
+          
+          {/* Selected Tags */}
+          {selectedTags.length > 0 && (
+            <div className="space-y-3">
+              <p className="text-sm font-medium text-muted-foreground">Selected tags:</p>
+              <div className="flex flex-wrap gap-2">
+                {selectedTags.map(tag => (
+                  <TagLibraryItem
+                    key={tag.id}
+                    tag={transformToEventTag(tag)}
+                    variant="compact"
+                    isSelected={true}
+                    showRemove={true}
+                    onClick={() => {}} // No action on click for selected tags
+                    onRemove={() => handleTagRemove(tag.slug)}
+                  />
+                ))}
               </div>
-            )}
+            </div>
 
-            {/* Available Tags */}
-            {unselectedTags.length > 0 && (
-              <div className="space-y-3">
-                <p className="text-sm font-medium text-muted-foreground">Add tags:</p>
-                <div className="flex flex-wrap gap-2">
-                  {unselectedTags.map(tag => (
-                    <Badge
-                      key={tag.id}
-                      variant="outline"
-                      className="cursor-pointer hover:bg-accent hover:text-accent-foreground flex items-center gap-1 transition-colors"
-                      onClick={() => handleTagAdd(tag.id)}
-                    >
-                      <Plus className="w-3 h-3" />
-                      {tag.name}
-                    </Badge>
-                  ))}
-                </div>
+          )}
+
+          {/* Available Tags */}
+          {unselectedTags.length > 0 && (
+            <div className="space-y-3">
+              <p className="text-sm font-medium text-muted-foreground">Add tags:</p>
+              <div className="flex flex-wrap gap-2">
+                {unselectedTags.map(tag => (
+                  <TagLibraryItem
+                    key={tag.id}
+                    tag={transformToEventTag(tag)}
+                    variant="compact"
+                    isSelected={false}
+                    onClick={() => handleTagAdd(tag.slug)}
+                  />
+                ))}
               </div>
-            )}
-          </div>
-        )}
+            </div>
+          )}
+
+          {/* Create New Tag */}
+          {onCreateTag && (
+            <div className="space-y-3">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onCreateTag}
+                disabled={isSubmitting}
+                className="w-full"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Create New Tag
+              </Button>
+            </div>
+          )}
+        </div>
 
         {/* Visibility */}
         <div className="space-y-6">
-          <h3 className="text-lg font-semibold">Privacy</h3>
+          <h3 className="text-lg font-semibold">Privacy & Visibility</h3>
           <Select
             label="Visibility"
             options={visibilityOptions}
@@ -474,8 +545,27 @@ export function NewEventForm({
             disabled={isSubmitting}
             placeholder="Select visibility..."
           />
+          <p className="text-sm text-muted-foreground">
+            Public events appear on your teacher profile and can be found by students. 
+            Private events are only visible to you and sync to your Google Calendar.
+          </p>
         </div>
       </div>
+
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete your event from our servers.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setIsDeleteDialogOpen(false)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete}>Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </UnifiedDialog>
   )
 } 

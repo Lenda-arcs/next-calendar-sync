@@ -1,7 +1,7 @@
 export { NewTagForm } from './NewTagForm';
 export { PatternInput } from './PatternInput';
 export { TagLibrary } from './TagLibrary';
-export { TagLibraryGrid } from './TagLibraryGrid';
+export { TagLibraryGrid, TagLibraryItem } from './TagLibraryGrid';
 export { default as TagList } from './TagList';
 export { TagManagement } from './TagManagement';
 export { TagRuleFormDialog } from './TagRuleFormDialog';

@@ -1,11 +1,10 @@
 'use client'
 
-import React, { useState, useEffect, useCallback } from 'react'
+import React from 'react'
 import { Edit3 } from 'lucide-react'
 import { EventCard } from './EventCard'
 import { Button } from '@/components/ui/button'
 import { EventTag, type EventDisplayVariant } from '@/lib/event-types'
-import { TagManagement } from '@/components/tags/TagManagement'
 import { Card } from '@/components/ui/card'
 
 interface InteractiveEventCardProps {
@@ -19,11 +18,6 @@ interface InteractiveEventCardProps {
   autoTags?: EventTag[]
   variant?: EventDisplayVariant
   availableTags?: EventTag[]
-  onUpdate?: (updates: {
-    id: string
-    tags: string[]
-    visibility: string
-  }) => void
   onEdit?: (event: { id: string }) => void
   className?: string
 }
@@ -37,59 +31,12 @@ export const InteractiveEventCard = React.memo<InteractiveEventCardProps>(
     imageQuery,
     tags = [],
     isPublic = true,
-    autoTags = [],
     variant = 'compact',
-    availableTags = [],
-    onUpdate,
     onEdit,
     className,
   }) => {
-    const [currentTags, setCurrentTags] = useState<EventTag[]>(tags)
-    const [publicStatus, setPublicStatus] = useState<boolean>(isPublic)
 
-    // Update local state when props change
-    useEffect(() => {
-      if (tags && tags.length > 0) {
-        setCurrentTags(tags)
-      }
-    }, [tags])
-
-    useEffect(() => {
-      setPublicStatus(isPublic)
-    }, [isPublic])
-
-    // Helper function to send updates (called only when user makes changes)
-    const sendUpdate = useCallback((newTags?: EventTag[], newPublicStatus?: boolean) => {
-      if (onUpdate) {
-        const tagsToUse = newTags || currentTags
-        const statusToUse = newPublicStatus !== undefined ? newPublicStatus : publicStatus
-        
-        // Only send custom tags (filter out auto-generated ones)
-        const autoTagSlugs = autoTags.map((tag) => tag.slug).filter((slug): slug is string => slug !== null)
-        const customTagSlugs = tagsToUse
-          .map((tag) => tag.slug)
-          .filter((slug): slug is string => slug !== null)
-          .filter((slug) => !autoTagSlugs.includes(slug))
-
-        onUpdate({
-          id,
-          tags: customTagSlugs,
-          visibility: statusToUse ? 'public' : 'private',
-        })
-      }
-    }, [currentTags, publicStatus, id, onUpdate, autoTags])
-
-    const handleTagUpdate = useCallback((updatedTags: EventTag[]) => {
-      setCurrentTags(updatedTags)
-      sendUpdate(updatedTags)
-    }, [sendUpdate])
-
-    const handleVisibilityChange = useCallback((isPublic: boolean) => {
-      setPublicStatus(isPublic)
-      sendUpdate(undefined, isPublic)
-    }, [sendUpdate])
-
-    const handleEdit = useCallback(() => {
+    const handleEdit = React.useCallback(() => {
       if (onEdit) {
         onEdit({ id })
       }
@@ -99,7 +46,7 @@ export const InteractiveEventCard = React.memo<InteractiveEventCardProps>(
       <div className={`relative group ${className || ''}`}>
         {/* Edit Button */}
         {onEdit && (
-          <div className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="absolute top-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
             <Button
               size="sm"
               variant="outline"
@@ -111,24 +58,25 @@ export const InteractiveEventCard = React.memo<InteractiveEventCardProps>(
           </div>
         )}
 
-        <Card className="relative">
+        <Card className="relative overflow-hidden">
           <EventCard
             id={id}
             title={title}
             dateTime={dateTime}
             location={location}
             imageQuery={imageQuery}
-            tags={currentTags}
+            tags={tags}
             variant={variant}
           />
           
-          <TagManagement
-            currentTags={currentTags}
-            availableTags={availableTags}
-            onTagsUpdate={handleTagUpdate}
-            publicStatus={publicStatus}
-            onVisibilityChange={handleVisibilityChange}
-          />
+          {/* Simple visibility indicator */}
+          {!isPublic && (
+            <div className="absolute bottom-2 right-2">
+              <div className="bg-gray-600 text-white text-xs px-2 py-1 rounded-full">
+                Private
+              </div>
+            </div>
+          )}
         </Card>
       </div>
     )

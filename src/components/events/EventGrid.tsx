@@ -32,11 +32,6 @@ interface EventGridProps {
   // Interactive mode support
   isInteractive?: boolean
   availableTags?: EventTag[]
-  onEventUpdate?: (updates: {
-    id: string
-    tags: string[]
-    visibility: string
-  }) => void
   onEventEdit?: (event: { id: string }) => void
   // Grid layout constraints
   maxColumns?: number // Maximum number of columns on desktop (1-4)
@@ -168,7 +163,6 @@ const EventGrid: React.FC<EventGridProps> = ({
   skeletonCount = 3,
   isInteractive = false,
   availableTags = [],
-  onEventUpdate,
   onEventEdit,
   maxColumns,
 }) => {
@@ -326,7 +320,7 @@ const EventGrid: React.FC<EventGridProps> = ({
               <div className="grid grid-cols-1 gap-6">
                 {dayEvents.map((event, index) => (
                   <div key={`${dateKey}-${index}`} className="flex flex-col">
-                    {isInteractive ? (
+                    {(isInteractive || onEventEdit) ? (
                       <InteractiveEventCard
                         id={event.id}
                         title={event.title}
@@ -337,7 +331,6 @@ const EventGrid: React.FC<EventGridProps> = ({
                         isPublic={event.isPublic}
                         variant={variant}
                         availableTags={availableTags}
-                        onUpdate={onEventUpdate}
                         onEdit={onEventEdit}
                       />
                     ) : (
@@ -365,7 +358,7 @@ const EventGrid: React.FC<EventGridProps> = ({
           {flattenedEvents.map(({ event, dayLabel, isFirstOfDay }, index) => (
             <div key={`desktop-${index}`} className="flex flex-col relative">
               {isFirstOfDay && <DateBadge label={dayLabel} />}
-              {isInteractive ? (
+              {(isInteractive || onEventEdit) ? (
                 <InteractiveEventCard
                   id={event.id}
                   title={event.title}
@@ -376,7 +369,6 @@ const EventGrid: React.FC<EventGridProps> = ({
                   isPublic={event.isPublic}
                   variant={variant}
                   availableTags={availableTags}
-                  onUpdate={onEventUpdate}
                   onEdit={onEventEdit}
                 />
               ) : (

@@ -3,17 +3,17 @@
 import React from 'react'
 import { toast } from 'sonner'
 import { Container } from '@/components/layout'
-import EventGrid from '@/components/events/EventGrid'
-import { 
+import {
   EventsControlPanel,
   EventsEmptyState,
-  FloatingActionButtons,
   NewEventForm,
   CreateEventData,
-  EditEventData
+  EditEventData,
+  CreateEventFAB
 } from '@/components/events'
+import EventGrid from '@/components/events/EventGrid'
 import { NewTagForm } from '@/components/tags'
-import { RefreshCw, Plus } from 'lucide-react'
+import { RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import DataLoader from '@/components/ui/data-loader'
 import { ManageEventsSkeleton } from '@/components/ui/skeleton'
@@ -29,12 +29,6 @@ import { VisibilityFilter, TimeFilter } from '@/components/events/EventsControlP
 import { useTranslation } from '@/lib/i18n/context'
 
 // Types for component
-interface PendingEventUpdate {
-  id: string
-  tags: string[]
-  visibility: string
-}
-
 interface EventStats {
   total: number
   public: number
@@ -53,17 +47,10 @@ export function ManageEventsClient({ userId }: ManageEventsClientProps) {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   )
-  
-  // Event management state
-  const [pendingChanges, setPendingChanges] = React.useState<Map<string, PendingEventUpdate>>(new Map())
-  const [isSaving, setIsSaving] = React.useState(false)
 
   // Filtering state
   const [visibilityFilter, setVisibilityFilter] = React.useState<VisibilityFilter>('all')
   const [timeFilter, setTimeFilter] = React.useState<TimeFilter>('all')
-
-  // UI state
-  const [resetSignal, setResetSignal] = React.useState(0)
 
   // Create tag form state
   const [isCreateTagFormOpen, setIsCreateTagFormOpen] = React.useState(false)
@@ -188,7 +175,7 @@ export function ManageEventsClient({ userId }: ManageEventsClientProps) {
           start: eventData.start,
           end: eventData.end,
           location: eventData.location,
-          tags: eventData.tags,
+          custom_tags: eventData.custom_tags,
           visibility: eventData.visibility
         }),
       })
@@ -209,6 +196,34 @@ export function ManageEventsClient({ userId }: ManageEventsClientProps) {
     },
     onError: (error) => {
       toast.error(error instanceof Error ? error.message : 'Failed to update event')
+    }
+  })
+
+  // Delete event mutation
+  const deleteEventMutation = useSupabaseMutation({
+    mutationFn: async (supabase, eventId: string) => {
+      if (!userId) throw new Error('User not authenticated')
+
+      const response = await fetch(`/api/calendar/events?eventId=${eventId}`, {
+        method: 'DELETE',
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to delete event')
+      }
+
+      return await response.json()
+    },
+    onSuccess: () => {
+      // Refetch events to update the UI
+      refetchEvents()
+      setIsEditEventFormOpen(false)
+      setEditingEvent(null)
+      toast.success('Event deleted successfully!')
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : 'Failed to delete event')
     }
   })
 
@@ -235,27 +250,14 @@ export function ManageEventsClient({ userId }: ManageEventsClientProps) {
         }
       }
 
-      // Visibility filter (check pending changes first)
-      const pendingUpdate = pendingChanges.get(event.id)
-      const eventVisibility = pendingUpdate ? pendingUpdate.visibility : event.visibility
-      
-      if (visibilityFilter !== 'all' && eventVisibility !== visibilityFilter) {
+      // Visibility filter
+      if (visibilityFilter !== 'all' && event.visibility !== visibilityFilter) {
         return false
       }
 
       return true
     })
-  }, [timeFilter, visibilityFilter, pendingChanges])
-
-  // Helper function to apply pending changes to an event
-  const applyPendingChanges = React.useCallback((event: Event) => {
-    const pendingUpdate = pendingChanges.get(event.id)
-    return pendingUpdate ? {
-      ...event,
-      tags: pendingUpdate.tags,
-      visibility: pendingUpdate.visibility
-    } : event
-  }, [pendingChanges])
+  }, [timeFilter, visibilityFilter])
 
   // Convert database events to display events for EventGrid
   const displayEvents = React.useMemo(() => {
@@ -264,103 +266,11 @@ export function ManageEventsClient({ userId }: ManageEventsClientProps) {
     const filteredEvents = applyEventFilters(events)
     
     return filteredEvents.map(event => {
-      const eventWithChanges = applyPendingChanges(event)
-      return convertEventToCardProps(eventWithChanges, allAvailableTags)
+      return convertEventToCardProps(event, allAvailableTags)
     })
-  }, [events, allAvailableTags, applyEventFilters, applyPendingChanges])
+  }, [events, allAvailableTags, applyEventFilters])
 
   // ==================== EVENT HANDLERS ====================
-  // Helper function to check if event state matches original
-  const isEventStateOriginal = React.useCallback((eventId: string, tags: string[], visibility: string) => {
-    const originalEvent = events?.find(event => event.id === eventId)
-    if (!originalEvent) return false
-    
-    // Compare tags (handle both null and empty array cases)
-    const originalTags = originalEvent.tags || []
-    const tagsMatch = originalTags.length === tags.length && 
-      originalTags.every(tag => tags.includes(tag)) &&
-      tags.every(tag => originalTags.includes(tag))
-    
-    // Compare visibility
-    const visibilityMatch = originalEvent.visibility === visibility
-    
-    return tagsMatch && visibilityMatch
-  }, [events])
-
-  // Handle event changes locally (no immediate DB update)
-  const handleEventUpdate = React.useCallback((updates: {
-    id: string
-    tags: string[]
-    visibility: string
-  }) => {
-    setPendingChanges(prev => {
-      const newChanges = new Map(prev)
-      
-      // Check if the update matches the original state
-      const isOriginal = isEventStateOriginal(updates.id, updates.tags, updates.visibility)
-      
-      if (isOriginal) {
-        // If it matches original, remove from pending changes
-        newChanges.delete(updates.id)
-      } else {
-        // If it's different from original, add/update pending changes
-        newChanges.set(updates.id, updates)
-      }
-      
-      return newChanges
-    })
-  }, [isEventStateOriginal])
-
-  // Handle batch save of all pending changes
-  const handleSaveChanges = React.useCallback(async () => {
-    if (!userId || pendingChanges.size === 0) {
-      return
-    }
-
-    setIsSaving(true)
-    try {
-      // Convert pending changes to batch update promises
-      const updatePromises = Array.from(pendingChanges.values()).map(update => {
-        return supabase
-          .from('events')
-          .update({
-            tags: update.tags,
-            visibility: update.visibility
-          })
-          .eq('id', update.id)
-          .eq('user_id', userId)
-      })
-
-      // Execute all updates in parallel
-      const results = await Promise.all(updatePromises)
-      
-      // Check for any errors
-      const errors = results.filter(result => result.error)
-      if (errors.length > 0) {
-        throw new Error(`${errors.length} updates failed`)
-      }
-
-      // Clear pending changes and refresh data
-      setPendingChanges(new Map())
-      await refetchEvents()
-      
-    } catch (error) {
-      console.error('Failed to save changes:', error)
-      // You could add a toast notification here
-    } finally {
-      setIsSaving(false)
-    }
-  }, [userId, pendingChanges, supabase, refetchEvents])
-
-  // Handle discarding all pending changes
-  const handleDiscardChanges = React.useCallback(() => {
-    // Clear all pending changes
-    setPendingChanges(new Map())
-    
-    // Force all InteractiveEventCard components to reset by changing the key
-    setResetSignal(prev => prev + 1)
-  }, [])
-
   const handleRefresh = React.useCallback(async () => {
     await refetchEvents()
   }, [refetchEvents])
@@ -402,7 +312,7 @@ export function ManageEventsClient({ userId }: ManageEventsClientProps) {
         timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
       },
       location: event.location || '',
-      tags: event.tags || [],
+      custom_tags: event.custom_tags || [],
       visibility: (event.visibility as 'public' | 'private') || 'public'
     }
     
@@ -419,6 +329,7 @@ export function ManageEventsClient({ userId }: ManageEventsClientProps) {
     }
   }
 
+  // Unified event handler for both create and edit
   const handleUpdateEvent = async (eventData: CreateEventData | (CreateEventData & { id: string })) => {
     if ('id' in eventData) {
       // Edit mode
@@ -427,6 +338,16 @@ export function ManageEventsClient({ userId }: ManageEventsClientProps) {
       // Create mode
       await createEventMutation.mutateAsync(eventData)
     }
+  }
+
+  // Handle delete event
+  const handleDeleteEvent = async (eventId: string) => {
+    await deleteEventMutation.mutateAsync(eventId)
+  }
+
+  // Handle create new tag from dialog
+  const handleCreateNewTag = () => {
+    setIsCreateTagFormOpen(true)
   }
 
   const handleEditEventFormClose = () => {
@@ -440,25 +361,15 @@ export function ManageEventsClient({ userId }: ManageEventsClientProps) {
     
     const filteredEvents = applyEventFilters(events)
     
-    const publicCount = filteredEvents.filter(event => {
-      const eventWithChanges = applyPendingChanges(event)
-      return eventWithChanges.visibility === 'public'
-    }).length
-    
-    const privateCount = filteredEvents.filter(event => {
-      const eventWithChanges = applyPendingChanges(event)
-      return eventWithChanges.visibility === 'private'
-    }).length
+    const publicCount = filteredEvents.filter(event => event.visibility === 'public').length
+    const privateCount = filteredEvents.filter(event => event.visibility === 'private').length
     
     return {
       total: filteredEvents.length,
       public: publicCount,
       private: privateCount
     }
-  }, [events, applyEventFilters, applyPendingChanges])
-
-  // Check if there are pending changes
-  const hasPendingChanges = pendingChanges.size > 0
+  }, [events, applyEventFilters])
 
   // Loading state
   const isLoading = eventsLoading || tagsLoading
@@ -513,16 +424,9 @@ export function ManageEventsClient({ userId }: ManageEventsClientProps) {
         {(loadedEvents) => (
           <div className="space-y-8">
             {/* Create Event Button */}
-            <div className="flex justify-between items-center">
-              <div></div>
-              <Button
-                onClick={() => setIsCreateEventFormOpen(true)}
-                className="bg-green-600 hover:bg-green-700"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Create New Event
-              </Button>
-            </div>
+            <CreateEventFAB
+              onClick={() => setIsCreateEventFormOpen(true)}
+            />
 
             <EventsControlPanel
               timeFilter={timeFilter}
@@ -530,8 +434,8 @@ export function ManageEventsClient({ userId }: ManageEventsClientProps) {
               eventStats={eventStats}
               userTags={allTags.filter(tag => tag.user_id) || undefined}
               globalTags={allTags.filter(tag => !tag.user_id) || undefined}
-              hasPendingChanges={hasPendingChanges}
-              pendingChangesCount={pendingChanges.size}
+              hasPendingChanges={false}
+              pendingChangesCount={0}
               isSyncing={isSyncing}
               isLoading={false}
               userId={userId}
@@ -543,38 +447,30 @@ export function ManageEventsClient({ userId }: ManageEventsClientProps) {
             />
 
             <EventGrid
-              key={resetSignal}
               events={loadedEvents}
               loading={false}
               error={null}
               availableTags={availableEventTags}
-              onEventUpdate={handleEventUpdate}
               onEventEdit={handleEventGridEdit}
-              isInteractive={true}
+              isInteractive={false}
               maxColumns={2}
             />
           </div>
         )}
       </DataLoader>
 
-      {/* Floating Action Button for Batch Updates */}
-      <FloatingActionButtons
-        pendingChangesCount={pendingChanges.size}
-        isSaving={isSaving}
-        onSave={handleSaveChanges}
-        onDiscard={handleDiscardChanges}
-      />
-
       {/* Create Event Form */}
       <NewEventForm
         isOpen={isCreateEventFormOpen}
         onSave={handleUpdateEvent}
         onCancel={handleCreateEventFormClose}
-        availableTags={allTags.filter(tag => tag.name && tag.color).map(tag => ({
+        availableTags={allTags.filter(tag => tag.name && tag.color && tag.slug).map(tag => ({
           id: tag.id,
           name: tag.name!,
-          color: tag.color!
+          color: tag.color!,
+          slug: tag.slug!
         }))}
+        onCreateTag={handleCreateNewTag}
         isSubmitting={createEventMutation.isLoading}
       />
 
@@ -583,13 +479,16 @@ export function ManageEventsClient({ userId }: ManageEventsClientProps) {
         isOpen={isEditEventFormOpen}
         onSave={handleUpdateEvent}
         onCancel={handleEditEventFormClose}
+        onDelete={handleDeleteEvent}
         editEvent={editingEvent}
-        availableTags={allTags.filter(tag => tag.name && tag.color).map(tag => ({
+        availableTags={allTags.filter(tag => tag.name && tag.color && tag.slug).map(tag => ({
           id: tag.id,
           name: tag.name!,
-          color: tag.color!
+          color: tag.color!,
+          slug: tag.slug!
         }))}
-        isSubmitting={updateEventMutation.isLoading}
+        onCreateTag={handleCreateNewTag}
+        isSubmitting={updateEventMutation.isLoading || deleteEventMutation.isLoading}
       />
 
       {/* Create Tag Form */}
