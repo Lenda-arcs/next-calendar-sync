@@ -14,6 +14,8 @@ export { default as PrivateEventList } from './PrivateEventList'
 export { default as EventsControlPanel } from './EventsControlPanel'
 export { default as EventsEmptyState } from './EventsEmptyState'
 export { default as FloatingActionButtons } from './FloatingActionButtons'
+export { NewEventForm } from './NewEventForm'
+export type { CreateEventData, EditEventData } from './NewEventForm'
 
 // Event processing components
 export { ExcludedEventsSection } from './ExcludedEventsSection'

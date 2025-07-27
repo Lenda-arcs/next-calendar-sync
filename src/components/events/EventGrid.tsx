@@ -37,6 +37,7 @@ interface EventGridProps {
     tags: string[]
     visibility: string
   }) => void
+  onEventEdit?: (event: { id: string }) => void
   // Grid layout constraints
   maxColumns?: number // Maximum number of columns on desktop (1-4)
 }
@@ -168,6 +169,7 @@ const EventGrid: React.FC<EventGridProps> = ({
   isInteractive = false,
   availableTags = [],
   onEventUpdate,
+  onEventEdit,
   maxColumns,
 }) => {
   const { t } = useTranslation()
@@ -336,6 +338,7 @@ const EventGrid: React.FC<EventGridProps> = ({
                         variant={variant}
                         availableTags={availableTags}
                         onUpdate={onEventUpdate}
+                        onEdit={onEventEdit}
                       />
                     ) : (
                       <EventCard
@@ -374,6 +377,7 @@ const EventGrid: React.FC<EventGridProps> = ({
                   variant={variant}
                   availableTags={availableTags}
                   onUpdate={onEventUpdate}
+                  onEdit={onEventEdit}
                 />
               ) : (
                 <EventCard

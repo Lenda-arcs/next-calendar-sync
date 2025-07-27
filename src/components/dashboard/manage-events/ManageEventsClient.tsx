@@ -1,15 +1,19 @@
 'use client'
 
 import React from 'react'
+import { toast } from 'sonner'
 import { Container } from '@/components/layout'
 import EventGrid from '@/components/events/EventGrid'
 import { 
   EventsControlPanel,
   EventsEmptyState,
-  FloatingActionButtons
+  FloatingActionButtons,
+  NewEventForm,
+  CreateEventData,
+  EditEventData
 } from '@/components/events'
 import { NewTagForm } from '@/components/tags'
-import { RefreshCw } from 'lucide-react'
+import { RefreshCw, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import DataLoader from '@/components/ui/data-loader'
 import { ManageEventsSkeleton } from '@/components/ui/skeleton'
@@ -63,6 +67,13 @@ export function ManageEventsClient({ userId }: ManageEventsClientProps) {
 
   // Create tag form state
   const [isCreateTagFormOpen, setIsCreateTagFormOpen] = React.useState(false)
+
+  // Create event form state
+  const [isCreateEventFormOpen, setIsCreateEventFormOpen] = React.useState(false)
+
+  // Edit event form state
+  const [isEditEventFormOpen, setIsEditEventFormOpen] = React.useState(false)
+  const [editingEvent, setEditingEvent] = React.useState<EditEventData | null>(null)
 
   // ==================== DATA FETCHING ====================
   const {
@@ -126,6 +137,78 @@ export function ManageEventsClient({ userId }: ManageEventsClientProps) {
       // Refetch tags to update the UI
       refetchTags()
       setIsCreateTagFormOpen(false)
+    }
+  })
+
+  // Create event mutation
+  const createEventMutation = useSupabaseMutation({
+    mutationFn: async (supabase, eventData: CreateEventData) => {
+      if (!userId) throw new Error('User not authenticated')
+
+      const response = await fetch('/api/calendar/events', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(eventData),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to create event')
+      }
+
+      return await response.json()
+    },
+    onSuccess: () => {
+      // Refetch events to update the UI
+      refetchEvents()
+      setIsCreateEventFormOpen(false)
+      toast.success('Event created successfully and synced to Google Calendar!')
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : 'Failed to create event')
+    }
+  })
+
+  // Update event mutation
+  const updateEventMutation = useSupabaseMutation({
+    mutationFn: async (supabase, eventData: CreateEventData & { id: string }) => {
+      if (!userId) throw new Error('User not authenticated')
+
+      const response = await fetch('/api/calendar/events', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          eventId: eventData.id,
+          summary: eventData.summary,
+          description: eventData.description,
+          start: eventData.start,
+          end: eventData.end,
+          location: eventData.location,
+          tags: eventData.tags,
+          visibility: eventData.visibility
+        }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to update event')
+      }
+
+      return await response.json()
+    },
+    onSuccess: () => {
+      // Refetch events to update the UI
+      refetchEvents()
+      setIsEditEventFormOpen(false)
+      setEditingEvent(null)
+      toast.success('Event updated successfully and synced to Google Calendar!')
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : 'Failed to update event')
     }
   })
 
@@ -298,6 +381,59 @@ export function ManageEventsClient({ userId }: ManageEventsClientProps) {
     setIsCreateTagFormOpen(false)
   }
 
+  // Create event handlers
+  const handleCreateEventFormClose = () => {
+    setIsCreateEventFormOpen(false)
+  }
+
+  // Edit event handlers
+  const handleEditEvent = (event: Event) => {
+    // Convert Event to EditEventData format
+    const editData: EditEventData = {
+      id: event.id,
+      summary: event.title || '',
+      description: event.description || '',
+      start: {
+        dateTime: event.start_time || '',
+        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+      },
+      end: {
+        dateTime: event.end_time || '',
+        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+      },
+      location: event.location || '',
+      tags: event.tags || [],
+      visibility: (event.visibility as 'public' | 'private') || 'public'
+    }
+    
+    setEditingEvent(editData)
+    setIsEditEventFormOpen(true)
+  }
+
+  // Wrapper function for EventGrid's onEdit prop
+  const handleEventGridEdit = (event: { id: string }) => {
+    // Find the full event data from our events array
+    const fullEvent = events?.find(e => e.id === event.id)
+    if (fullEvent) {
+      handleEditEvent(fullEvent)
+    }
+  }
+
+  const handleUpdateEvent = async (eventData: CreateEventData | (CreateEventData & { id: string })) => {
+    if ('id' in eventData) {
+      // Edit mode
+      await updateEventMutation.mutateAsync(eventData)
+    } else {
+      // Create mode
+      await createEventMutation.mutateAsync(eventData)
+    }
+  }
+
+  const handleEditEventFormClose = () => {
+    setIsEditEventFormOpen(false)
+    setEditingEvent(null)
+  }
+
   // Calculate stats for overview cards
   const eventStats: EventStats = React.useMemo(() => {
     if (!events) return { total: 0, public: 0, private: 0 }
@@ -376,6 +512,18 @@ export function ManageEventsClient({ userId }: ManageEventsClientProps) {
       >
         {(loadedEvents) => (
           <div className="space-y-8">
+            {/* Create Event Button */}
+            <div className="flex justify-between items-center">
+              <div></div>
+              <Button
+                onClick={() => setIsCreateEventFormOpen(true)}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Create New Event
+              </Button>
+            </div>
+
             <EventsControlPanel
               timeFilter={timeFilter}
               visibilityFilter={visibilityFilter}
@@ -401,6 +549,7 @@ export function ManageEventsClient({ userId }: ManageEventsClientProps) {
               error={null}
               availableTags={availableEventTags}
               onEventUpdate={handleEventUpdate}
+              onEventEdit={handleEventGridEdit}
               isInteractive={true}
               maxColumns={2}
             />
@@ -414,6 +563,33 @@ export function ManageEventsClient({ userId }: ManageEventsClientProps) {
         isSaving={isSaving}
         onSave={handleSaveChanges}
         onDiscard={handleDiscardChanges}
+      />
+
+      {/* Create Event Form */}
+      <NewEventForm
+        isOpen={isCreateEventFormOpen}
+        onSave={handleUpdateEvent}
+        onCancel={handleCreateEventFormClose}
+        availableTags={allTags.filter(tag => tag.name && tag.color).map(tag => ({
+          id: tag.id,
+          name: tag.name!,
+          color: tag.color!
+        }))}
+        isSubmitting={createEventMutation.isLoading}
+      />
+
+      {/* Edit Event Form */}
+      <NewEventForm
+        isOpen={isEditEventFormOpen}
+        onSave={handleUpdateEvent}
+        onCancel={handleEditEventFormClose}
+        editEvent={editingEvent}
+        availableTags={allTags.filter(tag => tag.name && tag.color).map(tag => ({
+          id: tag.id,
+          name: tag.name!,
+          color: tag.color!
+        }))}
+        isSubmitting={updateEventMutation.isLoading}
       />
 
       {/* Create Tag Form */}
