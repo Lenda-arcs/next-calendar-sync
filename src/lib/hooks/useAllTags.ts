@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { Tag } from '@/lib/types'
-import { useSupabaseQuery } from './useSupabaseQuery'
+import { useSupabaseQuery } from './useQueryWithSupabase'
 
 interface UseAllTagsProps {
   userId?: string | null

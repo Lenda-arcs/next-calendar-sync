@@ -1,7 +1,7 @@
 'use client'
 
 
-import { useSupabaseQuery } from './useSupabaseQuery'
+import { useSupabaseQuery } from './useQueryWithSupabase'
 import { getUninvoicedEvents, getUninvoicedEventsByStudio, getUnmatchedEvents, getExcludedEvents, EventWithSubstituteTeacher } from '@/lib/invoice-utils'
 import { Event } from '@/lib/types'
 

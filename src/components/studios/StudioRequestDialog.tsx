@@ -5,7 +5,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { createClient } from '@/lib/supabase'
 import { Studio } from '@/lib/types'
-import { useSupabaseQuery } from '@/lib/hooks/useSupabaseQuery'
+import { useSupabaseQuery } from '@/lib/hooks/useQueryWithSupabase'
 import { Button } from '@/components/ui/button'
 import { UnifiedDialog } from '@/components/ui/unified-dialog'
 import { Input } from '@/components/ui/input'

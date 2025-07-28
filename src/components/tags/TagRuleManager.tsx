@@ -1,8 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
-import { useSupabaseQuery } from '@/lib/hooks/useSupabaseQuery'
-import { useSupabaseMutation } from '@/lib/hooks/useSupabaseMutation'
+import { useSupabaseQuery, useSupabaseMutation } from '@/lib/hooks/useQueryWithSupabase'
 import { useKeywordSuggestions } from '@/lib/hooks/useKeywordSuggestions'
 import { TagRule, Tag } from '@/lib/types'
 import { rematchUserTags } from '@/lib/rematch-utils'
@@ -60,9 +59,9 @@ export const TagRuleManager: React.FC<Props> = ({ userId, availableTags: propTag
     data: tagRules, 
     isLoading: rulesLoading, 
     error: rulesError
-  } = useSupabaseQuery({
-    queryKey: ['tag-rules', userId],
-    fetcher: async (supabase) => {
+  } = useSupabaseQuery(
+    ['tag-rules', userId],
+    async (supabase) => {
       const { data, error } = await supabase
         .from('tag_rules')
         .select('*')
@@ -70,17 +69,17 @@ export const TagRuleManager: React.FC<Props> = ({ userId, availableTags: propTag
       
       if (error) throw error
       return data as ExtendedTagRule[]
-    },
-  })
+    }
+  )
 
   // Fetch available tags for the user (only if not provided as props)
   const { 
     data: fetchedTags, 
     isLoading: tagsLoading, 
     error: tagsError 
-  } = useSupabaseQuery({
-    queryKey: ['tags', userId],
-    fetcher: async (supabase) => {
+  } = useSupabaseQuery(
+    ['tags', userId],
+    async (supabase) => {
       const { data, error } = await supabase
         .from('tags')
         .select('*')
@@ -90,8 +89,10 @@ export const TagRuleManager: React.FC<Props> = ({ userId, availableTags: propTag
       if (error) throw error
       return data as Tag[]
     },
-    enabled: !propTags, // Only fetch if tags not provided as props
-  })
+    {
+      enabled: !propTags, // Only fetch if tags not provided as props
+    }
+  )
 
   // Use provided tags or fetched tags
   const availableTags = propTags || fetchedTags
@@ -103,8 +104,8 @@ export const TagRuleManager: React.FC<Props> = ({ userId, availableTags: propTag
   })
 
   // Create tag rule mutation
-  const { mutate: createRule, isLoading: creating } = useSupabaseMutation({
-    mutationFn: async (supabase, variables: { 
+  const { mutate: createRule, isPending: creating } = useSupabaseMutation(
+    async (supabase, variables: { 
       user_id: string; 
       keywords: string[]; 
       location_keywords: string[]; 
@@ -118,6 +119,7 @@ export const TagRuleManager: React.FC<Props> = ({ userId, availableTags: propTag
       if (error) throw error
       return data
     },
+    {
     onSuccess: async (data) => {
       // Clear form and close dialog
       setState((prev) => ({
@@ -154,12 +156,13 @@ export const TagRuleManager: React.FC<Props> = ({ userId, availableTags: propTag
         })
       }
     },
-    onError: () => {
-      // Clear optimistic state on error
-      setOptimisticRules([])
-      console.error('Failed to create tag rule')
+      onError: () => {
+        // Clear optimistic state on error
+        setOptimisticRules([])
+        console.error('Failed to create tag rule')
+      }
     }
-  })
+  )
 
   // Update tag rule mutation
   const { mutate: updateRule, isLoading: updating } = useSupabaseMutation({

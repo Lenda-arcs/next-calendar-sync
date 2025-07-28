@@ -18,7 +18,7 @@ import { Button } from '@/components/ui/button'
 import DataLoader from '@/components/ui/data-loader'
 import { ManageEventsSkeleton } from '@/components/ui/skeleton'
 import { useUserEvents, useAllTags, useCreateTag } from '@/lib/hooks/useAppQuery'
-import { useSupabaseMutation } from '@/lib/hooks/useSupabaseMutation'
+import { useSupabaseMutation } from '@/lib/hooks/useQueryWithSupabase'
 import { useCalendarSync } from '@/lib/hooks/useCalendarSync'
 import { Event } from '@/lib/types'
 import { convertToEventTag, EventTag } from '@/lib/event-types'
@@ -115,9 +115,9 @@ export function ManageEventsClient({ userId }: ManageEventsClientProps) {
     })
   }, [createTagMutation, refetchTags, userId])
 
-  // 🔥 SIMPLIFIED: Back to working legacy event mutations (we'll add optimistic updates properly later)
-  const createEventMutation = useSupabaseMutation({
-    mutationFn: async (supabase, eventData: CreateEventData) => {
+  // ✅ MIGRATED: Using native TanStack Query mutations with optimizations
+  const createEventMutation = useSupabaseMutation(
+    async (supabase, eventData: CreateEventData) => {
       if (!userId) throw new Error('User not authenticated')
 
       const response = await fetch('/api/calendar/events', {
@@ -135,19 +135,21 @@ export function ManageEventsClient({ userId }: ManageEventsClientProps) {
 
       return await response.json()
     },
-    onSuccess: () => {
-      refetchEvents()
-      setIsCreateEventFormOpen(false)
-      toast.success('Event created successfully!')
-    },
-    onError: (error) => {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to create event'
-      toast.error(errorMessage)
+    {
+      onSuccess: () => {
+        refetchEvents()
+        setIsCreateEventFormOpen(false)
+        toast.success('Event created successfully!')
+      },
+      onError: (error: Error) => {
+        const errorMessage = error instanceof Error ? error.message : 'Failed to create event'
+        toast.error(errorMessage)
+      }
     }
-  })
+  )
 
-  const updateEventMutation = useSupabaseMutation({
-    mutationFn: async (supabase, eventData: CreateEventData & { id: string }) => {
+  const updateEventMutation = useSupabaseMutation(
+    async (supabase, eventData: CreateEventData & { id: string }) => {
       if (!userId) throw new Error('User not authenticated')
 
       const response = await fetch('/api/calendar/events', {
@@ -174,20 +176,22 @@ export function ManageEventsClient({ userId }: ManageEventsClientProps) {
 
       return await response.json()
     },
-    onSuccess: () => {
-      refetchEvents()
-      setIsEditEventFormOpen(false)
-      setEditingEvent(null)
-      toast.success('Event updated successfully!')
-    },
-    onError: (error) => {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to update event'
-      toast.error(errorMessage)
+    {
+      onSuccess: () => {
+        refetchEvents()
+        setIsEditEventFormOpen(false)
+        setEditingEvent(null)
+        toast.success('Event updated successfully!')
+      },
+      onError: (error: Error) => {
+        const errorMessage = error instanceof Error ? error.message : 'Failed to update event'
+        toast.error(errorMessage)
+      }
     }
-  })
+  )
 
-  const deleteEventMutation = useSupabaseMutation({
-    mutationFn: async (supabase, eventId: string) => {
+  const deleteEventMutation = useSupabaseMutation(
+    async (supabase, eventId: string) => {
       if (!userId) throw new Error('User not authenticated')
 
       const response = await fetch(`/api/calendar/events?eventId=${eventId}`, {
@@ -201,17 +205,19 @@ export function ManageEventsClient({ userId }: ManageEventsClientProps) {
 
       return await response.json()
     },
-    onSuccess: () => {
-      refetchEvents()
-      setIsEditEventFormOpen(false)
-      setEditingEvent(null)
-      toast.success('Event deleted successfully!')
-    },
-    onError: (error) => {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to delete event'
-      toast.error(errorMessage)
+    {
+      onSuccess: () => {
+        refetchEvents()
+        setIsEditEventFormOpen(false)
+        setEditingEvent(null)
+        toast.success('Event deleted successfully!')
+      },
+      onError: (error: Error) => {
+        const errorMessage = error instanceof Error ? error.message : 'Failed to delete event'
+        toast.error(errorMessage)
+      }
     }
-  })
+  )
 
   // ==================== COMPUTED DATA ====================
   // Get all available tags from shared hook
@@ -456,7 +462,7 @@ export function ManageEventsClient({ userId }: ManageEventsClientProps) {
           slug: tag.slug!
         }))}
         onCreateTag={handleCreateNewTag}
-        isSubmitting={createEventMutation.isLoading}
+        isSubmitting={createEventMutation.isPending}
       />
 
       {/* Edit Event Form */}
@@ -473,7 +479,7 @@ export function ManageEventsClient({ userId }: ManageEventsClientProps) {
           slug: tag.slug!
         }))}
         onCreateTag={handleCreateNewTag}
-        isSubmitting={updateEventMutation.isLoading || deleteEventMutation.isLoading}
+        isSubmitting={updateEventMutation.isPending || deleteEventMutation.isPending}
       />
 
       {/* Create Tag Form */}

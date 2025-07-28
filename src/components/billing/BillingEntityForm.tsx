@@ -10,7 +10,7 @@ import { Select } from "../ui/select";
 import { PatternInput } from "@/components/tags/PatternInput";
 import { Textarea } from "../ui/textarea";
 import { toast } from 'sonner'
-import { useSupabaseMutation } from "../../lib/hooks/useSupabaseMutation";
+import { useSupabaseMutation } from "../../lib/hooks/useQueryWithSupabase";
 import { useTeacherStudioRelationships, getBestStudioSuggestion, extractBillingDefaultsFromStudio } from "../../lib/hooks/useTeacherStudioRelationships";
 import { createStudio, updateStudio } from "../../lib/invoice-utils";
 import { rematchUserStudios } from "../../lib/rematch-utils";

@@ -9,7 +9,7 @@ import ReactCrop, {
   makeAspectCrop,
 } from "react-image-crop";
 import "react-image-crop/dist/ReactCrop.css";
-import { useSupabaseQuery, useSupabaseMutation } from "@/lib/hooks";
+import { useSupabaseQuery, useSupabaseMutation } from "@/lib/hooks/useQueryWithSupabase";
 import DataLoader from "./data-loader";
 import { UnifiedDialog } from "./unified-dialog";
 import { Button } from "./button";

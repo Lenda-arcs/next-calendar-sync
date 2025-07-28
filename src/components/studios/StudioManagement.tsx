@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useSupabaseQuery } from '@/lib/hooks/useSupabaseQuery'
+import { useSupabaseQuery } from '@/lib/hooks/useQueryWithSupabase'
 import { Studio, StudioWithStats } from '@/lib/types'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -27,9 +27,9 @@ export function StudioManagement({ userRole }: StudioManagementProps) {
   const hasAccess = userRole === 'admin' || userRole === 'moderator'
 
   // Fetch studios with stats
-  const { data: studios, isLoading, refetch } = useSupabaseQuery({
-    queryKey: ['studios-with-stats'],
-    fetcher: async (supabase) => {
+  const { data: studios, isLoading, refetch } = useSupabaseQuery(
+    ['studios-with-stats'],
+    async (supabase) => {
       const { data, error } = await supabase
         .from('studios')
         .select(`
@@ -58,13 +58,15 @@ export function StudioManagement({ userRole }: StudioManagementProps) {
 
       return studiosWithStats
     },
-    enabled: hasAccess
-  })
+    {
+      enabled: hasAccess
+    }
+  )
 
   // Fetch pending teacher requests
-  const { data: pendingRequests } = useSupabaseQuery({
-    queryKey: ['studio-teacher-requests', 'pending'],
-    fetcher: async (supabase) => {
+  const { data: pendingRequests } = useSupabaseQuery(
+    ['studio-teacher-requests', 'pending'],
+    async (supabase) => {
       const { data, error } = await supabase
         .from('studio_teacher_requests')
         .select(`
@@ -82,8 +84,10 @@ export function StudioManagement({ userRole }: StudioManagementProps) {
 
       return data || []
     },
-    enabled: hasAccess
-  })
+    {
+      enabled: hasAccess
+    }
+  )
 
   // Only admins and moderators can access studio management
   if (!hasAccess) {

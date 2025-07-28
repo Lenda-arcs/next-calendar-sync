@@ -10,8 +10,9 @@ export * from './useResponsive'
 export * from './useScheduleExport'
 
 export * from './useScrollIntoView'
-export * from './useSupabaseMutation'
-export * from './useSupabaseQuery'
+// Migrated to useQueryWithSupabase.ts
+// export * from './useSupabaseMutation' 
+// export * from './useSupabaseQuery'
 export * from './useTagForm'
 export * from './useTagOperations'
 
@@ -21,21 +22,14 @@ export * from './useEnhancedEvents'
 export * from './useInvoiceEvents'
 export * from './useStudioActions'
 
+// Migrated to useQueryWithSupabase.ts
 export {
   useSupabaseQuery,
-  useSupabaseTable,
-  type UseSupabaseQueryOptions,
-  type UseSupabaseQueryResult,
-} from './useSupabaseQuery'
-
-export {
   useSupabaseMutation,
   useSupabaseInsert,
   useSupabaseUpdate,
   useSupabaseDelete,
-  type UseSupabaseMutationOptions,
-  type UseSupabaseMutationResult,
-} from './useSupabaseMutation'
+} from './useQueryWithSupabase'
 
 export { useTagForm } from './useTagForm'
 export { useTagOperations } from './useTagOperations'

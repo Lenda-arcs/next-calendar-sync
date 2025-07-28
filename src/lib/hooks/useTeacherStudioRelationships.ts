@@ -1,4 +1,4 @@
-import { useSupabaseQuery } from './useSupabaseQuery'
+import { useSupabaseQuery } from './useQueryWithSupabase'
 import { Studio, RateConfig } from '@/lib/types'
 
 interface TeacherStudioRelationship {

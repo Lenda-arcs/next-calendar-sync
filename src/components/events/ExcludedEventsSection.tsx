@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { EyeOff, RefreshCw, Eye, RotateCcw, Calendar } from 'lucide-react'
-import { useSupabaseMutation } from '@/lib/hooks/useSupabaseMutation'
+import { useSupabaseMutation } from '@/lib/hooks/useQueryWithSupabase'
 import { UnifiedDialog } from '@/components/ui/unified-dialog'
 import { EventInvoiceCard } from '@/components/invoices/EventInvoiceCard'
 import { Event } from '@/lib/types'

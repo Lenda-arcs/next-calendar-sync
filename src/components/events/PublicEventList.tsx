@@ -9,7 +9,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Calendar } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { type EventDisplayVariant, type EventTag } from '@/lib/event-types'
-import { useSupabaseQuery } from '@/lib/hooks/useSupabaseQuery'
+import { useSupabaseQuery } from '@/lib/hooks/useQueryWithSupabase'
 import { useAllTags } from '@/lib/hooks/useAllTags'
 import { convertEventToCardProps, processAllEventTags } from '@/lib/event-utils'
 import DataLoader from '@/components/ui/data-loader'
@@ -66,9 +66,9 @@ const PublicEventList: React.FC<PublicEventListProps> = ({
     data: fetchedEvents,
     isLoading: eventsLoading,
     error: eventsError
-  } = useSupabaseQuery<Event[]>({
-    queryKey: ['public_events_standalone', userId], // Different query key to avoid conflicts
-    fetcher: async (supabase) => {
+  } = useSupabaseQuery<Event[]>(
+    ['public_events_standalone', userId], // Different query key to avoid conflicts
+    async (supabase) => {
       const { data, error } = await supabase
         .from('events')
         .select('*')
@@ -81,8 +81,10 @@ const PublicEventList: React.FC<PublicEventListProps> = ({
       if (error) throw error
       return data || []
     },
-    enabled: !!userId && !propEvents && !disableFetching, // Only fetch if events not provided and fetching not disabled
-  })
+    {
+      enabled: !!userId && !propEvents && !disableFetching, // Only fetch if events not provided and fetching not disabled
+    }
+  )
 
   // Use provided events or fetched events
   const events = propEvents || fetchedEvents

@@ -1,4 +1,4 @@
-import { useSupabaseQuery } from './useSupabaseQuery'
+import { useSupabaseQuery } from './useQueryWithSupabase'
 import { useMemo } from 'react'
 
 interface KeywordSuggestion {

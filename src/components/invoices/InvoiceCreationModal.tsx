@@ -8,8 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { EditableEventItem } from '@/components/events/EditableEventItem'
 import { useInvoiceCreationState } from './useInvoiceCreationState'
-import { useSupabaseQuery } from '@/lib/hooks/useSupabaseQuery'
-import { useSupabaseMutation } from '@/lib/hooks/useSupabaseMutation'
+import { useSupabaseQuery, useSupabaseMutation } from '@/lib/hooks/useQueryWithSupabase'
 import {
   getUserStudios,
   createInvoice,

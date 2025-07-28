@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useMemo } from 'react'
-import { useSupabaseQuery } from '@/lib/hooks/useSupabaseQuery'
+import { useSupabaseQuery } from '@/lib/hooks/useQueryWithSupabase'
 import { Tag, UserRole } from '@/lib/types'
 import { convertToEventTag, EventTag } from '@/lib/event-types'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
@@ -43,9 +43,9 @@ export const TagLibrary: React.FC<Props> = ({
     data: fetchedGlobalTags, 
     isLoading: globalLoading, 
     error: globalError 
-  } = useSupabaseQuery({
-    queryKey: ['global-tags'],
-    fetcher: async (supabase) => {
+  } = useSupabaseQuery(
+    ['global-tags'],
+    async (supabase) => {
       const { data, error } = await supabase
         .from('tags')
         .select('*')
@@ -55,17 +55,19 @@ export const TagLibrary: React.FC<Props> = ({
       if (error) throw error
       return data as Tag[]
     },
-    enabled: !propGlobalTags, // Only fetch if not provided as props
-  })
+    {
+      enabled: !propGlobalTags, // Only fetch if not provided as props
+    }
+  )
 
   // Fetch user's custom tags (only if not provided as props)
   const { 
     data: fetchedCustomTags, 
     isLoading: customLoading, 
     error: customError
-  } = useSupabaseQuery({
-    queryKey: ['custom-tags', userId],
-    fetcher: async (supabase) => {
+  } = useSupabaseQuery(
+    ['custom-tags', userId],
+    async (supabase) => {
       const { data, error } = await supabase
         .from('tags')
         .select('*')
@@ -75,8 +77,10 @@ export const TagLibrary: React.FC<Props> = ({
       if (error) throw error
       return data as Tag[]
     },
-    enabled: !propCustomTags, // Only fetch if not provided as props
-  })
+    {
+      enabled: !propCustomTags, // Only fetch if not provided as props
+    }
+  )
 
   // Use provided tags or fetched tags
   const globalTags = propGlobalTags || fetchedGlobalTags

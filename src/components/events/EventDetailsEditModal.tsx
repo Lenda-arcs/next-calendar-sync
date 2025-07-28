@@ -18,7 +18,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
-import { useSupabaseMutation } from '@/lib/hooks/useSupabaseMutation'
+import { useSupabaseMutation } from '@/lib/hooks/useQueryWithSupabase'
 import { updateEventStudentCounts, calculateEventPayout, markEventAsExcluded, EventWithStudio } from '@/lib/invoice-utils'
 import { Event, RateConfig } from '@/lib/types'
 import { toast } from 'sonner'

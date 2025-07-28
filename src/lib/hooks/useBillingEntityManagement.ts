@@ -1,6 +1,5 @@
 import { useState } from 'react'
-import { useSupabaseQuery } from './useSupabaseQuery'
-import { useSupabaseMutation } from './useSupabaseMutation'
+import { useSupabaseQuery, useSupabaseMutation } from './useQueryWithSupabase'
 import { getUserStudios, getUserEventLocations, deleteStudio } from '@/lib/invoice-utils'
 import { BillingEntity } from '@/lib/types'
 

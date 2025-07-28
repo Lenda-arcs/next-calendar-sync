@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useSupabaseMutation } from './useSupabaseMutation'
+import { useSupabaseMutation } from './useQueryWithSupabase'
 import { TagInsert, TagUpdate } from '@/lib/types'
 import { EventTag } from '@/lib/event-types'
 import { toast } from 'sonner'
