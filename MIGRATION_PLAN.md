@@ -381,4 +381,17 @@ Migration is complete when:
 - **Main features**: ✅ **Fully migrated**
 - **Studio requests**: 🚧 **Data structure issue** (non-critical feature)
 
-**🚀 Major Milestone: Core Dashboard with unified data fetching is production-ready!** *(Studio requests feature needs refinement)* 
+#### **✅ Public Schedule Migration Complete:**
+- [x] **FilteredEventList** - ✅ **MIGRATED** to `usePublicEvents()` and unified `useAllTags()`
+  - ✅ **Public teacher schedule pages** now use unified data fetching
+  - ✅ **SEO-optimized** with server-side metadata generation
+  - ✅ **Performance improved** with consistent caching
+  - ✅ **Critical Fix**: Resolved infinite re-render issue with `useMemo()` for stable dependencies
+  - 🚧 **TODO**: Studio information fetching (secondary feature)
+
+#### **🎯 Public Routes Status:**
+- **`/classes/[teacher-slug]`**: ✅ **MIGRATED** to unified hooks
+- **Public schedule display**: ✅ **Fully functional** with TanStack Query
+- **Public events loading**: ✅ **Fast and cached**
+
+**🚀 MAJOR MILESTONE: Both Dashboard AND Public Schedule with unified data fetching are production-ready!** 

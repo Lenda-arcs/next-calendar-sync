@@ -337,4 +337,26 @@ export function useTeacherStudioRelationships(teacherId: string, options?: { ena
     fetcher: (supabase) => dataAccess.getTeacherStudioRelationships(supabase, teacherId),
     enabled: options?.enabled ?? !!teacherId,
   })
+}
+
+// ===== PUBLIC EVENTS HOOKS =====
+
+export function usePublicEvents(
+  userId: string, 
+  filters?: {
+    limit?: number
+    offset?: number
+    startDate?: string
+    endDate?: string
+  }, 
+  options?: { enabled?: boolean }
+) {
+  return useUnifiedQuery({
+    queryKey: queryKeys.events.public(userId, { 
+      startDate: filters?.startDate, 
+      endDate: filters?.endDate 
+    }),
+    fetcher: (supabase) => dataAccess.getPublicEvents(supabase, userId, filters),
+    enabled: options?.enabled ?? !!userId,
+  })
 } 

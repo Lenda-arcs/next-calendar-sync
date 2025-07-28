@@ -654,4 +654,41 @@ export async function getTeacherStudioRelationships(supabase: SupabaseClient, te
   }
 
   return data || []
+}
+
+// ===== PUBLIC EVENTS DATA ACCESS =====
+
+export async function getPublicEvents(
+  supabase: SupabaseClient, 
+  userId: string,
+  options?: {
+    limit?: number
+    offset?: number
+    startDate?: string
+    endDate?: string
+  }
+) {
+  const now = new Date()
+  const threeMonthsFromNow = new Date(now.getFullYear(), now.getMonth() + 3, now.getDate())
+  
+  let query = supabase
+    .from('public_events')
+    .select('*')
+    .eq('user_id', userId)
+    .gte('start_time', options?.startDate || now.toISOString())
+    .lte('start_time', options?.endDate || threeMonthsFromNow.toISOString())
+    .order('start_time', { ascending: true })
+
+  if (options?.limit) {
+    query = query.limit(options.limit)
+  }
+
+  if (options?.offset) {
+    query = query.range(options.offset, options.offset + (options.limit || 50) - 1)
+  }
+
+  const { data, error } = await query
+
+  if (error) throw error
+  return data || []
 } 
