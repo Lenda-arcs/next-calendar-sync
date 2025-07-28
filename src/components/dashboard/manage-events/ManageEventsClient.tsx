@@ -115,10 +115,7 @@ export function ManageEventsClient({ userId }: ManageEventsClientProps) {
     })
   }, [createTagMutation, refetchTags, userId])
 
-  // ✅ WORKING: Legacy event mutations (to be migrated later)
-  // These work with existing CreateEventData types and component logic
-  
-  // Create event mutation
+  // 🔥 SIMPLIFIED: Back to working legacy event mutations (we'll add optimistic updates properly later)
   const createEventMutation = useSupabaseMutation({
     mutationFn: async (supabase, eventData: CreateEventData) => {
       if (!userId) throw new Error('User not authenticated')
@@ -141,14 +138,14 @@ export function ManageEventsClient({ userId }: ManageEventsClientProps) {
     onSuccess: () => {
       refetchEvents()
       setIsCreateEventFormOpen(false)
-      toast.success('Event created successfully and synced to Google Calendar!')
+      toast.success('Event created successfully!')
     },
-    onError: (error: unknown) => {
-      toast.error(error instanceof Error ? error.message : 'Failed to create event')
+    onError: (error) => {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to create event'
+      toast.error(errorMessage)
     }
   })
 
-  // Update event mutation
   const updateEventMutation = useSupabaseMutation({
     mutationFn: async (supabase, eventData: CreateEventData & { id: string }) => {
       if (!userId) throw new Error('User not authenticated')
@@ -181,14 +178,14 @@ export function ManageEventsClient({ userId }: ManageEventsClientProps) {
       refetchEvents()
       setIsEditEventFormOpen(false)
       setEditingEvent(null)
-      toast.success('Event updated successfully and synced to Google Calendar!')
+      toast.success('Event updated successfully!')
     },
-    onError: (error: unknown) => {
-      toast.error(error instanceof Error ? error.message : 'Failed to update event')
+    onError: (error) => {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to update event'
+      toast.error(errorMessage)
     }
   })
 
-  // Delete event mutation
   const deleteEventMutation = useSupabaseMutation({
     mutationFn: async (supabase, eventId: string) => {
       if (!userId) throw new Error('User not authenticated')
@@ -210,8 +207,9 @@ export function ManageEventsClient({ userId }: ManageEventsClientProps) {
       setEditingEvent(null)
       toast.success('Event deleted successfully!')
     },
-    onError: (error: unknown) => {
-      toast.error(error instanceof Error ? error.message : 'Failed to delete event')
+    onError: (error) => {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to delete event'
+      toast.error(errorMessage)
     }
   })
 

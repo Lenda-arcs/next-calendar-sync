@@ -2,24 +2,22 @@
 
 import React, { useMemo } from 'react'
 import DataLoader from '@/components/ui/data-loader'
+import { TagLibraryGridSkeleton } from '@/components/ui/skeleton'
 import { useAllTags, useUserRole } from '@/lib/hooks/useAppQuery'
 import { useTagOperations } from '@/lib/hooks/useTagOperations'
-import { UserRole } from '@/lib/types'
-import { TagLibrary } from '@/components/tags/TagLibrary'
-import { TagRuleManager } from '@/components/tags/TagRuleManager'
-import { NewTagForm } from '@/components/tags/NewTagForm'
-import { TagViewDialog } from '@/components/tags/TagViewDialog'
-import { TagLibraryGridSkeleton } from '@/components/ui/skeleton'
+import { clearTagMapCache } from '@/lib/event-utils'
+import { TagLibrary, TagRuleManager, TagViewDialog } from '@/components/tags'
+import { NewTagForm } from '@/components/tags'
 import { Button } from '@/components/ui/button'
 import { Plus } from 'lucide-react'
-import { clearTagMapCache } from '@/lib/event-utils'
+import type { UserRole } from '@/lib/types'
 
 interface Props {
   userId: string
 }
 
 export function ManageTagsClient({ userId }: Props) {
-  // ✨ NEW: Use unified hooks
+  // ✨ Use unified hooks
   const { 
     data: tagData, 
     isLoading: tagsLoading, 
@@ -33,7 +31,7 @@ export function ManageTagsClient({ userId }: Props) {
     error: roleError 
   } = useUserRole(userId, { enabled: !!userId })
 
-  // Tag operations hook with proper refetch
+  // 🔥 SIMPLIFIED: Use regular tag operations (we'll add optimistic updates directly here later)
   const {
     selectedTag,
     showNewTagForm,
@@ -49,7 +47,7 @@ export function ManageTagsClient({ userId }: Props) {
     handleSaveTag,
     handleDeleteTag,
   } = useTagOperations({ 
-    onSuccess: refetchAllTags // Use the shared refetch function
+    onSuccess: refetchAllTags
   })
 
   // Extract tag data from unified response
@@ -96,7 +94,7 @@ export function ManageTagsClient({ userId }: Props) {
               userRole={resolvedUserRole}
               globalTags={globalTags}
               customTags={userTags}
-              // Pass down the tag operations instead of letting TagLibrary create its own
+              // Pass down the standard tag operations
               tagOperations={{
                 onTagClick: handleTagClick,
                 onEditClick: handleEditClick,
@@ -126,8 +124,8 @@ export function ManageTagsClient({ userId }: Props) {
           </div>
         )}
       </DataLoader>
-
-      {/* New/Edit Tag Form - MOVED OUTSIDE DataLoader so it works in empty state */}
+      
+      {/* New/Edit Tag Form */}
       <NewTagForm
         isOpen={showNewTagForm}
         isEditing={isEditing}
