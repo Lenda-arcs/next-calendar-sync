@@ -515,4 +515,28 @@ export function useSaveCalendarSelection() {
       return await response.json()
     },
   })
+}
+
+// ===== AUTH HOOKS =====
+
+export function useUpdateUserProfile() {
+  return useUnifiedMutation({
+    mutationFn: ({ supabase, userId, profileData }: { 
+      supabase: SupabaseClient; 
+      userId: string; 
+      profileData: Parameters<typeof dataAccess.updateUserProfile>[2] 
+    }) => 
+      dataAccess.updateUserProfile(supabase, userId, profileData),
+  })
+}
+
+export function useMarkInvitationAsUsed() {
+  return useUnifiedMutation({
+    mutationFn: ({ supabase, token, userId }: { 
+      supabase: SupabaseClient; 
+      token: string; 
+      userId: string; 
+    }) => 
+      dataAccess.markInvitationAsUsed(supabase, token, userId),
+  })
 } 

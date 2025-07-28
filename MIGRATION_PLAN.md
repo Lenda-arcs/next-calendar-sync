@@ -444,4 +444,23 @@ The following components still use legacy patterns but are **secondary features*
 - **Studio Components**: StudioManagement, StudioRequestDialog  
 - **Tag/Invoice Components**: Various supporting components
 
-**Note**: Core user flows are 100% migrated. Remaining components are edge cases and advanced features. 
+#### **✅ Auth Components Migration COMPLETE:**
+- [x] **ProfileForm** - ✅ **MIGRATED** to `useUpdateUserProfile()`
+  - ✅ **Profile updates** with unified mutation
+  - ✅ **Loading states** with `isPending` from TanStack Query
+  - ✅ **Success/error handling** with proper feedback
+- [x] **RegisterForm** - ✅ **MIGRATED** to `useMarkInvitationAsUsed()`
+  - ✅ **Invitation tracking** during registration
+  - ✅ **Clean API integration** with unified mutation
+  - ✅ **Error resilience** (doesn't block registration flow)
+
+#### **🎯 FINAL UPDATED Migration Progress:**
+- **Dashboard Components**: ✅ **100% Complete** (4/4 components)
+- **Public Schedule**: ✅ **100% Complete** (1/1 components)  
+- **Admin Panel**: ✅ **100% Complete** (2/2 components)
+- **Calendar Integration**: ✅ **100% Complete** (3/3 components)
+- **Auth Components**: ✅ **100% Complete** (2/2 components)
+
+#### **🏆 TOTAL CORE MIGRATION: 100% COMPLETE!**
+
+**Note**: All primary user flows are 100% migrated. Remaining components are edge cases and advanced features. 

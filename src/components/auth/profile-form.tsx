@@ -15,7 +15,7 @@ import {
 import { toast } from 'sonner'
 
 import { User } from '@/lib/types'
-import { useSupabaseUpdate } from '@/lib/hooks/useSupabaseMutation'
+import { useUpdateUserProfile } from '@/lib/hooks/useAppQuery'
 import ImageUpload from '@/components/ui/image-upload'
 import { YogaStylesSelect } from '@/components/ui/yoga-styles-select'
 import { cn, urlValidation } from '@/lib/utils'
@@ -120,18 +120,8 @@ export function ProfileForm({ user, onUpdate }: ProfileFormProps) {
   const [publicUrlPreview, setPublicUrlPreview] = useState<string>('')
   const [hasFormChanges, setHasFormChanges] = useState(false)
 
-  // Use the Supabase mutation hook for updating user profile
-  const updateUserMutation = useSupabaseUpdate<User>('users', {
-    onSuccess: (data) => {
-      toast.success('Profile updated successfully!')
-      setHasFormChanges(false) // Reset changes flag on successful save
-      onUpdate?.(data[0]) // Call the optional callback with updated user data
-    },
-    onError: (error) => {
-      console.error('Profile update error:', error)
-      toast.error(`Failed to update profile: ${error.message}`)
-    },
-  })
+  // ✨ NEW: Use unified mutation hook for updating user profile
+  const updateUserMutation = useUpdateUserProfile()
 
   const timezoneOptions = [
     { value: 'UTC', label: 'UTC' },
@@ -222,11 +212,16 @@ export function ProfileForm({ user, onUpdate }: ProfileFormProps) {
         event_display_variant: formData.event_display_variant as 'minimal' | 'compact' | 'full',
       }
 
-      // Use the mutation to update the user profile
-      await updateUserMutation.mutateAsync({
-        id: user.id,
-        data: updateData,
+      // ✨ NEW: Use unified mutation to update the user profile
+      const result = await updateUserMutation.mutateAsync({
+        userId: user.id,
+        profileData: updateData,
       })
+
+      // Handle success
+      toast.success('Profile updated successfully!')
+      setHasFormChanges(false) // Reset changes flag on successful save
+      onUpdate?.(result) // Call the optional callback with updated user data
     }
   })
 
@@ -271,7 +266,7 @@ export function ProfileForm({ user, onUpdate }: ProfileFormProps) {
 
   return (
     <div className="max-w-4xl mx-auto space-y-8">
-      <Form onSubmit={handleSubmit} loading={loading || updateUserMutation.isLoading}>
+              <Form onSubmit={handleSubmit} loading={loading || updateUserMutation.isPending}>
         {/* Basic Information */}
         <Card variant="glass">
           <CardHeader>
@@ -445,7 +440,7 @@ export function ProfileForm({ user, onUpdate }: ProfileFormProps) {
       {/* Floating Action Button for Profile Update */}
       <ProfileUpdateFAB
         hasChanges={hasFormChanges}
-        isSaving={loading || updateUserMutation.isLoading}
+                  isSaving={loading || updateUserMutation.isPending}
         onSave={handleSave}
         onReset={handleReset}
       />

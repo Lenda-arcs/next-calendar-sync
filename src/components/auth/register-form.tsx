@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Form, FormField, Button, useForm } from '@/components/ui'
 import { createClient } from '@/lib/supabase'
+import { useMarkInvitationAsUsed } from '@/lib/hooks/useAppQuery'
 import { Mail, Lock, Eye, EyeOff, AlertCircle, Loader2, User } from 'lucide-react'
 
 interface RegisterFormProps {
@@ -26,6 +27,9 @@ export function RegisterForm({ redirectTo = '/app', className, invitationToken }
   const [showPassword, setShowPassword] = React.useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = React.useState(false)
   const [authError, setAuthError] = React.useState<string>('')
+
+  // ✨ NEW: Use unified mutation for marking invitation as used
+  const markInvitationMutation = useMarkInvitationAsUsed()
 
   const {
     values,
@@ -99,18 +103,12 @@ export function RegisterForm({ redirectTo = '/app', className, invitationToken }
         }
 
         if (data.user) {
-          // Mark invitation as used if we have an invitation token
+          // ✨ NEW: Mark invitation as used if we have an invitation token
           if (invitationToken) {
             try {
-              await fetch('/api/invitations/mark-used', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                  token: invitationToken,
-                  userId: data.user.id
-                })
+              await markInvitationMutation.mutateAsync({
+                token: invitationToken,
+                userId: data.user.id
               })
             } catch (error) {
               console.error('Failed to mark invitation as used:', error)
