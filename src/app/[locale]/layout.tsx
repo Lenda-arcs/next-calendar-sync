@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Toaster } from "@/components/ui/sonner"
 import { CookieNotice } from "@/components/ui/cookie-notice"
 import SupabaseProvider from '@/components/providers/supabase-provider'
+import { QueryProvider } from '@/components/providers/query-provider'
 import { LanguageProvider } from '@/lib/i18n/context'
 import { getValidLocale, getTranslations } from '@/lib/i18n/config'
 import { generateSEOMetadata } from '@/lib/i18n/metadata'
@@ -53,7 +54,9 @@ export default async function LocaleLayout({ children, params }: Props) {
       
       <LanguageProvider initialLanguage={locale} serverTranslations={translations}>
         <SupabaseProvider>
-          {children}
+          <QueryProvider>
+            {children}
+          </QueryProvider>
         </SupabaseProvider>
         <Toaster />
         <CookieNotice />

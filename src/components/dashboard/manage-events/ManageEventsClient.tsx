@@ -17,10 +17,9 @@ import { RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import DataLoader from '@/components/ui/data-loader'
 import { ManageEventsSkeleton } from '@/components/ui/skeleton'
-import { useSupabaseQuery } from '@/lib/hooks/useSupabaseQuery'
+import { useUserEvents, useAllTags, useCreateTag } from '@/lib/hooks/useAppQuery'
 import { useSupabaseMutation } from '@/lib/hooks/useSupabaseMutation'
 import { useCalendarSync } from '@/lib/hooks/useCalendarSync'
-import { useAllTags } from '@/lib/hooks/useAllTags'
 import { Event } from '@/lib/types'
 import { convertToEventTag, EventTag } from '@/lib/event-types'
 import { convertEventToCardProps } from '@/lib/event-utils'
@@ -41,6 +40,12 @@ interface ManageEventsClientProps {
 
 export function ManageEventsClient({ userId }: ManageEventsClientProps) {
   const { t } = useTranslation()
+  
+  // 🚧 MIGRATION IN PROGRESS - PARTIALLY MIGRATED TO UNIFIED HOOKS
+  // ✅ Completed: Events fetching (useUserEvents), Tags fetching (useAllTags) 
+  // 🚧 TODO: Fix type mismatches between CreateEventData and unified hook parameters
+  // 🚧 TODO: Replace isLoading with isPending for TanStack Query mutations
+  // 🚧 TODO: Complete event CRUD integration with proper type transformations
   
   // ==================== SETUP & STATE ====================
   const supabase = createBrowserClient(
@@ -63,70 +68,56 @@ export function ManageEventsClient({ userId }: ManageEventsClientProps) {
   const [editingEvent, setEditingEvent] = React.useState<EditEventData | null>(null)
 
   // ==================== DATA FETCHING ====================
+  // ✨ NEW: Use unified hooks
   const {
     data: events,
     isLoading: eventsLoading,
     error: eventsError,
     refetch: refetchEvents
-  } = useSupabaseQuery<Event[]>({
-    queryKey: ['user_events', userId || 'no-user'],
-    fetcher: async (supabase) => {
-      if (!userId) return []
-      
-      const { data, error } = await supabase
-        .from('events')
-        .select('*')
-        .eq('user_id', userId)
-        .order('start_time', { ascending: true, nullsLast: true })
-      
-      if (error) throw error
-      return data || []
-    },
-    enabled: !!userId,
-  })
+  } = useUserEvents(userId, undefined, { enabled: !!userId })
 
-  // Use shared tags hook instead of individual fetches
-  const { allTags, isLoading: tagsLoading, refetch: refetchTags } = useAllTags({ 
-    userId, 
-    enabled: !!userId 
-  })
+  // Use unified tags hook
+  const { 
+    data: tagData, 
+    isLoading: tagsLoading, 
+    refetch: refetchTags 
+  } = useAllTags(userId, { enabled: !!userId })
 
-  // Create tag mutation
-  const createTagMutation = useSupabaseMutation({
-    mutationFn: async (supabase, tagData: EventTag) => {
-      if (!userId) throw new Error('User not authenticated')
+  // Extract tags from unified response
+  const allTags = tagData?.allTags || []
 
-      // Convert EventTag back to database format (following useTagOperations pattern)
-      const dbTag = {
-        name: tagData.name,
-        slug: tagData.slug || tagData.name?.toLowerCase().replace(/\s+/g, '-'),
-        color: tagData.color,
-        // Use first class type only (matching useTagOperations pattern)
-        class_type: tagData.classType?.[0] || null,
-        audience: tagData.audience || null,
-        priority: tagData.priority || null,
-        cta_label: tagData.cta?.label || null,
-        cta_url: tagData.cta?.url || null,
-        image_url: tagData.imageUrl || null,
-        user_id: userId,
-      }
-
-      const { data, error } = await supabase
-        .from('tags')
-        .insert([dbTag])
-        .select()
-        .single()
-
-      if (error) throw error
-      return data
-    },
-    onSuccess: () => {
-      // Refetch tags to update the UI
-      refetchTags()
-      setIsCreateTagFormOpen(false)
+  // ✨ NEW: Use unified tag creation
+  const createTagMutation = useCreateTag()
+  
+  // Handle tag creation with proper data transformation
+  const handleCreateTagWithRefetch = React.useCallback((tagData: EventTag) => {
+    // Convert EventTag back to database format (following useTagOperations pattern)
+    const dbTag = {
+      name: tagData.name,
+      slug: tagData.slug || tagData.name?.toLowerCase().replace(/\s+/g, '-'),
+      color: tagData.color,
+      // Use first class type only (matching useTagOperations pattern)
+      class_type: tagData.classType?.[0] || null,
+      audience: tagData.audience || null,
+      priority: tagData.priority || null,
+      cta_label: tagData.cta?.label || null,
+      cta_url: tagData.cta?.url || null,
+      image_url: tagData.imageUrl || null,
+      user_id: userId,
     }
-  })
 
+    createTagMutation.mutate(dbTag, {
+      onSuccess: () => {
+        // Refetch tags to update the UI
+        refetchTags()
+        setIsCreateTagFormOpen(false)
+      }
+    })
+  }, [createTagMutation, refetchTags, userId])
+
+  // ✅ WORKING: Legacy event mutations (to be migrated later)
+  // These work with existing CreateEventData types and component logic
+  
   // Create event mutation
   const createEventMutation = useSupabaseMutation({
     mutationFn: async (supabase, eventData: CreateEventData) => {
@@ -148,12 +139,11 @@ export function ManageEventsClient({ userId }: ManageEventsClientProps) {
       return await response.json()
     },
     onSuccess: () => {
-      // Refetch events to update the UI
       refetchEvents()
       setIsCreateEventFormOpen(false)
       toast.success('Event created successfully and synced to Google Calendar!')
     },
-    onError: (error) => {
+    onError: (error: unknown) => {
       toast.error(error instanceof Error ? error.message : 'Failed to create event')
     }
   })
@@ -188,13 +178,12 @@ export function ManageEventsClient({ userId }: ManageEventsClientProps) {
       return await response.json()
     },
     onSuccess: () => {
-      // Refetch events to update the UI
       refetchEvents()
       setIsEditEventFormOpen(false)
       setEditingEvent(null)
       toast.success('Event updated successfully and synced to Google Calendar!')
     },
-    onError: (error) => {
+    onError: (error: unknown) => {
       toast.error(error instanceof Error ? error.message : 'Failed to update event')
     }
   })
@@ -216,13 +205,12 @@ export function ManageEventsClient({ userId }: ManageEventsClientProps) {
       return await response.json()
     },
     onSuccess: () => {
-      // Refetch events to update the UI
       refetchEvents()
       setIsEditEventFormOpen(false)
       setEditingEvent(null)
       toast.success('Event deleted successfully!')
     },
-    onError: (error) => {
+    onError: (error: unknown) => {
       toast.error(error instanceof Error ? error.message : 'Failed to delete event')
     }
   })
@@ -279,12 +267,12 @@ export function ManageEventsClient({ userId }: ManageEventsClientProps) {
   const { syncFeeds: handleSyncFeeds, isSyncing } = useCalendarSync({
     userId,
     supabase,
-    onSyncComplete: refetchEvents
+    onSyncComplete: () => { refetchEvents() }
   })
 
   // Handle create tag form
   const handleCreateTag = (tagData: EventTag) => {
-    createTagMutation.mutate(tagData)
+    handleCreateTagWithRefetch(tagData)
   }
 
   const handleCreateTagFormClose = () => {
@@ -323,7 +311,7 @@ export function ManageEventsClient({ userId }: ManageEventsClientProps) {
   // Wrapper function for EventGrid's onEdit prop
   const handleEventGridEdit = (event: { id: string }) => {
     // Find the full event data from our events array
-    const fullEvent = events?.find(e => e.id === event.id)
+    const fullEvent = events?.find((e: Event) => e.id === event.id)
     if (fullEvent) {
       handleEditEvent(fullEvent)
     }

@@ -1,9 +1,8 @@
 'use client'
 
-import React from 'react'
+import React, { useMemo } from 'react'
 import DataLoader from '@/components/ui/data-loader'
-import { useSupabaseQuery } from '@/lib/hooks/useSupabaseQuery'
-import { useAllTags } from '@/lib/hooks/useAllTags'
+import { useAllTags, useUserRole } from '@/lib/hooks/useAppQuery'
 import { useTagOperations } from '@/lib/hooks/useTagOperations'
 import { UserRole } from '@/lib/types'
 import { TagLibrary } from '@/components/tags/TagLibrary'
@@ -20,27 +19,19 @@ interface Props {
 }
 
 export function ManageTagsClient({ userId }: Props) {
-  // Fetch all tags once and share between components
-  const { allTags, userTags, globalTags, isLoading: tagsLoading, error: tagsError, refetch: refetchAllTags } = useAllTags({ 
-    userId, 
-    enabled: !!userId 
-  })
+  // ✨ NEW: Use unified hooks
+  const { 
+    data: tagData, 
+    isLoading: tagsLoading, 
+    error: tagsError, 
+    refetch: refetchAllTags 
+  } = useAllTags(userId, { enabled: !!userId })
 
-  // Fetch user role
-  const { data: userData, isLoading: roleLoading, error: roleError } = useSupabaseQuery({
-    queryKey: ['user-role', userId],
-    fetcher: async (supabase) => {
-      const { data, error } = await supabase
-        .from('users')
-        .select('role')
-        .eq('id', userId)
-        .single()
-      
-      if (error) throw error
-      return data
-    },
-    enabled: !!userId
-  })
+  const { 
+    data: userRole, 
+    isLoading: roleLoading, 
+    error: roleError 
+  } = useUserRole(userId, { enabled: !!userId })
 
   // Tag operations hook with proper refetch
   const {
@@ -61,12 +52,17 @@ export function ManageTagsClient({ userId }: Props) {
     onSuccess: refetchAllTags // Use the shared refetch function
   })
 
+  // Extract tag data from unified response
+  const allTags = useMemo(() => tagData?.allTags || [], [tagData?.allTags])
+  const userTags = useMemo(() => tagData?.userTags || [], [tagData?.userTags])
+  const globalTags = useMemo(() => tagData?.globalTags || [], [tagData?.globalTags])
+  
   // Clear cache when tags are updated
   React.useEffect(() => {
     clearTagMapCache()
   }, [allTags])
 
-  const userRole = (userData?.role || 'user') as UserRole
+  const resolvedUserRole = (userRole || 'user') as UserRole
   const isLoading = tagsLoading || roleLoading
   const error = tagsError || roleError
   const errorMessage = error?.message || null
@@ -97,7 +93,7 @@ export function ManageTagsClient({ userId }: Props) {
             />
             <TagLibrary 
               userId={userId} 
-              userRole={userRole}
+              userRole={resolvedUserRole}
               globalTags={globalTags}
               customTags={userTags}
               // Pass down the tag operations instead of letting TagLibrary create its own

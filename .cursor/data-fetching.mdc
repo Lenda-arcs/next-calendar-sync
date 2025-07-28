@@ -1,18 +1,147 @@
 ---
-description: 
-globs: 
-alwaysApply: true
----
----
-description: Data fetching guidelines for Supabase-powered Next.js apps using server components and ISR.
+description: Unified data fetching guidelines using TanStack Query + Supabase for consistent, performant data management
 alwaysApply: true
 ---
 
-# 📡 Data Fetching
+# 📡 Unified Data Fetching Strategy
 
-- Use `createServerComponentClient()` for fetching data in RSCs.
-- Prefer server data fetching to client-side unless absolutely required.
-- Place all DB logic in `lib/queries/` or `lib/db.ts`.
-- Co-locate query logic by feature: `queries/teachers.ts`, `queries/tags.ts`, etc.
-- Use `revalidate` tags for incremental regeneration (`export const revalidate = 60`).
-- Wrap queries in `try/catch` and handle missing data with `notFound()` or redirects.
+## ✅ NEW UNIFIED APPROACH (Use This!)
+
+### Client Components - Use App-Specific Hooks
+```typescript
+// ✅ ALWAYS use these app-specific hooks
+const { data, isLoading, error } = useAllTags(userId)
+const { data: events } = useUserEvents(userId, filters)
+const { data: profile } = useUserProfile(userId)
+
+// ✅ For mutations
+const { mutate: createTag } = useCreateTag()
+const { mutate: updateEvent } = useUpdateEvent()
+```
+
+### Server Components - Use Data Access Functions
+```typescript
+// ✅ Use centralized data access functions
+import { getAllTags, getUserProfile } from '@/lib/server/data-access'
+import { createServerClient } from '@/lib/supabase-server'
+
+const supabase = await createServerClient()
+const tags = await getAllTags(supabase, userId)
+const profile = await getUserProfile(supabase, userId)
+```
+
+### API Routes - Use Same Data Access Functions
+```typescript
+// ✅ Reuse the same functions in API routes
+import { getAllTags } from '@/lib/server/data-access'
+import { createServerClient } from '@/lib/supabase-server'
+
+export async function GET() {
+  const supabase = await createServerClient()
+  const data = await getAllTags(supabase, userId)
+  return NextResponse.json(data)
+}
+```
+
+## 🏗️ Architecture Layers
+
+1. **Application Hooks** (`useAllTags`, `useUserEvents`) → Use in components
+2. **Unified Query Layer** (`useUnifiedQuery`, `useUnifiedMutation`) → Building blocks
+3. **Data Access Layer** (`getAllTags`, `getUserEvents`) → Single source of truth
+4. **Query Keys Factory** (`queryKeys.tags.allForUser(userId)`) → Cache management
+5. **TanStack Query** → Caching, background updates, optimistic updates
+
+## 📋 Implementation Rules
+
+### ✅ DO THIS
+- **Always use app-specific hooks** like `useAllTags(userId)` in components
+- **Use data access functions** like `getAllTags(supabase, userId)` in server components
+- **Add new queries to data access layer first**, then create app hooks
+- **Use query keys factory** for consistent cache invalidation
+- **Handle loading and error states** in every component
+
+### ❌ DON'T DO THIS
+- Don't use `useSupabaseQuery` or `useSupabaseMutation` (legacy)
+- Don't call `fetch('/api/route')` for internal data (use hooks instead)
+- Don't write raw Supabase queries in components
+- Don't create API routes for simple CRUD (use direct hooks)
+- Don't forget to handle loading and error states
+
+## 🚀 Adding New Data Fetching
+
+1. **Add to data access layer**: `src/lib/server/data-access.ts`
+   ```typescript
+   export async function getNewData(supabase: SupabaseClient, params: string) {
+     const { data, error } = await supabase.from('table').select('*')
+     if (error) throw error
+     return data
+   }
+   ```
+
+2. **Add query keys**: `src/lib/query-keys.ts`
+   ```typescript
+   newData: {
+     all: ['new-data'] as const,
+     detail: (id: string) => ['new-data', 'detail', id] as const,
+   }
+   ```
+
+3. **Create app hook**: `src/lib/hooks/useAppQuery.ts`
+   ```typescript
+   export function useNewData(params: string) {
+     return useUnifiedQuery({
+       queryKey: queryKeys.newData.detail(params),
+       fetcher: (supabase) => dataAccess.getNewData(supabase, params),
+       enabled: !!params,
+     })
+   }
+   ```
+
+4. **Use in components**: 
+   ```typescript
+   const { data, isLoading, error } = useNewData(params)
+   ```
+
+## 🔄 Migration from Legacy Patterns
+
+### Replace useSupabaseQuery
+```typescript
+// ❌ Old way
+const { data } = useSupabaseQuery({
+  queryKey: ['tags', userId],
+  fetcher: async (supabase) => { /* complex query */ }
+})
+
+// ✅ New way  
+const { data } = useAllTags(userId)
+```
+
+### Replace fetch() calls
+```typescript
+// ❌ Old way
+const response = await fetch('/api/tags')
+const data = await response.json()
+
+// ✅ New way
+const { data } = useAllTags(userId)
+```
+
+### Replace direct Supabase in components
+```typescript
+// ❌ Old way
+const { data } = await supabase.from('tags').select('*')
+
+// ✅ New way
+const { data } = useAllTags(userId)
+```
+
+## 🎛️ Development Tools
+
+- **React Query Devtools** - Automatic in development, inspect cache
+- **Query key debugging** - See cache keys in dev mode
+- **Error boundaries** - Handle query errors gracefully
+- **Loading states** - Use consistent loading UI patterns
+
+---
+
+**🎯 Goal: One consistent, performant, and maintainable data fetching pattern throughout the entire application.**
