@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
-import { useSupabaseQuery } from '@/lib/hooks/useSupabaseQuery'
+import { useAllInvitations, useCreateInvitation, useCancelInvitation } from '@/lib/hooks/useAppQuery'
 import { UserPlus, Copy, X, Clock, CheckCircle, XCircle, AlertCircle } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -42,37 +42,24 @@ export function InvitationManagement() {
     notes: ''
   })
 
-  // Fetch invitations
-  const { data: invitations, isLoading, refetch } = useSupabaseQuery<Invitation[]>({
-    queryKey: ['invitations'],
-    fetcher: async () => {
-      const response = await fetch('/api/invitations')
-      if (!response.ok) {
-        throw new Error('Failed to fetch invitations')
-      }
-      const result = await response.json()
-      return result.invitations || []
-    }
-  })
+  // ✨ NEW: Use unified hooks
+  const { data: invitations, isLoading, refetch } = useAllInvitations()
+  const createInvitationMutation = useCreateInvitation()
+  const cancelInvitationMutation = useCancelInvitation()
 
   const handleCreateInvitation = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsCreating(true)
 
     try {
-      const response = await fetch('/api/invitations', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData)
+      // ✨ NEW: Use unified mutation
+      const result = await createInvitationMutation.mutateAsync({
+        email: formData.email,
+        invited_name: formData.invitedName,
+        personal_message: formData.personalMessage,
+        expiry_days: formData.expiryDays,
+        notes: formData.notes,
       })
-
-      const result = await response.json()
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to create invitation')
-      }
 
       toast.success('Invitation created successfully')
       
@@ -103,13 +90,8 @@ export function InvitationManagement() {
 
   const handleCancelInvitation = async (invitationId: string) => {
     try {
-      const response = await fetch(`/api/invitations/${invitationId}`, {
-        method: 'DELETE'
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to cancel invitation')
-      }
+      // ✨ NEW: Use unified mutation
+      await cancelInvitationMutation.mutateAsync({ invitationId })
 
       toast.success('Invitation cancelled')
       refetch()
@@ -253,7 +235,7 @@ export function InvitationManagement() {
         ) : (
           <div className="space-y-4">
             {invitations && invitations.length > 0 ? (
-              invitations.map((invitation) => (
+              invitations.map((invitation: Invitation) => (
                 <Card key={invitation.id}>
                   <CardContent className="pt-6">
                     <div className="flex justify-between items-start">

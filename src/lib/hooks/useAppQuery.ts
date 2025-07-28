@@ -3,6 +3,7 @@
 import { useUnifiedQuery, useUnifiedMutation } from './useUnifiedQuery'
 import { queryKeys } from '../query-keys'
 import * as dataAccess from '../server/data-access'
+import type { SupabaseClient } from '@supabase/supabase-js'
 
 /**
  * Application-specific query hooks that use our unified system
@@ -224,6 +225,14 @@ export function useAllUsers(options?: { enabled?: boolean }) {
   })
 }
 
+export function useAllInvitations(options?: { enabled?: boolean }) {
+  return useUnifiedQuery({
+    queryKey: queryKeys.admin.invitations(),
+    fetcher: (supabase) => dataAccess.getAllInvitations(supabase),
+    enabled: options?.enabled ?? true,
+  })
+}
+
 export function useUpdateUserRole() {
   return useUnifiedMutation({
     mutationFn: (supabase, { userId, role }: { userId: string; role: string }) => 
@@ -358,5 +367,21 @@ export function usePublicEvents(
     }),
     fetcher: (supabase) => dataAccess.getPublicEvents(supabase, userId, filters),
     enabled: options?.enabled ?? !!userId,
+  })
+}
+
+// ===== ADMIN HOOKS (Additional) =====
+
+export function useCreateInvitation() {
+  return useUnifiedMutation({
+    mutationFn: ({ supabase, ...invitationData }) => 
+      dataAccess.createInvitation(supabase, invitationData),
+  })
+}
+
+export function useCancelInvitation() {
+  return useUnifiedMutation({
+    mutationFn: ({ supabase, invitationId }: { supabase: SupabaseClient; invitationId: string }) => 
+      dataAccess.cancelInvitation(supabase, invitationId),
   })
 } 

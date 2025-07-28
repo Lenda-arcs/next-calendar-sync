@@ -145,4 +145,14 @@ export const queryInvalidation = {
     ...(studioId ? [queryKeys.studios.detail(studioId)] : []),
     queryKeys.events.list(userId), // Events are associated with studios
   ],
+
+  // Admin domain
+  admin: {
+    all: ['admin'] as const,
+    users: () => ['admin', 'users'] as const,
+    invitations: () => ['admin', 'invitations'] as const,
+    createInvitation: () => ['admin', 'invitations', 'create'] as const,
+    cancelInvitation: (invitationId: string) => ['admin', 'invitations', 'cancel', invitationId] as const,
+    deleteUser: (userId: string) => ['admin', 'users', 'delete', userId] as const,
+  },
 } 

@@ -146,8 +146,11 @@ export async function getUserEvents(
     variant?: string
     limit?: number
     offset?: number
+    futureOnly?: boolean  // ✨ NEW: Filter for upcoming events only
   }
 ) {
+  const now = new Date().toISOString()
+  
   let query = supabase
     .from('events')
     .select('*')  // ✅ Fixed: Simple select without problematic joins
@@ -155,6 +158,11 @@ export async function getUserEvents(
 
   if (filters?.isPublic !== undefined) {
     query = query.eq('is_public', filters.isPublic)
+  }
+
+  // ✨ NEW: Filter for future events only (for dashboard preview)
+  if (filters?.futureOnly) {
+    query = query.gte('start_time', now)
   }
 
   if (filters?.limit) {
@@ -691,4 +699,44 @@ export async function getPublicEvents(
 
   if (error) throw error
   return data || []
+}
+
+// ===== ADMIN MUTATIONS (VIA API) =====
+
+export async function createInvitation(
+  supabase: SupabaseClient,
+  invitationData: {
+    email: string
+    invited_name?: string
+    personal_message?: string
+    expiry_days: number
+    notes?: string
+  }
+) {
+  // This will need to call the API since invitation creation involves email sending
+  const response = await fetch('/api/invitations', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(invitationData)
+  })
+
+  if (!response.ok) {
+    const error = await response.json()
+    throw new Error(error.error || 'Failed to create invitation')
+  }
+
+  return await response.json()
+}
+
+export async function cancelInvitation(supabase: SupabaseClient, invitationId: string) {
+  const response = await fetch(`/api/invitations/${invitationId}`, {
+    method: 'DELETE'
+  })
+
+  if (!response.ok) {
+    const error = await response.json()
+    throw new Error(error.error || 'Failed to cancel invitation')
+  }
+
+  return await response.json()
 } 

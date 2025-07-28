@@ -24,12 +24,15 @@ const PrivateEventList: React.FC<PrivateEventListProps> = ({
   variant = 'compact',
   className = '',
 }) => {
-  // ✨ NEW: Use unified hooks for data fetching
+  // ✨ NEW: Use unified hooks for data fetching - future events only for dashboard preview
   const {
     data: events,
     isLoading: eventsLoading,
     error: eventsError
-  } = useUserEvents(userId, { limit: eventCount }, { enabled: !!userId })
+  } = useUserEvents(userId, { 
+    limit: eventCount, 
+    futureOnly: true  // ✨ Only show upcoming events
+  }, { enabled: !!userId })
 
   // Use unified tags hook
   const { 

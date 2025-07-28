@@ -367,6 +367,7 @@ Migration is complete when:
 
 #### **✅ Completed Successfully:**
 - [x] **PrivateEventList** - ✅ **MIGRATED** to `useUserEvents()` and unified `useAllTags()`
+  - ✅ **Dashboard Preview Fixed**: Now shows only next 3 upcoming events (futureOnly: true)
   - Now using unified data fetching on main dashboard
   - Clean, consistent caching and performance
 
@@ -394,4 +395,19 @@ Migration is complete when:
 - **Public schedule display**: ✅ **Fully functional** with TanStack Query
 - **Public events loading**: ✅ **Fast and cached**
 
-**🚀 MAJOR MILESTONE: Both Dashboard AND Public Schedule with unified data fetching are production-ready!** 
+#### **✅ Admin Components Migration Complete:**
+- [x] **InvitationManagement** - ✅ **MIGRATED** to `useAllInvitations()`, `useCreateInvitation()`, `useCancelInvitation()`
+  - ✅ **Invitation creation** with email sending via API
+  - ✅ **Invitation cancellation** with automatic refetch
+  - ✅ **Real-time invitation list** with unified caching
+- [x] **UserManagement** - ✅ **MIGRATED** to `useAllUsers()`, `useDeleteUser()`
+  - ✅ **User listing** with admin privileges
+  - ✅ **User deletion** with complete data removal
+  - ✅ **Automatic cache invalidation** on mutations
+
+#### **🎯 Admin Routes Status:**
+- **`/app/admin`**: ✅ **MIGRATED** to unified hooks
+- **Admin functionality**: ✅ **Fully functional** with TanStack Query
+- **Admin operations**: ✅ **Fast and reliable** with proper error handling
+
+**🚀 TRIPLE MILESTONE: Dashboard, Public Schedule, AND Admin with unified data fetching are production-ready!** 

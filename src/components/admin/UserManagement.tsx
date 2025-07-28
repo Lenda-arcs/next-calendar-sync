@@ -4,7 +4,7 @@ import React from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { useSupabaseQuery } from '@/lib/hooks/useSupabaseQuery'
+import { useAllUsers, useDeleteUser } from '@/lib/hooks/useAppQuery'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog'
 import { Users, Trash2, Crown, Star, Calendar, ExternalLink } from 'lucide-react'
 import { toast } from 'sonner'
@@ -25,32 +25,16 @@ interface User {
 export function UserManagement() {
   const [deletingUserId, setDeletingUserId] = React.useState<string | null>(null)
 
-  // Fetch users
-  const { data: users, isLoading, refetch } = useSupabaseQuery<User[]>({
-    queryKey: ['admin-users'],
-    fetcher: async () => {
-      const response = await fetch('/api/admin/users')
-      if (!response.ok) {
-        throw new Error('Failed to fetch users')
-      }
-      const result = await response.json()
-      return result.users || []
-    }
-  })
+  // ✨ NEW: Use unified hooks
+  const { data: users, isLoading, refetch } = useAllUsers()
+  const deleteUserMutation = useDeleteUser()
 
   const handleDeleteUser = async (userId: string, userName: string | null, userEmail: string | null) => {
     setDeletingUserId(userId)
 
     try {
-      const response = await fetch(`/api/admin/users/${userId}`, {
-        method: 'DELETE'
-      })
-
-      const result = await response.json()
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to delete user')
-      }
+      // ✨ NEW: Use unified mutation
+      await deleteUserMutation.mutateAsync({ userId })
 
       toast.success(`User ${userName || userEmail} has been completely removed`)
       refetch()
@@ -135,7 +119,7 @@ export function UserManagement() {
         ) : (
           <div className="space-y-4">
             {users && users.length > 0 ? (
-              users.map((user) => (
+              users.map((user: User) => (
                 <Card key={user.id}>
                   <CardContent className="pt-6">
                     <div className="flex justify-between items-start">
