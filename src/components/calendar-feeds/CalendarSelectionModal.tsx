@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import React from 'react'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { UnifiedDialog } from "@/components/ui/unified-dialog"
@@ -9,6 +9,7 @@ import { CalendarItemCard } from "./CalendarItemCard"
 import { useCalendarSelection } from "@/lib/hooks"
 import { CalendarItem } from "@/lib/types"
 import { toast } from "sonner"
+import { useSaveCalendarSelection } from "@/lib/hooks/useAppQuery"
 import { Calendar, Loader2, Info } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 
@@ -25,36 +26,26 @@ export function CalendarSelectionModal({
   onSuccess, 
   calendars: propCalendars = [] 
 }: CalendarSelectionModalProps) {
-  const [saving, setSaving] = useState(false)
   const { state, actions } = useCalendarSelection({ 
     calendars: propCalendars, 
     isOpen 
   })
 
+  // ✨ NEW: Use unified mutation for calendar selection
+  const saveCalendarSelectionMutation = useSaveCalendarSelection()
+
   const handleSave = async () => {
     try {
-      setSaving(true)
-      
       const selectionArray = Object.entries(state.selections).map(([calendarId, selected]) => ({
         calendarId,
         selected
       }))
 
-      const response = await fetch('/api/calendar-selection', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          selections: selectionArray,
-          sync_approach: 'yoga_only' // Always use yoga_only for legacy API compatibility
-        })
+      // ✨ NEW: Use unified mutation for calendar selection
+      await saveCalendarSelectionMutation.mutateAsync({
+        selections: selectionArray,
+        syncApproach: 'yoga_only' // Always use yoga_only for legacy API compatibility
       })
-
-      if (!response.ok) {
-        const error = await response.text()
-        throw new Error(error || 'Failed to save calendar selection')
-      }
 
       const selectedCount = Object.values(state.selections).filter(Boolean).length
       toast.success(`Successfully connected ${selectedCount} calendar${selectedCount !== 1 ? 's' : ''}`)
@@ -63,8 +54,6 @@ export function CalendarSelectionModal({
     } catch (error) {
       console.error('Failed to save calendar selection:', error)
       toast.error('Failed to save calendar selection. Please try again.')
-    } finally {
-      setSaving(false)
     }
   }
 
@@ -135,15 +124,15 @@ export function CalendarSelectionModal({
           <Button
             variant="outline"
             onClick={onClose}
-            disabled={saving}
+            disabled={saveCalendarSelectionMutation.isPending}
           >
             Cancel
           </Button>
           <Button
             onClick={handleSave}
-            disabled={!hasSelections || saving}
+            disabled={!hasSelections || saveCalendarSelectionMutation.isPending}
           >
-            {saving ? (
+            {saveCalendarSelectionMutation.isPending ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                 Connecting...

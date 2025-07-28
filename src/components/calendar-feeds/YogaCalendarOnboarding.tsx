@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { toast } from 'sonner'
+import { useCreateYogaCalendar } from '@/lib/hooks/useAppQuery'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -23,9 +24,11 @@ interface YogaCalendarOnboardingProps {
 export function YogaCalendarOnboarding({ error, message, onCalendarCreated }: YogaCalendarOnboardingProps) {
   const { t } = useTranslation()
   const [isConnecting, setIsConnecting] = useState(false)
-  const [isCreatingCalendar, setIsCreatingCalendar] = useState(false)
   const [calendarCreated, setCalendarCreated] = useState(false)
   const [oauthConnected, setOauthConnected] = useState(false)
+  
+  // ✨ NEW: Use unified mutation for calendar creation
+  const createYogaCalendarMutation = useCreateYogaCalendar()
 
   const handleGoogleConnect = async () => {
     setIsConnecting(true)
@@ -38,20 +41,12 @@ export function YogaCalendarOnboarding({ error, message, onCalendarCreated }: Yo
   }
 
   const handleCreateYogaCalendar = async () => {
-    setIsCreatingCalendar(true)
     try {
-      const response = await fetch('/api/calendar/create-yoga-calendar', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-          sync_approach: 'yoga_only'
-        }),
+      // ✨ NEW: Use unified mutation for calendar creation
+      const result = await createYogaCalendarMutation.mutateAsync({
+        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        syncApproach: 'yoga_only'
       })
-
-      const result = await response.json()
 
       if (result.success) {
         setCalendarCreated(true)
@@ -73,8 +68,6 @@ export function YogaCalendarOnboarding({ error, message, onCalendarCreated }: Yo
     } catch (error) {
       console.error('Calendar creation error:', error)
       toast.error(error instanceof Error ? error.message : 'Failed to create calendar')
-    } finally {
-      setIsCreatingCalendar(false)
     }
   }
 
@@ -200,11 +193,11 @@ export function YogaCalendarOnboarding({ error, message, onCalendarCreated }: Yo
                 </div>
                 <Button 
                   onClick={handleCreateYogaCalendar}
-                  disabled={!oauthConnected || isCreatingCalendar}
+                  disabled={!oauthConnected || createYogaCalendarMutation.isPending}
                   className="w-full"
                   size="lg"
                 >
-                  {isCreatingCalendar ? (
+                  {createYogaCalendarMutation.isPending ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                       {t('calendar.yogaOnboarding.setup.step2.creating')}

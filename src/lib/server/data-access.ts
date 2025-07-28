@@ -739,4 +739,108 @@ export async function cancelInvitation(supabase: SupabaseClient, invitationId: s
   }
 
   return await response.json()
+}
+
+// ===== CALENDAR IMPORT DATA ACCESS =====
+
+export async function getImportableCalendars() {
+  const response = await fetch('/api/calendar/import')
+  
+  if (!response.ok) {
+    throw new Error('Failed to fetch available calendars')
+  }
+  
+  const data = await response.json()
+  if (!data.success) {
+    throw new Error(data.error || 'Failed to fetch calendars')
+  }
+  
+  return data.calendars || []
+}
+
+export async function importCalendarData(
+  importData: {
+    source: 'google' | 'ics'
+    calendarId?: string
+    icsContent?: string
+    selectedEvents?: string[]
+  }
+) {
+  const response = await fetch('/api/calendar/import', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(importData)
+  })
+
+  if (!response.ok) {
+    const error = await response.json()
+    throw new Error(error.error || 'Failed to import calendar data')
+  }
+
+  return await response.json()
+}
+
+export async function uploadICSFile(
+  icsContent: string
+) {
+  const response = await fetch('/api/calendar/import', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      source: 'ics',
+      icsContent,
+      action: 'preview'
+    })
+  })
+
+  if (!response.ok) {
+    const error = await response.json()
+    throw new Error(error.error || 'Failed to process ICS file')
+  }
+
+  return await response.json()
+}
+
+export async function saveCalendarSelection(
+  selections: { calendarId: string; selected: boolean }[],
+  syncApproach: string = 'yoga_only'
+) {
+  const response = await fetch('/api/calendar-selection', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ 
+      selections,
+      sync_approach: syncApproach
+    })
+  })
+
+  if (!response.ok) {
+    const error = await response.json()
+    throw new Error(error.error || 'Failed to save calendar selection')
+  }
+
+  return await response.json()
+}
+
+export async function createYogaCalendar(
+  options: {
+    timeZone?: string
+    syncApproach?: string
+  } = {}
+) {
+  const response = await fetch('/api/calendar/create-yoga-calendar', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      timeZone: options.timeZone || Intl.DateTimeFormat().resolvedOptions().timeZone,
+      sync_approach: options.syncApproach || 'yoga_only'
+    })
+  })
+
+  if (!response.ok) {
+    const error = await response.json()
+    throw new Error(error.error || 'Failed to create yoga calendar')
+  }
+
+  return await response.json()
 } 

@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { toast } from 'sonner'
+import { useGetAvailableCalendars, usePreviewCalendarImport, useImportCalendarEvents } from '@/lib/hooks/useAppQuery'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -24,9 +25,7 @@ type ImportStep = 'choose' | 'select-google' | 'upload-ics' | 'preview' | 'impor
 export function CalendarImportStep({ onComplete, onSkip }: CalendarImportStepProps) {
   const { t } = useTranslation()
   const [step, setStep] = useState<ImportStep>('choose')
-  const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [availableCalendars, setAvailableCalendars] = useState<CalendarSource[]>([])
   const [selectedCalendar, setSelectedCalendar] = useState<CalendarSource | null>(null)
   const [previewData, setPreviewData] = useState<ImportPreviewResult | null>(null)
   const [importResult, setImportResult] = useState<{
@@ -35,55 +34,32 @@ export function CalendarImportStep({ onComplete, onSkip }: CalendarImportStepPro
     errors: string[]
   } | null>(null)
 
+  // ✨ NEW: Use unified hooks for calendar import operations
+  const { data: availableCalendars = [], isLoading: calendarsLoading } = useGetAvailableCalendars({ enabled: step === 'select-google' })
+  const previewMutation = usePreviewCalendarImport()
+  const importMutation = useImportCalendarEvents()
+
   const handleChooseGoogle = async () => {
-    setLoading(true)
     setError(null)
-    
-    try {
-      const response = await fetch('/api/calendar/import')
-      const data = await response.json()
-      
-      if (!data.success) {
-        throw new Error(data.error || 'Failed to fetch calendars')
-      }
-      
-      setAvailableCalendars(data.calendars)
-      setStep('select-google')
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to fetch calendars')
-    } finally {
-      setLoading(false)
-    }
+    // ✨ NEW: Just move to the next step - the query will automatically fetch calendars
+    setStep('select-google')
   }
 
   const handleSelectGoogleCalendar = async (calendar: CalendarSource) => {
-    setLoading(true)
     setError(null)
     setSelectedCalendar(calendar)
     
     try {
-      const response = await fetch('/api/calendar/import', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'preview',
-          source: 'google',
-          sourceCalendarId: calendar.id
-        })
+      // ✨ NEW: Use unified mutation for preview
+      const preview = await previewMutation.mutateAsync({
+        source: 'google',
+        sourceCalendarId: calendar.id
       })
       
-      const data = await response.json()
-      
-      if (!data.success) {
-        throw new Error(data.error || 'Failed to preview events')
-      }
-      
-      setPreviewData(data.preview)
+      setPreviewData(preview)
       setStep('preview')
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to preview events')
-    } finally {
-      setLoading(false)
     }
   }
 
@@ -91,34 +67,21 @@ export function CalendarImportStep({ onComplete, onSkip }: CalendarImportStepPro
     const file = event.target.files?.[0]
     if (!file) return
 
-    setLoading(true)
     setError(null)
     
     try {
       const icsContent = await file.text()
       
-      const response = await fetch('/api/calendar/import', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'preview',
-          source: 'ics',
-          icsContent
-        })
+      // ✨ NEW: Use unified mutation for ICS preview
+      const preview = await previewMutation.mutateAsync({
+        source: 'ics',
+        icsContent
       })
       
-      const data = await response.json()
-      
-      if (!data.success) {
-        throw new Error(data.error || 'Failed to parse ICS file')
-      }
-      
-      setPreviewData(data.preview)
+      setPreviewData(preview)
       setStep('preview')
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to process ICS file')
-    } finally {
-      setLoading(false)
     }
   }
 
@@ -127,27 +90,13 @@ export function CalendarImportStep({ onComplete, onSkip }: CalendarImportStepPro
     setError(null)
     
     try {
-      const response = await fetch('/api/calendar/import', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'import',
-          source: selectedEvents[0]?.source || 'google',
-          events: selectedEvents
-        })
+      // ✨ NEW: Use unified mutation for import
+      const result = await importMutation.mutateAsync({
+        source: selectedEvents[0]?.source as 'google' | 'ics' || 'google',
+        events: selectedEvents
       })
       
-      const data = await response.json()
-      
-      if (!data.success) {
-        throw new Error(data.error || 'Failed to import events')
-      }
-      
-      setImportResult({
-        imported: data.imported,
-        skipped: data.skipped,
-        errors: data.errors || []
-      })
+      setImportResult(result)
       setStep('complete')
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to import events')
@@ -202,11 +151,11 @@ export function CalendarImportStep({ onComplete, onSkip }: CalendarImportStepPro
             <CardContent>
               <Button 
                 onClick={handleChooseGoogle}
-                disabled={loading}
+                disabled={calendarsLoading}
                 className="w-full"
                 size="lg"
               >
-                {loading ? (
+                {calendarsLoading ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                     {t('calendar.yogaOnboarding.import.choose.googleCard.loading')}
@@ -239,7 +188,7 @@ export function CalendarImportStep({ onComplete, onSkip }: CalendarImportStepPro
                   type="file"
                   accept=".ics,.ical"
                   onChange={handleICSUpload}
-                  disabled={loading}
+                  disabled={previewMutation.isPending}
                 />
               </div>
               <InfoSection title={t('calendar.yogaOnboarding.import.choose.icsCard.exportGuide.title')}>
@@ -284,7 +233,7 @@ export function CalendarImportStep({ onComplete, onSkip }: CalendarImportStepPro
                 No additional calendars found to import from
               </p>
             ) : (
-              availableCalendars.map((calendar) => (
+              availableCalendars.map((calendar: CalendarSource) => (
                 <div
                   key={calendar.id}
                   className="border rounded-lg p-4 hover:bg-gray-50 cursor-pointer transition-colors"

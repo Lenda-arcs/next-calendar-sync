@@ -155,4 +155,14 @@ export const queryInvalidation = {
     cancelInvitation: (invitationId: string) => ['admin', 'invitations', 'cancel', invitationId] as const,
     deleteUser: (userId: string) => ['admin', 'users', 'delete', userId] as const,
   },
+
+  // Calendar integration domain
+  calendar: {
+    all: ['calendar'] as const,
+    importable: () => ['calendar', 'importable'] as const,
+    import: (source: string) => ['calendar', 'import', source] as const,
+    uploadICS: () => ['calendar', 'upload-ics'] as const,
+    saveSelection: () => ['calendar', 'save-selection'] as const,
+    createYogaCalendar: () => ['calendar', 'create-yoga'] as const,
+  },
 } 

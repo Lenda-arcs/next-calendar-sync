@@ -384,4 +384,135 @@ export function useCancelInvitation() {
     mutationFn: ({ supabase, invitationId }: { supabase: SupabaseClient; invitationId: string }) => 
       dataAccess.cancelInvitation(supabase, invitationId),
   })
+}
+
+// ===== CALENDAR INTEGRATION HOOKS =====
+
+export function useCreateYogaCalendar() {
+  return useUnifiedMutation({
+    mutationFn: async ({ timeZone, syncApproach }: { timeZone?: string; syncApproach?: string }) => {
+      const response = await fetch('/api/calendar/create-yoga-calendar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          timeZone: timeZone || Intl.DateTimeFormat().resolvedOptions().timeZone,
+          sync_approach: syncApproach || 'yoga_only'
+        })
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Failed to create yoga calendar')
+      }
+
+      return await response.json()
+    },
+  })
+}
+
+// ===== CALENDAR IMPORT HOOKS =====
+
+export function useGetAvailableCalendars(options?: { enabled?: boolean }) {
+  return useUnifiedQuery({
+    queryKey: ['calendar', 'import', 'available'],
+    fetcher: async () => {
+      const response = await fetch('/api/calendar/import')
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch available calendars')
+      }
+      
+      const data = await response.json()
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to fetch calendars')
+      }
+      
+      return data.calendars || []
+    },
+    enabled: options?.enabled ?? true,
+  })
+}
+
+export function usePreviewCalendarImport() {
+  return useUnifiedMutation({
+    mutationFn: async ({ source, sourceCalendarId, icsContent }: {
+      source: 'google' | 'ics';
+      sourceCalendarId?: string;
+      icsContent?: string;
+    }) => {
+      const response = await fetch('/api/calendar/import', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'preview',
+          source,
+          ...(source === 'google' ? { sourceCalendarId } : { icsContent })
+        })
+      })
+      
+      const data = await response.json()
+      
+      if (!data.success) {
+        throw new Error(data.error || `Failed to preview ${source} events`)
+      }
+      
+      return data.preview
+    },
+  })
+}
+
+export function useImportCalendarEvents() {
+  return useUnifiedMutation({
+    mutationFn: async ({ source, events }: {
+      source: 'google' | 'ics';
+      events: unknown[];
+    }) => {
+      const response = await fetch('/api/calendar/import', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'import',
+          source,
+          events
+        })
+      })
+      
+      const data = await response.json()
+      
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to import events')
+      }
+      
+      return {
+        imported: data.imported,
+        skipped: data.skipped,
+        errors: data.errors || []
+      }
+    },
+  })
+}
+
+export function useSaveCalendarSelection() {
+  return useUnifiedMutation({
+    mutationFn: async ({ selections, syncApproach }: { 
+      selections: { calendarId: string; selected: boolean }[];
+      syncApproach?: string;
+    }) => {
+      const response = await fetch('/api/calendar-selection', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          selections,
+          sync_approach: syncApproach || 'yoga_only'
+        })
+      })
+
+      if (!response.ok) {
+        const error = await response.text()
+        throw new Error(error || 'Failed to save calendar selection')
+      }
+
+      return await response.json()
+    },
+  })
 } 

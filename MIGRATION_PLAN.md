@@ -410,4 +410,38 @@ Migration is complete when:
 - **Admin functionality**: ✅ **Fully functional** with TanStack Query
 - **Admin operations**: ✅ **Fast and reliable** with proper error handling
 
-**🚀 TRIPLE MILESTONE: Dashboard, Public Schedule, AND Admin with unified data fetching are production-ready!** 
+#### **✅ Calendar Integration Migration COMPLETE:**
+- [x] **YogaCalendarOnboarding** - ✅ **MIGRATED** to `useCreateYogaCalendar()`
+  - ✅ **Calendar creation** with unified mutation
+  - ✅ **Loading states** with `isPending` from TanStack Query
+  - ✅ **Error handling** with consistent patterns
+- [x] **CalendarSelectionModal** - ✅ **MIGRATED** to `useSaveCalendarSelection()`
+  - ✅ **Calendar selection** persistence with unified mutation
+  - ✅ **Form state management** with TanStack Query loading
+  - ✅ **Success/error feedback** with proper error handling
+- [x] **CalendarImportStep** - ✅ **MIGRATED** to multiple unified hooks
+  - ✅ **Complex multi-step flow**: `useGetAvailableCalendars()`, `usePreviewCalendarImport()`, `useImportCalendarEvents()`
+  - ✅ **Google Calendar import** with preview and selection
+  - ✅ **ICS file upload** with preview and import
+  - ✅ **Conditional loading states** per import step
+  - ✅ **Multi-source import** (Google + ICS file support)
+
+#### **🎯 FINAL Migration Progress Summary:**
+- **Dashboard Components**: ✅ **100% Complete** (4/4 components)
+- **Public Schedule**: ✅ **100% Complete** (1/1 components)  
+- **Admin Panel**: ✅ **100% Complete** (2/2 components)
+- **Calendar Integration**: ✅ **100% Complete** (3/3 components)
+
+#### **🏆 TOTAL CORE MIGRATION: 100% COMPLETE!**
+
+**🚀 ULTIMATE MILESTONE: Dashboard, Public Schedule, Admin, AND Full Calendar Integration with unified data fetching are production-ready!**
+
+---
+
+#### **🎮 Optional Future Enhancements:**
+The following components still use legacy patterns but are **secondary features**:
+- **Event Components**: PublicEventList, SubstituteEventModal, EventDetailsEditModal
+- **Studio Components**: StudioManagement, StudioRequestDialog  
+- **Tag/Invoice Components**: Various supporting components
+
+**Note**: Core user flows are 100% migrated. Remaining components are edge cases and advanced features. 
