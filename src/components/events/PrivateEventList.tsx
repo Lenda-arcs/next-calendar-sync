@@ -8,8 +8,7 @@ import { DashboardUpcomingClassesSkeleton } from '@/components/ui/skeleton'
 import { Calendar } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { type EventDisplayVariant } from '@/lib/event-types'
-import { useSupabaseQuery } from '@/lib/hooks/useSupabaseQuery'
-import { useAllTags } from '@/lib/hooks/useAllTags'
+import { useUserEvents, useAllTags } from '@/lib/hooks/useAppQuery'
 import { convertEventToCardProps } from '@/lib/event-utils'
 
 interface PrivateEventListProps {
@@ -25,33 +24,21 @@ const PrivateEventList: React.FC<PrivateEventListProps> = ({
   variant = 'compact',
   className = '',
 }) => {
-  // Fetch events using the custom hook - using events table instead of public_events view
+  // ✨ NEW: Use unified hooks for data fetching
   const {
     data: events,
     isLoading: eventsLoading,
     error: eventsError
-  } = useSupabaseQuery<Event[]>({
-    queryKey: ['private_events_preview', userId],
-    fetcher: async (supabase) => {
-      const { data, error } = await supabase
-        .from('events')
-        .select('*')
-        .eq('user_id', userId)
-        .gte('start_time', new Date().toISOString())
-        .order('start_time', { ascending: true })
-        .limit(eventCount)
-      
-      if (error) throw error
-      return data || []
-    },
-    enabled: !!userId,
-  })
+  } = useUserEvents(userId, { limit: eventCount }, { enabled: !!userId })
 
-  // Use shared tags hook instead of individual fetches
-  const { allTags, isLoading: tagsLoading } = useAllTags({ 
-    userId, 
-    enabled: !!userId 
-  })
+  // Use unified tags hook
+  const { 
+    data: tagData, 
+    isLoading: tagsLoading 
+  } = useAllTags(userId, { enabled: !!userId })
+
+  // Extract tags from unified response
+  const allTags = tagData?.allTags || []
 
   // Get grid classes based on variant
   const getGridClasses = () => {
@@ -90,7 +77,7 @@ const PrivateEventList: React.FC<PrivateEventListProps> = ({
     >
       {(events) => (
         <div className={cn(getGridClasses(), className)}>
-          {events.map((event) => (
+          {events.map((event: Event) => (
             <div key={event.id} className="flex flex-col">
               <EventCard
                 {...convertEventToCardProps(event, allTags)}

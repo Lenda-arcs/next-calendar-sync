@@ -83,6 +83,7 @@ export const queryKeys = {
     detail: (studioId: string) => ['studios', 'detail', studioId] as const,
     requests: (userId: string) => ['studios', 'requests', userId] as const,
     relationships: (userId: string) => ['studios', 'relationships', userId] as const,
+    teacherRelationships: (teacherId: string) => ['studios', 'teacher-relationships', teacherId] as const,
   },
 
   // Admin domain

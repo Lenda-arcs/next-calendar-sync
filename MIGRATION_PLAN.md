@@ -363,4 +363,22 @@ Migration is complete when:
    - Server-side prefetching for instant page loads
    - Performance optimization and Core Web Vitals improvement
 
-**🚀 Major Milestone: Core Dashboard with unified data fetching is production-ready!** 
+### **Dashboard Migration Progress Update** 🚧
+
+#### **✅ Completed Successfully:**
+- [x] **PrivateEventList** - ✅ **MIGRATED** to `useUserEvents()` and unified `useAllTags()`
+  - Now using unified data fetching on main dashboard
+  - Clean, consistent caching and performance
+
+#### **🚧 In Progress:**
+- [x] **TeacherStudioRequest** - 🔧 **DATA STRUCTURE MISMATCH**
+  - ✅ **Hook created**: `useTeacherStudioRelationships()` with unified pattern
+  - ⚠️ **Issue**: Component expects joined studio data, but simplified query doesn't include it
+  - 🔧 **Needs**: Data structure alignment or component refactoring
+
+#### **📊 Dashboard Status:**
+- **Core functionality**: ✅ **Working** (events, tags, invoices)
+- **Main features**: ✅ **Fully migrated**
+- **Studio requests**: 🚧 **Data structure issue** (non-critical feature)
+
+**🚀 Major Milestone: Core Dashboard with unified data fetching is production-ready!** *(Studio requests feature needs refinement)* 

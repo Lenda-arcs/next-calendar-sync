@@ -636,4 +636,22 @@ export async function deleteInvoice(supabase: SupabaseClient, invoiceId: string)
 
   if (error) throw error
   return data
+}
+
+// ===== TEACHER STUDIO RELATIONSHIPS =====
+
+export async function getTeacherStudioRelationships(supabase: SupabaseClient, teacherId: string) {
+  const { data, error } = await supabase
+    .from('studio_teacher_requests')
+    .select('*')  // ✅ Fixed: Simple select without problematic studio join
+    .eq('teacher_id', teacherId)
+    .eq('status', 'approved')
+    .order('processed_at', { ascending: false })
+
+  if (error) {
+    console.error('Error fetching teacher-studio relationships:', error)
+    return []
+  }
+
+  return data || []
 } 

@@ -327,4 +327,14 @@ export function useDeleteInvoice() {
       // Manual invalidation for now - would invalidate invoices queries
     },
   })
+}
+
+// ===== TEACHER STUDIO RELATIONSHIPS HOOKS =====
+
+export function useTeacherStudioRelationships(teacherId: string, options?: { enabled?: boolean }) {
+  return useUnifiedQuery({
+    queryKey: queryKeys.studios.teacherRelationships(teacherId),
+    fetcher: (supabase) => dataAccess.getTeacherStudioRelationships(supabase, teacherId),
+    enabled: options?.enabled ?? !!teacherId,
+  })
 } 
