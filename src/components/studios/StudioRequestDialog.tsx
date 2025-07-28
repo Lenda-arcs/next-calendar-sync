@@ -74,7 +74,7 @@ export function StudioRequestDialog({ isOpen, onClose, userId }: StudioRequestDi
 
   // Fetch available studios and calculate relevance
   const { data: relevantStudios, isLoading } = useSupabaseQuery<RelevantStudio[]>({
-    queryKey: ['relevant-studios', userId, String(userEventLocations?.locations.length || 0)],
+    queryKey: ['relevant-studios', userId, String(userEventLocations?.locations?.length || 0)],
     fetcher: async (supabase) => {
       // Get all verified studios
       const { data: studiosData, error: studiosError } = await supabase
@@ -98,7 +98,7 @@ export function StudioRequestDialog({ isOpen, onClose, userId }: StudioRequestDi
       const availableStudios = studiosData?.filter((studio: Studio) => !existingStudioIds.has(studio.id)) || []
 
       // If no user event data yet, return all available studios with score 0
-      if (!userEventLocations || !userEventLocations.locations || userEventLocations.locations.length === 0) {
+      if (!userEventLocations?.locations || userEventLocations.locations.length === 0) {
         return availableStudios.map((studio: Studio) => ({
           ...studio,
           matchScore: 0,
@@ -167,7 +167,7 @@ export function StudioRequestDialog({ isOpen, onClose, userId }: StudioRequestDi
       })
 
       // If user has events but no studios match, show a few fallback studios
-      if (userEventLocations?.locations && userEventLocations.locations.length > 0 && sortedStudios.length === 0) {
+      if (userEventLocations?.locations?.length > 0 && sortedStudios.length === 0) {
         const fallbackStudios = availableStudios.slice(0, 3).map((studio: Studio) => ({
           ...studio,
           matchScore: 0,

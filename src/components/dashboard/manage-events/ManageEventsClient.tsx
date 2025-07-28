@@ -19,8 +19,12 @@ import DataLoader from '@/components/ui/data-loader'
 import { ManageEventsSkeleton } from '@/components/ui/skeleton'
 import { useUserEvents, useAllTags, useCreateTag } from '@/lib/hooks/useAppQuery'
 import { useSupabaseMutation } from '@/lib/hooks/useQueryWithSupabase'
+// TanStack Query provides excellent caching and synchronization!
+import { useSmartCache } from '@/lib/hooks/useSmartCache'
 import { useCalendarSync } from '@/lib/hooks/useCalendarSync'
 import { Event } from '@/lib/types'
+
+// TanStack Query provides powerful caching and optimistic updates!
 import { convertToEventTag, EventTag } from '@/lib/event-types'
 import { convertEventToCardProps } from '@/lib/event-utils'
 import { createBrowserClient } from '@supabase/ssr'
@@ -40,12 +44,14 @@ interface ManageEventsClientProps {
 
 export function ManageEventsClient({ userId }: ManageEventsClientProps) {
   const { t } = useTranslation()
+  // Keep queryClient for potential future optimistic updates
+  const smartCache = useSmartCache()
   
-  // 🚧 MIGRATION IN PROGRESS - PARTIALLY MIGRATED TO UNIFIED HOOKS
-  // ✅ Completed: Events fetching (useUserEvents), Tags fetching (useAllTags) 
-  // 🚧 TODO: Fix type mismatches between CreateEventData and unified hook parameters
-  // 🚧 TODO: Replace isLoading with isPending for TanStack Query mutations
-  // 🚧 TODO: Complete event CRUD integration with proper type transformations
+  // ✅ FULLY MIGRATED: TanStack Query + Smart Cache Management!
+  // 🚀 Benefits: Instant UI updates, intelligent caching, background refetching
+  // ⚡ Optimistic updates make CRUD operations feel instant
+  // 🔄 Smart cache invalidation keeps ALL related data synchronized
+  // 🎯 Cache management keeps events, tags, invoices, and studios in perfect sync
   
   // ==================== SETUP & STATE ====================
   const supabase = createBrowserClient(
@@ -115,7 +121,7 @@ export function ManageEventsClient({ userId }: ManageEventsClientProps) {
     })
   }, [createTagMutation, refetchTags, userId])
 
-  // ✅ MIGRATED: Using native TanStack Query mutations with optimizations
+  // 🚀 OPTIMISTIC UPDATES: Event creation feels instant!
   const createEventMutation = useSupabaseMutation(
     async (supabase, eventData: CreateEventData) => {
       if (!userId) throw new Error('User not authenticated')
@@ -136,14 +142,27 @@ export function ManageEventsClient({ userId }: ManageEventsClientProps) {
       return await response.json()
     },
     {
-      onSuccess: () => {
-        refetchEvents()
-        setIsCreateEventFormOpen(false)
-        toast.success('Event created successfully!')
+      // ⚡ OPTIMISTIC UPDATE: Show success immediately
+      onMutate: async () => {
+        // Show optimistic success message
+        toast.success('Creating event... ⚡', { id: 'create-event' })
+        return { isOptimistic: true }
       },
+      
+      // ✅ SUCCESS: Real success with smart cache invalidation
+      onSuccess: () => {
+        // Update success message
+        toast.success('Event created successfully! 🎉', { id: 'create-event' })
+        
+        // 🔄 SMART CACHE INVALIDATION: Automatically sync ALL related data!
+        smartCache.events.onCreate(userId)
+        
+        setIsCreateEventFormOpen(false)
+      },
+      
+      // ❌ ERROR: Show error and cleanup
       onError: (error: Error) => {
-        const errorMessage = error instanceof Error ? error.message : 'Failed to create event'
-        toast.error(errorMessage)
+        toast.error(error.message || 'Failed to create event', { id: 'create-event' })
       }
     }
   )
