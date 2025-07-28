@@ -290,4 +290,41 @@ export function useDeleteEvent() {
       // Manual invalidation for now - would invalidate events queries
     },
   })
+}
+
+// ===== INVOICE OPERATIONS HOOKS =====
+
+export function useUpdateInvoiceStatus() {
+  return useUnifiedMutation({
+    mutationFn: (supabase, { invoiceId, status, timestamp }: {
+      invoiceId: string
+      status: 'draft' | 'sent' | 'paid' | 'overdue' | 'cancelled'
+      timestamp?: string
+    }) => dataAccess.updateInvoiceStatus(supabase, invoiceId, status, timestamp),
+    onSuccess: () => {
+      // Manual invalidation for now - would invalidate invoices queries
+    },
+  })
+}
+
+export function useGenerateInvoicePDF() {
+  return useUnifiedMutation({
+    mutationFn: (supabase, { invoiceId, language }: {
+      invoiceId: string
+      language?: 'en' | 'de' | 'es'
+    }) => dataAccess.generateInvoicePDF(supabase, invoiceId, language),
+    onSuccess: () => {
+      // Manual invalidation for now - would invalidate invoices queries
+    },
+  })
+}
+
+export function useDeleteInvoice() {
+  return useUnifiedMutation({
+    mutationFn: (supabase, { invoiceId }: { invoiceId: string }) => 
+      dataAccess.deleteInvoice(supabase, invoiceId),
+    onSuccess: () => {
+      // Manual invalidation for now - would invalidate invoices queries
+    },
+  })
 } 

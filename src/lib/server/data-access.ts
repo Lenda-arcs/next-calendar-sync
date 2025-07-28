@@ -229,15 +229,12 @@ export async function getCalendarFeedById(supabase: SupabaseClient, feedId: stri
 export async function getUserStudios(supabase: SupabaseClient, userId: string) {
   const { data, error } = await supabase
     .from('teacher_studio_relationships')
-    .select(`
-      *,
-      studio:studios(*)
-    `)
+    .select('*')  // ✅ Fixed: Simple select without problematic studio join
     .eq('teacher_id', userId)
     .order('created_at', { ascending: false })
   
   if (error) throw error
-  return data
+  return data || []
 }
 
 export async function getStudioById(supabase: SupabaseClient, studioId: string) {
@@ -256,16 +253,12 @@ export async function getStudioById(supabase: SupabaseClient, studioId: string) 
 export async function getUserInvoices(supabase: SupabaseClient, userId: string) {
   const { data, error } = await supabase
     .from('invoices')
-    .select(`
-      *,
-      studio:studios(*),
-      invoice_events(event:events(*))
-    `)
+    .select('*')  // ✅ Fixed: Simple select without problematic joins
     .eq('user_id', userId)
     .order('created_at', { ascending: false })
   
   if (error) throw error
-  return data
+  return data || []
 }
 
 export async function getUninvoicedEvents(
@@ -547,4 +540,100 @@ export async function deleteEventViaAPI(eventId: string) {
   }
 
   return await response.json()
+}
+
+// ===== INVOICE OPERATIONS =====
+
+export async function updateInvoiceStatus(
+  supabase: SupabaseClient,
+  invoiceId: string, 
+  status: 'draft' | 'sent' | 'paid' | 'overdue' | 'cancelled',
+  timestamp?: string
+) {
+  const updates: Partial<{ status: string; sent_at?: string; paid_at?: string }> = { status }
+  
+  // Set appropriate timestamp based on status
+  if (status === 'sent' && timestamp) {
+    updates.sent_at = timestamp
+  } else if (status === 'paid' && timestamp) {
+    updates.paid_at = timestamp
+  }
+
+  const { data, error } = await supabase
+    .from("invoices")
+    .update(updates)
+    .eq('id', invoiceId)
+    .select()
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+export async function generateInvoicePDF(
+  supabase: SupabaseClient,
+  invoiceId: string, 
+  language: 'en' | 'de' | 'es' = 'en'
+) {
+  const { data, error } = await supabase.functions.invoke('generate-invoice-pdf', {
+    body: { invoiceId, language }
+  })
+
+  if (error) {
+    console.error('Error generating PDF:', error)
+    throw new Error(`Failed to generate PDF: ${error.message}`)
+  }
+
+  if (!data.success) {
+    throw new Error(data.error || 'Failed to generate PDF')
+  }
+
+  return { pdf_url: data.pdf_url }
+}
+
+export async function deleteInvoice(supabase: SupabaseClient, invoiceId: string) {
+  // First, get the invoice details to check for PDF file
+  const { data: invoice, error: fetchError } = await supabase
+    .from("invoices")
+    .select("pdf_url, user_id")
+    .eq("id", invoiceId)
+    .single()
+
+  if (fetchError) {
+    console.error("Error fetching invoice for deletion:", fetchError)
+    throw new Error(`Failed to fetch invoice: ${fetchError.message}`)
+  }
+
+  // Delete PDF file from storage if it exists
+  if (invoice?.pdf_url) {
+    try {
+      // Extract file path from URL - assuming it follows the pattern /storage/v1/object/public/bucket/path
+      const url = new URL(invoice.pdf_url)
+      const pathParts = url.pathname.split('/')
+      const fileName = pathParts[pathParts.length - 1]
+      const filePath = `invoices/${invoice.user_id}/${fileName}`
+      
+      const { error: deleteFileError } = await supabase.storage
+        .from('invoice-pdfs')
+        .remove([filePath])
+        
+      if (deleteFileError) {
+        console.warn('Failed to delete PDF file:', deleteFileError)
+        // Continue with invoice deletion even if file deletion fails
+      }
+    } catch (urlError) {
+      console.warn('Failed to parse PDF URL for deletion:', urlError)
+      // Continue with invoice deletion even if file deletion fails
+    }
+  }
+
+  // Delete the invoice from database
+  const { data, error } = await supabase
+    .from("invoices")
+    .delete()
+    .eq("id", invoiceId)
+    .select()
+
+  if (error) throw error
+  return data
 } 

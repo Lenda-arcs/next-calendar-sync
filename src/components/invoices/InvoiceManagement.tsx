@@ -10,8 +10,14 @@ import { UninvoicedEventsList } from './UninvoicedEventsList'
 import { InvoiceCreationModal } from './InvoiceCreationModal'
 import { InvoiceSettings } from './InvoiceSettings'
 import { InvoiceCard } from './InvoiceCard'
-import { useSupabaseQuery } from '@/lib/hooks/useSupabaseQuery'
-import { getUserInvoices, getUninvoicedEvents, updateInvoiceStatus, generateInvoicePDF, deleteInvoice, EventWithStudio, InvoiceWithDetails } from '@/lib/invoice-utils'
+import { 
+  useUserInvoices, 
+  useUninvoicedEvents,
+  useUpdateInvoiceStatus,
+  useGenerateInvoicePDF,
+  useDeleteInvoice 
+} from '@/lib/hooks/useAppQuery'
+import { EventWithStudio, InvoiceWithDetails } from '@/lib/invoice-utils'
 import { toast } from 'sonner'
 import { Receipt, FileText, Settings, Loader2 } from 'lucide-react'
 import { useTranslation } from '@/lib/i18n/context'
@@ -56,14 +62,13 @@ export function InvoiceManagement({ userId }: InvoiceManagementProps) {
     setTimeout(() => setTabSwitchLoading(null), 150)
   }
 
+  // ✨ NEW: Use unified hooks for data fetching
   // Fetch uninvoiced events only when on uninvoiced tab
   const { 
     data: uninvoicedEvents, 
     isLoading: uninvoicedLoading,
     refetch: refetchUninvoiced 
-  } = useSupabaseQuery({
-    queryKey: ['uninvoiced-events', userId],
-    fetcher: () => getUninvoicedEvents(userId),
+  } = useUninvoicedEvents(userId, undefined, {
     enabled: !!userId && (activeTab === 'uninvoiced' || tabSwitchLoading === 'uninvoiced')
   })
 
@@ -73,9 +78,7 @@ export function InvoiceManagement({ userId }: InvoiceManagementProps) {
     isLoading: invoicesLoading,
     error: invoicesError,
     refetch: refetchInvoices 
-  } = useSupabaseQuery({
-    queryKey: ['user-invoices', userId],
-    fetcher: () => getUserInvoices(userId),
+  } = useUserInvoices(userId, {
     enabled: !!userId && (activeTab === 'invoices' || tabSwitchLoading === 'invoices')
   })
 
@@ -97,67 +100,85 @@ export function InvoiceManagement({ userId }: InvoiceManagementProps) {
     setInvoiceModalOpen(true)
   }
 
-  const handleStatusChange = async (invoiceId: string, newStatus: 'sent' | 'paid' | 'overdue') => {
-    try {
-      const timestamp = new Date().toISOString()
-      await updateInvoiceStatus(invoiceId, newStatus, timestamp)
-      
-      // Refresh invoices list to show updated status
-      refetchInvoices()
-    } catch (error) {
-      console.error('Failed to update invoice status:', error)
-      // You might want to show a toast notification here
-    }
+  // ✨ NEW: Use unified mutation hooks
+  const updateInvoiceStatusMutation = useUpdateInvoiceStatus()
+  const generateInvoicePDFMutation = useGenerateInvoicePDF()
+  const deleteInvoiceMutation = useDeleteInvoice()
+
+  const handleStatusChange = (invoiceId: string, newStatus: 'sent' | 'paid' | 'overdue') => {
+    const timestamp = new Date().toISOString()
+    
+    updateInvoiceStatusMutation.mutate(
+      { invoiceId, status: newStatus, timestamp },
+      {
+        onSuccess: () => {
+          // Refresh invoices list to show updated status
+          refetchInvoices()
+        },
+        onError: (error) => {
+          console.error('Failed to update invoice status:', error)
+          toast.error('Failed to update invoice status')
+        }
+      }
+    )
   }
 
-  const handleGeneratePDF = async (invoiceId: string, language: 'en' | 'de' | 'es' = 'en') => {
-    try {
-      const { pdf_url } = await generateInvoicePDF(invoiceId, language)
-      
-      // Refresh invoices list to show updated PDF URL
-      refetchInvoices()
-      
-      // Show success toast with option to view PDF
-      toast(t('invoices.creation.pdfGenerated'), {
-        description: t('invoices.creation.pdfGeneratedDesc'),
-        action: {
-          label: t('invoices.creation.viewPDF'),
-          onClick: () => window.open(pdf_url, '_blank'),
+  const handleGeneratePDF = (invoiceId: string, language: 'en' | 'de' | 'es' = 'en') => {
+    generateInvoicePDFMutation.mutate(
+      { invoiceId, language },
+      {
+        onSuccess: ({ pdf_url }) => {
+          // Refresh invoices list to show updated PDF URL
+          refetchInvoices()
+          
+          // Show success toast with option to view PDF
+          toast(t('invoices.creation.pdfGenerated'), {
+            description: t('invoices.creation.pdfGeneratedDesc'),
+            action: {
+              label: t('invoices.creation.viewPDF'),
+              onClick: () => window.open(pdf_url, '_blank'),
+            },
+            duration: 8000
+          })
         },
-        duration: 8000
-      })
-    } catch (error) {
-      console.error('Failed to generate PDF:', error)
-      toast.error(t('invoices.creation.pdfFailed'), {
-        description: t('invoices.creation.pdfFailedDesc'),
-        duration: 6000
-      })
-    }
+        onError: (error) => {
+          console.error('Failed to generate PDF:', error)
+          toast.error(t('invoices.creation.pdfFailed'), {
+            description: t('invoices.creation.pdfFailedDesc'),
+            duration: 6000
+          })
+        }
+      }
+    )
   }
 
   const handleViewPDF = (pdfUrl: string) => {
     window.open(pdfUrl, '_blank')
   }
 
-  const handleDeleteInvoice = async (invoiceId: string) => {
-    try {
-      await deleteInvoice(invoiceId)
-      
-      // Refresh both uninvoiced events and invoices lists
-      refetchUninvoiced()
-      refetchInvoices()
-      
-      toast(t('invoices.card.deleteSuccess'), {
-        description: t('invoices.card.deleteSuccessDesc'),
-        duration: 5000
-      })
-    } catch (error) {
-      console.error('Failed to delete invoice:', error)
-      toast.error(t('invoices.card.deleteFailed'), {
-        description: t('invoices.card.deleteFailedDesc'),
-        duration: 6000
-      })
-    }
+  const handleDeleteInvoice = (invoiceId: string) => {
+    deleteInvoiceMutation.mutate(
+      { invoiceId },
+      {
+        onSuccess: () => {
+          // Refresh both uninvoiced events and invoices lists
+          refetchUninvoiced()
+          refetchInvoices()
+          
+          toast(t('invoices.card.deleteSuccess'), {
+            description: t('invoices.card.deleteSuccessDesc'),
+            duration: 5000
+          })
+        },
+        onError: (error) => {
+          console.error('Failed to delete invoice:', error)
+          toast.error(t('invoices.card.deleteFailed'), {
+            description: t('invoices.card.deleteFailedDesc'),
+            duration: 6000
+          })
+        }
+      }
+    )
   }
 
   const handleInvoiceSuccess = () => {

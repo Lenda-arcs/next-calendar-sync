@@ -70,6 +70,10 @@ export const queryKeys = {
     uninvoicedEvents: (userId: string, studioId?: string) => 
       ['invoices', 'uninvoiced', userId, ...(studioId ? [studioId] : [])] as const,
     settings: (userId: string) => ['invoices', 'settings', userId] as const,
+    // Invoice operations
+    updateStatus: (invoiceId: string) => ['invoices', 'update-status', invoiceId] as const,
+    generatePDF: (invoiceId: string) => ['invoices', 'generate-pdf', invoiceId] as const,
+    delete: (invoiceId: string) => ['invoices', 'delete', invoiceId] as const,
   },
 
   // Studios domain
