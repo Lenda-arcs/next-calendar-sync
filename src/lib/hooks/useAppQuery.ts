@@ -521,8 +521,7 @@ export function useSaveCalendarSelection() {
 
 export function useUpdateUserProfile() {
   return useUnifiedMutation({
-    mutationFn: ({ supabase, userId, profileData }: { 
-      supabase: SupabaseClient; 
+    mutationFn: (supabase, { userId, profileData }: { 
       userId: string; 
       profileData: Parameters<typeof dataAccess.updateUserProfile>[2] 
     }) => 
@@ -532,8 +531,7 @@ export function useUpdateUserProfile() {
 
 export function useMarkInvitationAsUsed() {
   return useUnifiedMutation({
-    mutationFn: ({ supabase, token, userId }: { 
-      supabase: SupabaseClient; 
+    mutationFn: (supabase, { token, userId }: { 
       token: string; 
       userId: string; 
     }) => 
