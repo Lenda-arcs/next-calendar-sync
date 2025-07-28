@@ -108,7 +108,7 @@ export default async function LocalizedAppLayout({ children, params }: AppLayout
             </div>
 
             {/* Navigation */}
-            <ActiveNavLinks navigation={desktopNavigation} />
+            <ActiveNavLinks navigation={desktopNavigation} userId={user.id} />
 
             {/* User Menu */}
             <div className="flex items-center space-x-4">

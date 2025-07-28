@@ -10,6 +10,7 @@ import { PATHS } from '@/lib/paths'
 import { Calendar } from 'lucide-react'
 import { TeacherStudioRequest } from './components/TeacherStudioRequest'
 import { useTranslationNamespace } from '@/lib/i18n/context'
+import { useSmartPreload } from '@/lib/hooks/useSmartPreload'
 
 interface DashboardContentProps {
   user: { name?: string | null; public_url?: string | null } | null
@@ -29,6 +30,14 @@ export default function DashboardContent({
   hasCustomUrl
 }: DashboardContentProps) {
   const { t } = useTranslationNamespace('dashboard')
+  
+  // ✨ Smart preloading for instant navigation
+  const {
+    preloadManageEventsData,
+    preloadManageInvoicesData,
+    preloadManageTagsData,
+    preloadPublicEvents
+  } = useSmartPreload()
 
   const shareLabel = hasCustomUrl
     ? t('publicSchedule.yourSchedule')
@@ -96,14 +105,19 @@ export default function DashboardContent({
                        label={shareLabel}
                        buttonText={t('publicSchedule.share')}
                      />
-                     <LoadingButtonLink
-                       href={publicPath}
-                       variant="secondary"
-                       className="flex-1"
-                       iconName="Eye"
+                     <div
+                       onMouseEnter={() => preloadPublicEvents(userId)}
+                       onFocus={() => preloadPublicEvents(userId)}
                      >
-                       {t('publicSchedule.viewPublic')}
-                     </LoadingButtonLink>
+                       <LoadingButtonLink
+                         href={publicPath}
+                         variant="secondary"
+                         className="flex-1"
+                         iconName="Eye"
+                       >
+                         {t('publicSchedule.viewPublic')}
+                       </LoadingButtonLink>
+                     </div>
                    </div>
                  </CardContent>
                </Card>
@@ -118,14 +132,23 @@ export default function DashboardContent({
                  </CardDescription>
                </CardHeader>
                <CardContent>
-                 <LoadingButtonLink
-                   href={PATHS.APP.MANAGE_EVENTS}
-                   variant="default"
-                   className="w-full"
-                   iconName="Calendar"
+                 <div
+                   onMouseEnter={() => {
+                     preloadManageEventsData(userId)
+                   }}
+                   onFocus={() => {
+                     preloadManageEventsData(userId)
+                   }}
                  >
-                   {t('manageEvents.button')}
-                 </LoadingButtonLink>
+                   <LoadingButtonLink
+                     href={PATHS.APP.MANAGE_EVENTS}
+                     variant="default"
+                     className="w-full"
+                     iconName="Calendar"
+                   >
+                     {t('manageEvents.button')}
+                   </LoadingButtonLink>
+                 </div>
                </CardContent>
              </Card>
  
@@ -138,14 +161,23 @@ export default function DashboardContent({
                  </CardDescription>
                </CardHeader>
                <CardContent>
-                 <LoadingButtonLink
-                   href={PATHS.APP.MANAGE_TAGS}
-                   variant="default"
-                   className="w-full"
-                   iconName="Tags"
+                 <div
+                   onMouseEnter={() => {
+                     preloadManageTagsData(userId)
+                   }}
+                   onFocus={() => {
+                     preloadManageTagsData(userId)
+                   }}
                  >
-                   {t('tagRules.button')}
-                 </LoadingButtonLink>
+                   <LoadingButtonLink
+                     href={PATHS.APP.MANAGE_TAGS}
+                     variant="default"
+                     className="w-full"
+                     iconName="Tags"
+                   >
+                     {t('tagRules.button')}
+                   </LoadingButtonLink>
+                 </div>
                </CardContent>
              </Card>
  
@@ -158,14 +190,23 @@ export default function DashboardContent({
                  </CardDescription>
                </CardHeader>
                <CardContent>
-                 <LoadingButtonLink
-                   href={PATHS.APP.MANAGE_INVOICES}
-                   variant="default"
-                   className="w-full"
-                   iconName="Receipt"
+                 <div
+                   onMouseEnter={() => {
+                     preloadManageInvoicesData(userId)
+                   }}
+                   onFocus={() => {
+                     preloadManageInvoicesData(userId)
+                   }}
                  >
-                   {t('invoices.button')}
-                 </LoadingButtonLink>
+                   <LoadingButtonLink
+                     href={PATHS.APP.MANAGE_INVOICES}
+                     variant="default"
+                     className="w-full"
+                     iconName="Receipt"
+                   >
+                     {t('invoices.button')}
+                   </LoadingButtonLink>
+                 </div>
                </CardContent>
              </Card>
 
