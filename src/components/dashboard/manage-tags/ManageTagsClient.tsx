@@ -1,9 +1,10 @@
 'use client'
 
-import React, { useMemo } from 'react'
+import React from 'react'
 import DataLoader from '@/components/ui/data-loader'
 import { TagLibraryGridSkeleton } from '@/components/ui/skeleton'
-import { useAllTags, useUserRole } from '@/lib/hooks/useAppQuery'
+import { useAllTags } from '@/lib/hooks/useAllTags'
+import { useUserRole } from '@/lib/hooks/useAppQuery'
 import { useTagOperations } from '@/lib/hooks/useTagOperations'
 import { clearTagMapCache } from '@/lib/event-utils'
 import { TagLibrary, TagRuleManager, TagViewDialog } from '@/components/tags'
@@ -19,11 +20,13 @@ interface Props {
 export function ManageTagsClient({ userId }: Props) {
   // ✨ Use unified hooks
   const { 
-    data: tagData, 
+    userTags, 
+    globalTags, 
+    allTags, 
     isLoading: tagsLoading, 
     error: tagsError, 
     refetch: refetchAllTags 
-  } = useAllTags(userId, { enabled: !!userId })
+  } = useAllTags({ userId, enabled: !!userId })
 
   const { 
     data: userRole, 
@@ -50,11 +53,6 @@ export function ManageTagsClient({ userId }: Props) {
     onSuccess: refetchAllTags
   })
 
-  // Extract tag data from unified response
-  const allTags = useMemo(() => tagData?.allTags || [], [tagData?.allTags])
-  const userTags = useMemo(() => tagData?.userTags || [], [tagData?.userTags])
-  const globalTags = useMemo(() => tagData?.globalTags || [], [tagData?.globalTags])
-  
   // Clear cache when tags are updated
   React.useEffect(() => {
     clearTagMapCache()

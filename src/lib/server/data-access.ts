@@ -173,7 +173,7 @@ export async function getUserEvents(
     query = query.range(filters.offset, filters.offset + (filters.limit || 50) - 1)
   }
 
-  query = query.order('start_time', { ascending: true, nullsLast: true })  // ✅ Fixed: Match working pattern
+  query = query.order('start_time', { ascending: true, nullsFirst: false })  // ✅ Fixed: Match working pattern
 
   const { data, error } = await query
 

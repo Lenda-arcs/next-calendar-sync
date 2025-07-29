@@ -23,7 +23,7 @@ export function useAllTags({ userId, enabled = true }: UseAllTagsProps = {}) {
         .from('tags')
         .select('*')
         .eq('user_id', userId)
-        .order('priority', { ascending: false, nullsLast: true })
+        .order('priority', { ascending: false, nullsFirst: false })
       
       if (error) throw error
       return data || []
@@ -44,7 +44,7 @@ export function useAllTags({ userId, enabled = true }: UseAllTagsProps = {}) {
         .from('tags')
         .select('*')
         .is('user_id', null)
-        .order('priority', { ascending: false, nullsLast: true })
+        .order('priority', { ascending: false, nullsFirst: false })
       
       if (error) throw error
       return data || []

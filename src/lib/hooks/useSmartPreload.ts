@@ -1,10 +1,14 @@
 'use client'
 import { useQueryClient } from '@tanstack/react-query'
 import { createBrowserClient } from '@supabase/ssr'
+import { queryKeys } from '../query-keys'
+import * as dataAccess from '../server/data-access'
 
 /**
  * Hook for intelligent data preloading based on user intent signals
  * Optimized for better UX with predictive loading
+ * 
+ * ✅ Fixed: Uses same query keys and data access functions as actual hooks
  */
 export function useSmartPreload() {
   const queryClient = useQueryClient()
@@ -15,104 +19,101 @@ export function useSmartPreload() {
 
   return {
     preloadUserEvents: (userId: string) => {
+      // ✅ Uses same query key as useUserEvents hook (without filters for general preload)
       return queryClient.prefetchQuery({
-        queryKey: ['events', 'list', userId],
-        queryFn: () => fetchUserEvents(supabase, userId),
+        queryKey: queryKeys.events.list(userId),
+        queryFn: () => dataAccess.getUserEvents(supabase, userId),
         staleTime: 30 * 1000, // 30 seconds
       })
     },
 
-    preloadUserTags: (userId: string) => {
-      return queryClient.prefetchQuery({
-        queryKey: ['tags', 'user', userId],
-        queryFn: () => fetchUserTags(supabase, userId),
-        staleTime: 60 * 1000, // 1 minute
-      })
+        preloadUserTags: (userId: string) => {
+      // ✅ Preload all tag query patterns used across the app
+      return Promise.all([
+        // User tags (for TagLibrary)
+        queryClient.prefetchQuery({
+          queryKey: ['user_tags', userId],
+          queryFn: async () => {
+            const { data, error } = await supabase
+              .from('tags')
+              .select('*')
+              .eq('user_id', userId)
+              .order('priority', { ascending: false, nullsFirst: false })
+            
+            if (error) throw error
+            return data || []
+          },
+          staleTime: 60 * 1000, // 1 minute
+        }),
+        // Global tags (for TagLibrary)
+        queryClient.prefetchQuery({
+          queryKey: ['global_tags'],
+          queryFn: async () => {
+            const { data, error } = await supabase
+              .from('tags')
+              .select('*')
+              .is('user_id', null)
+              .order('priority', { ascending: false, nullsFirst: false })
+            
+            if (error) throw error
+            return data || []
+          },
+          staleTime: 60 * 1000, // 1 minute
+        }),
+        // All tags combined (for TagRuleManager and useAppQuery)
+        queryClient.prefetchQuery({
+          queryKey: ['tags', 'all', userId],
+          queryFn: async () => {
+            const { data, error } = await supabase
+              .from('tags')
+              .select('*')
+              .or(`user_id.eq.${userId},user_id.is.null`)
+              .order('priority', { ascending: false, nullsFirst: false })
+            
+            if (error) throw error
+            return data || []
+          },
+          staleTime: 60 * 1000, // 1 minute
+        }),
+        // Tag rules (often used with tags)
+        queryClient.prefetchQuery({
+          queryKey: ['tag-rules', userId],
+          queryFn: async () => {
+            const { data, error } = await supabase
+              .from('tag_rules')
+              .select('*')
+              .eq('user_id', userId)
+            
+            if (error) throw error
+            return data || []
+          },
+          staleTime: 60 * 1000, // 1 minute
+        })
+      ])
     },
 
     preloadPublicEvents: (teacherSlug: string) => {
       return queryClient.prefetchQuery({
-        queryKey: ['events', 'public', teacherSlug],
-        queryFn: () => fetchPublicEvents(supabase, teacherSlug),
+        queryKey: queryKeys.events.public(teacherSlug),
+        queryFn: () => dataAccess.getPublicEvents(supabase, teacherSlug),
         staleTime: 30 * 1000, // 30 seconds
       })
     },
 
     preloadUserStudios: (userId: string) => {
       return queryClient.prefetchQuery({
-        queryKey: ['studios', 'user', userId],
-        queryFn: () => fetchUserStudios(supabase, userId),
+        queryKey: queryKeys.studios.userStudios(userId),
+        queryFn: () => dataAccess.getUserStudios(supabase, userId),
         staleTime: 5 * 60 * 1000, // 5 minutes
       })
     },
 
     preloadInvoices: (userId: string) => {
       return queryClient.prefetchQuery({
-        queryKey: ['invoices', 'list', userId],
-        queryFn: () => fetchUserInvoices(supabase, userId),
+        queryKey: queryKeys.invoices.userInvoices(userId),
+        queryFn: () => dataAccess.getUserInvoices(supabase, userId),
         staleTime: 2 * 60 * 1000, // 2 minutes
       })
     },
   }
-}
-
-// Helper functions for data fetching
-async function fetchUserEvents(supabase: ReturnType<typeof createBrowserClient>, userId: string) {
-  const { data, error } = await supabase
-    .from('events')
-    .select('*')
-    .eq('user_id', userId)
-    .order('start_time', { ascending: false })
-    .limit(50)
-
-  if (error) throw error
-  return data
-}
-
-async function fetchUserTags(supabase: ReturnType<typeof createBrowserClient>, userId: string) {
-  const { data, error } = await supabase
-    .from('tags')
-    .select('*')
-    .eq('user_id', userId)
-    .order('name')
-
-  if (error) throw error
-  return data
-}
-
-async function fetchPublicEvents(supabase: ReturnType<typeof createBrowserClient>, teacherSlug: string) {
-  const { data, error } = await supabase
-    .from('events')
-    .select('*, users!inner(teacher_slug)')
-    .eq('users.teacher_slug', teacherSlug)
-    .eq('is_private', false)
-    .gte('start_time', new Date().toISOString())
-    .order('start_time', { ascending: true })
-    .limit(20)
-
-  if (error) throw error
-  return data
-}
-
-async function fetchUserStudios(supabase: ReturnType<typeof createBrowserClient>, userId: string) {
-  const { data, error } = await supabase
-    .from('teacher_studio_relationships')
-    .select('*, studios(*)')
-    .eq('teacher_id', userId)
-    .eq('status', 'approved')
-
-  if (error) throw error
-  return data
-}
-
-async function fetchUserInvoices(supabase: ReturnType<typeof createBrowserClient>, userId: string) {
-  const { data, error } = await supabase
-    .from('invoices')
-    .select('*')
-    .eq('user_id', userId)
-    .order('created_at', { ascending: false })
-    .limit(20)
-
-  if (error) throw error
-  return data
 } 

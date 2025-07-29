@@ -1,7 +1,8 @@
 'use client'
 
 import React from 'react'
-import { useAllTags, useUserRole } from '@/lib/hooks/useAppQuery'
+import { useAllTags } from '@/lib/hooks/useAllTags'
+import { useUserRole } from '@/lib/hooks/useAppQuery'
 import { queryKeys } from '@/lib/query-keys'
 import { TagLibrary } from '@/components/tags/TagLibrary'
 import { TagRuleManager } from '@/components/tags/TagRuleManager'
@@ -25,10 +26,12 @@ export function ManageTagsClientUnified({ userId }: Props) {
 
   // ✨ NEW: Clean, consistent query hooks
   const { 
-    data: tagData, 
+    allTags, 
+    userTags, 
+    globalTags, 
     isLoading: tagsLoading, 
     error: tagsError 
-  } = useAllTags(userId, { enabled: !!userId })
+  } = useAllTags({ userId, enabled: !!userId })
 
   const { 
     data: userRole, 
@@ -38,11 +41,6 @@ export function ManageTagsClientUnified({ userId }: Props) {
 
   // Note: Manual invalidation can be added later when needed
   // For now, the components handle their own data fetching and updates
-
-  // Derived state (same as before)
-  const allTags = tagData?.allTags || []
-  const userTags = tagData?.userTags || []
-  const globalTags = tagData?.globalTags || []
   const resolvedUserRole = (userRole || 'user') as UserRole
   const isLoading = tagsLoading || roleLoading
   const error = tagsError || roleError

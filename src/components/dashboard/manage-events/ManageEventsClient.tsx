@@ -17,12 +17,13 @@ import { RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import DataLoader from '@/components/ui/data-loader'
 import { ManageEventsSkeleton } from '@/components/ui/skeleton'
-import { useUserEvents, useAllTags, useCreateTag } from '@/lib/hooks/useAppQuery'
+import { useUserEvents, useCreateTag } from '@/lib/hooks/useAppQuery'
+import { useAllTags } from '@/lib/hooks/useAllTags'
 import { useSupabaseMutation } from '@/lib/hooks/useQueryWithSupabase'
 // TanStack Query provides excellent caching and synchronization!
 import { useSmartCache } from '@/lib/hooks/useSmartCache'
 import { useCalendarSync } from '@/lib/hooks/useCalendarSync'
-import { Event } from '@/lib/types'
+import { Event, Tag } from '@/lib/types'
 
 // TanStack Query provides powerful caching and optimistic updates!
 import { convertToEventTag, EventTag } from '@/lib/event-types'
@@ -84,13 +85,10 @@ export function ManageEventsClient({ userId }: ManageEventsClientProps) {
 
   // Use unified tags hook
   const { 
-    data: tagData, 
+    allTags, 
     isLoading: tagsLoading, 
     refetch: refetchTags 
-  } = useAllTags(userId, { enabled: !!userId })
-
-  // Extract tags from unified response
-  const allTags = tagData?.allTags || []
+  } = useAllTags({ userId, enabled: !!userId })
 
   // ✨ NEW: Use unified tag creation
   const createTagMutation = useCreateTag()
@@ -443,8 +441,8 @@ export function ManageEventsClient({ userId }: ManageEventsClientProps) {
               timeFilter={timeFilter}
               visibilityFilter={visibilityFilter}
               eventStats={eventStats}
-              userTags={allTags.filter(tag => tag.user_id) || undefined}
-              globalTags={allTags.filter(tag => !tag.user_id) || undefined}
+              userTags={allTags.filter((tag: Tag) => tag.user_id) || undefined}
+              globalTags={allTags.filter((tag: Tag) => !tag.user_id) || undefined}
               isSyncing={isSyncing}
               isLoading={false}
               userId={userId}
@@ -474,7 +472,7 @@ export function ManageEventsClient({ userId }: ManageEventsClientProps) {
         isOpen={isCreateEventFormOpen}
         onSave={handleUpdateEvent}
         onCancel={handleCreateEventFormClose}
-        availableTags={allTags.filter(tag => tag.name && tag.color && tag.slug).map(tag => ({
+        availableTags={allTags.filter((tag: Tag) => tag.name && tag.color && tag.slug).map((tag: Tag) => ({
           id: tag.id,
           name: tag.name!,
           color: tag.color!,
@@ -491,7 +489,7 @@ export function ManageEventsClient({ userId }: ManageEventsClientProps) {
         onCancel={handleEditEventFormClose}
         onDelete={handleDeleteEvent}
         editEvent={editingEvent}
-        availableTags={allTags.filter(tag => tag.name && tag.color && tag.slug).map(tag => ({
+        availableTags={allTags.filter((tag: Tag) => tag.name && tag.color && tag.slug).map((tag: Tag) => ({
           id: tag.id,
           name: tag.name!,
           color: tag.color!,

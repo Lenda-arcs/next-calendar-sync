@@ -8,7 +8,8 @@ import { DashboardUpcomingClassesSkeleton } from '@/components/ui/skeleton'
 import { Calendar } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { type EventDisplayVariant } from '@/lib/event-types'
-import { useUserEvents, useAllTags } from '@/lib/hooks/useAppQuery'
+import { useUserEvents } from '@/lib/hooks/useAppQuery'
+import { useAllTags } from '@/lib/hooks/useAllTags'
 import { convertEventToCardProps } from '@/lib/event-utils'
 
 interface PrivateEventListProps {
@@ -36,12 +37,9 @@ const PrivateEventList: React.FC<PrivateEventListProps> = ({
 
   // Use unified tags hook
   const { 
-    data: tagData, 
+    allTags, 
     isLoading: tagsLoading 
-  } = useAllTags(userId, { enabled: !!userId })
-
-  // Extract tags from unified response
-  const allTags = tagData?.allTags || []
+  } = useAllTags({ userId, enabled: !!userId })
 
   // Get grid classes based on variant
   const getGridClasses = () => {

@@ -44,13 +44,13 @@ export const TagLibrary: React.FC<Props> = ({
     isLoading: globalLoading, 
     error: globalError 
   } = useSupabaseQuery(
-    ['global-tags'],
+    ['global_tags'],
     async (supabase) => {
       const { data, error } = await supabase
         .from('tags')
         .select('*')
         .is('user_id', null)
-        .order('name', { ascending: true })
+        .order('priority', { ascending: false, nullsFirst: false })
       
       if (error) throw error
       return data as Tag[]
@@ -66,13 +66,13 @@ export const TagLibrary: React.FC<Props> = ({
     isLoading: customLoading, 
     error: customError
   } = useSupabaseQuery(
-    ['custom-tags', userId],
+    ['user_tags', userId],
     async (supabase) => {
       const { data, error } = await supabase
         .from('tags')
         .select('*')
         .eq('user_id', userId)
-        .order('name', { ascending: true })
+        .order('priority', { ascending: false, nullsFirst: false })
       
       if (error) throw error
       return data as Tag[]

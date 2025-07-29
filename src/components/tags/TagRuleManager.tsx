@@ -78,13 +78,13 @@ export const TagRuleManager: React.FC<Props> = ({ userId, availableTags: propTag
     isLoading: tagsLoading, 
     error: tagsError 
   } = useSupabaseQuery(
-    ['tags', userId],
+    ['tags', 'all', userId],
     async (supabase) => {
       const { data, error } = await supabase
         .from('tags')
         .select('*')
         .or(`user_id.eq.${userId},user_id.is.null`)
-        .order('name', { ascending: true })
+        .order('priority', { ascending: false, nullsFirst: false })
       
       if (error) throw error
       return data as Tag[]
