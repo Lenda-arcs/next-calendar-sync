@@ -84,24 +84,25 @@ export function InvoiceCreationModal({
   }, [isOpen])
 
   // Get studio details
-  const { data: studios } = useSupabaseQuery({
-    queryKey: ['user-studios', userId],
-    fetcher: () => getUserStudios(userId),
-    enabled: !!userId && isOpen
-  })
+  const { data: studios } = useSupabaseQuery(
+    ['user-studios', userId],
+    () => getUserStudios(userId),
+    { enabled: !!userId && isOpen }
+  )
 
   const studio = studios?.find((s) => s.id === studioId) || existingInvoice?.studio
 
   // Invoice creation/update mutation
-  const invoiceMutation = useSupabaseMutation({
-    mutationFn: async (supabase, data: { type: 'create'; invoice: InvoiceInsert } | { type: 'update'; id: string; updates: Partial<InvoiceInsert> }) => {
+  const invoiceMutation = useSupabaseMutation(
+    async (supabase, data: { type: 'create'; invoice: InvoiceInsert } | { type: 'update'; id: string; updates: Partial<InvoiceInsert> }) => {
       if (data.type === 'update') {
         return await updateInvoice(data.id, data.updates)
       } else {
         return await createInvoice(data.invoice)
       }
     },
-    onSuccess: async (invoice) => {
+    {
+      onSuccess: async (invoice) => {
       if (mode === 'create') {
         await linkEventsToInvoice(eventIds, invoice.id)
       } else if (mode === 'edit' && existingInvoice) {
@@ -124,8 +125,9 @@ export function InvoiceCreationModal({
       // Store the invoice ID for PDF generation
       setCreatedInvoiceId(invoice.id)
       setShowSuccess(true)
+      }
     }
-  })
+  )
 
   const handleSubmitInvoice = async () => {
     if (!studio || editableEvents.length === 0) return
@@ -199,14 +201,14 @@ export function InvoiceCreationModal({
 
   const footerContent = !showSuccess ? (
     <>
-      <Button variant="outline" onClick={onClose} disabled={invoiceMutation.isLoading}>
+      <Button variant="outline" onClick={onClose} disabled={invoiceMutation.isPending}>
         Cancel
       </Button>
       <Button 
         onClick={handleSubmitInvoice} 
-        disabled={invoiceMutation.isLoading || !studio || editableEvents.length === 0 || !isReady}
+        disabled={invoiceMutation.isPending || !studio || editableEvents.length === 0 || !isReady}
       >
-                 {invoiceMutation.isLoading ? (
+                 {invoiceMutation.isPending ? (
            <>
              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
              {mode === 'edit' ? 'Updating' : 'Creating'} Invoice...
@@ -311,7 +313,7 @@ export function InvoiceCreationModal({
                     id="invoice_number"
                     value={invoiceNumber}
                     onChange={(e) => setInvoiceNumber(e.target.value)}
-                    disabled={invoiceMutation.isLoading}
+                    disabled={invoiceMutation.isPending}
                   />
                 </div>
                 <div>
@@ -322,7 +324,7 @@ export function InvoiceCreationModal({
                     onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setNotes(e.target.value)}
                     placeholder={t('invoices.creation.notesPlaceholder')}
                     rows={3}
-                    disabled={invoiceMutation.isLoading}
+                    disabled={invoiceMutation.isPending}
                     className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                   />
                 </div>
@@ -352,7 +354,7 @@ export function InvoiceCreationModal({
                           rate={item.rate}
                           date={item.date}
                           onUpdate={handleEventUpdate}
-                          disabled={invoiceMutation.isLoading}
+                          disabled={invoiceMutation.isPending}
                         />
                       ))}
                     </div>

@@ -33,9 +33,9 @@ export default function DashboardContent({
   
   // ✨ Smart preloading for instant navigation
   const {
-    preloadManageEventsData,
-    preloadManageInvoicesData,
-    preloadManageTagsData,
+    preloadUserEvents,
+    preloadInvoices,
+    preloadUserTags,
     preloadPublicEvents
   } = useSmartPreload()
 
@@ -134,10 +134,10 @@ export default function DashboardContent({
                <CardContent>
                  <div
                    onMouseEnter={() => {
-                     preloadManageEventsData(userId)
+                     preloadUserEvents(userId)
                    }}
                    onFocus={() => {
-                     preloadManageEventsData(userId)
+                     preloadUserEvents(userId)
                    }}
                  >
                    <LoadingButtonLink
@@ -163,10 +163,10 @@ export default function DashboardContent({
                <CardContent>
                  <div
                    onMouseEnter={() => {
-                     preloadManageTagsData(userId)
+                     preloadUserTags(userId)
                    }}
                    onFocus={() => {
-                     preloadManageTagsData(userId)
+                     preloadUserTags(userId)
                    }}
                  >
                    <LoadingButtonLink
@@ -192,10 +192,10 @@ export default function DashboardContent({
                <CardContent>
                  <div
                    onMouseEnter={() => {
-                     preloadManageInvoicesData(userId)
+                     preloadInvoices(userId)
                    }}
                    onFocus={() => {
-                     preloadManageInvoicesData(userId)
+                     preloadInvoices(userId)
                    }}
                  >
                    <LoadingButtonLink

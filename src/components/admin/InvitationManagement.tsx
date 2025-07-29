@@ -91,7 +91,7 @@ export function InvitationManagement() {
   const handleCancelInvitation = async (invitationId: string) => {
     try {
       // ✨ NEW: Use unified mutation
-      await cancelInvitationMutation.mutateAsync({ invitationId })
+      await cancelInvitationMutation.mutateAsync(invitationId)
 
       toast.success('Invitation cancelled')
       refetch()

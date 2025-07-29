@@ -21,32 +21,34 @@ export function useBillingEntityManagement({ userId }: UseBillingEntityManagemen
     isLoading, 
     error,
     refetch
-  } = useSupabaseQuery({
-    queryKey: ['user-studios', userId],
-    fetcher: () => getUserStudios(userId),
-    enabled: !!userId
-  })
+  } = useSupabaseQuery(
+    ['user-studios', userId],
+    () => getUserStudios(userId),
+    { enabled: !!userId }
+  )
 
   const { 
     data: eventLocations = []
-  } = useSupabaseQuery({
-    queryKey: ['user-event-locations', userId],
-    fetcher: () => getUserEventLocations(userId),
-    enabled: !!userId
-  })
+  } = useSupabaseQuery(
+    ['user-event-locations', userId],
+    () => getUserEventLocations(userId),
+    { enabled: !!userId }
+  )
 
   // Delete mutation
-  const deleteMutation = useSupabaseMutation({
-    mutationFn: (supabase, entityId: string) => deleteStudio(entityId),
-    onSuccess: () => {
-      refetch()
-      setDeletingEntityId(null)
-    },
-    onError: (error) => {
-      console.error('Error deleting billing entity:', error)
-      setDeletingEntityId(null)
+  const deleteMutation = useSupabaseMutation(
+    (supabase, entityId: string) => deleteStudio(entityId),
+    {
+      onSuccess: () => {
+        refetch()
+        setDeletingEntityId(null)
+      },
+      onError: (error) => {
+        console.error('Error deleting billing entity:', error)
+        setDeletingEntityId(null)
+      }
     }
-  })
+  )
 
   // Computed values
   const studioEntities = (entities?.filter(e => e.entity_type === 'studio') as BillingEntity[]) || []

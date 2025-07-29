@@ -34,7 +34,7 @@ export function UserManagement() {
 
     try {
       // ✨ NEW: Use unified mutation
-      await deleteUserMutation.mutateAsync({ userId })
+      await deleteUserMutation.mutateAsync(userId)
 
       toast.success(`User ${userName || userEmail} has been completely removed`)
       refetch()

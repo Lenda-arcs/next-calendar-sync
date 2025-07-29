@@ -58,8 +58,8 @@ export function UserInvoiceSettingsForm({
   }, [existingSettings])
 
   // Mutation for creating/updating settings
-  const settingsMutation = useSupabaseMutation({
-    mutationFn: async (supabase, data: UserInvoiceSettingsInsert | UserInvoiceSettingsUpdate) => {
+  const settingsMutation = useSupabaseMutation(
+    async (supabase, data: UserInvoiceSettingsInsert | UserInvoiceSettingsUpdate) => {
       if (existingSettings) {
         // Update existing settings
         const { data: result, error } = await supabase
@@ -83,19 +83,21 @@ export function UserInvoiceSettingsForm({
         return result
       }
     },
-    onSuccess: () => {
-      if (onSettingsUpdated) {
-        onSettingsUpdated()
+    {
+      onSuccess: () => {
+        if (onSettingsUpdated) {
+          onSettingsUpdated()
+        }
       }
     }
-  })
+  )
 
   // Notify parent about loading state changes
   useEffect(() => {
     if (onLoadingChange) {
-      onLoadingChange(settingsMutation.isLoading)
+      onLoadingChange(settingsMutation.isPending)
     }
-  }, [settingsMutation.isLoading, onLoadingChange])
+  }, [settingsMutation.isPending, onLoadingChange])
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault()
@@ -137,7 +139,7 @@ export function UserInvoiceSettingsForm({
             value={formData.full_name}
             onChange={(e) => handleInputChange('full_name', e.target.value)}
             required
-            disabled={settingsMutation.isLoading}
+            disabled={settingsMutation.isPending}
           />
         </div>
 
@@ -148,7 +150,7 @@ export function UserInvoiceSettingsForm({
             type="email"
             value={formData.email}
             onChange={(e) => handleInputChange('email', e.target.value)}
-            disabled={settingsMutation.isLoading}
+            disabled={settingsMutation.isPending}
           />
         </div>
 
@@ -158,7 +160,7 @@ export function UserInvoiceSettingsForm({
             id="phone"
             value={formData.phone}
             onChange={(e) => handleInputChange('phone', e.target.value)}
-            disabled={settingsMutation.isLoading}
+            disabled={settingsMutation.isPending}
           />
         </div>
 
@@ -169,7 +171,7 @@ export function UserInvoiceSettingsForm({
             value={formData.address}
             onChange={(e) => handleInputChange('address', e.target.value)}
             rows={3}
-            disabled={settingsMutation.isLoading}
+            disabled={settingsMutation.isPending}
           />
         </div>
       </div>
@@ -185,7 +187,7 @@ export function UserInvoiceSettingsForm({
             value={formData.iban}
             onChange={(e) => handleInputChange('iban', e.target.value)}
             placeholder={t('invoices.settingsForm.ibanPlaceholder')}
-            disabled={settingsMutation.isLoading}
+            disabled={settingsMutation.isPending}
           />
         </div>
 
@@ -196,7 +198,7 @@ export function UserInvoiceSettingsForm({
             value={formData.bic}
             onChange={(e) => handleInputChange('bic', e.target.value)}
             placeholder={t('invoices.settingsForm.bicPlaceholder')}
-            disabled={settingsMutation.isLoading}
+            disabled={settingsMutation.isPending}
           />
         </div>
       </div>
@@ -211,7 +213,7 @@ export function UserInvoiceSettingsForm({
             id="tax_id"
             value={formData.tax_id}
             onChange={(e) => handleInputChange('tax_id', e.target.value)}
-            disabled={settingsMutation.isLoading}
+            disabled={settingsMutation.isPending}
           />
         </div>
 
@@ -222,7 +224,7 @@ export function UserInvoiceSettingsForm({
             value={formData.vat_id}
             onChange={(e) => handleInputChange('vat_id', e.target.value)}
             placeholder={t('invoices.settingsForm.vatIdPlaceholder')}
-            disabled={settingsMutation.isLoading}
+            disabled={settingsMutation.isPending}
           />
         </div>
 
@@ -232,7 +234,7 @@ export function UserInvoiceSettingsForm({
             id="kleinunternehmerregelung"
             checked={formData.kleinunternehmerregelung}
             onChange={(e) => handleInputChange('kleinunternehmerregelung', e.target.checked.toString())}
-            disabled={settingsMutation.isLoading}
+            disabled={settingsMutation.isPending}
             className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
           />
           <Label htmlFor="kleinunternehmerregelung" className="text-sm">
@@ -258,9 +260,9 @@ export function UserInvoiceSettingsForm({
         <div className="flex justify-end space-x-3">
           <Button
             type="submit"
-            disabled={settingsMutation.isLoading || !isFormValid}
+            disabled={settingsMutation.isPending || !isFormValid}
           >
-            {settingsMutation.isLoading ? (
+            {settingsMutation.isPending ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                 {t('invoices.settingsForm.saving')}

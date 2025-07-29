@@ -50,19 +50,19 @@ export function SubstituteEventModal({
   const originalStudioId = targetEvents[0]?.studio_id
   
   // Fetch existing teacher billing entities
-  const { data: teacherEntities, isLoading: entitiesLoading } = useSupabaseQuery({
-    queryKey: ['teacher-billing-entities', userId || 'none'],
-    fetcher: async () => {
+  const { data: teacherEntities, isLoading: entitiesLoading } = useSupabaseQuery(
+    ['teacher-billing-entities', userId || 'none'],
+    async () => {
       if (!userId) return []
       return await getTeacherBillingEntities(userId as string)
     },
-    enabled: !!userId && isOpen
-  })
+    { enabled: !!userId && isOpen }
+  )
 
   // Fetch original studio info to get location_match
-  const { data: originalStudio } = useSupabaseQuery({
-    queryKey: ['original-studio', originalStudioId || 'none'],
-    fetcher: async () => {
+  const { data: originalStudio } = useSupabaseQuery(
+    ['original-studio', originalStudioId || 'none'],
+    async () => {
       if (!originalStudioId) return null
       const { createClient } = await import('@/lib/supabase')
       const supabase = createClient()
@@ -75,11 +75,11 @@ export function SubstituteEventModal({
       if (error) throw error
       return data
     },
-    enabled: !!originalStudioId && isOpen && recipientMode === 'new'
-  })
+    { enabled: !!originalStudioId && isOpen && recipientMode === 'new' }
+  )
 
-  const setupMutation = useSupabaseMutation({
-    mutationFn: async (supabase, data: { existingEntityId?: string; recipient?: InvoiceRecipient; notes: string }) => {
+  const setupMutation = useSupabaseMutation(
+    async (supabase, data: { existingEntityId?: string; recipient?: InvoiceRecipient; notes: string }) => {
       if (targetEvents.length === 0) throw new Error('No events selected')
       
       if (data.existingEntityId) {
@@ -102,7 +102,8 @@ export function SubstituteEventModal({
         throw new Error('Either existingEntityId or recipient must be provided')
       }
     },
-    onSuccess: () => {
+    {
+      onSuccess: () => {
       const eventCount = targetEvents.length
       toast.success(
         eventCount === 1 ? 'Teacher billing entity configured' : `${eventCount} events configured for teacher billing`, 
@@ -120,8 +121,9 @@ export function SubstituteEventModal({
       toast.error('Failed to configure teacher billing', {
         description: 'There was an error setting up the teacher billing. Please try again.',
       })
+      }
     }
-  })
+  )
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -202,15 +204,15 @@ export function SubstituteEventModal({
       <Button
         variant="outline"
         onClick={handleClose}
-        disabled={setupMutation.isLoading}
+        disabled={setupMutation.isPending}
       >
         Cancel
       </Button>
       <Button
         onClick={handleSubmit}
-        disabled={setupMutation.isLoading || !isFormValid()}
+        disabled={setupMutation.isPending || !isFormValid()}
       >
-        {setupMutation.isLoading ? 'Setting up...' : 
+        {setupMutation.isPending ? 'Setting up...' : 
           isBatchMode ? `Change ${targetEvents.length} Events to Teacher Billing` : 'Change to Teacher Billing'}
       </Button>
     </div>
@@ -307,7 +309,7 @@ export function SubstituteEventModal({
                 value={selectedTeacherId}
                 onChange={setSelectedTeacherId}
                 placeholder="Choose a teacher..."
-                disabled={setupMutation.isLoading}
+                disabled={setupMutation.isPending}
               />
             ) : (
               <div className="text-sm text-gray-600">
@@ -333,7 +335,7 @@ export function SubstituteEventModal({
               type="button"
               onClick={() => setShowBillingEntityFormModal(true)}
               className="w-full"
-              disabled={setupMutation.isLoading}
+              disabled={setupMutation.isPending}
             >
               <Plus className="w-4 h-4 mr-2" />
               Create Teacher Profile
@@ -350,7 +352,7 @@ export function SubstituteEventModal({
             onChange={(e) => handleInputChange('substituteNotes', e.target.value)}
             placeholder="Add any notes about this billing change..."
             rows={3}
-            disabled={setupMutation.isLoading}
+            disabled={setupMutation.isPending}
           />
         </div>
 

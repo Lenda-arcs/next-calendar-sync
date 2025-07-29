@@ -28,10 +28,9 @@ const iconMap: Record<string, LucideIcon> = {
 export function ActiveNavLinks({ navigation, userId }: ActiveNavLinksProps) {
   // ✨ Smart preloading for instant navigation
   const {
-    preloadManageEventsData,
-    preloadManageInvoicesData,
-    preloadManageTagsData,
-    preloadAdminData
+    preloadUserEvents,
+    preloadInvoices,
+    preloadUserTags
   } = useSmartPreload()
 
   // Map navigation paths to preload functions
@@ -39,17 +38,15 @@ export function ActiveNavLinks({ navigation, userId }: ActiveNavLinksProps) {
     if (!userId) return undefined
     
     if (href.includes('manage-events')) {
-      return () => preloadManageEventsData(userId)
+      return () => preloadUserEvents(userId)
     }
     if (href.includes('manage-tags')) {
-      return () => preloadManageTagsData(userId)
+      return () => preloadUserTags(userId)
     }
     if (href.includes('manage-invoices')) {
-      return () => preloadManageInvoicesData(userId)
+      return () => preloadInvoices(userId)
     }
-    if (href.includes('admin')) {
-      return () => preloadAdminData()
-    }
+    // Note: No preload for admin - it's not in useSmartPreload
     // Note: Studios page doesn't need preloading for now
     return undefined
   }

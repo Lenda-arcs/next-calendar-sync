@@ -29,61 +29,63 @@ export function ExcludedEventsSection({
   const [selectedEvents, setSelectedEvents] = useState<string[]>([])
   const [isProcessing, setIsProcessing] = useState(false)
 
-  const batchIncludeMutation = useSupabaseMutation({
-    mutationFn: async (supabase, eventIds: string[]) => {
+  const batchIncludeMutation = useSupabaseMutation(
+    async (supabase, eventIds: string[]) => {
       // Toggle exclusion for all selected events
       const results = await Promise.all(
         eventIds.map(eventId => toggleEventExclusion(eventId))
       )
-      return results
+      return results;
     },
-    onSuccess: async (results) => {
-      const includedCount = results.filter(r => !r.excluded).length
-      
-      if (includedCount > 0) {
-        toast.success(`${includedCount} event${includedCount !== 1 ? 's' : ''} included in studio matching`, {
-          description: 'Events are now available for studio billing and will be re-matched.',
-        })
+    {
+      onSuccess: async (results) => {
+        const includedCount = results.filter(r => !r.excluded).length
+        
+        if (includedCount > 0) {
+          toast.success(`${includedCount} event${includedCount !== 1 ? 's' : ''} included in studio matching`, {
+            description: 'Events are now available for studio billing and will be re-matched.',
+          })
 
-        // 🚀 Use efficient rematch instead of heavy database operation
-        if (userId) {
-          setIsProcessing(true)
-          try {
-            // Use new rematch functionality for faster studio matching
-            const rematchResult = await rematchEvents({
-              user_id: userId,
-              rematch_studios: true,
-              rematch_tags: true
-            })
-            
-            toast.success('Events Re-matched!', {
-              description: `${rematchResult.updated_count} out of ${rematchResult.total_events_processed} events were matched with studios and tags.`,
-              duration: 4000,
-            })
-          } catch (error) {
-            console.error('Failed to re-match events:', error)
-            toast.error('Re-matching Failed', {
-              description: 'Unable to re-match events with studios. The events were included but may need manual matching.',
-              duration: 5000,
-            })
-          } finally {
-            setIsProcessing(false)
+          // 🚀 Use efficient rematch instead of heavy database operation
+          if (userId) {
+            setIsProcessing(true)
+            try {
+              // Use new rematch functionality for faster studio matching
+              const rematchResult = await rematchEvents({
+                user_id: userId,
+                rematch_studios: true,
+                rematch_tags: true
+              })
+              
+              toast.success('Events Re-matched!', {
+                description: `${rematchResult.updated_count} out of ${rematchResult.total_events_processed} events were matched with studios and tags.`,
+                duration: 4000,
+              })
+            } catch (error) {
+              console.error('Failed to re-match events:', error)
+              toast.error('Re-matching Failed', {
+                description: 'Unable to re-match events with studios. The events were included but may need manual matching.',
+                duration: 5000,
+              })
+            } finally {
+              setIsProcessing(false)
+            }
           }
         }
+        
+        // Clear selections and refresh
+        setSelectedEvents([])
+        onRefresh()
+      },
+      onError: (error) => {
+        console.error('Failed to include events:', error)
+        toast.error('Failed to update events', {
+          description: 'There was an error updating the events. Please try again.',
+        })
+        setIsProcessing(false)
       }
-      
-      // Clear selections and refresh
-      setSelectedEvents([])
-      onRefresh()
-    },
-    onError: (error) => {
-      console.error('Failed to include events:', error)
-      toast.error('Failed to update events', {
-        description: 'There was an error updating the events. Please try again.',
-      })
-      setIsProcessing(false)
     }
-  })
+  )
 
   // Selection handlers
   const handleToggleEvent = (eventId: string) => {
@@ -174,15 +176,15 @@ export function ExcludedEventsSection({
               {someEventsSelected && (
                 <Button
                   onClick={handleBatchInclude}
-                  disabled={batchIncludeMutation.isLoading || isProcessing}
+                  disabled={batchIncludeMutation.isPending || isProcessing}
                   className="bg-orange-600 hover:bg-orange-700 w-full sm:w-auto"
                 >
                   <RotateCcw className="mr-2 h-3 w-3" />
                   <span className="sm:hidden">
-                    {batchIncludeMutation.isLoading || isProcessing ? 'Including...' : `Include (${selectedEvents.length})`}
+                    {batchIncludeMutation.isPending || isProcessing ? 'Including...' : `Include (${selectedEvents.length})`}
                   </span>
                   <span className="hidden sm:inline">
-                    {batchIncludeMutation.isLoading || isProcessing ? 'Including...' : `Include in Matching (${selectedEvents.length})`}
+                    {batchIncludeMutation.isPending || isProcessing ? 'Including...' : `Include in Matching (${selectedEvents.length})`}
                   </span>
                 </Button>
               )}

@@ -7,17 +7,11 @@ type SupabaseClient = ReturnType<typeof createBrowserClient>
 
 /**
  * Simple wrapper around TanStack Query's useQuery for Supabase operations
- * Supports both new and old API formats for backward compatibility
+ * Uses the standard TanStack Query API with array-based query keys
  */
 export function useSupabaseQuery<TData = unknown, TError = Error>(
-  queryKeyOrOptions: readonly unknown[] | {
-    queryKey: readonly unknown[]
-    fetcher: (supabase: SupabaseClient) => Promise<TData>
-    enabled?: boolean
-    staleTime?: number
-    refetchOnWindowFocus?: boolean
-  },
-  fetcher?: (supabase: SupabaseClient) => Promise<TData>,
+  queryKey: readonly unknown[],
+  fetcher: (supabase: SupabaseClient) => Promise<TData>,
   options?: Omit<UseQueryOptions<TData, TError>, 'queryKey' | 'queryFn'>
 ) {
   const supabase = createBrowserClient(
@@ -25,28 +19,10 @@ export function useSupabaseQuery<TData = unknown, TError = Error>(
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   )
 
-  // Normalize parameters based on API format
-  const isNewFormat = Array.isArray(queryKeyOrOptions)
-  const normalizedParams = isNewFormat 
-    ? {
-        queryKey: queryKeyOrOptions as readonly unknown[],
-        fetcher: fetcher!,
-        options: options || {}
-      }
-    : {
-        queryKey: (queryKeyOrOptions as any).queryKey,
-        fetcher: (queryKeyOrOptions as any).fetcher,
-        options: { 
-          enabled: (queryKeyOrOptions as any).enabled,
-          staleTime: (queryKeyOrOptions as any).staleTime,
-          refetchOnWindowFocus: (queryKeyOrOptions as any).refetchOnWindowFocus
-        }
-      }
-
   return useQuery({
-    queryKey: normalizedParams.queryKey,
-    queryFn: () => normalizedParams.fetcher(supabase),
-    ...normalizedParams.options,
+    queryKey,
+    queryFn: () => fetcher(supabase),
+    ...options,
   })
 }
 

@@ -1,93 +1,118 @@
 'use client'
-
-import { usePrefetchQuery } from './useUnifiedQuery'
-import { queryKeys } from '@/lib/query-keys'
-import * as dataAccess from '@/lib/server/data-access'
-import { useCallback } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
+import { createBrowserClient } from '@supabase/ssr'
 
 /**
- * Smart Preloading Hook
- * 
- * Preloads critical data on user intent (hover/focus) for instant navigation
- * Uses page-specific preloading strategies for optimal performance
+ * Hook for intelligent data preloading based on user intent signals
+ * Optimized for better UX with predictive loading
  */
 export function useSmartPreload() {
-  const { prefetch } = usePrefetchQuery()
+  const queryClient = useQueryClient()
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
 
   return {
-    // Page-specific preloading functions
-    preloadManageEventsData: useCallback((userId: string) => {
-      if (!userId) return Promise.resolve()
-      
-      // Preload what the manage events page needs
-      return Promise.all([
-        prefetch(
-          queryKeys.events.list(userId),
-          (supabase) => dataAccess.getUserEvents(supabase, userId),
-          2 * 60 * 1000 // 2 minutes cache
-        ),
-        prefetch(
-          queryKeys.tags.allForUser(userId),
-          (supabase) => dataAccess.getAllTags(supabase, userId),
-          10 * 60 * 1000 // 10 minutes cache
-        )
-      ])
-    }, [prefetch]),
+    preloadUserEvents: (userId: string) => {
+      return queryClient.prefetchQuery({
+        queryKey: ['events', 'list', userId],
+        queryFn: () => fetchUserEvents(supabase, userId),
+        staleTime: 30 * 1000, // 30 seconds
+      })
+    },
 
-    preloadManageInvoicesData: useCallback((userId: string) => {
-      if (!userId) return Promise.resolve()
-      
-      // Preload what the manage invoices page needs
-      return Promise.all([
-        prefetch(
-          queryKeys.invoices.userInvoices(userId),
-          (supabase) => dataAccess.getUserInvoices(supabase, userId),
-          5 * 60 * 1000 // 5 minutes cache
-        ),
-        prefetch(
-          queryKeys.invoices.uninvoicedEvents(userId),
-          (supabase) => dataAccess.getUninvoicedEvents(supabase, userId),
-          3 * 60 * 1000 // 3 minutes cache
-        )
-      ])
-    }, [prefetch]),
+    preloadUserTags: (userId: string) => {
+      return queryClient.prefetchQuery({
+        queryKey: ['tags', 'user', userId],
+        queryFn: () => fetchUserTags(supabase, userId),
+        staleTime: 60 * 1000, // 1 minute
+      })
+    },
 
-    preloadManageTagsData: useCallback((userId: string) => {
-      if (!userId) return Promise.resolve()
-      
-      // Preload what the manage tags page needs
-      return prefetch(
-        queryKeys.tags.allForUser(userId),
-        (supabase) => dataAccess.getAllTags(supabase, userId),
-        10 * 60 * 1000 // 10 minutes cache
-      )
-    }, [prefetch]),
+    preloadPublicEvents: (teacherSlug: string) => {
+      return queryClient.prefetchQuery({
+        queryKey: ['events', 'public', teacherSlug],
+        queryFn: () => fetchPublicEvents(supabase, teacherSlug),
+        staleTime: 30 * 1000, // 30 seconds
+      })
+    },
 
-    preloadPublicEvents: useCallback((userId: string, options?: { startDate?: string; endDate?: string }) => {
-      if (!userId) return Promise.resolve()
-      
-      // Preload public events for teacher schedule pages
-      return prefetch(
-        queryKeys.events.public(userId, options),
-        (supabase) => dataAccess.getPublicEvents(supabase, userId, options),
-        5 * 60 * 1000 // 5 minutes cache
-      )
-    }, [prefetch]),
+    preloadUserStudios: (userId: string) => {
+      return queryClient.prefetchQuery({
+        queryKey: ['studios', 'user', userId],
+        queryFn: () => fetchUserStudios(supabase, userId),
+        staleTime: 5 * 60 * 1000, // 5 minutes
+      })
+    },
 
-    preloadAdminData: useCallback(() => {
-      // Preload admin data for admin pages
-      return Promise.all([
-        prefetch(
-          queryKeys.admin.users(),
-          (supabase) => dataAccess.getAllUsers(supabase),
-          10 * 60 * 1000 // 10 minutes cache
-        ),
-        prefetch(
-          queryKeys.admin.invitations(),
-          (supabase) => dataAccess.getAllInvitations(supabase),
-          5 * 60 * 1000 // 5 minutes cache
-        )
-      ])
-    }, [prefetch])
+    preloadInvoices: (userId: string) => {
+      return queryClient.prefetchQuery({
+        queryKey: ['invoices', 'list', userId],
+        queryFn: () => fetchUserInvoices(supabase, userId),
+        staleTime: 2 * 60 * 1000, // 2 minutes
+      })
+    },
   }
+}
+
+// Helper functions for data fetching
+async function fetchUserEvents(supabase: ReturnType<typeof createBrowserClient>, userId: string) {
+  const { data, error } = await supabase
+    .from('events')
+    .select('*')
+    .eq('user_id', userId)
+    .order('start_time', { ascending: false })
+    .limit(50)
+
+  if (error) throw error
+  return data
+}
+
+async function fetchUserTags(supabase: ReturnType<typeof createBrowserClient>, userId: string) {
+  const { data, error } = await supabase
+    .from('tags')
+    .select('*')
+    .eq('user_id', userId)
+    .order('name')
+
+  if (error) throw error
+  return data
+}
+
+async function fetchPublicEvents(supabase: ReturnType<typeof createBrowserClient>, teacherSlug: string) {
+  const { data, error } = await supabase
+    .from('events')
+    .select('*, users!inner(teacher_slug)')
+    .eq('users.teacher_slug', teacherSlug)
+    .eq('is_private', false)
+    .gte('start_time', new Date().toISOString())
+    .order('start_time', { ascending: true })
+    .limit(20)
+
+  if (error) throw error
+  return data
+}
+
+async function fetchUserStudios(supabase: ReturnType<typeof createBrowserClient>, userId: string) {
+  const { data, error } = await supabase
+    .from('teacher_studio_relationships')
+    .select('*, studios(*)')
+    .eq('teacher_id', userId)
+    .eq('status', 'approved')
+
+  if (error) throw error
+  return data
+}
+
+async function fetchUserInvoices(supabase: ReturnType<typeof createBrowserClient>, userId: string) {
+  const { data, error } = await supabase
+    .from('invoices')
+    .select('*')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(20)
+
+  if (error) throw error
+  return data
 } 

@@ -68,7 +68,7 @@ export function InvoiceManagement({ userId }: InvoiceManagementProps) {
     data: uninvoicedEvents, 
     isLoading: uninvoicedLoading,
     refetch: refetchUninvoiced 
-  } = useUninvoicedEvents(userId, undefined, {
+  } = useUninvoicedEvents(userId, {
     enabled: !!userId && (activeTab === 'uninvoiced' || tabSwitchLoading === 'uninvoiced')
   })
 
@@ -158,7 +158,7 @@ export function InvoiceManagement({ userId }: InvoiceManagementProps) {
 
   const handleDeleteInvoice = (invoiceId: string) => {
     deleteInvoiceMutation.mutate(
-      { invoiceId },
+      invoiceId,
       {
         onSuccess: () => {
           // Refresh both uninvoiced events and invoices lists

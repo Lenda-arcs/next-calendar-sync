@@ -31,7 +31,7 @@ export function FilteredEventList({ userId, variant = 'compact', className }: Fi
     data: events,
     isLoading: eventsLoading,
     error: eventsError
-  } = usePublicEvents(userId, undefined, { enabled: !!userId })
+  } = usePublicEvents(userId, { enabled: !!userId })
 
   // 🚧 TODO: Migrate studio information fetching to unified pattern
   // For now, using empty data to complete the main migration

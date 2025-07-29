@@ -35,11 +35,11 @@ export function InvoiceSettings({ userId }: InvoiceSettingsProps) {
     isLoading: loadingSettings, 
     error: settingsError,
     refetch: refetchSettings
-  } = useSupabaseQuery({
-    queryKey: ['user-invoice-settings', userId],
-    fetcher: () => getUserInvoiceSettings(userId),
-    enabled: !!userId
-  })
+  } = useSupabaseQuery(
+    ['user-invoice-settings', userId],
+    () => getUserInvoiceSettings(userId),
+    { enabled: !!userId }
+  )
 
   const handleSettingsUpdated = () => {
     refetchSettings()
@@ -64,8 +64,8 @@ export function InvoiceSettings({ userId }: InvoiceSettingsProps) {
   }, [userSettings])
 
   // Mutation for updating PDF template settings
-  const pdfTemplateMutation = useSupabaseMutation({
-    mutationFn: async (supabase, data: { pdf_template_config: PDFTemplateConfig | null; template_theme: PDFTemplateTheme }) => {
+  const pdfTemplateMutation = useSupabaseMutation(
+    async (supabase, data: { pdf_template_config: PDFTemplateConfig | null; template_theme: PDFTemplateTheme }) => {
       // First, try to update existing record
       const { data: updateResult, error: updateError } = await supabase
         .from('user_invoice_settings')
@@ -104,14 +104,16 @@ export function InvoiceSettings({ userId }: InvoiceSettingsProps) {
       
       return updateResult
     },
-    onSuccess: () => {
-      toast.success(t('invoices.settings.pdfTemplateSettingsSaved'))
-      refetchSettings()
-    },
-    onError: (error) => {
-      toast.error(`${t('invoices.settings.pdfTemplateSettingsFailed')}: ${error.message}`)
+    {
+      onSuccess: () => {
+        toast.success(t('invoices.settings.pdfTemplateSettingsSaved'))
+        refetchSettings()
+      },
+      onError: (error) => {
+        toast.error(`${t('invoices.settings.pdfTemplateSettingsFailed')}: ${error.message}`)
+      }
     }
-  })
+  )
 
   const handleSavePdfTemplate = async (config: PDFTemplateConfig, theme: PDFTemplateTheme) => {
     // Save the actual current state from the modal, not parent state
@@ -217,7 +219,7 @@ export function InvoiceSettings({ userId }: InvoiceSettingsProps) {
 
         <CardContent>
           <DataLoader
-            data={userSettings}
+            data={userSettings ?? null}
             loading={loadingSettings}
             error={settingsError?.message || null}
             empty={
@@ -376,7 +378,7 @@ export function InvoiceSettings({ userId }: InvoiceSettingsProps) {
                 <Button 
                   variant="outline"
                   onClick={handlePreviewCurrentTemplate}
-                  disabled={pdfTemplateMutation.isLoading || isPreviewLoading}
+                  disabled={pdfTemplateMutation.isPending || isPreviewLoading}
                   className="flex items-center gap-2"
                 >
                   {isPreviewLoading ? (
@@ -413,7 +415,7 @@ export function InvoiceSettings({ userId }: InvoiceSettingsProps) {
         onConfigChange={setPdfConfig}
         onThemeChange={setPdfTheme}
         onSave={handleSavePdfTemplate}
-        isLoading={pdfTemplateMutation.isLoading}
+        isLoading={pdfTemplateMutation.isPending}
       />
     </div>
   )

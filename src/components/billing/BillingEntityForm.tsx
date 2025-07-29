@@ -379,9 +379,10 @@ const useBillingEntityForm = (props: Props) => {
     }
   }, [formData, user.id, entityType, existingStudio]);
 
-  const createMutation = useSupabaseMutation({
-    mutationFn: (supabase, data: BillingEntityInsert) => createStudio(data),
-    onSuccess: async (data) => {
+  const createMutation = useSupabaseMutation(
+    (supabase, data: BillingEntityInsert) => createStudio(data),
+    {
+      onSuccess: async (data) => {
       try {
         const rematchResult = await rematchUserStudios(user.id);
         
@@ -417,9 +418,10 @@ const useBillingEntityForm = (props: Props) => {
     },
   });
 
-  const updateMutation = useSupabaseMutation({
-    mutationFn: (supabase, { id, data }: { id: string; data: BillingEntityUpdate }) => updateStudio(id, data),
-    onSuccess: async (data) => {
+  const updateMutation = useSupabaseMutation(
+    (supabase, { id, data }: { id: string; data: BillingEntityUpdate }) => updateStudio(id, data),
+    {
+      onSuccess: async (data) => {
       try {
         const rematchResult = await rematchUserStudios(user.id);
         
@@ -459,7 +461,7 @@ const useBillingEntityForm = (props: Props) => {
     createMutation,
     updateMutation,
     convertFormDataToEntityData,
-    isLoading: createMutation.isLoading || updateMutation.isLoading,
+    isLoading: createMutation.isPending || updateMutation.isPending,
     rateTiers,
     addRateTier,
     removeRateTier,

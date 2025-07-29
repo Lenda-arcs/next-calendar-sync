@@ -51,10 +51,11 @@ export function EventDetailsEditModal({
     }
   }, [event])
 
-  const updateMutation = useSupabaseMutation({
-    mutationFn: (supabase, data: { eventId: string; studentsStudio: number | null; studentsOnline: number | null }) =>
+  const updateMutation = useSupabaseMutation(
+    (supabase, data: { eventId: string; studentsStudio: number | null; studentsOnline: number | null }) =>
       updateEventStudentCounts(data.eventId, data.studentsStudio, data.studentsOnline),
-    onSuccess: (updatedEvent) => {
+    {
+      onSuccess: (updatedEvent) => {
       toast.success('Event details updated successfully!')
       onSuccess?.(updatedEvent)
       onClose()
@@ -67,10 +68,11 @@ export function EventDetailsEditModal({
     }
   })
 
-  const excludeMutation = useSupabaseMutation({
-    mutationFn: (supabase, data: { eventId: string }) =>
+  const excludeMutation = useSupabaseMutation(
+    (supabase, data: { eventId: string }) =>
       markEventAsExcluded(data.eventId, true),
-    onSuccess: () => {
+    {
+      onSuccess: () => {
       toast.success('Event excluded from invoicing')
       onClose()
       // Optionally refresh the parent list
@@ -173,11 +175,11 @@ export function EventDetailsEditModal({
           <AlertDialogTrigger asChild>
             <Button
               variant="destructive"
-              disabled={updateMutation.isLoading || excludeMutation.isLoading}
+              disabled={updateMutation.isPending || excludeMutation.isPending}
               className="gap-2"
             >
               <X className="w-4 h-4" />
-              {excludeMutation.isLoading ? 'Excluding...' : 'Exclude from Invoice'}
+              {excludeMutation.isPending ? 'Excluding...' : 'Exclude from Invoice'}
             </Button>
           </AlertDialogTrigger>
           <AlertDialogContent>
@@ -188,15 +190,15 @@ export function EventDetailsEditModal({
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel disabled={excludeMutation.isLoading}>
+              <AlertDialogCancel disabled={excludeMutation.isPending}>
                 Cancel
               </AlertDialogCancel>
               <AlertDialogAction
                 onClick={handleExcludeEvent}
-                disabled={excludeMutation.isLoading}
+                disabled={excludeMutation.isPending}
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
-                {excludeMutation.isLoading ? 'Excluding...' : 'Exclude Event'}
+                {excludeMutation.isPending ? 'Excluding...' : 'Exclude Event'}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
@@ -206,15 +208,15 @@ export function EventDetailsEditModal({
         <Button
           variant="outline"
           onClick={onClose}
-          disabled={updateMutation.isLoading || excludeMutation.isLoading}
+          disabled={updateMutation.isPending || excludeMutation.isPending}
         >
           Cancel
         </Button>
         <Button
           onClick={handleSubmit}
-          disabled={updateMutation.isLoading || excludeMutation.isLoading}
+          disabled={updateMutation.isPending || excludeMutation.isPending}
         >
-          {updateMutation.isLoading ? 'Saving...' : 'Save Changes'}
+          {updateMutation.isPending ? 'Saving...' : 'Save Changes'}
         </Button>
       </div>
     </>
@@ -340,7 +342,7 @@ export function EventDetailsEditModal({
                     }}
                     placeholder="0"
                     className={errors.studentsStudio ? "border-red-500" : ""}
-                    disabled={updateMutation.isLoading}
+                    disabled={updateMutation.isPending}
                   />
                   {errors.studentsStudio && (
                     <p className="text-sm text-red-500 mt-1">{errors.studentsStudio}</p>
@@ -368,7 +370,7 @@ export function EventDetailsEditModal({
                     }}
                     placeholder="0"
                     className={errors.studentsOnline ? "border-red-500" : ""}
-                    disabled={updateMutation.isLoading}
+                    disabled={updateMutation.isPending}
                   />
                   {errors.studentsOnline && (
                     <p className="text-sm text-red-500 mt-1">{errors.studentsOnline}</p>

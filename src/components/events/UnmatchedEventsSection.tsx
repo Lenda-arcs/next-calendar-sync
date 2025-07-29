@@ -37,9 +37,10 @@ export function UnmatchedEventsSection({
   const { syncFeed } = useCalendarFeedActions()
 
   // Mark event as excluded mutation
-  const excludeEventMutation = useSupabaseMutation({
-    mutationFn: (supabase, eventId: string) => markEventAsExcluded(eventId, true),
-    onSuccess: () => {
+  const excludeEventMutation = useSupabaseMutation(
+    (supabase, eventId: string) => markEventAsExcluded(eventId, true),
+    {
+      onSuccess: () => {
       toast.success('Event Marked as Free', {
         description: 'The event has been excluded from studio matching and invoicing.',
         duration: 4000,
@@ -54,8 +55,9 @@ export function UnmatchedEventsSection({
         duration: 5000,
       })
       setExcludingEventId(null)
+      }
     }
-  })
+  )
 
   // Format date for EventCard
   const formatEventDateTime = (startTime: string | null) => {
