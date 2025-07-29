@@ -9,7 +9,7 @@ import ReactCrop, {
   makeAspectCrop,
 } from "react-image-crop";
 import "react-image-crop/dist/ReactCrop.css";
-import { useSupabaseQuery, useSupabaseMutation } from "@/lib/hooks/useQueryWithSupabase";
+import { useSupabaseQuery, useSupabaseMutation } from "@/lib/hooks";
 import DataLoader from "./data-loader";
 import { UnifiedDialog } from "./unified-dialog";
 import { Button } from "./button";
@@ -289,9 +289,9 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
     isLoading: isLoadingImages,
     error: fetchError,
     refetch: fetchImages,
-  } = useSupabaseQuery<BucketImage[]>({
-    queryKey: ['bucket_images', bucketName, userFolderPath],
-    fetcher: async (supabase) => {
+  } = useSupabaseQuery<BucketImage[]>(
+    ['bucket_images', bucketName, userFolderPath],
+    async (supabase) => {
       const { data, error } = await supabase.storage
         .from(bucketName)
         .list(userFolderPath, {
@@ -326,12 +326,12 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
         }),
       );
     },
-    enabled: hasOpenedModal && modalStep === 'select' && showModal,
-  });
+    { enabled: hasOpenedModal && modalStep === 'select' && showModal }
+  );
 
   // Upload mutation using useSupabaseMutation
-  const uploadMutation = useSupabaseMutation<{ url: string }, { file: Uint8Array; fileName: string }>({
-    mutationFn: async (supabase, { file, fileName }) => {
+  const uploadMutation = useSupabaseMutation<{ url: string }, { file: Uint8Array; fileName: string }>(
+    async (supabase, { file, fileName }) => {
       const filePath = `${userFolderPath}/${fileName}`;
       
       const { error: uploadError } = await supabase.storage
@@ -350,15 +350,16 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
 
       return { url: publicUrl };
     },
-    onSuccess: (data) => {
-      setPreviewUrl(data.url);
-      onImageUrlChange(data.url);
-      setShowModal(false);
-      setModalStep("select");
-      // Refresh the image list after upload
-      fetchImages();
-    },
-    onError: (error) => {
+    {
+      onSuccess: (data) => {
+        setPreviewUrl(data.url);
+        onImageUrlChange(data.url);
+        setShowModal(false);
+        setModalStep("select");
+        // Refresh the image list after upload
+        fetchImages();
+      },
+      onError: (error) => {
       console.error("Error uploading image:", error);
       
       // Check for server-side RLS policy violation (storage limit exceeded)
@@ -368,15 +369,16 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
         setError(`You have reached your ${limitText} limit. Please delete some existing images before uploading new ones.`);
       } else if (error.message?.includes('413') || error.message?.includes('too large')) {
         setError("Image file is too large. Please compress your image or choose a smaller file.");
-      } else {
-        setError(`Upload failed: ${error.message || 'Please try again.'}`);
+        } else {
+          setError(`Upload failed: ${error.message || 'Please try again.'}`);
+        }
       }
-    },
-  });
+    }
+  );
 
   // Delete mutation using useSupabaseMutation
-  const deleteMutation = useSupabaseMutation<void, { fileName: string }>({
-    mutationFn: async (supabase, { fileName }) => {
+  const deleteMutation = useSupabaseMutation<void, { fileName: string }>(
+    async (supabase, { fileName }) => {
       const filePath = `${userFolderPath}/${fileName}`;
       
       const { error } = await supabase.storage
@@ -385,15 +387,17 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
 
       if (error) throw error;
     },
-    onSuccess: () => {
-      // Refresh the image list after deletion
-      fetchImages();
-    },
-    onError: (error) => {
-      console.error("Error deleting image:", error);
-      setError("Failed to delete image. Please try again.");
-    },
-  });
+    {
+      onSuccess: () => {
+        // Refresh the image list after deletion
+        fetchImages();
+      },
+      onError: (error) => {
+        console.error("Error deleting image:", error);
+        setError("Failed to delete image. Please try again.");
+      }
+    }
+  );
 
   const onImageLoad = useCallback(
     (e: React.SyntheticEvent<HTMLImageElement>) => {
@@ -573,7 +577,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
           )}
           <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
             <span className="text-white text-sm">
-              {uploadMutation.isLoading ? "Uploading..." : placeholderText}
+              {uploadMutation.isPending ? "Uploading..." : placeholderText}
             </span>
           </div>
         </div>
@@ -665,11 +669,11 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
               </Button>
               <Button
                 onClick={handleCropComplete}
-                disabled={uploadMutation.isLoading}
+                disabled={uploadMutation.isPending}
                 size="default"
-                loading={uploadMutation.isLoading}
+                loading={uploadMutation.isPending}
               >
-                {uploadMutation.isLoading ? "Uploading..." : "Crop & Save"}
+                {uploadMutation.isPending ? "Uploading..." : "Crop & Save"}
               </Button>
             </>
           )
@@ -687,7 +691,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
             {/* Step Content */}
             {modalStep === "select" ? (
               <ExistingImagesStep
-                existingImages={existingImages}
+                existingImages={existingImages || null}
                 isLoadingImages={isLoadingImages}
                 fetchError={fetchError?.message || null}
                 onSelectImage={handleSelectExistingImage}
