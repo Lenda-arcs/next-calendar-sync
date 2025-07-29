@@ -19,9 +19,9 @@ export function useKeywordSuggestions({
   minCount = 2 
 }: UseKeywordSuggestionsProps) {
   // Fetch user's events to analyze for keyword suggestions
-  const { data: events, isLoading, error } = useSupabaseQuery({
-    queryKey: ['keyword-suggestions', userId],
-    fetcher: async (supabase) => {
+  const { data: events, isLoading, error } = useSupabaseQuery(
+    ['keyword-suggestions', userId],
+    async (supabase) => {
       const { data, error } = await supabase
         .from('events')
         .select('title, location')
@@ -32,8 +32,8 @@ export function useKeywordSuggestions({
       if (error) throw error
       return data
     },
-    enabled: enabled && !!userId,
-  })
+    { enabled: enabled && !!userId }
+  )
 
   // Process events to extract keyword suggestions
   const suggestions = useMemo<KeywordSuggestion[]>(() => {

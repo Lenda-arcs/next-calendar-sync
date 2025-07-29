@@ -10,76 +10,55 @@ import {
   type CalendarFeed,
   type CalendarFeedInsert 
 } from '@/lib/calendar-feeds'
-import { createBrowserClient } from '@supabase/ssr'
 import { useCallback } from 'react'
 
-export function useCalendarFeeds(userId: string ) {
-  return useSupabaseQuery<CalendarFeed[]>({
-    queryKey: ['calendar-feeds', userId],
-    fetcher: async (supabase) => {
+export function useCalendarFeeds(userId: string) {
+  return useSupabaseQuery<CalendarFeed[]>(
+    ['calendar-feeds', userId],
+    async (supabase) => {
       if (!userId) throw new Error('No user ID provided')
-      return getUserCalendarFeeds({ supabase, userId: userId! })
+      return getUserCalendarFeeds({ supabase, userId })
     },
-    enabled: !!userId,
-  })
+    { enabled: !!userId }
+  )
 }
 
 export function useCreateCalendarFeed() {
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
-
-  return useSupabaseMutation<{ feed: CalendarFeed; syncResult: { success: boolean; count: number } }, CalendarFeedInsert>({
-    mutationFn: async (_, variables) => {
+  return useSupabaseMutation<{ feed: CalendarFeed; syncResult: { success: boolean; count: number } }, CalendarFeedInsert>(
+    async (supabase, variables) => {
       return createCalendarFeed(supabase, variables)
-    },
-  })
+    }
+  )
 }
 
 export function useDeleteCalendarFeed() {
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
-
-  return useSupabaseMutation<void, string>({
-    mutationFn: async (_, feedId) => {
+  return useSupabaseMutation<void, string>(
+    async (supabase, feedId) => {
       return deleteCalendarFeed(supabase, feedId)
-    },
-  })
+    }
+  )
 }
 
 export function useSyncCalendarFeed() {
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
-
-  return useSupabaseMutation<{ success: boolean; count: number }, { feedId: string; mode?: 'default' | 'historical' }>({
-    mutationFn: async (_, variables) => {
+  return useSupabaseMutation<{ success: boolean; count: number }, { feedId: string; mode?: 'default' | 'historical' }>(
+    async (supabase, variables) => {
       return syncCalendarFeed(supabase, variables.feedId, variables.mode)
-    },
-  })
+    }
+  )
 }
 
 export function useSyncAllCalendarFeeds(userId: string) {
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
-
-  return useSupabaseMutation<{ successfulSyncs: number; totalFeeds: number; totalEvents: number }, void>({
-    mutationFn: async () => {
+  return useSupabaseMutation<{ successfulSyncs: number; totalFeeds: number; totalEvents: number }, void>(
+    async (supabase) => {
       if (!userId) throw new Error('No user ID provided')
       return syncAllUserCalendarFeeds(supabase, userId)
-    },
-  })
+    }
+  )
 }
 
 export function useUpdateCalendarFeedSyncApproach() {
-  return useSupabaseMutation<CalendarFeed, { feedId: string; syncApproach: 'yoga_only' | 'mixed_calendar' }>({
-    mutationFn: async (_, variables) => {
+  return useSupabaseMutation<CalendarFeed, { feedId: string; syncApproach: 'yoga_only' | 'mixed_calendar' }>(
+    async (_, variables) => {
       const response = await fetch(`/api/calendar-feeds/${variables.feedId}`, {
         method: 'PATCH',
         headers: {
@@ -95,8 +74,8 @@ export function useUpdateCalendarFeedSyncApproach() {
 
       const data = await response.json()
       return data.feed
-    },
-  })
+    }
+  )
 }
 
 export function useCalendarFeedActions() {
@@ -126,10 +105,10 @@ export function useCalendarFeedActions() {
     deleteFeed,
     syncFeed,
     updateSyncApproach,
-    isCreating: createMutation.isLoading,
-    isDeleting: deleteMutation.isLoading,
-    isSyncing: syncMutation.isLoading,
-    isUpdatingSyncApproach: updateSyncApproachMutation.isLoading,
+    isCreating: createMutation.isPending,
+    isDeleting: deleteMutation.isPending,
+    isSyncing: syncMutation.isPending,
+    isUpdatingSyncApproach: updateSyncApproachMutation.isPending,
     createError: createMutation.error,
     deleteError: deleteMutation.error,
     syncError: syncMutation.error,

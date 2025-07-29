@@ -1,33 +1,37 @@
 'use client'
 
-
-import { useSupabaseQuery } from './useQueryWithSupabase'
-import { getUninvoicedEvents, getUninvoicedEventsByStudio, getUnmatchedEvents, getExcludedEvents, EventWithSubstituteTeacher } from '@/lib/invoice-utils'
+import { useSupabaseQuery } from '@/lib/hooks'
+import {
+  getUninvoicedEvents,
+  getUninvoicedEventsByStudio,
+  getUnmatchedEvents,
+  getExcludedEvents,
+  type EventWithSubstituteTeacher
+} from '@/lib/invoice-utils'
 import { Event } from '@/lib/types'
 
 interface UseInvoiceEventsResult {
-  // Data
-  uninvoicedEvents: EventWithSubstituteTeacher[] | null
-  unmatchedEvents: Event[] | null
-  excludedEvents: Event[] | null
-  eventsByStudio: Record<string, EventWithSubstituteTeacher[]> | null
-  
-  // Loading states
+  uninvoicedEvents: EventWithSubstituteTeacher[] | undefined
+  unmatchedEvents: Event[] | undefined
+  excludedEvents: Event[] | undefined
+  eventsByStudio: Record<string, EventWithSubstituteTeacher[]> | undefined
   isLoading: boolean
   isUnmatchedLoading: boolean
   isExcludedLoading: boolean
-  
-  // Errors
   error: Error | null
   unmatchedError: Error | null
   excludedError: Error | null
-  
-  // Actions
   refetchAll: () => Promise<void>
-  refetchUninvoiced: () => Promise<void>
-  refetchUnmatched: () => Promise<void>
-  refetchExcluded: () => Promise<void>
+  refetchUninvoiced: () => void
+  refetchUnmatched: () => void
+  refetchExcluded: () => void
 }
+
+/**
+ * Comprehensive hook for managing all invoice-related events
+ * Fetches uninvoiced, unmatched, and excluded events
+ * Provides grouped data for invoice creation workflows
+ */
 
 export function useInvoiceEvents(userId: string): UseInvoiceEventsResult {
   // Fetch uninvoiced events
@@ -36,11 +40,11 @@ export function useInvoiceEvents(userId: string): UseInvoiceEventsResult {
     isLoading,
     error,
     refetch: refetchUninvoiced
-  } = useSupabaseQuery({
-    queryKey: ['uninvoiced-events', userId],
-    fetcher: () => getUninvoicedEvents(userId),
-    enabled: !!userId
-  })
+  } = useSupabaseQuery(
+    ['uninvoiced-events', userId],
+    () => getUninvoicedEvents(userId),
+    { enabled: !!userId }
+  )
 
   // Fetch unmatched events  
   const {
@@ -48,11 +52,11 @@ export function useInvoiceEvents(userId: string): UseInvoiceEventsResult {
     isLoading: isUnmatchedLoading,
     error: unmatchedError,
     refetch: refetchUnmatched
-  } = useSupabaseQuery({
-    queryKey: ['unmatched-events', userId],
-    fetcher: () => getUnmatchedEvents(userId),
-    enabled: !!userId
-  })
+  } = useSupabaseQuery(
+    ['unmatched-events', userId],
+    () => getUnmatchedEvents(userId),
+    { enabled: !!userId }
+  )
 
   // Fetch excluded events
   const {
@@ -60,21 +64,21 @@ export function useInvoiceEvents(userId: string): UseInvoiceEventsResult {
     isLoading: isExcludedLoading,
     error: excludedError,
     refetch: refetchExcluded
-  } = useSupabaseQuery({
-    queryKey: ['excluded-events', userId],
-    fetcher: () => getExcludedEvents(userId),
-    enabled: !!userId
-  })
+  } = useSupabaseQuery(
+    ['excluded-events', userId],
+    () => getExcludedEvents(userId),
+    { enabled: !!userId }
+  )
 
   // Fetch events grouped by studio/teacher (using the updated grouping logic)
   const {
     data: eventsByStudio,
     refetch: refetchEventsByStudio
-  } = useSupabaseQuery({
-    queryKey: ['uninvoiced-events-by-studio', userId],
-    fetcher: () => getUninvoicedEventsByStudio(userId),
-    enabled: !!userId
-  })
+  } = useSupabaseQuery(
+    ['uninvoiced-events-by-studio', userId],
+    () => getUninvoicedEventsByStudio(userId),
+    { enabled: !!userId }
+  )
 
   // Consolidated refetch function
   const refetchAll = async () => {

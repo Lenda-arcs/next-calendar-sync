@@ -36,9 +36,9 @@ export function StudioRequestDialog({ isOpen, onClose, userId }: StudioRequestDi
   const supabase = createClient()
 
   // Fetch user's event locations to determine relevant studios
-  const { data: userEventLocations } = useSupabaseQuery({
-    queryKey: ['user-event-locations', userId],
-    fetcher: async (supabase) => {
+  const { data: userEventLocations } = useSupabaseQuery(
+    ['user-event-locations', userId],
+    async (supabase) => {
       const { data, error } = await supabase
         .from('events')
         .select('location, title')
@@ -69,13 +69,13 @@ export function StudioRequestDialog({ isOpen, onClose, userId }: StudioRequestDi
         titleKeywords: Array.from(titleKeywords)
       }
     },
-    enabled: isOpen && !!userId
-  })
+    { enabled: isOpen && !!userId }
+  )
 
   // Fetch available studios and calculate relevance
-  const { data: relevantStudios, isLoading } = useSupabaseQuery<RelevantStudio[]>({
-    queryKey: ['relevant-studios', userId, String(userEventLocations?.locations?.length || 0)],
-    fetcher: async (supabase) => {
+  const { data: relevantStudios, isLoading } = useSupabaseQuery<RelevantStudio[]>(
+    ['relevant-studios', userId, String(userEventLocations?.locations?.length || 0)],
+    async (supabase) => {
       // Get all verified studios
       const { data: studiosData, error: studiosError } = await supabase
         .from('studios')
@@ -179,8 +179,8 @@ export function StudioRequestDialog({ isOpen, onClose, userId }: StudioRequestDi
 
       return sortedStudios
     },
-    enabled: isOpen && !!userEventLocations
-  })
+    { enabled: isOpen && !!userEventLocations }
+  )
 
   // Reset form when dialog closes
   useEffect(() => {
@@ -192,9 +192,9 @@ export function StudioRequestDialog({ isOpen, onClose, userId }: StudioRequestDi
   }, [isOpen])
 
   // Fetch all studios for search functionality
-  const { data: allStudios } = useSupabaseQuery({
-    queryKey: ['all-studios-search', userId],
-    fetcher: async (supabase) => {
+  const { data: allStudios } = useSupabaseQuery(
+    ['all-studios-search', userId],
+    async (supabase) => {
       const { data: studiosData, error: studiosError } = await supabase
         .from('studios')
         .select('*')
@@ -215,8 +215,8 @@ export function StudioRequestDialog({ isOpen, onClose, userId }: StudioRequestDi
       const existingStudioIds = new Set(existingRequests?.map((req: { studio_id: string; status: string }) => req.studio_id) || [])
       return studiosData?.filter((studio: Studio) => !existingStudioIds.has(studio.id)) || []
     },
-    enabled: isOpen && !!userId
-  })
+    { enabled: isOpen && !!userId }
+  )
 
   // Filter studios based on search - search all studios or show relevant ones
   const filteredStudios = useMemo(() => {

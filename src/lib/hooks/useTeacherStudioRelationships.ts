@@ -15,9 +15,9 @@ interface UseTeacherStudioRelationshipsProps {
 }
 
 export function useTeacherStudioRelationships({ teacherId, enabled = true }: UseTeacherStudioRelationshipsProps) {
-  return useSupabaseQuery<TeacherStudioRelationship[]>({
-    queryKey: ['teacher-studio-relationships', teacherId || 'null'],
-    fetcher: async (supabase) => {
+  return useSupabaseQuery<TeacherStudioRelationship[]>(
+    ['teacher-studio-relationships', teacherId || 'null'],
+    async (supabase) => {
       if (!teacherId) return []
       
       const { data, error } = await supabase
@@ -47,8 +47,8 @@ export function useTeacherStudioRelationships({ teacherId, enabled = true }: Use
 
       return relationships
     },
-    enabled: enabled && !!teacherId
-  })
+    { enabled: enabled && !!teacherId }
+  )
 }
 
 // Helper function to get the best studio suggestion for a teacher

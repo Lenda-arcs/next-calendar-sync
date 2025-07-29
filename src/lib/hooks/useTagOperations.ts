@@ -1,5 +1,7 @@
+'use client'
+
 import { useState } from 'react'
-import { useSupabaseMutation } from './useQueryWithSupabase'
+import { useSupabaseMutation } from '@/lib/hooks'
 import { TagInsert, TagUpdate } from '@/lib/types'
 import { EventTag } from '@/lib/event-types'
 import { toast } from 'sonner'
@@ -15,8 +17,8 @@ export function useTagOperations({ onSuccess }: UseTagOperationsProps = {}) {
   const [isEditing, setIsEditing] = useState(false)
 
   // Create tag mutation
-  const { mutate: createTag, isLoading: creating } = useSupabaseMutation({
-    mutationFn: async (supabase, variables: TagInsert) => {
+  const { mutate: createTag, isPending: creating } = useSupabaseMutation(
+    async (supabase, variables: TagInsert) => {
       const { data, error } = await supabase
         .from('tags')
         .insert([variables])
@@ -25,21 +27,23 @@ export function useTagOperations({ onSuccess }: UseTagOperationsProps = {}) {
       if (error) throw error
       return data
     },
-    onSuccess: () => {
-      toast.success('Tag created successfully!')
-      handleCancel()
-      onSuccess?.()
-    },
-    onError: (error) => {
-      toast.error('Failed to create tag', {
-        description: error.message
-      })
+    {
+      onSuccess: () => {
+        toast.success('Tag created successfully!')
+        handleCancel()
+        onSuccess?.()
+      },
+      onError: (error) => {
+        toast.error('Failed to create tag', {
+          description: error.message
+        })
+      }
     }
-  })
+  )
 
   // Update tag mutation
-  const { mutate: updateTag, isLoading: updating } = useSupabaseMutation({
-    mutationFn: async (supabase, variables: { id: string; data: TagUpdate }) => {
+  const { mutate: updateTag, isPending: updating } = useSupabaseMutation(
+    async (supabase, variables: { id: string; data: TagUpdate }) => {
       const { data, error } = await supabase
         .from('tags')
         .update(variables.data)
@@ -49,43 +53,48 @@ export function useTagOperations({ onSuccess }: UseTagOperationsProps = {}) {
       if (error) throw error
       return data
     },
-    onSuccess: () => {
-      toast.success('Tag updated successfully!')
-      handleCancel()
-      onSuccess?.()
-    },
-    onError: (error) => {
-      toast.error('Failed to update tag', {
-        description: error.message
-      })
+    {
+      onSuccess: () => {
+        toast.success('Tag updated successfully!')
+        handleCancel()
+        onSuccess?.()
+      },
+      onError: (error) => {
+        toast.error('Failed to update tag', {
+          description: error.message
+        })
+      }
     }
-  })
+  )
 
   // Delete tag mutation
-  const { mutate: deleteTag, isLoading: deleting } = useSupabaseMutation({
-    mutationFn: async (supabase, tagId: string) => {
+  const { mutate: deleteTag, isPending: deleting } = useSupabaseMutation(
+    async (supabase, tagId: string) => {
       const { data, error } = await supabase
         .from('tags')
         .delete()
         .eq('id', tagId)
-        .select()
       
       if (error) throw error
       return data
     },
-    onSuccess: () => {
-      toast.success('Tag deleted successfully!')
-      onSuccess?.()
-    },
-    onError: (error) => {
-      toast.error('Failed to delete tag', {
-        description: error.message
-      })
+    {
+      onSuccess: () => {
+        toast.success('Tag deleted successfully!')
+        handleCancel()
+        onSuccess?.()
+      },
+      onError: (error) => {
+        toast.error('Failed to delete tag', {
+          description: error.message
+        })
+      }
     }
-  })
+  )
 
   const handleTagClick = (tag: EventTag) => {
     setSelectedTag(tag)
+    setIsEditing(false)
     setShowViewDialog(true)
   }
 
@@ -93,7 +102,6 @@ export function useTagOperations({ onSuccess }: UseTagOperationsProps = {}) {
     setSelectedTag(tag)
     setIsEditing(true)
     setShowNewTagForm(true)
-    setShowViewDialog(false)
   }
 
   const handleCreateNew = () => {

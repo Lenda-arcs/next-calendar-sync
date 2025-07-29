@@ -14,9 +14,9 @@ export function useAllTags({ userId, enabled = true }: UseAllTagsProps = {}) {
     isLoading: userTagsLoading,
     error: userTagsError,
     refetch: refetchUserTags
-  } = useSupabaseQuery<Tag[]>({
-    queryKey: ['user_tags', userId || 'no-user'],
-    fetcher: async (supabase) => {
+  } = useSupabaseQuery<Tag[]>(
+    ['user_tags', userId || 'no-user'],
+    async (supabase) => {
       if (!userId) return []
       
       const { data, error } = await supabase
@@ -28,8 +28,8 @@ export function useAllTags({ userId, enabled = true }: UseAllTagsProps = {}) {
       if (error) throw error
       return data || []
     },
-    enabled: enabled && !!userId,
-  })
+    { enabled: enabled && !!userId }
+  )
 
   // Fetch global tags
   const {
@@ -37,9 +37,9 @@ export function useAllTags({ userId, enabled = true }: UseAllTagsProps = {}) {
     isLoading: globalTagsLoading,
     error: globalTagsError,
     refetch: refetchGlobalTags
-  } = useSupabaseQuery<Tag[]>({
-    queryKey: ['global_tags'],
-    fetcher: async (supabase) => {
+  } = useSupabaseQuery<Tag[]>(
+    ['global_tags'],
+    async (supabase) => {
       const { data, error } = await supabase
         .from('tags')
         .select('*')
@@ -49,8 +49,8 @@ export function useAllTags({ userId, enabled = true }: UseAllTagsProps = {}) {
       if (error) throw error
       return data || []
     },
-    enabled,
-  })
+    { enabled }
+  )
 
   // Combine all tags
   const allTags = useMemo(() => {

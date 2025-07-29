@@ -165,8 +165,8 @@ export const TagRuleManager: React.FC<Props> = ({ userId, availableTags: propTag
   )
 
   // Update tag rule mutation
-  const { mutate: updateRule, isLoading: updating } = useSupabaseMutation({
-    mutationFn: async (supabase, variables: { 
+  const { mutate: updateRule, isPending: updating } = useSupabaseMutation(
+    async (supabase, variables: { 
       id: string;
       keywords: string[]; 
       location_keywords: string[]; 
@@ -186,7 +186,8 @@ export const TagRuleManager: React.FC<Props> = ({ userId, availableTags: propTag
       if (error) throw error
       return data
     },
-    onSuccess: async (data) => {
+    {
+      onSuccess: async (data) => {
       // Clear editing state and close dialog
       setState((prev) => ({
         ...prev,
@@ -224,15 +225,16 @@ export const TagRuleManager: React.FC<Props> = ({ userId, availableTags: propTag
           duration: 5000,
         })
       }
-    },
-    onError: () => {
-      console.error('Failed to update tag rule')
+      },
+      onError: () => {
+        console.error('Failed to update tag rule')
+      }
     }
-  })
+  )
 
   // Delete tag rule mutation
-  const { mutate: deleteRule } = useSupabaseMutation({
-    mutationFn: async (supabase, ruleId: string) => {
+  const { mutate: deleteRule } = useSupabaseMutation(
+    async (supabase, ruleId: string) => {
       const { data, error } = await supabase
         .from('tag_rules')
         .delete()
@@ -242,7 +244,8 @@ export const TagRuleManager: React.FC<Props> = ({ userId, availableTags: propTag
       if (error) throw error
       return data
     },
-    onSuccess: async (_, ruleId) => {
+    {
+      onSuccess: async (_, ruleId) => {
       // Mark as deleted in optimistic state
       setDeletedRuleIds(prev => new Set([...prev, ruleId]))
       
@@ -271,17 +274,18 @@ export const TagRuleManager: React.FC<Props> = ({ userId, availableTags: propTag
           duration: 5000,
         })
       }
-    },
-    onError: (_, ruleId) => {
-      // Remove from deleted set to restore the rule
-      setDeletedRuleIds(prev => {
-        const newSet = new Set(prev)
-        newSet.delete(ruleId)
-        return newSet
-      })
-      console.error('Failed to delete tag rule')
+      },
+      onError: (_, ruleId) => {
+        // Remove from deleted set to restore the rule
+        setDeletedRuleIds(prev => {
+          const newSet = new Set(prev)
+          newSet.delete(ruleId)
+          return newSet
+        })
+        console.error('Failed to delete tag rule')
+      }
     }
-  })
+  )
 
   const handleAddRule = async () => {
     const hasKeywords = state.newRule.keywords.length > 0
