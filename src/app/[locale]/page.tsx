@@ -64,6 +64,7 @@ export default async function LocalizedLandingPage({ params }: Props) {
   return (
     <main className="flex flex-col">
       {/* Add structured data for SEO */}
+      {/*TODO: do it in layout instead?*/}
       <StructuredData data={organizationData} />
       
       {/* Hero Section */}

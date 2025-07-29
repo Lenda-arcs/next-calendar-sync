@@ -106,6 +106,7 @@ export default async function RegisterPage({ params, searchParams }: RegisterPag
   }
 
   // Show closed beta message if no valid invitation
+  //TODO: translate this texts
   return (
     <>
       <div className="text-center mb-8">

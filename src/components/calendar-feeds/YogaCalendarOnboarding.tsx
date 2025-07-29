@@ -63,7 +63,7 @@ export function YogaCalendarOnboarding({ error, message, onCalendarCreated }: Yo
           }, 2000)
         }
       } else {
-        throw new Error(result.error || 'Failed to create calendar')
+         new Error( 'Failed to create calendar')
       }
     } catch (error) {
       console.error('Calendar creation error:', error)

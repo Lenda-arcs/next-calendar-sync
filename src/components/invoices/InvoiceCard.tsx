@@ -61,7 +61,7 @@ export const InvoiceCard: React.FC<InvoiceCardProps> = ({ invoice, onEdit, onSta
     
     setIsUpdatingStatus(true)
     try {
-      await onStatusChange(invoice.id, newStatus as 'sent' | 'paid' | 'overdue')
+      onStatusChange(invoice.id, newStatus as 'sent' | 'paid' | 'overdue')
     } finally {
       setIsUpdatingStatus(false)
     }
@@ -72,7 +72,8 @@ export const InvoiceCard: React.FC<InvoiceCardProps> = ({ invoice, onEdit, onSta
     
     setIsGeneratingPDF(true)
     try {
-      await onGeneratePDF(invoice.id, 'en') // Default to English for now, can be made configurable
+      onGeneratePDF(invoice.id, 'en') // Default to English for now, can be made configurable
+      // Default to English for now, can be made configurable
     } finally {
       setIsGeneratingPDF(false)
     }
@@ -258,6 +259,7 @@ export const InvoiceCard: React.FC<InvoiceCardProps> = ({ invoice, onEdit, onSta
                     </Button>
                   </AlertDialogTrigger>
                   <AlertDialogContent>
+                    {/*TODO: Translate Text*/}
                     <AlertDialogHeader>
                       <AlertDialogTitle>Delete Invoice?</AlertDialogTitle>
                       <AlertDialogDescription>

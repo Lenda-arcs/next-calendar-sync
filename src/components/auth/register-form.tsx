@@ -28,7 +28,6 @@ export function RegisterForm({ redirectTo = '/app', className, invitationToken }
   const [showConfirmPassword, setShowConfirmPassword] = React.useState(false)
   const [authError, setAuthError] = React.useState<string>('')
 
-  // ✨ NEW: Use unified mutation for marking invitation as used
   const markInvitationMutation = useMarkInvitationAsUsed()
 
   const {

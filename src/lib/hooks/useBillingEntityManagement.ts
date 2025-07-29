@@ -15,6 +15,10 @@ export function useBillingEntityManagement({ userId }: UseBillingEntityManagemen
   const [entityToDelete, setEntityToDelete] = useState<BillingEntity | null>(null)
   const [deletingEntityId, setDeletingEntityId] = useState<string | null>(null)
 
+
+
+  //TODO: CURSOR Migrate to new query system (Utilise TanStack Query's optimistic updates, instead of manual state management)
+  // FOR FOLLOWING---
   // Data fetching
   const { 
     data: entities, 

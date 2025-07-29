@@ -42,18 +42,13 @@ interface ManageEventsClientProps {
   userId: string
 }
 
+//TODO REFACTOR this after all other TODOs are done (make it more readable and remove unnecessary comments)
 export function ManageEventsClient({ userId }: ManageEventsClientProps) {
   const { t } = useTranslation()
-  // Keep queryClient for potential future optimistic updates
+  //TODO:  Remove this if not needed anymore (i think we do have a proper tanstack query cache now)
   const smartCache = useSmartCache()
-  
-  // ✅ FULLY MIGRATED: TanStack Query + Smart Cache Management!
-  // 🚀 Benefits: Instant UI updates, intelligent caching, background refetching
-  // ⚡ Optimistic updates make CRUD operations feel instant
-  // 🔄 Smart cache invalidation keeps ALL related data synchronized
-  // 🎯 Cache management keeps events, tags, invoices, and studios in perfect sync
-  
-  // ==================== SETUP & STATE ====================
+
+  //TODO: Remove when useCalendarSync was migrated to now QuerySystem
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -90,7 +85,7 @@ export function ManageEventsClient({ userId }: ManageEventsClientProps) {
   } = useAllTags(userId, { enabled: !!userId })
   
   // Extract allTags from the result
-  const allTags = tagsData?.allTags || []
+  const allAvailableTags = tagsData?.allTags || []
 
   // ✨ NEW: Use unified tag creation
   const createTagMutation = useCreateTag()
@@ -121,7 +116,8 @@ export function ManageEventsClient({ userId }: ManageEventsClientProps) {
     })
   }, [createTagMutation, refetchTags, userId])
 
-  // 🚀 OPTIMISTIC UPDATES: Event creation feels instant!
+
+  //TODO: CURSOR Migrate to new query system (Utilise TanStack Query's optimistic updates, instead of manual state management)
   const createEventMutation = useSupabaseMutation(
     async (supabase, eventData: CreateEventData) => {
       if (!userId) throw new Error('User not authenticated')
@@ -167,6 +163,7 @@ export function ManageEventsClient({ userId }: ManageEventsClientProps) {
     }
   )
 
+  //TODO: CURSOR Migrate to new query system (Utilise TanStack Query's optimistic updates, instead of manual state management)
   const updateEventMutation = useSupabaseMutation(
     async (supabase, eventData: CreateEventData & { id: string }) => {
       if (!userId) throw new Error('User not authenticated')
@@ -209,6 +206,8 @@ export function ManageEventsClient({ userId }: ManageEventsClientProps) {
     }
   )
 
+
+  //TODO: CURSOR Migrate to new query system (Utilise TanStack Query's optimistic updates, instead of manual state management)
   const deleteEventMutation = useSupabaseMutation(
     async (supabase, eventId: string) => {
       if (!userId) throw new Error('User not authenticated')
@@ -238,9 +237,6 @@ export function ManageEventsClient({ userId }: ManageEventsClientProps) {
     }
   )
 
-  // ==================== COMPUTED DATA ====================
-  // Get all available tags from shared hook
-  const allAvailableTags = allTags
 
   // Convert tags to EventTag format for the grid
   const availableEventTags = React.useMemo(() => {
@@ -262,11 +258,9 @@ export function ManageEventsClient({ userId }: ManageEventsClientProps) {
       }
 
       // Visibility filter
-      if (visibilityFilter !== 'all' && event.visibility !== visibilityFilter) {
-        return false
-      }
+      return !(visibilityFilter !== 'all' && event.visibility !== visibilityFilter);
 
-      return true
+
     })
   }, [timeFilter, visibilityFilter])
 
@@ -287,6 +281,7 @@ export function ManageEventsClient({ userId }: ManageEventsClientProps) {
   }, [refetchEvents])
 
   // Calendar sync functionality using custom hook
+  //TODO: CURSOR Migrate to new query system (Utilise TanStack Query's optimistic updates, instead of manual state management) Be careful as this is a supabase edge function not a direct database query - This does not use the smart cache system
   const { syncFeeds: handleSyncFeeds, isSyncing } = useCalendarSync({
     userId,
     supabase,
@@ -443,8 +438,8 @@ export function ManageEventsClient({ userId }: ManageEventsClientProps) {
               timeFilter={timeFilter}
               visibilityFilter={visibilityFilter}
               eventStats={eventStats}
-              userTags={allTags.filter((tag: Tag) => tag.user_id) || undefined}
-              globalTags={allTags.filter((tag: Tag) => !tag.user_id) || undefined}
+              userTags={allAvailableTags.filter((tag: Tag) => tag.user_id) || undefined}
+              globalTags={allAvailableTags.filter((tag: Tag) => !tag.user_id) || undefined}
               isSyncing={isSyncing}
               isLoading={false}
               userId={userId}
@@ -474,7 +469,7 @@ export function ManageEventsClient({ userId }: ManageEventsClientProps) {
         isOpen={isCreateEventFormOpen}
         onSave={handleUpdateEvent}
         onCancel={handleCreateEventFormClose}
-        availableTags={allTags.filter((tag: Tag) => tag.name && tag.color && tag.slug).map((tag: Tag) => ({
+        availableTags={allAvailableTags.filter((tag: Tag) => tag.name && tag.color && tag.slug).map((tag: Tag) => ({
           id: tag.id,
           name: tag.name!,
           color: tag.color!,
@@ -491,7 +486,7 @@ export function ManageEventsClient({ userId }: ManageEventsClientProps) {
         onCancel={handleEditEventFormClose}
         onDelete={handleDeleteEvent}
         editEvent={editingEvent}
-        availableTags={allTags.filter((tag: Tag) => tag.name && tag.color && tag.slug).map((tag: Tag) => ({
+        availableTags={allAvailableTags.filter((tag: Tag) => tag.name && tag.color && tag.slug).map((tag: Tag) => ({
           id: tag.id,
           name: tag.name!,
           color: tag.color!,

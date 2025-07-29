@@ -60,7 +60,7 @@ const PublicEventList: React.FC<PublicEventListProps> = ({
     }))
   }
 
-  // ✨ Use unified hooks for fetching events and tags
+  //TODO: DO we need this if we already fetch in the FilteredEventList?
   const {
     data: fetchedEvents,
     isLoading: eventsLoading,
@@ -73,7 +73,7 @@ const PublicEventList: React.FC<PublicEventListProps> = ({
   // Use provided events or fetched events
   const events = propEvents || fetchedEvents
 
-  // ✨ Use unified tags hook with proper destructuring
+  //TODO: DO we need this if we already fetch in the FilteredEventList?
   const { 
     data: tagsData, 
     isLoading: tagsLoading 
@@ -113,6 +113,7 @@ const PublicEventList: React.FC<PublicEventListProps> = ({
   }
 
   // Get formatted date header (client-safe version)
+  //TODO Refactor date grid logic to a separate utility function
   const getDateHeader = (dateString: string, currentDate?: Date) => {
     const date = parseISO(dateString)
     
@@ -191,7 +192,7 @@ const PublicEventList: React.FC<PublicEventListProps> = ({
   const isLoading = (propEvents ? false : eventsLoading) || (propTags ? false : tagsLoading)
   const errorMessage = eventsError?.message || null
   
-  // Empty state component
+  // TODO: can be removed if we handle empty state in FilteredEventList
   const emptyState = (
     <div className={cn('flex items-center justify-center py-12', className)}>
       <Card className="p-8 text-center max-w-md mx-auto">
@@ -218,6 +219,7 @@ const PublicEventList: React.FC<PublicEventListProps> = ({
   )
 
   return (
+      //TODO: see if wee need this DataLoader component,, or if we put it directly in the FilteredEventList
     <DataLoader
       data={enhancedEvents}
       loading={isLoading}

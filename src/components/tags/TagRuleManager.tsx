@@ -82,7 +82,8 @@ export const TagRuleManager: React.FC<Props> = ({
     enabled: !!userId
   })
 
-  // Create tag rule mutation
+
+  //TODO: CURSOR Migrate to new query system (Utilise TanStack Query's optimistic updates, instead of manual state management)
   const { mutate: createRule, isPending: creating } = useSupabaseMutation(
     async (supabase, variables: { 
       user_id: string;
@@ -147,8 +148,7 @@ export const TagRuleManager: React.FC<Props> = ({
       }
     }
   )
-
-  // Update tag rule mutation
+  //TODO: CURSOR Migrate to new query system (Utilise TanStack Query's optimistic updates, instead of manual state management)
   const { mutate: updateRule, isPending: updating } = useSupabaseMutation(
     async (supabase, variables: { 
       id: string;
@@ -216,7 +216,7 @@ export const TagRuleManager: React.FC<Props> = ({
     }
   )
 
-  // Delete tag rule mutation
+  //TODO: CURSOR Migrate to new query system (Utilise TanStack Query's optimistic updates, instead of manual state management)
   const { mutate: deleteRule, isPending: deleting } = useSupabaseMutation(
     async (supabase, ruleId: string) => {
       const { data, error } = await supabase
@@ -360,6 +360,7 @@ export const TagRuleManager: React.FC<Props> = ({
   return (
     <div className="space-y-8">
       {/* Loading States */}
+      {/*TODO: USE Sonner */}
       {(creating || updating || deleting || (error && !initialLoading)) && (
         <Alert variant={error ? "destructive" : "default"}>
           <AlertCircle className="h-4 w-4" />

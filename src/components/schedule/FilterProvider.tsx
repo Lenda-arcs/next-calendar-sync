@@ -78,6 +78,7 @@ export function FilterProvider({ children }: FilterProviderProps) {
 
   // ==================== COMPUTED DATA ====================
   // Enhanced studio info with event counts
+  //TODO: Currently not working.. after TanStack Query migration
   const availableStudioInfo = useMemo(() => {
     if (!studioInfo) return undefined // Return undefined during loading
     

@@ -26,7 +26,10 @@ export function FilteredEventList({ userId, variant = 'compact', className }: Fi
     setStudioInfo
   } = useScheduleFilters()
 
-  // ✨ NEW: Use unified hook for public events
+
+  //TODO: Lets set the default filter to "this week" instead of "all" make the change in FilterProvider.tsx and here..
+  // We want to make the initial load more relevant to users and increasde the page laod speed.
+  // This means we need to actually connect the filter to the query.. TanStack Query will handle the caching and re-fetching for us.
   const {
     data: events,
     isLoading: eventsLoading,
@@ -38,8 +41,7 @@ export function FilteredEventList({ userId, variant = 'compact', className }: Fi
   const studioLoading = false
   const studioInfo = useMemo(() => [] as StudioInfo[], [])
 
-  // ✨ NEW: Use unified tags hook
-  const { 
+  const {
     data: tagsData,
     isLoading: tagsLoading 
   } = useAllTags(userId, { enabled: !!userId })

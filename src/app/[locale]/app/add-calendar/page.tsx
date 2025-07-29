@@ -33,7 +33,8 @@ export default async function AddCalendarPage({ params, searchParams }: AddCalen
 
   // Get the current user (guaranteed by middleware)
   const { data: { user: authUser }, error: authError } = await supabase.auth.getUser()
-  
+
+  //TODO: Check if this is still needed, as auth should be handled by middleware
   if (authError || !authUser) {
     // This should rarely happen due to middleware, but kept as failsafe
     const signInPath = locale === 'en' ? '/auth/sign-in' : `/${locale}/auth/sign-in`

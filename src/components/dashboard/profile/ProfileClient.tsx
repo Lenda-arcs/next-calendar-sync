@@ -48,6 +48,7 @@ export default function ProfileClient({ userId }: ProfileClientProps) {
       loading={isLoading}
       error={errorMessage}
       skeleton={() => (
+          /*TODO: Create separte comopoentn   skeleton.tsx*/
         <div className="space-y-8 animate-pulse">
           <div className="h-8 bg-gray-200 rounded w-1/3"></div>
           <div className="space-y-4">

@@ -1,22 +1,22 @@
 'use client'
 
 import React from 'react'
-import { Button } from '@/components/ui/button'
+import {Button} from '@/components/ui/button'
 import DataLoader from '@/components/ui/data-loader'
-import { 
-  AlertDialog, 
-  AlertDialogAction, 
-  AlertDialogCancel, 
-  AlertDialogContent, 
-  AlertDialogDescription, 
-  AlertDialogFooter, 
-  AlertDialogHeader, 
-  AlertDialogTitle 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle
 } from '@/components/ui/alert-dialog'
-import { useBillingEntityManagement } from '@/lib/hooks'
-import { BillingEntityCard } from './BillingEntityCard'
+import {useBillingEntityManagement} from '@/lib/hooks'
+import {BillingEntityCard} from '@/components'
 import BillingEntityFormModal from './BillingEntityFormModal'
-import { useTranslation } from '@/lib/i18n/context'
+import {useTranslation} from '@/lib/i18n/context'
 
 interface BillingEntityManagementProps {
   userId: string

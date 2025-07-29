@@ -28,14 +28,11 @@ export default async function ManageInvoicesPage({ params }: ManageInvoicesPageP
   // Get translations for the page
   const translations = await getTranslations(locale)
   const t = createTranslator(translations)
-  
-  const title = t('invoices.management.title')
-  const subtitle = t('invoices.management.subtitle')
 
   return (
     <Container 
-      title={title}
-      subtitle={subtitle}
+      title={t('invoices.management.title')}
+      subtitle={t('invoices.management.subtitle')}
     >
       <ManageInvoicesClient userId={user!.id} />
     </Container>

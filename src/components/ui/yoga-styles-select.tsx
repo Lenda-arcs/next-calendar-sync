@@ -16,6 +16,7 @@ export const YogaStylesSelect: React.FC<YogaStylesSelectProps> = ({
   onChange, 
   className = "" 
 }) => {
+  // TODO: make more dynamic, e.g. fetch from API or config
   const yogaStyles = [
     'Hatha Yoga',
     'Vinyasa Flow', 

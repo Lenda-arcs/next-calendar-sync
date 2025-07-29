@@ -51,6 +51,7 @@ export default async function TeacherSchedulePage({ params }: PageProps) {
   const supabase = await createServerClient()
 
   // Fetch profile data
+  //TODO: are both public_profiles fetches in generateMetadata and here necessary?
   const { data: profile } = await supabase
     .from('public_profiles')
     .select('*')
@@ -62,6 +63,7 @@ export default async function TeacherSchedulePage({ params }: PageProps) {
   }
 
   // Generate structured data for SEO
+  //TODO: shouldn't we do this in the layout.tsx instead?
   const structuredData = generateYogaInstructorStructuredData(
     profile.name || 'Yoga Teacher',
     teacherSlug,

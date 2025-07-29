@@ -1,26 +1,23 @@
 'use client'
 
-import React, { useState } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
-import { Tabs, TabsContent, TabsList, TabContent, LoadingTabsTrigger } from '@/components/ui'
-import { Card, CardContent } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import React, {useState} from 'react'
+import {useRouter, useSearchParams} from 'next/navigation'
+import {LoadingTabsTrigger, TabContent, Tabs, TabsContent, TabsList} from '@/components/ui'
+import {Card, CardContent} from '@/components/ui/card'
+import {Button} from '@/components/ui/button'
 import DataLoader from '@/components/ui/data-loader'
-import { UninvoicedEventsList } from './UninvoicedEventsList'
-import { InvoiceCreationModal } from './InvoiceCreationModal'
-import { InvoiceSettings } from './InvoiceSettings'
-import { InvoiceCard } from './InvoiceCard'
-import { 
-  useUserInvoices, 
+import {InvoiceCard, InvoiceCreationModal, InvoiceSettings, UninvoicedEventsList} from '@/components'
+import {
+  useDeleteInvoice,
+  useGenerateInvoicePDF,
   useUninvoicedEvents,
   useUpdateInvoiceStatus,
-  useGenerateInvoicePDF,
-  useDeleteInvoice 
+  useUserInvoices
 } from '@/lib/hooks/useAppQuery'
-import { EventWithStudio, InvoiceWithDetails } from '@/lib/invoice-utils'
-import { toast } from 'sonner'
-import { Receipt, FileText, Settings, Loader2 } from 'lucide-react'
-import { useTranslation } from '@/lib/i18n/context'
+import {EventWithStudio, InvoiceWithDetails} from '@/lib/invoice-utils'
+import {toast} from 'sonner'
+import {FileText, Loader2, Receipt, Settings} from 'lucide-react'
+import {useTranslation} from '@/lib/i18n/context'
 
 interface InvoiceManagementProps {
   userId: string
@@ -28,6 +25,8 @@ interface InvoiceManagementProps {
 
 type TabValue = 'uninvoiced' | 'invoices' | 'settings'
 
+
+//TODO: Make the SmartPreloading form ActiveNavigationLink even smarter by only preloading the active tab's data not all tabs.. and as soon as the page is loaded, load the other tabs' data in the background
 export function InvoiceManagement({ userId }: InvoiceManagementProps) {
   const { t } = useTranslation()
   const router = useRouter()
@@ -40,7 +39,9 @@ export function InvoiceManagement({ userId }: InvoiceManagementProps) {
   const [editingInvoice, setEditingInvoice] = useState<InvoiceWithDetails | null>(null)
   const [tabSwitchLoading, setTabSwitchLoading] = useState<TabValue | null>(null)
 
+
   // Get active tab from URL, default to 'uninvoiced'
+  //TODO: Separate the Tablogic into a hook for better reusability and readability
   const getActiveTabFromUrl = (): TabValue => {
     const tab = searchParams.get('tab') as TabValue
     return ['uninvoiced', 'invoices', 'settings'].includes(tab) ? tab : 'uninvoiced'
@@ -50,6 +51,7 @@ export function InvoiceManagement({ userId }: InvoiceManagementProps) {
   const activeTab = getActiveTabFromUrl()
 
   // Update URL when tab changes with loading feedback
+  //TODO: Separate the Tablogic into a hook for better reusability and readability
   const setActiveTab = (tab: TabValue) => {
     if (tab === activeTab) return // Don't switch if already on the tab
     
@@ -101,6 +103,7 @@ export function InvoiceManagement({ userId }: InvoiceManagementProps) {
   }
 
   // ✨ NEW: Use unified mutation hooks
+  //TODO: CURSOR Migrate to new query system (Utilise TanStack Query's optimistic updates, instead of manual state management) ...
   const updateInvoiceStatusMutation = useUpdateInvoiceStatus()
   const generateInvoicePDFMutation = useGenerateInvoicePDF()
   const deleteInvoiceMutation = useDeleteInvoice()
@@ -260,11 +263,13 @@ export function InvoiceManagement({ userId }: InvoiceManagementProps) {
             title={t('invoices.management.invoicesTab.title')}
             description={t('invoices.management.invoicesTab.description')}
           >
+            {/*TODO: fix linting*/}
             <DataLoader
-              data={userInvoices}
+              data={userInvoices }
               loading={invoicesLoading || tabSwitchLoading === 'invoices'}
               error={invoicesError?.message || null}
               empty={
+              /*TODO: Create separate empty conmpoennt*/
                 <Card>
                   <CardContent className="py-12 text-center">
                     <div className="w-12 h-12 mx-auto mb-4 text-gray-300">

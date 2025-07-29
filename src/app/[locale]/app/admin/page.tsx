@@ -21,6 +21,7 @@ export const metadata: Metadata = {
   description: 'Administrative tools and user management for avara.',
 }
 
+// TODO: REFACTOR: New query system, Dataloaders, empty states, etc.
 export default async function AdminPage({ params }: AdminPageProps) {
   const { locale: localeParam } = await params
   const locale = getValidLocale(localeParam)

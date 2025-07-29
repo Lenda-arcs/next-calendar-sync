@@ -1,15 +1,11 @@
 'use client'
 
-import React, { useState, useEffect, useRef } from 'react'
-import { Filter, MapPin, X } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Skeleton } from '@/components/ui/skeleton'
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
-import { Select, MultiSelect } from '@/components/ui'
-import { useScheduleFilters } from './FilterProvider'
-import { useTranslation } from '@/lib/i18n/context'
+import React, {useEffect, useRef, useState} from 'react'
+import {Filter, MapPin, X} from 'lucide-react'
+import {Accordion, AccordionContent, AccordionItem, AccordionTrigger} from '@/components/ui/accordion'
+import {MultiSelect, Select, Badge, Button, Card, Skeleton} from '@/components/ui'
+import {useScheduleFilters} from '@/components'
+import {useTranslation} from '@/lib/i18n/context'
 
 export function ScheduleFilters() {
   const [isFloatingVisible, setIsFloatingVisible] = useState(false)
@@ -232,6 +228,7 @@ function WhenFilter({ options }: { options: Array<{ key: string; label: string }
 
 // Desktop Studio Filter Component - Compact Version
 function StudioFilter() {
+
   const { filters, availableStudioInfo, toggleStudio } = useScheduleFilters()
   const { t } = useTranslation()
 

@@ -23,6 +23,7 @@ interface EventImportPreviewProps {
 
 type FilterType = 'all' | 'yoga' | 'private' | 'selected'
 
+//TODO: REFACTOR: make more readable by breaking into smaller components and hooks, and make more efficient
 export function EventImportPreview({ 
   previewData, 
   sourceName, 

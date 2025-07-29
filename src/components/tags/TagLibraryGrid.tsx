@@ -1,12 +1,12 @@
 'use client'
 
 import React from 'react'
-import { EventTag } from '@/lib/event-types'
-import { UserRole } from '@/lib/types'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Edit, Trash2, Globe, Plus, X } from 'lucide-react'
-import { useTranslation } from '@/lib/i18n/context'
+import {EventTag} from '@/lib/event-types'
+import {UserRole} from '@/lib/types'
+import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card'
+import {Button} from '@/components/ui/button'
+import {Edit, Globe, Plus, Trash2, X} from 'lucide-react'
+import {useTranslation} from '@/lib/i18n/context'
 
 interface Props {
   globalTags: EventTag[]
@@ -140,6 +140,7 @@ const TagLibraryItem: React.FC<TagLibraryItemProps> = ({
 export const TagLibraryGrid: React.FC<Props> = ({
   globalTags,
   customTags,
+    //TODO : Fix this linter error
   onTagClick,
   onEditClick,
   onDeleteClick,

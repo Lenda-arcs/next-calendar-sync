@@ -23,6 +23,7 @@ export function EnhancedYogaOnboarding({
   forceImportStep = false 
 }: EnhancedYogaOnboardingProps) {
   const { t } = useTranslation()
+  //TODO: USe type safe values for this state ans use enum if possible and make use of it in the component
   const [step, setStep] = useState<'create-calendar' | 'import-events'>(() => {
     // If there's a success message, assume calendar is already created and force import step
     if (success || forceImportStep) {
@@ -35,11 +36,12 @@ export function EnhancedYogaOnboarding({
     setStep('import-events')
   }
 
+  //TODO: see if we can unify follwing two functions into one
   const handleImportComplete = () => {
     toast.success(t('calendar.yogaOnboarding.completion.success'))
     // Redirect to dashboard
     setTimeout(() => {
-      window.location.href = '/app'
+      window.location.href = '/app' //TODO: use PATHS for constancy
     }, 1000)
   }
 
@@ -47,7 +49,7 @@ export function EnhancedYogaOnboarding({
     toast.info(t('calendar.yogaOnboarding.completion.skipped'))
     // Redirect to dashboard
     setTimeout(() => {
-      window.location.href = '/app'
+      window.location.href = '/app' //TODO: use PATHS for constancy
     }, 1000)
   }
 

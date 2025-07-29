@@ -1,12 +1,12 @@
 'use client'
 
-import React, { useRef, useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { UnifiedDialog } from '@/components/ui/unified-dialog'
-import { UserInvoiceSettingsForm } from './UserInvoiceSettingsForm'
-import { UserInvoiceSettings } from '@/lib/types'
-import { useTranslation } from '@/lib/i18n/context'
-import { Loader2 } from 'lucide-react'
+import React, {useRef, useState} from 'react'
+import {Button} from '@/components/ui/button'
+import {UnifiedDialog} from '@/components/ui/unified-dialog'
+import {UserInvoiceSettingsForm} from '@/components'
+import {UserInvoiceSettings} from '@/lib/types'
+import {useTranslation} from '@/lib/i18n/context'
+import {Loader2} from 'lucide-react'
 
 interface UserInvoiceSettingsModalProps {
   isOpen: boolean

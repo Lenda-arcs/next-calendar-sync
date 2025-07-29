@@ -55,7 +55,7 @@ export function CalendarImportStep({ onComplete, onSkip }: CalendarImportStepPro
         source: 'google',
         sourceCalendarId: calendar.id
       })
-      
+      //TODO: fix this linting error
       setPreviewData(preview)
       setStep('preview')
     } catch (err) {
@@ -77,7 +77,8 @@ export function CalendarImportStep({ onComplete, onSkip }: CalendarImportStepPro
         source: 'ics',
         icsContent
       })
-      
+
+      //TODO: fix this linting error
       setPreviewData(preview)
       setStep('preview')
     } catch (err) {

@@ -1,10 +1,10 @@
 'use client'
 
 import React from 'react'
-import { X } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { useScheduleFilters } from './FilterProvider'
-import { useTranslation } from '@/lib/i18n/context'
+import {X} from 'lucide-react'
+import {Button} from '@/components/ui/button'
+import {useScheduleFilters} from '@/components'
+import {useTranslation} from '@/lib/i18n/context'
 
 export function ScheduleHeader() {
   const { filteredEvents, totalEvents, hasActiveFilters, clearAllFilters } = useScheduleFilters()

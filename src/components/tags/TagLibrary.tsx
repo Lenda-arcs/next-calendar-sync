@@ -67,6 +67,7 @@ export const TagLibrary: React.FC<Props> = ({
 
   return (
     <div className="space-y-8">
+      {/*TODO: USE SONNER instead of custom uI alerts*/}
       {error && (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
