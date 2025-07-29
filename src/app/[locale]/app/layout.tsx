@@ -1,5 +1,4 @@
 import { createServerClient } from '@/lib/supabase-server'
-import { redirect } from 'next/navigation'
 import { LogoutButton } from '@/components/auth'
 import { MobileNavMenu, CompactLanguageSelector } from '@/components/ui'
 import { PATHS, getLocalizedPath } from '@/lib/paths'
@@ -30,14 +29,12 @@ export default async function LocalizedAppLayout({ children, params }: AppLayout
   
   const supabase = await createServerClient()
 
+  // ✨ Middleware already handles auth protection for /app routes
+  // Just get the user ID - no need for redundant auth checks
   const { data: { user } } = await supabase.auth.getUser()
-
-  // Note: Auth is handled by middleware, so user should always exist here
-  if (!user) {
-    // This should rarely happen due to middleware, but kept as failsafe
-    const signInPath = locale === 'en' ? '/auth/sign-in' : `/${locale}/auth/sign-in`
-    redirect(signInPath)
-  }
+  
+  // TypeScript assertion: middleware guarantees user exists for /app routes
+  if (!user) throw new Error('User should exist - middleware handles auth')
 
   // Use the centralized getLocalizedPath function
 
@@ -60,15 +57,15 @@ export default async function LocalizedAppLayout({ children, params }: AppLayout
     { name: 'Admin Dashboard', href: getLocalizedPath(PATHS.APP.ADMIN, locale), icon: Shield, iconName: 'Shield' },
   ]
 
-  // Get user role from the database
-  const { data: userData } = await supabase
+  // ✨ Single user profile fetch - get all needed data at once
+  const { data: userProfile } = await supabase
     .from('users')
-    .select('role, profile_image_url')
+    .select('*')
     .eq('id', user.id)
     .single()
 
-  const userRole = userData?.role || 'user'
-  const profileImage = userData?.profile_image_url
+  const userRole = userProfile?.role || 'user'
+  const profileImage = userProfile?.profile_image_url
 
   // Create navigation based on user role
   const navigation = userRole === 'admin' || userRole === 'moderator' 
@@ -89,13 +86,6 @@ export default async function LocalizedAppLayout({ children, params }: AppLayout
     iconName
   }))
 
-  // Get user profile for additional context
-  const { data: userProfile } = await supabase
-    .from('users')
-    .select('*')
-    .eq('id', user.id)
-    .single()
-
   return (
     <div className="min-h-screen">
       {/* Navigation Header with Glassmorphism */}
@@ -104,7 +94,7 @@ export default async function LocalizedAppLayout({ children, params }: AppLayout
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
             <div className="flex items-center">
-              <ActiveHomeLink />
+              <ActiveHomeLink userId={user.id} />
             </div>
 
             {/* Navigation */}

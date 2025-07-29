@@ -110,6 +110,28 @@ const { allTags, userTags, globalTags } = useAllTags({ userId })  // From useAll
 // If component uses specific ordering, preload with same ordering
 ```
 
+### 🚨 Query Key Mismatch in Preloading (Critical)
+```typescript
+// ❌ CRITICAL PROBLEM: Preload and hook use different query keys
+// Preload function:
+queryKey: ['calendar-feeds', userId]
+
+// Hook:
+queryKey: queryKeys.calendarFeeds.userFeeds(userId)  // ['calendar-feeds', 'user', userId]
+
+// Result: No preloading works, network requests after page load
+
+// ✅ SOLUTION: Always use queryKeys helpers in preloading
+// Both preload and hook should use:
+queryKey: queryKeys.calendarFeeds.userFeeds(userId)
+queryFn: () => dataAccess.getUserCalendarFeeds(supabase, userId)
+
+// 🔍 DETECTION: 
+// - No requests in Network tab on hover
+// - Requests fire after navigating to page
+// - Cache misses in TanStack DevTools
+```
+
 ## 🔍 Debugging Cache Issues
 
 ### Check TanStack Query DevTools
@@ -194,3 +216,86 @@ export default async function ProfilePage() {
 - Public pages (SEO important)
 - One-time data that doesn't change
 - Initial app shell data
+- Layout components (navigation, auth state)
+
+### Middleware Auth Protection
+
+```typescript
+// ✅ GOOD: Middleware already protects /app routes
+// No need for redundant auth checks in page components
+
+// page.tsx (Server Component)
+export default async function ProfilePage() {
+  const supabase = await createServerClient()
+  const { data: { user } } = await supabase.auth.getUser()  // ✅ Simple, middleware guarantees user exists
+  return <ProfileClient userId={user!.id} />
+}
+
+// ❌ BAD: Redundant auth checks when middleware already handles it
+export default async function ProfilePage() {
+  const supabase = await createServerClient()
+  const { data: { user }, error } = await supabase.auth.getUser()
+  
+  if (error || !user) {  // ❌ Unnecessary - middleware already handles this
+    redirect('/auth/sign-in')
+  }
+  return <ProfileClient userId={user.id} />
+}
+```
+
+### Data Fetching Optimizations
+
+```typescript
+// ✅ GOOD: Calculate counts from existing data
+const { data: calendarFeeds } = useCalendarFeeds(userId)
+const feedsCount = calendarFeeds?.length || 0  // ✅ No extra query needed
+
+// ❌ BAD: Separate count queries
+const { data: calendarFeeds } = useCalendarFeeds(userId)
+const { count: feedsCount } = useSupabaseQuery(['feeds-count'], ...)  // ❌ Redundant
+```
+
+### Layout Component Optimization
+
+```typescript
+// ✅ GOOD: Single efficient query in layout
+const { data: userProfile } = await supabase
+  .from('users')
+  .select('*')  // Get all needed data at once
+  .eq('id', user.id)
+  .single()
+
+const userRole = userProfile?.role || 'user'
+const profileImage = userProfile?.profile_image_url
+
+// ❌ BAD: Multiple redundant queries  
+const { data: userData } = await supabase
+  .from('users')
+  .select('role, profile_image_url')  // Query 1
+  .eq('id', user.id)
+  .single()
+
+const { data: userProfile } = await supabase
+  .from('users') 
+  .select('*')  // Query 2 - duplicates data!
+  .eq('id', user.id)
+  .single()
+```
+
+### Passing Data to Client Components
+
+```typescript
+// ✅ GOOD: Pass data from server to client components
+// Layout (server):
+const { data: { user } } = await supabase.auth.getUser()
+return <ActiveHomeLink userId={user.id} />
+
+// Component (client):
+export function HomeLinkClient({ userId }) {
+  const { preloadDashboard } = useSmartPreload()
+  return <div onMouseEnter={() => preloadDashboard(userId)}>
+
+// ❌ BAD: Client component trying to get server data
+export function HomeLinkClient() {
+  const { user } = useAuth()  // ❌ Error: useAuth must be used within AuthProvider
+```

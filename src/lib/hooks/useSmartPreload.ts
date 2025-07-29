@@ -126,11 +126,8 @@ export function useSmartPreload() {
         
         // Calendar feeds (for UninvoicedEventsList.tsx)
         queryClient.prefetchQuery({
-          queryKey: ['calendar-feeds', userId],
-          queryFn: async () => {
-            const { getUserCalendarFeeds } = await import('@/lib/calendar-feeds')
-            return getUserCalendarFeeds({ supabase, userId })
-          },
+          queryKey: queryKeys.calendarFeeds.userFeeds(userId),
+          queryFn: () => dataAccess.getUserCalendarFeeds(supabase, userId),
           staleTime: 60 * 1000, // 1 minute
         }),
         
@@ -179,11 +176,8 @@ export function useSmartPreload() {
         
         // Calendar feeds (for dashboard calendar section)
         queryClient.prefetchQuery({
-          queryKey: ['calendar-feeds', userId],
-          queryFn: async () => {
-            const { getUserCalendarFeeds } = await import('@/lib/calendar-feeds')
-            return getUserCalendarFeeds({ supabase, userId })
-          },
+          queryKey: queryKeys.calendarFeeds.userFeeds(userId),
+          queryFn: () => dataAccess.getUserCalendarFeeds(supabase, userId),
           staleTime: 60 * 1000, // 1 minute
         }),
         

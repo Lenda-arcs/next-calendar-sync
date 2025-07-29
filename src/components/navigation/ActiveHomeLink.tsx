@@ -1,6 +1,9 @@
 import {HomeLinkClient} from './HomeLinkClient'
 
-export async function ActiveHomeLink() {
+interface ActiveHomeLinkProps {
+  userId: string
+}
 
-  return <HomeLinkClient appName={"avara."} />
+export function ActiveHomeLink({ userId }: ActiveHomeLinkProps) {
+  return <HomeLinkClient appName={"avara."} userId={userId} />
 } 
