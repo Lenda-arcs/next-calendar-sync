@@ -196,9 +196,18 @@ export function useUpdateUserRole() {
 // ===== COMPATIBILITY ALIASES =====
 // These provide compatibility for components that haven't been updated yet
 
-export function useUserEvents(userId: string, filters?: unknown, options?: { enabled?: boolean }) {
-  // Alias for useEvents for backward compatibility
-  return useEvents(userId, options)
+export function useUserEvents(userId: string, filters?: {
+  limit?: number
+  futureOnly?: boolean
+  isPublic?: boolean
+  variant?: string
+  offset?: number
+}, options?: { enabled?: boolean }) {
+  return useSupabaseQuery(
+    queryKeys.events.list(userId, filters),
+    (supabase) => dataAccess.getUserEvents(supabase, userId, filters),
+    { enabled: options?.enabled ?? !!userId, staleTime: 30 * 1000 }
+  )
 }
 
 export function useMarkInvitationAsUsed() {
@@ -211,11 +220,11 @@ export function useMarkInvitationAsUsed() {
 
 export function useSaveCalendarSelection() {
   return useSupabaseMutation(
-    async (supabase: SupabaseClient, { selections }: { 
+    async (_, { selections, syncApproach }: { 
       selections: { calendarId: string; selected: boolean }[];
       syncApproach?: string;
     }) => {
-      return dataAccess.saveCalendarSelection(supabase, selections)
+      return dataAccess.saveCalendarSelection(selections, syncApproach)
     }
   )
 }
