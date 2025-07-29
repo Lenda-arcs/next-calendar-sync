@@ -151,3 +151,46 @@ const { allTags, userTags, globalTags } = useAllTags({ userId })  // From useAll
 - **Navigation Speed**: <100ms for preloaded pages
 - **Network Requests**: Zero duplicates for cached queries
 - **TanStack Logs**: Clean with no disabled/orphaned queries
+
+## 📋 Architecture Guidelines
+
+### Client-Side vs Server-Side Data Fetching
+
+```typescript
+// ✅ PREFERRED: Client-side data fetching for /app pages
+// Benefits: Cache integration, optimistic updates, consistent architecture
+
+// page.tsx (Server Component)
+export default async function ProfilePage({ params }) {
+  const { user } = await supabase.auth.getUser()
+  return <ProfileClient userId={user.id} />  // Just pass ID
+}
+
+// ProfileClient.tsx (Client Component)
+export default function ProfileClient({ userId }) {
+  const { data: user, isLoading, error } = useUserProfile(userId)
+  return <DataLoader data={user} loading={isLoading} error={error}>
+    {(user) => <ProfileContent user={user} />}
+  </DataLoader>
+}
+
+// ❌ AVOID: Server-side data fetching for /app pages
+// Problems: Bypasses cache, inconsistent with preloading, no optimistic updates
+export default async function ProfilePage() {
+  const { data: user } = await supabase.from('users').select('*')  // ❌ Bypasses cache
+  return <ProfileContent user={user} />
+}
+```
+
+### When to Use Each Approach
+
+**Use Client-Side (useQuery hooks) for:**
+- Authenticated user pages (/app/*)
+- Pages that need optimistic updates
+- Pages with preloading
+- Pages that update frequently
+
+**Use Server-Side (direct Supabase) for:**
+- Public pages (SEO important)
+- One-time data that doesn't change
+- Initial app shell data

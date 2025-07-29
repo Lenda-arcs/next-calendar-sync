@@ -1,9 +1,9 @@
 'use client'
 
+import { useMemo } from 'react'
 import { useSupabaseQuery } from '@/lib/hooks'
 import {
   getUninvoicedEvents,
-  getUninvoicedEventsByStudio,
   getUnmatchedEvents,
   getExcludedEvents,
   type EventWithSubstituteTeacher
@@ -14,7 +14,7 @@ interface UseInvoiceEventsResult {
   uninvoicedEvents: EventWithSubstituteTeacher[] | undefined
   unmatchedEvents: Event[] | undefined
   excludedEvents: Event[] | undefined
-  eventsByStudio: Record<string, EventWithSubstituteTeacher[]> | undefined
+  eventsByStudio: Record<string, EventWithSubstituteTeacher[]> | null
   isLoading: boolean
   isUnmatchedLoading: boolean
   isExcludedLoading: boolean
@@ -70,21 +70,26 @@ export function useInvoiceEvents(userId: string): UseInvoiceEventsResult {
     { enabled: !!userId }
   )
 
-  // Fetch events grouped by studio/teacher (using the updated grouping logic)
-  const {
-    data: eventsByStudio,
-    refetch: refetchEventsByStudio
-  } = useSupabaseQuery(
-    ['uninvoiced-events-by-studio', userId],
-    () => getUninvoicedEventsByStudio(userId),
-    { enabled: !!userId }
-  )
+  // Calculate events grouped by studio/teacher from already-fetched uninvoiced events
+  // This avoids the duplicate billing entities fetch that getUninvoicedEventsByStudio causes
+  const eventsByStudio = useMemo(() => {
+    if (!uninvoicedEvents) return null  // Return null instead of undefined to match expected type
+    
+    return uninvoicedEvents.reduce((acc, event) => {
+      // Group by substitute teacher if present, otherwise by studio
+      const groupingId = event.substitute_teacher_entity_id || event.studio_id!
+      if (!acc[groupingId]) {
+        acc[groupingId] = []
+      }
+      acc[groupingId].push(event)
+      return acc
+    }, {} as Record<string, EventWithSubstituteTeacher[]>)
+  }, [uninvoicedEvents])
 
   // Consolidated refetch function
   const refetchAll = async () => {
     await Promise.all([
       refetchUninvoiced(),
-      refetchEventsByStudio(),
       refetchUnmatched(),
       refetchExcluded()
     ])

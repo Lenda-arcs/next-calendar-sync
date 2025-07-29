@@ -1,6 +1,6 @@
 import { generateProfileMetadata } from '@/lib/i18n/metadata'
 import type { Metadata } from 'next'
-import ProfileContent from '@/components/dashboard/profile/ProfileContent'
+import ProfileClient from '@/components/dashboard/profile/ProfileClient'
 import { createServerClient } from '@/lib/supabase-server'
 import { redirect } from 'next/navigation'
 import { getValidLocale } from '@/lib/i18n/config'
@@ -31,36 +31,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
     redirect(signInPath)
   }
 
-  // Fetch user profile data
-  const { data: userData, error: userError } = await supabase
-    .from('users')
-    .select('*')
-    .eq('id', authUser.id)
-    .single()
-
-  if (userError || !userData) {
-    console.error('Error fetching user data:', userError)
-    // Fallback to auth user data if profile doesn't exist yet
-    const fallbackUser = {
-      id: authUser.id,
-      email: authUser.email || '',
-      name: null,
-      bio: null,
-      profile_image_url: null,
-      public_url: null,
-      timezone: null,
-      instagram_url: null,
-      website_url: null,
-      yoga_styles: null,
-      event_display_variant: null,
-      role: 'user' as const,
-      calendar_feed_count: 0,
-      is_featured: null,
-      created_at: null
-    }
-    
-    return <ProfileContent user={fallbackUser} />
-  }
-
-  return <ProfileContent user={userData} />
+  // ✨ NEW: Client-side data fetching for better cache integration
+  // Just pass the userId - let ProfileClient handle data fetching with TanStack Query
+  return <ProfileClient userId={authUser.id} />
 } 

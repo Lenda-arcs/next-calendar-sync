@@ -30,7 +30,9 @@ export function ActiveNavLinks({ navigation, userId }: ActiveNavLinksProps) {
   const {
     preloadUserEvents,
     preloadInvoices,
-    preloadUserTags
+    preloadUserTags,
+    preloadDashboard,
+    preloadProfile
   } = useSmartPreload()
 
   // Map navigation paths to preload functions
@@ -45,6 +47,13 @@ export function ActiveNavLinks({ navigation, userId }: ActiveNavLinksProps) {
     }
     if (href.includes('manage-invoices')) {
       return () => preloadInvoices(userId)
+    }
+    if (href.includes('/app') && !href.includes('manage-') && !href.includes('admin') && !href.includes('profile') && !href.includes('studios')) {
+      // Dashboard home page (/app)
+      return () => preloadDashboard(userId)
+    }
+    if (href.includes('profile')) {
+      return () => preloadProfile(userId)
     }
     // Note: No preload for admin - it's not in useSmartPreload
     // Note: Studios page doesn't need preloading for now

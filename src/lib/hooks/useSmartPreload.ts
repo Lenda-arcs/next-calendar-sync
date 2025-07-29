@@ -109,10 +109,98 @@ export function useSmartPreload() {
     },
 
     preloadInvoices: (userId: string) => {
+      return Promise.all([
+        // Basic user invoices (for InvoiceManagement.tsx)
+        queryClient.prefetchQuery({
+          queryKey: queryKeys.invoices.userInvoices(userId),
+          queryFn: () => dataAccess.getUserInvoices(supabase, userId),
+          staleTime: 2 * 60 * 1000, // 2 minutes
+        }),
+        
+        // Uninvoiced events (useAppQuery version - for InvoiceManagement.tsx)
+        queryClient.prefetchQuery({
+          queryKey: queryKeys.invoices.uninvoicedEvents(userId),
+          queryFn: () => dataAccess.getUninvoicedEvents(supabase, userId),
+          staleTime: 30 * 1000, // 30 seconds
+        }),
+        
+        // Calendar feeds (for UninvoicedEventsList.tsx)
+        queryClient.prefetchQuery({
+          queryKey: ['calendar-feeds', userId],
+          queryFn: async () => {
+            const { getUserCalendarFeeds } = await import('@/lib/calendar-feeds')
+            return getUserCalendarFeeds({ supabase, userId })
+          },
+          staleTime: 60 * 1000, // 1 minute
+        }),
+        
+        // Invoice Events queries (for UninvoicedEventsList.tsx via useInvoiceEvents)
+        // These use invoice-utils.ts functions with different cache keys
+        queryClient.prefetchQuery({
+          queryKey: ['uninvoiced-events', userId],
+          queryFn: async () => {
+            const { getUninvoicedEvents } = await import('@/lib/invoice-utils')
+            return getUninvoicedEvents(userId)
+          },
+          staleTime: 30 * 1000,
+        }),
+        
+        queryClient.prefetchQuery({
+          queryKey: ['unmatched-events', userId],
+          queryFn: async () => {
+            const { getUnmatchedEvents } = await import('@/lib/invoice-utils')
+            return getUnmatchedEvents(userId)
+          },
+          staleTime: 30 * 1000,
+        }),
+        
+        queryClient.prefetchQuery({
+          queryKey: ['excluded-events', userId],
+          queryFn: async () => {
+            const { getExcludedEvents } = await import('@/lib/invoice-utils')
+            return getExcludedEvents(userId)
+          },
+          staleTime: 30 * 1000,
+        }),
+        
+        // Note: uninvoiced-events-by-studio is now calculated from uninvoiced-events
+        // No need to preload separately as it would cause duplicate billing entity fetches
+      ])
+    },
+
+    preloadDashboard: (userId: string) => {
+      return Promise.all([
+        // User profile (for dashboard header and user info)
+        queryClient.prefetchQuery({
+          queryKey: queryKeys.users.profile(userId),
+          queryFn: () => dataAccess.getUserProfile(supabase, userId),
+          staleTime: 5 * 60 * 1000, // 5 minutes
+        }),
+        
+        // Calendar feeds (for dashboard calendar section)
+        queryClient.prefetchQuery({
+          queryKey: ['calendar-feeds', userId],
+          queryFn: async () => {
+            const { getUserCalendarFeeds } = await import('@/lib/calendar-feeds')
+            return getUserCalendarFeeds({ supabase, userId })
+          },
+          staleTime: 60 * 1000, // 1 minute
+        }),
+        
+        // User events (for upcoming events list - 3 events)
+        queryClient.prefetchQuery({
+          queryKey: queryKeys.events.list(userId, { limit: 3, futureOnly: true }),
+          queryFn: () => dataAccess.getUserEvents(supabase, userId, { limit: 3, futureOnly: true }),
+          staleTime: 30 * 1000, // 30 seconds
+        })
+      ])
+    },
+
+    preloadProfile: (userId: string) => {
       return queryClient.prefetchQuery({
-        queryKey: queryKeys.invoices.userInvoices(userId),
-        queryFn: () => dataAccess.getUserInvoices(supabase, userId),
-        staleTime: 2 * 60 * 1000, // 2 minutes
+        queryKey: queryKeys.users.profile(userId),
+        queryFn: () => dataAccess.getUserProfile(supabase, userId),
+        staleTime: 5 * 60 * 1000, // 5 minutes
       })
     },
   }
