@@ -1,0 +1,153 @@
+---
+description: Cache consistency and query alignment rules for TanStack Query + Supabase to prevent cache fragmentation and ensure optimal performance
+alwaysApply: false
+---
+# 🎯 Cache Consistency & Query Alignment
+
+## ⚠️ Critical Rules to Prevent Cache Fragmentation
+
+### 1. Hook Import Consistency
+
+```typescript
+// ❌ WRONG: Mixing hook sources causes cache conflicts
+import { useAllTags } from '@/lib/hooks/useAppQuery'     // Returns flat array
+import { useAllTags } from '@/lib/hooks/useAllTags'      // Returns structured object
+
+// ✅ CORRECT: Use the hook that matches your expected data structure
+// For structured data: { allTags, userTags, globalTags }
+import { useAllTags } from '@/lib/hooks/useAllTags'
+
+// For simple array data or specific queries
+import { useUserEvents, useCreateTag } from '@/lib/hooks/useAppQuery'
+```
+
+### 2. Supabase Query Parameter Validation
+
+```typescript
+// ❌ WRONG: Invalid Supabase parameters (causes cache mismatches)
+.order('priority', { ascending: false, nullsLast: true })    // nullsLast doesn't exist!
+
+// ✅ CORRECT: Valid Supabase parameters
+.order('priority', { ascending: false, nullsFirst: false })  // Puts NULLs at end
+.order('priority', { ascending: false, nullsFirst: true })   // Puts NULLs at start
+.order('priority', { ascending: false })                     // Default behavior
+```
+
+### 3. Smart Preloading Alignment
+
+```typescript
+// ✅ CRITICAL: Preloading queries MUST match consuming components exactly
+
+// Preloading (useSmartPreload.ts)
+queryClient.prefetchQuery({
+  queryKey: ['user_tags', userId],                    // ✅ Same key
+  queryFn: async () => {
+    return supabase
+      .from('tags')
+      .select('*')
+      .eq('user_id', userId)
+      .order('priority', { ascending: false, nullsFirst: false })  // ✅ Same params
+  }
+})
+
+// Consuming component (useAllTags.ts)
+useSupabaseQuery(
+  ['user_tags', userId],                              // ✅ Same key
+  async (supabase) => {
+    return supabase
+      .from('tags')
+      .select('*')
+      .eq('user_id', userId)
+      .order('priority', { ascending: false, nullsFirst: false })  // ✅ Same params
+  }
+)
+```
+
+### 4. Cache Key Patterns
+
+```typescript
+// ✅ STANDARD: Use these consistent cache key patterns
+['user_tags', userId]           // User-specific tags
+['global_tags']                 // Global tags (no userId needed)
+['events', 'list', userId]      // User events list
+['events', 'public', userId]    // Public events
+['tag-rules', userId]           // User tag rules
+['users', 'role', userId]       // User role
+```
+
+## 🚨 Common Pitfalls & Solutions
+
+### Cache Miss Due to Parameter Mismatch
+```typescript
+// ❌ PROBLEM: Different ordering creates different cache signatures
+// Component A
+.order('name', { ascending: true, nullsFirst: false })
+// Component B  
+.order('name', { ascending: true })  // Default nullsFirst behavior differs!
+
+// ✅ SOLUTION: Always specify all parameters explicitly
+.order('name', { ascending: true, nullsFirst: false })  // Consistent everywhere
+```
+
+### Hook Data Structure Mismatch
+```typescript
+// ❌ PROBLEM: Component expects structured data but gets flat array
+const { data: tagData } = useAllTags(userId)  // From useAppQuery - returns array
+const allTags = tagData?.allTags || []         // ❌ .allTags doesn't exist on array!
+
+// ✅ SOLUTION: Use hook that matches expected structure
+const { allTags, userTags, globalTags } = useAllTags({ userId })  // From useAllTags - returns object
+```
+
+### Smart Preloading Not Working
+```typescript
+// ❌ PROBLEM: Preloading different data than what components request
+// Preload: ['tags', 'all', userId] with .order('name')
+// Component: ['user_tags', userId] with .order('priority')
+
+// ✅ SOLUTION: Match exactly what components need
+// If component uses ['user_tags', userId], preload ['user_tags', userId]
+// If component uses specific ordering, preload with same ordering
+```
+
+## 🔍 Debugging Cache Issues
+
+### Check TanStack Query DevTools
+```typescript
+// Look for these warning signs:
+// 1. "disabled" queries in logs - indicates unused cache keys
+// 2. Multiple similar cache keys - indicates fragmentation  
+// 3. Same data fetched multiple times - indicates cache misses
+
+// Example problematic log:
+["tags","all","userId"] disabled     // ❌ Unused/conflicting key
+["user_tags","userId"]               // ✅ Active key
+["global_tags"]                      // ✅ Active key
+```
+
+### Network Tab Analysis
+```typescript
+// ✅ GOOD: After preloading, no duplicate requests
+// Hover trigger: tags?select=*&eq.user_id... (preload)
+// Page load: (no additional tag requests)
+
+// ❌ BAD: Duplicate requests despite preloading
+// Hover trigger: tags?...&order=priority.desc.nullsFirst=false
+// Page load: tags?...&order=priority.desc               // Different query!
+```
+
+## 📋 Checklist Before Committing
+
+- [ ] All Supabase \`.order()\` calls use valid parameters (\`nullsFirst\`, not \`nullsLast\`)
+- [ ] Smart preloading cache keys match consuming component cache keys exactly
+- [ ] Query parameters (select, order, filters) match between preload and consumption
+- [ ] Components import hooks that match their expected data structure
+- [ ] No "disabled" queries in TanStack Query logs
+- [ ] Network tab shows no duplicate requests after successful preloading
+
+## 🎯 Performance Goals
+
+- **Cache Hit Rate**: >90% for preloaded resources
+- **Navigation Speed**: <100ms for preloaded pages
+- **Network Requests**: Zero duplicates for cached queries
+- **TanStack Logs**: Clean with no disabled/orphaned queries
