@@ -9,8 +9,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Calendar } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { type EventDisplayVariant, type EventTag } from '@/lib/event-types'
-import { useSupabaseQuery } from '@/lib/hooks/useQueryWithSupabase'
-import { useAllTags } from '@/lib/hooks/useAllTags'
+import { useAllTags, usePublicEvents } from '@/lib/hooks/useAppQuery'
 import { convertEventToCardProps, processAllEventTags } from '@/lib/event-utils'
 import DataLoader from '@/components/ui/data-loader'
 import { PublicEventListSkeleton } from '@/components/ui/skeleton'
@@ -61,42 +60,29 @@ const PublicEventList: React.FC<PublicEventListProps> = ({
     }))
   }
 
-  // Fetch events using the custom hook (only if events not provided as props)
+  // ✨ Use unified hooks for fetching events and tags
   const {
     data: fetchedEvents,
     isLoading: eventsLoading,
     error: eventsError
-  } = useSupabaseQuery<Event[]>(
-    ['public_events_standalone', userId], // Different query key to avoid conflicts
-    async (supabase) => {
-      const { data, error } = await supabase
-        .from('events')
-        .select('*')
-        .eq('user_id', userId)
-        .eq('visibility', 'public') // Only fetch public events
-        .gte('start_time', new Date().toISOString())
-        .order('start_time', { ascending: true })
-        .limit(50)
-      
-      if (error) throw error
-      return data || []
-    },
-    {
-      enabled: !!userId && !propEvents && !disableFetching, // Only fetch if events not provided and fetching not disabled
-    }
-  )
+  } = usePublicEvents(userId, { 
+    limit: 50,
+    enabled: !!userId && !propEvents && !disableFetching, // Only fetch if events not provided and fetching not disabled
+  })
 
   // Use provided events or fetched events
   const events = propEvents || fetchedEvents
 
-  // Use shared tags hook only if tags not provided as props
-  const { allTags: fetchedTags, isLoading: tagsLoading } = useAllTags({ 
-    userId, 
+  // ✨ Use unified tags hook with proper destructuring
+  const { 
+    data: tagsData, 
+    isLoading: tagsLoading 
+  } = useAllTags(userId, { 
     enabled: !!userId && !propTags && !disableFetching
   })
   
   // Use provided tags or fetched tags - ensure type compatibility
-  const allTags: Tag[] = propTags || fetchedTags || []
+  const allTags: Tag[] = propTags || tagsData?.allTags || []
 
   // Utility function to group events by date
   const groupEventsByDate = (events: EnhancedEventUnion[]) => {
@@ -157,7 +143,7 @@ const PublicEventList: React.FC<PublicEventListProps> = ({
     return { label, compact }
   }
 
-  // Get all available tags for processing (now using shared hook)
+  // Get all available tags for processing
   const allAvailableTags = allTags
 
   // Enhanced events with matched tags

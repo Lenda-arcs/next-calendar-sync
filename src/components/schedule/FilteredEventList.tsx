@@ -1,8 +1,7 @@
 'use client'
 
 import React, { useEffect, useMemo } from 'react'
-import { usePublicEvents } from '@/lib/hooks/useAppQuery'
-import { useAllTags } from '@/lib/hooks/useAllTags'
+import { usePublicEvents, useAllTags } from '@/lib/hooks/useAppQuery'
 import { useScheduleFilters, type StudioInfo } from './FilterProvider'
 
 import { Button } from '@/components/ui/button'
@@ -41,9 +40,12 @@ export function FilteredEventList({ userId, variant = 'compact', className }: Fi
 
   // ✨ NEW: Use unified tags hook
   const { 
-    allTags, 
+    data: tagsData,
     isLoading: tagsLoading 
-  } = useAllTags({ userId, enabled: !!userId })
+  } = useAllTags(userId, { enabled: !!userId })
+  
+  // Extract allTags from the result
+  const allTags = tagsData?.allTags || []
 
   // Update filter context when data changes
   useEffect(() => {

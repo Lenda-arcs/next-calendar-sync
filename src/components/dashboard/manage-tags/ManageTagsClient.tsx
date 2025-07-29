@@ -3,8 +3,7 @@
 import React from 'react'
 import DataLoader from '@/components/ui/data-loader'
 import { TagLibraryGridSkeleton } from '@/components/ui/skeleton'
-import { useAllTags } from '@/lib/hooks/useAllTags'
-import { useUserRole } from '@/lib/hooks/useAppQuery'
+import { useAllTags, useTagRules, useUserRole } from '@/lib/hooks/useAppQuery'
 import { useTagOperations } from '@/lib/hooks/useTagOperations'
 import { clearTagMapCache } from '@/lib/event-utils'
 import { TagLibrary, TagRuleManager, TagViewDialog } from '@/components/tags'
@@ -18,15 +17,18 @@ interface Props {
 }
 
 export function ManageTagsClient({ userId }: Props) {
-  // ✨ Use unified hooks
+  // ✨ Use unified hooks to fetch all data in one place
   const { 
-    userTags, 
-    globalTags, 
-    allTags, 
+    data: tagsData,
     isLoading: tagsLoading, 
     error: tagsError, 
     refetch: refetchAllTags 
-  } = useAllTags({ userId, enabled: !!userId })
+  } = useAllTags(userId, { enabled: !!userId })
+
+  // Extract tag data
+  const userTags = tagsData?.userTags || []
+  const globalTags = tagsData?.globalTags || []
+  const allTags = tagsData?.allTags || []
 
   const { 
     data: userRole, 
@@ -34,7 +36,15 @@ export function ManageTagsClient({ userId }: Props) {
     error: roleError 
   } = useUserRole(userId, { enabled: !!userId })
 
-  // 🔥 SIMPLIFIED: Use regular tag operations (we'll add optimistic updates directly here later)
+  // ✨ Fetch tag rules in parent to pass down
+  const {
+    data: tagRules,
+    isLoading: rulesLoading,
+    error: rulesError,
+    refetch: refetchTagRules
+  } = useTagRules(userId, { enabled: !!userId })
+
+  // ✨ Use unified tag operations with cache invalidation
   const {
     selectedTag,
     showNewTagForm,
@@ -50,7 +60,10 @@ export function ManageTagsClient({ userId }: Props) {
     handleSaveTag,
     handleDeleteTag,
   } = useTagOperations({ 
-    onSuccess: refetchAllTags
+    onSuccess: () => {
+      refetchAllTags()
+      refetchTagRules()
+    }
   })
 
   // Clear cache when tags are updated
@@ -59,8 +72,8 @@ export function ManageTagsClient({ userId }: Props) {
   }, [allTags])
 
   const resolvedUserRole = (userRole || 'user') as UserRole
-  const isLoading = tagsLoading || roleLoading
-  const error = tagsError || roleError
+  const isLoading = tagsLoading || roleLoading || rulesLoading
+  const error = tagsError || roleError || rulesError
   const errorMessage = error?.message || null
 
   return (
@@ -83,16 +96,24 @@ export function ManageTagsClient({ userId }: Props) {
       >
         {() => (
           <div className="space-y-12">
+            {/* ✨ Pass all data as props to eliminate child queries */}
             <TagRuleManager 
               userId={userId} 
               availableTags={allTags}
+              tagRules={tagRules}
+              isLoadingRules={rulesLoading}
+              rulesError={rulesError?.message || null}
             />
+            
+            {/* ✨ Pass all data as props to eliminate child queries */}
             <TagLibrary 
               userId={userId} 
               userRole={resolvedUserRole}
               globalTags={globalTags}
               customTags={userTags}
-              // Pass down the standard tag operations
+              isLoading={tagsLoading}
+              error={tagsError?.message || null}
+              // Pass down the unified tag operations
               tagOperations={{
                 onTagClick: handleTagClick,
                 onEditClick: handleEditClick,

@@ -1,7 +1,6 @@
 'use client'
 
 import React, { useMemo } from 'react'
-import { useSupabaseQuery } from '@/lib/hooks/useQueryWithSupabase'
 import { Tag, UserRole } from '@/lib/types'
 import { convertToEventTag, EventTag } from '@/lib/event-types'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
@@ -24,68 +23,24 @@ interface TagOperations {
 interface Props {
   userId: string
   userRole?: UserRole // User role for determining edit permissions
-  globalTags?: Tag[] // Accept global tags as props to avoid duplicate fetching
-  customTags?: Tag[] // Accept custom tags as props to avoid duplicate fetching
+  globalTags: Tag[] // Required - passed from parent
+  customTags: Tag[] // Required - passed from parent
   tagOperations?: TagOperations // Accept tag operations as props
+  isLoading?: boolean // Loading state from parent
+  error?: string | null // Error state from parent
 }
 
 export const TagLibrary: React.FC<Props> = ({ 
   userId, 
   userRole = 'user', 
-  globalTags: propGlobalTags, 
-  customTags: propCustomTags,
-  tagOperations 
+  globalTags,
+  customTags,
+  tagOperations,
+  isLoading = false,
+  error = null
 }) => {
   const { t } = useTranslation()
   
-  // Fetch global tags (only if not provided as props)
-  const { 
-    data: fetchedGlobalTags, 
-    isLoading: globalLoading, 
-    error: globalError 
-  } = useSupabaseQuery(
-    ['global_tags'],
-    async (supabase) => {
-      const { data, error } = await supabase
-        .from('tags')
-        .select('*')
-        .is('user_id', null)
-        .order('priority', { ascending: false, nullsFirst: false })
-      
-      if (error) throw error
-      return data as Tag[]
-    },
-    {
-      enabled: !propGlobalTags, // Only fetch if not provided as props
-    }
-  )
-
-  // Fetch user's custom tags (only if not provided as props)
-  const { 
-    data: fetchedCustomTags, 
-    isLoading: customLoading, 
-    error: customError
-  } = useSupabaseQuery(
-    ['user_tags', userId],
-    async (supabase) => {
-      const { data, error } = await supabase
-        .from('tags')
-        .select('*')
-        .eq('user_id', userId)
-        .order('priority', { ascending: false, nullsFirst: false })
-      
-      if (error) throw error
-      return data as Tag[]
-    },
-    {
-      enabled: !propCustomTags, // Only fetch if not provided as props
-    }
-  )
-
-  // Use provided tags or fetched tags
-  const globalTags = propGlobalTags || fetchedGlobalTags
-  const customTags = propCustomTags || fetchedCustomTags
-
   // Convert database tags to EventTags
   const globalEventTags = useMemo(() => {
     return globalTags?.map(convertToEventTag) || []
@@ -95,9 +50,6 @@ export const TagLibrary: React.FC<Props> = ({
     return customTags?.map(convertToEventTag) || []
   }, [customTags])
 
-  const error = globalError || customError
-  const errorMessage = error ? error.message || error.toString() : null
-  const loading = (propGlobalTags ? false : globalLoading) || (propCustomTags ? false : customLoading)
   const data = globalTags && customTags ? { globalTags: globalEventTags, customTags: customEventTags } : null
 
   // If no tag operations provided, create default handlers (fallback)
@@ -119,7 +71,7 @@ export const TagLibrary: React.FC<Props> = ({
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>{t('common.messages.error')}</AlertTitle>
-          <AlertDescription>{errorMessage}</AlertDescription>
+          <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
 
@@ -135,8 +87,8 @@ export const TagLibrary: React.FC<Props> = ({
 
       <DataLoader
         data={data}
-        loading={loading}
-        error={errorMessage}
+        loading={isLoading}
+        error={error}
         skeleton={TagLibraryGridSkeleton}
         skeletonCount={1}
         empty={

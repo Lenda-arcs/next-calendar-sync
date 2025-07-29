@@ -17,8 +17,7 @@ import { RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import DataLoader from '@/components/ui/data-loader'
 import { ManageEventsSkeleton } from '@/components/ui/skeleton'
-import { useUserEvents, useCreateTag } from '@/lib/hooks/useAppQuery'
-import { useAllTags } from '@/lib/hooks/useAllTags'
+import { useUserEvents, useCreateTag, useAllTags } from '@/lib/hooks/useAppQuery'
 import { useSupabaseMutation } from '@/lib/hooks/useQueryWithSupabase'
 // TanStack Query provides excellent caching and synchronization!
 import { useSmartCache } from '@/lib/hooks/useSmartCache'
@@ -85,10 +84,13 @@ export function ManageEventsClient({ userId }: ManageEventsClientProps) {
 
   // Use unified tags hook
   const { 
-    allTags, 
+    data: tagsData,
     isLoading: tagsLoading, 
     refetch: refetchTags 
-  } = useAllTags({ userId, enabled: !!userId })
+  } = useAllTags(userId, { enabled: !!userId })
+  
+  // Extract allTags from the result
+  const allTags = tagsData?.allTags || []
 
   // ✨ NEW: Use unified tag creation
   const createTagMutation = useCreateTag()
@@ -242,7 +244,7 @@ export function ManageEventsClient({ userId }: ManageEventsClientProps) {
 
   // Convert tags to EventTag format for the grid
   const availableEventTags = React.useMemo(() => {
-    return allAvailableTags.map(tag => convertToEventTag(tag))
+    return allAvailableTags.map((tag: Tag) => convertToEventTag(tag))
   }, [allAvailableTags])
 
   // ==================== EVENT FILTERING & PROCESSING ====================

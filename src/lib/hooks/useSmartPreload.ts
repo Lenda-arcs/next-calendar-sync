@@ -3,6 +3,10 @@ import { useQueryClient } from '@tanstack/react-query'
 import { createBrowserClient } from '@supabase/ssr'
 import { queryKeys } from '../query-keys'
 import * as dataAccess from '../server/data-access'
+import type { 
+  Event, 
+  Tag
+} from '../types'
 
 /**
  * Hook for intelligent data preloading based on user intent signals
@@ -18,7 +22,7 @@ export function useSmartPreload() {
   )
 
   return {
-    preloadUserEvents: (userId: string) => {
+    preloadUserEvents: (userId: string): Promise<void> => {
       // ✅ Uses same query key as useUserEvents hook (without filters for general preload)
       return queryClient.prefetchQuery({
         queryKey: queryKeys.events.list(userId),
@@ -27,13 +31,13 @@ export function useSmartPreload() {
       })
     },
 
-        preloadUserTags: (userId: string) => {
+    preloadUserTags: (userId: string): Promise<void[]> => {
       // ✅ Preload all tag query patterns used across the app
       return Promise.all([
         // User tags (for TagLibrary)
         queryClient.prefetchQuery({
           queryKey: ['user_tags', userId],
-          queryFn: async () => {
+          queryFn: async (): Promise<Tag[]> => {
             const { data, error } = await supabase
               .from('tags')
               .select('*')
@@ -48,7 +52,7 @@ export function useSmartPreload() {
         // Global tags (for TagLibrary)
         queryClient.prefetchQuery({
           queryKey: ['global_tags'],
-          queryFn: async () => {
+          queryFn: async (): Promise<Tag[]> => {
             const { data, error } = await supabase
               .from('tags')
               .select('*')
@@ -63,7 +67,7 @@ export function useSmartPreload() {
         // All tags combined (for TagRuleManager and useAppQuery)
         queryClient.prefetchQuery({
           queryKey: ['tags', 'all', userId],
-          queryFn: async () => {
+          queryFn: async (): Promise<Tag[]> => {
             const { data, error } = await supabase
               .from('tags')
               .select('*')
@@ -78,7 +82,7 @@ export function useSmartPreload() {
         // Tag rules (often used with tags)
         queryClient.prefetchQuery({
           queryKey: ['tag-rules', userId],
-          queryFn: async () => {
+          queryFn: async (): Promise<Array<{ id: string; keyword: string | null; keywords: string[] | null; location_keywords: string[] | null; tag_id: string; updated_at: string | null; user_id: string }>> => {
             const { data, error } = await supabase
               .from('tag_rules')
               .select('*')
@@ -92,7 +96,7 @@ export function useSmartPreload() {
       ])
     },
 
-    preloadPublicEvents: (teacherSlug: string) => {
+    preloadPublicEvents: (teacherSlug: string): Promise<void> => {
       return queryClient.prefetchQuery({
         queryKey: queryKeys.events.public(teacherSlug),
         queryFn: () => dataAccess.getPublicEvents(supabase, teacherSlug),
@@ -100,7 +104,7 @@ export function useSmartPreload() {
       })
     },
 
-    preloadUserStudios: (userId: string) => {
+    preloadUserStudios: (userId: string): Promise<void> => {
       return queryClient.prefetchQuery({
         queryKey: queryKeys.studios.userStudios(userId),
         queryFn: () => dataAccess.getUserStudios(supabase, userId),
@@ -108,7 +112,7 @@ export function useSmartPreload() {
       })
     },
 
-    preloadInvoices: (userId: string) => {
+    preloadInvoices: (userId: string): Promise<void[]> => {
       return Promise.all([
         // Basic user invoices (for InvoiceManagement.tsx)
         queryClient.prefetchQuery({
@@ -135,7 +139,7 @@ export function useSmartPreload() {
         // These use invoice-utils.ts functions with different cache keys
         queryClient.prefetchQuery({
           queryKey: ['uninvoiced-events', userId],
-          queryFn: async () => {
+          queryFn: async (): Promise<Event[]> => {
             const { getUninvoicedEvents } = await import('@/lib/invoice-utils')
             return getUninvoicedEvents(userId)
           },
@@ -144,7 +148,7 @@ export function useSmartPreload() {
         
         queryClient.prefetchQuery({
           queryKey: ['unmatched-events', userId],
-          queryFn: async () => {
+          queryFn: async (): Promise<Event[]> => {
             const { getUnmatchedEvents } = await import('@/lib/invoice-utils')
             return getUnmatchedEvents(userId)
           },
@@ -153,7 +157,7 @@ export function useSmartPreload() {
         
         queryClient.prefetchQuery({
           queryKey: ['excluded-events', userId],
-          queryFn: async () => {
+          queryFn: async (): Promise<Event[]> => {
             const { getExcludedEvents } = await import('@/lib/invoice-utils')
             return getExcludedEvents(userId)
           },
@@ -165,7 +169,7 @@ export function useSmartPreload() {
       ])
     },
 
-    preloadDashboard: (userId: string) => {
+    preloadDashboard: (userId: string): Promise<void[]> => {
       return Promise.all([
         // User profile (for dashboard header and user info)
         queryClient.prefetchQuery({
@@ -190,7 +194,7 @@ export function useSmartPreload() {
       ])
     },
 
-    preloadProfile: (userId: string) => {
+    preloadProfile: (userId: string): Promise<void> => {
       return queryClient.prefetchQuery({
         queryKey: queryKeys.users.profile(userId),
         queryFn: () => dataAccess.getUserProfile(supabase, userId),

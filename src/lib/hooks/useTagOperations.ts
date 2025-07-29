@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useSupabaseMutation } from '@/lib/hooks'
+import { useCreateTag, useUpdateTag, useDeleteTag } from '@/lib/hooks/useAppQuery'
 import { TagInsert, TagUpdate } from '@/lib/types'
 import { EventTag } from '@/lib/event-types'
 import { toast } from 'sonner'
@@ -16,81 +16,10 @@ export function useTagOperations({ onSuccess }: UseTagOperationsProps = {}) {
   const [showViewDialog, setShowViewDialog] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
 
-  // Create tag mutation
-  const { mutate: createTag, isPending: creating } = useSupabaseMutation(
-    async (supabase, variables: TagInsert) => {
-      const { data, error } = await supabase
-        .from('tags')
-        .insert([variables])
-        .select()
-      
-      if (error) throw error
-      return data
-    },
-    {
-      onSuccess: () => {
-        toast.success('Tag created successfully!')
-        handleCancel()
-        onSuccess?.()
-      },
-      onError: (error) => {
-        toast.error('Failed to create tag', {
-          description: error.message
-        })
-      }
-    }
-  )
-
-  // Update tag mutation
-  const { mutate: updateTag, isPending: updating } = useSupabaseMutation(
-    async (supabase, variables: { id: string; data: TagUpdate }) => {
-      const { data, error } = await supabase
-        .from('tags')
-        .update(variables.data)
-        .eq('id', variables.id)
-        .select()
-      
-      if (error) throw error
-      return data
-    },
-    {
-      onSuccess: () => {
-        toast.success('Tag updated successfully!')
-        handleCancel()
-        onSuccess?.()
-      },
-      onError: (error) => {
-        toast.error('Failed to update tag', {
-          description: error.message
-        })
-      }
-    }
-  )
-
-  // Delete tag mutation
-  const { mutate: deleteTag, isPending: deleting } = useSupabaseMutation(
-    async (supabase, tagId: string) => {
-      const { data, error } = await supabase
-        .from('tags')
-        .delete()
-        .eq('id', tagId)
-      
-      if (error) throw error
-      return data
-    },
-    {
-      onSuccess: () => {
-        toast.success('Tag deleted successfully!')
-        handleCancel()
-        onSuccess?.()
-      },
-      onError: (error) => {
-        toast.error('Failed to delete tag', {
-          description: error.message
-        })
-      }
-    }
-  )
+  // ✨ Use unified hooks instead of direct mutations
+  const { mutate: createTag, isPending: creating } = useCreateTag()
+  const { mutate: updateTag, isPending: updating } = useUpdateTag()
+  const { mutate: deleteTag, isPending: deleting } = useDeleteTag()
 
   const handleTagClick = (tag: EventTag) => {
     setSelectedTag(tag)
@@ -131,7 +60,18 @@ export function useTagOperations({ onSuccess }: UseTagOperationsProps = {}) {
         image_url: tagData.imageUrl,
       }
       
-      updateTag({ id: selectedTag.id, data: updateData })
+      updateTag({ tagId: selectedTag.id, updates: updateData }, {
+        onSuccess: () => {
+          toast.success('Tag updated successfully!')
+          handleCancel()
+          onSuccess?.()
+        },
+        onError: (error) => {
+          toast.error('Failed to update tag', {
+            description: error.message
+          })
+        }
+      })
     } else {
       // Convert EventTag to database format for insert
       if (!tagData.userId) {
@@ -151,8 +91,34 @@ export function useTagOperations({ onSuccess }: UseTagOperationsProps = {}) {
         user_id: tagData.userId,
       }
       
-      createTag(insertData)
+      createTag(insertData, {
+        onSuccess: () => {
+          toast.success('Tag created successfully!')
+          handleCancel()
+          onSuccess?.()
+        },
+        onError: (error) => {
+          toast.error('Failed to create tag', {
+            description: error.message
+          })
+        }
+      })
     }
+  }
+
+  const handleDeleteTag = (tagId: string) => {
+    deleteTag(tagId, {
+      onSuccess: () => {
+        toast.success('Tag deleted successfully!')
+        handleCancel()
+        onSuccess?.()
+      },
+      onError: (error) => {
+        toast.error('Failed to delete tag', {
+          description: error.message
+        })
+      }
+    })
   }
 
   return {
@@ -168,6 +134,6 @@ export function useTagOperations({ onSuccess }: UseTagOperationsProps = {}) {
     handleCreateNew,
     handleCancel,
     handleSaveTag,
-    handleDeleteTag: deleteTag,
+    handleDeleteTag,
   }
 } 

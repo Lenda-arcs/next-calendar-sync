@@ -20,7 +20,6 @@ export { useSmartPreload } from './useSmartPreload'
 export * from './useAppQuery'
 
 // Specialized domain hooks
-export { useAllTags } from './useAllTags'
 export { useBillingEntityManagement } from './useBillingEntityManagement'
 export { useInvoiceEvents } from './useInvoiceEvents'
 export { useKeywordSuggestions } from './useKeywordSuggestions'

@@ -8,8 +8,7 @@ import { DashboardUpcomingClassesSkeleton } from '@/components/ui/skeleton'
 import { Calendar } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { type EventDisplayVariant } from '@/lib/event-types'
-import { useUserEvents } from '@/lib/hooks/useAppQuery'
-import { useAllTags } from '@/lib/hooks/useAllTags'
+import { useAllTags, useUserEvents } from '@/lib/hooks/useAppQuery'
 import { convertEventToCardProps } from '@/lib/event-utils'
 
 interface PrivateEventListProps {
@@ -25,7 +24,7 @@ const PrivateEventList: React.FC<PrivateEventListProps> = ({
   variant = 'compact',
   className = '',
 }) => {
-  // ✨ NEW: Use unified hooks for data fetching - future events only for dashboard preview
+  // ✨ Use unified hooks for data fetching - future events only for dashboard preview
   const {
     data: events,
     isLoading: eventsLoading,
@@ -35,11 +34,16 @@ const PrivateEventList: React.FC<PrivateEventListProps> = ({
     futureOnly: true  // ✨ Only show upcoming events
   }, { enabled: !!userId })
 
-  // Use unified tags hook
+  // ✨ Use unified tags hook with proper destructuring
   const { 
-    allTags, 
+    data: tagsData,
     isLoading: tagsLoading 
-  } = useAllTags({ userId, enabled: !!userId })
+  } = useAllTags(userId, { enabled: !!userId })
+
+
+  // Extract allTags from the result
+  const allTags = tagsData?.allTags || []
+
 
   // Get grid classes based on variant
   const getGridClasses = () => {
@@ -56,7 +60,7 @@ const PrivateEventList: React.FC<PrivateEventListProps> = ({
 
   // Combined loading state
   const isLoading = eventsLoading || tagsLoading
-  const eventsData = events && allTags.length >= 0 ? events : null
+  const eventsData = events && allTags?.length >= 0 ? events : null
 
   return (
     <DataLoader

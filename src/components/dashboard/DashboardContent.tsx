@@ -1,22 +1,23 @@
 'use client'
 
-import { Container } from '@/components/layout/container'
-import { PageSection } from '@/components/layout/page-section'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { CopyLinkButton, LoadingLink, LoadingButtonLink } from '@/components/ui'
-import { PrivateEventList } from '@/components/events'
-import { CalendarFeedsProfileSection } from '@/components/calendar-feeds'
-import { PATHS } from '@/lib/paths'
-import { Calendar } from 'lucide-react'
-import { TeacherStudioRequest } from './components/TeacherStudioRequest'
-import { useTranslationNamespace } from '@/lib/i18n/context'
-import { useSmartPreload } from '@/lib/hooks/useSmartPreload'
+import {Container} from '@/components/layout/container'
+import {PageSection} from '@/components/layout/page-section'
+import {Card, CardContent, CardDescription, CardHeader, CardTitle} from '@/components/ui/card'
+import {CopyLinkButton, LoadingButtonLink, LoadingLink} from '@/components/ui'
+import {PrivateEventList} from '@/components/events'
+import {CalendarFeedsProfileSection} from '@/components/calendar-feeds'
+import {PATHS} from '@/lib/paths'
+import {Calendar} from 'lucide-react'
+import {TeacherStudioRequest} from '@/components'
+import {useTranslationNamespace} from '@/lib/i18n/context'
+import {useSmartPreload} from '@/lib/hooks/useSmartPreload'
+import type {CalendarFeed} from "@/lib/types";
 
 interface DashboardContentProps {
   user: { name?: string | null; public_url?: string | null } | null
   userId: string
   hasFeeds: boolean
-  feeds: unknown[]
+  feeds: CalendarFeed[]
   publicPath: string | null
   hasCustomUrl: boolean
 }
@@ -133,12 +134,8 @@ export default function DashboardContent({
                </CardHeader>
                <CardContent>
                  <div
-                   onMouseEnter={() => {
-                     preloadUserEvents(userId)
-                   }}
-                   onFocus={() => {
-                     preloadUserEvents(userId)
-                   }}
+                   onMouseEnter={() => preloadUserEvents(userId)}
+                   onFocus={() => preloadUserEvents(userId)}
                  >
                    <LoadingButtonLink
                      href={PATHS.APP.MANAGE_EVENTS}
@@ -162,12 +159,8 @@ export default function DashboardContent({
                </CardHeader>
                <CardContent>
                  <div
-                   onMouseEnter={() => {
-                     preloadUserTags(userId)
-                   }}
-                   onFocus={() => {
-                     preloadUserTags(userId)
-                   }}
+                   onMouseEnter={() => preloadUserTags(userId)}
+                   onFocus={() => preloadUserTags(userId)}
                  >
                    <LoadingButtonLink
                      href={PATHS.APP.MANAGE_TAGS}
@@ -191,12 +184,8 @@ export default function DashboardContent({
                </CardHeader>
                <CardContent>
                  <div
-                   onMouseEnter={() => {
-                     preloadInvoices(userId)
-                   }}
-                   onFocus={() => {
-                     preloadInvoices(userId)
-                   }}
+                   onMouseEnter={() => preloadInvoices(userId)}
+                   onFocus={() => preloadInvoices(userId)}
                  >
                    <LoadingButtonLink
                      href={PATHS.APP.MANAGE_INVOICES}
@@ -214,8 +203,7 @@ export default function DashboardContent({
              <TeacherStudioRequest userId={userId} />
 
              {/* Calendar Integration */}
-             {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-             <CalendarFeedsProfileSection feeds={feeds as any} />
+             <CalendarFeedsProfileSection feeds={feeds} />
  
              {/* Profile Setup (if no public URL) */}
              {!hasCustomUrl && (

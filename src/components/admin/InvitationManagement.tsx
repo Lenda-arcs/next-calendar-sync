@@ -10,18 +10,7 @@ import { Badge } from '@/components/ui/badge'
 import { useAllInvitations, useCreateInvitation, useCancelInvitation } from '@/lib/hooks/useAppQuery'
 import { UserPlus, Copy, X, Clock, CheckCircle, XCircle, AlertCircle } from 'lucide-react'
 import { toast } from 'sonner'
-
-interface Invitation {
-  id: string
-  email: string
-  token: string
-  status: 'pending' | 'accepted' | 'expired' | 'cancelled'
-  invited_name?: string
-  personal_message?: string
-  expires_at: string
-  used_at?: string
-  created_at: string
-}
+import type { UserInvitation } from '@/lib/server/data-access'
 
 interface CreateInvitationForm {
   email: string
@@ -114,7 +103,7 @@ export function InvitationManagement() {
     }
   }
 
-  const getStatusBadge = (invitation: Invitation) => {
+  const getStatusBadge = (invitation: UserInvitation) => {
     const isExpired = new Date(invitation.expires_at) < new Date()
     
     if (invitation.status === 'accepted') {
