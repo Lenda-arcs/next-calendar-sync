@@ -206,7 +206,7 @@ export const TagRuleManager: React.FC<Props> = ({
     }
   )
 
-  const { mutate: deleteRule, isPending: deleting } = useSupabaseMutation(
+  const { mutate: deleteRule } = useSupabaseMutation(
     async (supabase, ruleId: string) => {
       const { data, error } = await supabase
         .from('tag_rules')
@@ -333,22 +333,7 @@ export const TagRuleManager: React.FC<Props> = ({
     }
   }, [actualRulesError])
 
-  // Show loading toasts for operations
-  React.useEffect(() => {
-    if (creating) {
-      toast.loading(t('pages.manageTags.tagRuleManager.creating'), {
-        description: t('pages.manageTags.tagRuleManager.creatingDesc')
-      })
-    } else if (updating) {
-      toast.loading(t('pages.manageTags.tagRuleManager.updating'), {
-        description: t('pages.manageTags.tagRuleManager.updatingDesc')
-      })
-    } else if (deleting) {
-      toast.loading(t('pages.manageTags.tagRuleManager.deleting'), {
-        description: t('pages.manageTags.tagRuleManager.deletingDesc')
-      })
-    }
-  }, [creating, updating, deleting, t])
+
 
   // Don't render if no data (parent DataLoader handles loading states)
   if (!hasData) {

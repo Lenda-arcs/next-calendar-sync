@@ -57,16 +57,7 @@ export const TagLibrary: React.FC<Props> = ({
 
   const operations = tagOperations || defaultTagOperations
 
-  // Show loading toasts for operations only
-  React.useEffect(() => {
-    if (operations.creating) {
-      toast.loading(t('pages.manageTags.tagLibraryComponent.creating'))
-    } else if (operations.updating) {
-      toast.loading(t('pages.manageTags.tagLibraryComponent.updating'))
-    } else if (operations.deleting) {
-      toast.loading(t('pages.manageTags.tagLibraryComponent.deleting'))
-    }
-  }, [operations.creating, operations.updating, operations.deleting, t])
+
 
   return (
     <TagLibraryGrid
