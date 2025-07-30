@@ -369,10 +369,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "invoices_studio_id_fkey"
+            columns: ["studio_id"]
+            isOneToOne: false
+            referencedRelation: "studio_entities_view"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "invoices_substitute_teacher_entity_id_fkey"
             columns: ["substitute_teacher_entity_id"]
             isOneToOne: false
             referencedRelation: "billing_entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_substitute_teacher_entity_id_fkey"
+            columns: ["substitute_teacher_entity_id"]
+            isOneToOne: false
+            referencedRelation: "studio_entities_view"
             referencedColumns: ["id"]
           },
           {
@@ -1125,6 +1139,17 @@ export type Database = {
           timezone?: string | null
           website_url?: string | null
           yoga_styles?: string[] | null
+        }
+        Relationships: []
+      }
+      studio_entities_view: {
+        Row: {
+          address: string | null
+          fallback_name: string | null
+          has_studio_profile: boolean | null
+          id: string | null
+          is_verified: boolean | null
+          name: string | null
         }
         Relationships: []
       }

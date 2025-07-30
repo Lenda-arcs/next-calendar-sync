@@ -16,18 +16,14 @@ interface ExtendedPublicEventsOptions extends PublicEventsOptions {
 // Types
 export type WhenFilter = 'today' | 'week' | 'nextweek' | 'month' | 'nextmonth' | 'next3months'
 
-// Database types for studio entities
-type BillingEntityWithStudio = {
+// Database view type for studio entities (from studio_entities_view)
+type StudioEntityView = {
   id: string
-  entity_name: string
-  entity_type: string
-  studio_id: string | null
-  studios: {
-    id: string
-    name: string
-    address: string | null
-    verified: boolean | null
-  } | null
+  name: string
+  address: string | null
+  is_verified: boolean
+  has_studio_profile: boolean
+  fallback_name: string
 }
 
 // Comprehensive studio interface
@@ -234,44 +230,27 @@ export function FilterProvider({ children, userId }: FilterProviderProps) {
       if (billingEntityIds.length === 0) return []
 
       try {
-        // Get billing entities with linked studio info (optimized fields)
-        const { data: enrichedEntities, error } = await supabase
-          .from('billing_entities')
-          .select(`
-            id,
-            entity_name,
-            studio_id,
-            studios:studio_id (
-              name,
-              address,
-              verified
-            )
-          `)
+        // Use optimized database view (much faster!)
+        const { data: studioEntities, error } = await supabase
+          .from('studio_entities_view')
+          .select('*')
           .in('id', billingEntityIds)
-          .eq('entity_type', 'studio')
 
         if (error) throw error
 
-        const studioEntities: StudioInfo[] = enrichedEntities?.map((entity: BillingEntityWithStudio) => {
-          // Prefer actual studio info if available, fall back to billing entity
-          const studioData = entity.studios
-          
-          return {
-            id: entity.id, // IMPORTANT: Use billing entity ID (this is what events reference)
-            name: studioData?.name || entity.entity_name || `Studio ${entity.id.slice(-6)}`,
-            address: studioData?.address || undefined,
-            // Additional metadata for better UX
-            isVerified: studioData?.verified || false,
-            hasStudioProfile: !!studioData
-          }
-        }).filter(Boolean) || []
+        // Transform to our interface
+        const studios: StudioInfo[] = studioEntities?.map((entity: StudioEntityView) => ({
+          id: entity.id,
+          name: entity.name,
+          address: entity.address || undefined,
+          isVerified: entity.is_verified || false,
+          hasStudioProfile: entity.has_studio_profile || false
+        })) || []
 
-        // Studio entities loaded successfully
-
-        return studioEntities
+        return studios
 
       } catch (error) {
-        console.warn('Error loading studio entities, using fallback:', error)
+        console.warn('Error loading studio entities from view, using fallback:', error)
         
         // Fallback: Basic studio entities from billing IDs
         return billingEntityIds.map((entityId: string) => ({
