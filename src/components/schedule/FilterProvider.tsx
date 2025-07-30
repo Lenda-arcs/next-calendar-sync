@@ -7,15 +7,14 @@ import { usePublicEvents, useAllTags } from '@/lib/hooks/useAppQuery'
 import { useSupabaseQuery } from '@/lib/hooks/useQueryWithSupabase'
 import type { PublicEventsOptions } from '@/lib/server/data-access'
 
-// Extended options for filtering
+// Extended server options for filtering
 interface ExtendedPublicEventsOptions extends PublicEventsOptions {
   studioIds?: string[]
   yogaStyles?: string[]
-  weekdays?: string[]
 }
 
 // Types
-export type WhenFilter = 'all' | 'today' | 'tomorrow' | 'weekend' | 'week' | 'month' | 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday'
+export type WhenFilter = 'today' | 'week' | 'nextweek' | 'month' | 'nextmonth' | 'next3months'
 
 // Database types for studio entities
 type BillingEntityWithStudio = {
@@ -92,7 +91,7 @@ export function useScheduleFilters() {
   return context
 }
 
-// Helper function to convert client-side filters to server-side options
+// Convert client filters to server options
 function filtersToServerOptions(
   filters: FilterState, 
   allTags: Tag[], 
@@ -100,53 +99,46 @@ function filtersToServerOptions(
 ): ExtendedPublicEventsOptions {
   const options: ExtendedPublicEventsOptions = {}
 
-  // Convert date filter to startDate/endDate
-  if (filters.when !== 'week') { // 'week' is now our default, not 'all'
-    const dateRange = getDateRangeForFilter(filters.when, stableDates)
-    if (dateRange) {
-      options.startDate = dateRange.start.toISOString()
-      options.endDate = dateRange.end.toISOString()
-    }
-    
-    // Handle weekday filters
-    if (['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].includes(filters.when)) {
-      options.weekdays = [filters.when]
-    }
-  } else {
-    // Default to current week - use stable dates
-    const startOfWeekDate = startOfWeek(stableDates.now)
-    const endOfWeekDate = endOfWeek(stableDates.now)
-    options.startDate = startOfWeekDate.toISOString()
-    options.endDate = endOfWeekDate.toISOString()
+  // Apply date filter
+  const dateRange = getDateRangeForFilter(filters.when, stableDates)
+  if (dateRange) {
+    options.startDate = dateRange.start.toISOString()
+    options.endDate = dateRange.end.toISOString()
   }
 
-  // Studio filtering - re-enabled with proper billing entity IDs
+  // Studio filtering (server-side)
   if (filters.studios.length > 0) {
-    options.studioIds = filters.studios // These are billing entity IDs
+    options.studioIds = filters.studios
   }
 
-  // Yoga styles filtering - DISABLED for server-side (using client-side instead)
-  // KISS approach: handle yoga styles on client-side for simplicity
+  // Yoga styles: client-side only (KISS)
 
   return options
 }
 
-// Helper function for date range calculation - now using stable dates
+// Date range calculation for time filters
 function getDateRangeForFilter(filter: WhenFilter, stableDates: { today: Date; now: Date }) {
   const { today, now } = stableDates
   
   switch (filter) {
     case 'today':
       return { start: today, end: new Date(today.getTime() + 24 * 60 * 60 * 1000 - 1) }
-    case 'tomorrow':
-      const tomorrow = addDays(today, 1)
-      return { start: tomorrow, end: new Date(tomorrow.getTime() + 24 * 60 * 60 * 1000 - 1) }
-    case 'weekend':
-      const saturday = addDays(today, 6 - today.getDay())
-      const sunday = addDays(saturday, 1)
-      return { start: saturday, end: new Date(sunday.getTime() + 24 * 60 * 60 * 1000 - 1) }
+    case 'week':
+      return { start: startOfWeek(now), end: endOfWeek(now) }
+    case 'nextweek':
+      const nextWeekStart = addDays(startOfWeek(now), 7)
+      const nextWeekEnd = addDays(endOfWeek(now), 7)
+      return { start: nextWeekStart, end: nextWeekEnd }
     case 'month':
-      return { start: startOfMonth(now), end: endOfMonth(now) }
+      // Upcoming events in current month only
+      return { start: today, end: endOfMonth(now) }
+    case 'nextmonth':
+      const nextMonth = addDays(now, 32)
+      return { start: startOfMonth(nextMonth), end: endOfMonth(nextMonth) }
+    case 'next3months':
+      const threeMonthsAhead = new Date(now)
+      threeMonthsAhead.setMonth(threeMonthsAhead.getMonth() + 3)
+      return { start: today, end: threeMonthsAhead }
     default:
       return null
   }
@@ -155,13 +147,12 @@ function getDateRangeForFilter(filter: WhenFilter, stableDates: { today: Date; n
 export function FilterProvider({ children, userId }: FilterProviderProps) {
   // State
   const [filters, setFilters] = useState<FilterState>({
-    when: 'week',
+    when: 'week', // Initial load shows this week
     studios: [],
     yogaStyles: []
   })
   
-  // ==================== STABLE DATE RANGES ====================
-  // CRITICAL: Memoize date calculations to prevent cache busting!
+  // Stable date ranges to prevent cache busting
   const stableDateRanges = useMemo(() => {
     const now = new Date()
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
@@ -169,14 +160,12 @@ export function FilterProvider({ children, userId }: FilterProviderProps) {
     const oneYearAhead = new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000)
     
     return {
-      // For studio discovery - use start of day to make it more stable
       discoveryStart: new Date(ninetyDaysAgo.getFullYear(), ninetyDaysAgo.getMonth(), ninetyDaysAgo.getDate()).toISOString(),
       discoveryEnd: new Date(oneYearAhead.getFullYear(), oneYearAhead.getMonth(), oneYearAhead.getDate()).toISOString(),
-      // For current day/week calculations
       today,
       now
     }
-  }, []) // Empty dependency array = calculate once and never change!
+  }, [])
   
   // Fetch tags first (needed for filter conversion)
   const { 
@@ -203,31 +192,52 @@ export function FilterProvider({ children, userId }: FilterProviderProps) {
     enabled: !!userId 
   })
   
-  // Fetch all user events (without filters) to get available studios
-  const { data: allUserEvents } = usePublicEvents(userId, { 
-    enabled: !!userId,
-    // Use stable date range to prevent cache busting
-    startDate: stableDateRanges.discoveryStart,
-    endDate: stableDateRanges.discoveryEnd
-  })
-  
-  // ROBUST: Extract all billing entities that serve as studios from user's events
-  const { data: studioInfo } = useSupabaseQuery<StudioInfo[]>(
-    ['user-studio-entities', userId, allUserEvents?.length || 0],
+  // Stable events query for consistent studio discovery (time-independent)
+  const { data: stableEvents } = useSupabaseQuery<PublicEvent[]>(
+    ['user-stable-events', userId],
     async (supabase) => {
-      if (!allUserEvents || allUserEvents.length === 0) return []
+      if (!userId) return []
       
-      // Get unique billing entity IDs from events that act as studios
+      // Wide time range for stable studio discovery and counting
+      const now = new Date()
+      const oneYearAgo = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate())
+      const oneYearAhead = new Date(now.getFullYear() + 1, now.getMonth(), now.getDate())
+      
+      const { data, error } = await supabase
+        .from('public_events')
+        .select('*')
+        .eq('user_id', userId)
+        .gte('start_time', oneYearAgo.toISOString())
+        .lte('start_time', oneYearAhead.toISOString())
+        .not('studio_id', 'is', null)
+        .order('start_time', { ascending: true })
+      
+      if (error) throw error
+      return data || []
+    },
+    { 
+      enabled: !!userId,
+      staleTime: 15 * 60 * 1000
+    }
+  )
+  
+  // Extract studio information from stable events
+  const { data: studioInfo } = useSupabaseQuery<StudioInfo[]>(
+    ['user-studio-entities', userId, stableEvents?.length || 0],
+    async (supabase) => {
+      if (!stableEvents || stableEvents.length === 0) return []
+      
+      // Get unique billing entity IDs from events
       const billingEntityIds = [...new Set(
-        allUserEvents
-          .map(event => event.studio_id)
+        stableEvents
+          .map((event: PublicEvent) => event.studio_id)
           .filter((id): id is string => id !== null)
       )]
 
       if (billingEntityIds.length === 0) return []
 
       try {
-        // COMPREHENSIVE QUERY: Get billing entities with their linked studio info
+        // Get billing entities with linked studio info
         const { data: enrichedEntities, error } = await supabase
           .from('billing_entities')
           .select(`
@@ -269,7 +279,7 @@ export function FilterProvider({ children, userId }: FilterProviderProps) {
         console.warn('Error loading studio entities, using fallback:', error)
         
         // Fallback: Basic studio entities from billing IDs
-        return billingEntityIds.map(entityId => ({
+        return billingEntityIds.map((entityId: string) => ({
           id: entityId,
           name: `Studio ${entityId.slice(-6)}`,
           address: undefined
@@ -277,19 +287,18 @@ export function FilterProvider({ children, userId }: FilterProviderProps) {
       }
     },
     { 
-      enabled: !!allUserEvents && allUserEvents.length > 0,
-      staleTime: 10 * 60 * 1000 // Cache for 10 minutes (more stable)
+      enabled: !!stableEvents && stableEvents.length > 0,
+      staleTime: 10 * 60 * 1000
     }
   )
 
-  // ==================== COMPUTED DATA ====================
-  // Server-side filtering + client-side fallback for studios
+  // Filtered events with client-side fallbacks
   const filteredEvents = useMemo(() => {
     if (!events) return []
     
     let filtered = events
     
-    // Client-side studio filtering (backup)
+    // Client-side studio filtering fallback
     if (filters.studios.length > 0) {
       const needsClientFilter = filtered.some(event => 
         event.studio_id && !filters.studios.includes(event.studio_id)
@@ -302,14 +311,13 @@ export function FilterProvider({ children, userId }: FilterProviderProps) {
       }
     }
 
-    // KISS: Client-side yoga style filtering (simple and reliable)
+    // Client-side yoga style filtering
     if (filters.yogaStyles.length > 0) {
       filtered = filtered.filter(event => {
         if (!event.tags || event.tags.length === 0) return false
         
-        // Check if any of the event's tags match the selected yoga styles
+        // Match event tags to selected yoga styles
         return event.tags.some(eventTag => {
-          // Find the tag object to get its class_type
           const tagObj = allTags.find(t => t.name?.toLowerCase() === eventTag.toLowerCase())
           return tagObj?.class_type && filters.yogaStyles.includes(tagObj.class_type)
         })
@@ -319,30 +327,26 @@ export function FilterProvider({ children, userId }: FilterProviderProps) {
     return filtered
   }, [events, filters.studios, filters.yogaStyles, allTags])
 
-  // Enhanced studio info with event counts - SHOW ALL STUDIOS regardless of current filter
+  // Enhanced studio info with stable event counts
   const availableStudioInfo = useMemo(() => {
     if (!studioInfo) return studioInfo
     
-    // CRITICAL FIX: Show ALL studios, but update event counts based on ALL events (not filtered)
-    // This allows users to see and select any studio, even if not currently visible
-    const allEvents = events || [] // Use ALL events for counting, not filtered ones
+    // Use stable events for consistent counting regardless of time filter
+    const eventData = stableEvents || []
     
     const enhanced = studioInfo.map(studio => {
-      // Count events in ALL data (before client-side filtering)
-      const eventCount = allEvents.filter(event => event.studio_id === studio.id).length
+      // Count events in stable data
+      const eventCount = eventData.filter(event => event.studio_id === studio.id).length
       return {
-        ...studio,
+      ...studio,
         eventCount,
-        // Add indicator if this studio has events in current filter
-        hasEventsInFilter: filteredEvents ? 
-          filteredEvents.filter(event => event.studio_id === studio.id).length > 0 : false
+        // Indicator if studio has events in current filter
+        hasEventsInFilter: filteredEvents.some(event => event.studio_id === studio.id)
       }
-    }).filter(studio => studio.eventCount > 0) // Only exclude studios with NO events at all
-    
-    // Enhanced studio info ready for UI
+    }).filter(studio => studio.eventCount > 0)
     
     return enhanced
-  }, [studioInfo, events, filteredEvents])
+  }, [studioInfo, stableEvents, filteredEvents])
 
   // Get yoga styles from tags
   const availableYogaStyles = useMemo(() => {
@@ -351,7 +355,7 @@ export function FilterProvider({ children, userId }: FilterProviderProps) {
     return uniqueStyles.sort()
   }, [allTags])
 
-  // Calculate filter stats based on server-filtered events
+  // Calculate filter stats
   const filterStats: FilterStats = useMemo(() => {
     if (!filteredEvents.length) return { total: 0, byStudio: {}, byYogaStyle: {}, byWeekday: {} }
     
@@ -392,7 +396,7 @@ export function FilterProvider({ children, userId }: FilterProviderProps) {
     }
   }, [filteredEvents, allTags, availableStudioInfo])
 
-  // ==================== EVENT HANDLERS ====================
+  // Event handlers
   const updateFilter = useCallback((key: keyof FilterState, value: WhenFilter | string[] | string) => {
     setFilters(prev => ({ ...prev, [key]: value }))
   }, [])
@@ -417,15 +421,15 @@ export function FilterProvider({ children, userId }: FilterProviderProps) {
 
   const clearAllFilters = useCallback(() => {
     setFilters({
-      when: 'week',
+      when: 'next3months',
       studios: [],
       yogaStyles: []
     })
   }, [])
 
-  // Computed values - check for active filters
-  const hasActiveFilters = filters.when !== 'week' || filters.studios.length > 0 || filters.yogaStyles.length > 0
-  const totalEvents = filteredEvents.length // With server-side filtering, this is the current result count
+  // Active filters check (next3months is reset default, so week shows reset button)
+  const hasActiveFilters = filters.when !== 'next3months' || filters.studios.length > 0 || filters.yogaStyles.length > 0
+  const totalEvents = filteredEvents.length
 
   const value: FilterContextValue = {
     // State
@@ -444,9 +448,9 @@ export function FilterProvider({ children, userId }: FilterProviderProps) {
     toggleYogaStyle,
     clearAllFilters,
     
-    // Legacy data setters (kept for compatibility but not used)
-    setEvents: () => {}, // No-op since we use server-side data
-    setTags: () => {}    // No-op since we use server-side data
+    // Legacy compatibility (no-op)
+    setEvents: () => {},
+    setTags: () => {}
   }
 
   return (

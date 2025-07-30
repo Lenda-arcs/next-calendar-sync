@@ -737,7 +737,7 @@ export interface PublicEventsOptions {
   // Server-side filtering options
   studioIds?: string[]
   yogaStyles?: string[]
-  weekdays?: string[] // for specific weekday filtering
+  // weekdays removed - simplified to date ranges only
 }
 
 export async function getPublicEvents(
@@ -776,21 +776,11 @@ export async function getPublicEvents(
     query = query.range(options.offset, options.offset + (options.limit || 50) - 1)
   }
 
-  const { data: initialData, error } = await query
+  const { data, error } = await query
 
   if (error) throw error
   
-  let data = initialData
-  
-  // Handle weekday filtering client-side for now (since SQL weekday extraction is complex)
-  if (options?.weekdays && options.weekdays.length > 0 && data) {
-    data = data.filter((event: PublicEvent) => {
-      if (!event.start_time) return false
-      const eventDate = new Date(event.start_time)
-      const weekday = eventDate.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase()
-      return options.weekdays!.includes(weekday)
-    })
-  }
+  // Weekdays filtering removed - simplified to basic date ranges only
 
   return data || []
 }

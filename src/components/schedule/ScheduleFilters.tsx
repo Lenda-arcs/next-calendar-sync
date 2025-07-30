@@ -55,23 +55,16 @@ export function ScheduleFilters() {
   }, [accordionValue, preventAutoClose])
 
   const whenOptions = [
-    { key: 'all', label: t('pages.publicSchedule.schedule.filters.when.options.all') },
     { key: 'today', label: t('pages.publicSchedule.schedule.filters.when.options.today') },
-    { key: 'tomorrow', label: t('pages.publicSchedule.schedule.filters.when.options.tomorrow') },
-    { key: 'weekend', label: t('pages.publicSchedule.schedule.filters.when.options.weekend') },
     { key: 'week', label: t('pages.publicSchedule.schedule.filters.when.options.week') },
+    { key: 'nextweek', label: 'Next Week' },
     { key: 'month', label: t('pages.publicSchedule.schedule.filters.when.options.month') },
-    { key: 'monday', label: t('pages.publicSchedule.schedule.filters.when.options.monday') },
-    { key: 'tuesday', label: t('pages.publicSchedule.schedule.filters.when.options.tuesday') },
-    { key: 'wednesday', label: t('pages.publicSchedule.schedule.filters.when.options.wednesday') },
-    { key: 'thursday', label: t('pages.publicSchedule.schedule.filters.when.options.thursday') },
-    { key: 'friday', label: t('pages.publicSchedule.schedule.filters.when.options.friday') },
-    { key: 'saturday', label: t('pages.publicSchedule.schedule.filters.when.options.saturday') },
-    { key: 'sunday', label: t('pages.publicSchedule.schedule.filters.when.options.sunday') }
+    { key: 'nextmonth', label: 'Next Month' },
+    { key: 'next3months', label: 'Next 3 Months' }
   ]
 
   const getActiveFiltersCount = () => {
-    return filters.studios.length + filters.yogaStyles.length + (filters.when !== 'all' ? 1 : 0)
+    return filters.studios.length + filters.yogaStyles.length + (filters.when !== 'next3months' ? 1 : 0)
   }
 
   const handleFABClick = () => {
@@ -122,17 +115,18 @@ export function ScheduleFilters() {
         {/* Desktop: Always visible filters bar */}
         <div className="hidden md:block">
           <Card className="p-6">
-            <div className="flex flex-wrap items-center gap-6">
+            <div className="space-y-4">
               {/* When Filter */}
               <WhenFilter options={whenOptions} />
               
-              {/* Studio Filter */}
-              <StudioFilter />
-              
-              {/* Yoga Style Filter */}
-              <YogaStyleFilter />
-              
-              {/* Clear All Button removed - now only shown outside filter container */}
+              {/* Location and Style Filters */}
+              <div className="flex flex-wrap items-start gap-6">
+                {/* Studio Filter */}
+                <StudioFilter />
+                
+                {/* Yoga Style Filter */}
+                <YogaStyleFilter />
+              </div>
             </div>
           </Card>
         </div>
@@ -183,10 +177,10 @@ function WhenFilter({ options }: { options: Array<{ key: string; label: string }
   const { t } = useTranslation()
 
   return (
-    <div className="flex items-center gap-3">
-      <label className="text-sm font-medium text-muted-foreground">
+    <div className="space-y-3">
+      <h4 className="font-medium text-sm text-muted-foreground">
         {t('pages.publicSchedule.schedule.filters.when.label')}
-      </label>
+      </h4>
       <div className="flex flex-wrap gap-2">
         {options.map(option => (
           <Button
@@ -209,6 +203,9 @@ function StudioFilter() {
   const { filters, availableStudioInfo, toggleStudio } = useScheduleFilters()
   const { t } = useTranslation()
 
+  // Option 2: Always show section, even if loading or empty (better UX)
+  // Users can see consistent filter options
+
   return (
     <div className="space-y-3">
       <h4 className="font-medium text-sm text-muted-foreground flex items-center gap-2">
@@ -219,7 +216,12 @@ function StudioFilter() {
         {availableStudioInfo === undefined ? (
           // Loading skeleton
           <StudioFilterSkeleton />
-        ) : availableStudioInfo.length === 0 ? null : (
+        ) : availableStudioInfo.length === 0 ? (
+          // Empty state - show subtle message
+          <div className="text-xs text-muted-foreground italic">
+            No studios found
+          </div>
+        ) : (
           // Actual studio buttons - compact version
           availableStudioInfo.map(studio => {
             const isSelected = filters.studios.includes(studio.id)
@@ -235,19 +237,9 @@ function StudioFilter() {
                   // Visual feedback for studios with/without events in current filter
                   !hasEventsInFilter && !isSelected ? 'opacity-60' : ''
                 }`}
-                title={`${studio.name}${studio.address ? ` - ${studio.address}` : ''}${
-                  studio.isVerified ? ' ✓ Verified' : ''
-                }${hasEventsInFilter ? '' : ' (No events in current filter)'}`}
+                title={`${studio.name}${studio.address ? ` - ${studio.address}` : ''}${hasEventsInFilter ? '' : ' (No events in current filter)'}`}
               >
                 {studio.name}
-                {studio.eventCount && (
-                  <span className="ml-1 text-xs opacity-70">
-                    ({studio.eventCount})
-                  </span>
-                )}
-                {studio.isVerified && (
-                  <span className="ml-1 text-xs text-green-600">✓</span>
-                )}
               </Button>
             )
           })
@@ -324,6 +316,7 @@ function MobileStudioFilter() {
   const { filters, availableStudioInfo, updateFilter } = useScheduleFilters()
   const { t } = useTranslation()
 
+  // Option 2: Always show section for consistent UX, handle empty state gracefully
   if (!availableStudioInfo || availableStudioInfo.length === 0) return null
 
   const studioOptions = availableStudioInfo.map(studio => ({
