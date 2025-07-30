@@ -1,7 +1,7 @@
 'use client'
 
 import React, {useEffect, useRef, useState} from 'react'
-import {Filter, MapPin, X} from 'lucide-react'
+import {Filter, MapPin} from 'lucide-react'
 import {Accordion, AccordionContent, AccordionItem, AccordionTrigger} from '@/components/ui/accordion'
 import {MultiSelect, Select, Badge, Button, Card, Skeleton} from '@/components/ui'
 import {useScheduleFilters} from '@/components'
@@ -133,18 +133,7 @@ export function ScheduleFilters() {
               {/* Yoga Style Filter */}
               <YogaStyleFilter />
               
-              {/* Clear All Button */}
-              {hasActiveFilters && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={clearAllFilters}
-                  className="ml-auto"
-                >
-                  <X className="h-4 w-4 mr-1" />
-                  {t('pages.publicSchedule.schedule.header.clearFilters')}
-                </Button>
-              )}
+              {/* Clear All Button removed - now only shown outside filter container */}
             </div>
           </Card>
         </div>
@@ -177,18 +166,7 @@ export function ScheduleFilters() {
                     <MobileStudioFilter />
                     <MobileYogaStyleFilter />
                     
-                    {/* Clear All Button */}
-                    {hasActiveFilters && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={clearAllFilters}
-                        className="w-full"
-                      >
-                        <X className="h-4 w-4 mr-1" />
-                        {t('pages.publicSchedule.schedule.header.clearFilters')}
-                      </Button>
-                    )}
+                    {/* Clear All Button removed - now only shown outside filter container */}
                   </div>
                 </Card>
               </AccordionContent>

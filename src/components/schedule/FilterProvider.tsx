@@ -125,17 +125,8 @@ function filtersToServerOptions(
     options.studioIds = filters.studios // These are billing entity IDs
   }
 
-  // Yoga styles filtering - convert yoga styles to tag names
-  if (filters.yogaStyles.length > 0) {
-    const yogaStyleTags = allTags
-      .filter(tag => tag.class_type && filters.yogaStyles.includes(tag.class_type))
-      .map(tag => tag.name)
-      .filter((name): name is string => !!name)
-    
-    if (yogaStyleTags.length > 0) {
-      options.yogaStyles = yogaStyleTags
-    }
-  }
+  // Yoga styles filtering - DISABLED for server-side (using client-side instead)
+  // KISS approach: handle yoga styles on client-side for simplicity
 
   return options
 }
@@ -298,7 +289,7 @@ export function FilterProvider({ children, userId }: FilterProviderProps) {
     
     let filtered = events
     
-    // Client-side backup filtering (fallback only)
+    // Client-side studio filtering (backup)
     if (filters.studios.length > 0) {
       const needsClientFilter = filtered.some(event => 
         event.studio_id && !filters.studios.includes(event.studio_id)
@@ -310,9 +301,23 @@ export function FilterProvider({ children, userId }: FilterProviderProps) {
         )
       }
     }
+
+    // KISS: Client-side yoga style filtering (simple and reliable)
+    if (filters.yogaStyles.length > 0) {
+      filtered = filtered.filter(event => {
+        if (!event.tags || event.tags.length === 0) return false
+        
+        // Check if any of the event's tags match the selected yoga styles
+        return event.tags.some(eventTag => {
+          // Find the tag object to get its class_type
+          const tagObj = allTags.find(t => t.name?.toLowerCase() === eventTag.toLowerCase())
+          return tagObj?.class_type && filters.yogaStyles.includes(tagObj.class_type)
+        })
+      })
+    }
     
     return filtered
-  }, [events, filters.studios])
+  }, [events, filters.studios, filters.yogaStyles, allTags])
 
   // Enhanced studio info with event counts - SHOW ALL STUDIOS regardless of current filter
   const availableStudioInfo = useMemo(() => {
@@ -418,7 +423,7 @@ export function FilterProvider({ children, userId }: FilterProviderProps) {
     })
   }, [])
 
-  // Computed values
+  // Computed values - check for active filters
   const hasActiveFilters = filters.when !== 'week' || filters.studios.length > 0 || filters.yogaStyles.length > 0
   const totalEvents = filteredEvents.length // With server-side filtering, this is the current result count
 
