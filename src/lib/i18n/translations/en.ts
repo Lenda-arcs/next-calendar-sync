@@ -936,6 +936,16 @@ const translations: Translations = {
         syncDescription: 'Fix event tags or download fresh calendar data (~15-30s for sync)',
         availableTags: 'Available Tags:'
       },
+      toast: {
+        syncSuccess: 'Sync completed: {successfulSyncs}/{totalFeeds} feeds synced, {totalEvents} total events',
+        syncError: 'Failed to sync calendar feeds',
+        eventCreated: 'Event created successfully! 🎉',
+        eventUpdated: 'Event updated successfully!',
+        eventDeleted: 'Event deleted successfully!',
+        eventCreateError: 'Failed to create event',
+        eventUpdateError: 'Failed to update event',
+        eventDeleteError: 'Failed to delete event'
+      },
       emptyState: {
         noEvents: 'No events found',
         noEventsFiltered: 'No events match your filters',

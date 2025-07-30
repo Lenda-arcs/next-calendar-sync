@@ -27,7 +27,10 @@ import type {
   InvitationResult,
   CalendarSelection,
   MarkInvitationUsedResult,
-  InvoiceStatus
+  InvoiceStatus,
+  CreateEventData,
+  CreateEventResult,
+  UpdateEventData
 } from '../server/data-access'
 import type { Database } from '../../../database-generated.types'
 
@@ -158,6 +161,44 @@ export function useDeleteTag() {
   return useSupabaseMutation<Tag[], string>(
     async (supabase: SupabaseClient, tagId: string) => {
       return dataAccess.deleteTag(supabase, tagId)
+    }
+  )
+}
+
+// ===== EVENT MUTATIONS =====
+
+export function useCreateEvent() {
+  return useSupabaseMutation<CreateEventResult, CreateEventData>(
+    async (_supabase: SupabaseClient, eventData: CreateEventData) => {
+      return dataAccess.createEventViaAPI(eventData)
+    }
+  )
+}
+
+export function useUpdateEvent() {
+  return useSupabaseMutation<CreateEventResult, UpdateEventData>(
+    async (_supabase: SupabaseClient, eventData: UpdateEventData) => {
+      return dataAccess.updateEventViaAPI(eventData)
+    }
+  )
+}
+
+export function useDeleteEvent() {
+  return useSupabaseMutation<CreateEventResult, string>(
+    async (_supabase: SupabaseClient, eventId: string) => {
+      return dataAccess.deleteEventViaAPI(eventId)
+    }
+  )
+}
+
+// ===== CALENDAR SYNC MUTATION =====
+
+export function useSyncAllCalendarFeeds() {
+  return useSupabaseMutation<{ successfulSyncs: number; totalFeeds: number; totalEvents: number }, string>(
+    async (supabase: SupabaseClient, userId: string) => {
+      // Import the function dynamically to avoid circular dependency issues
+      const { syncAllUserCalendarFeeds } = await import('../calendar-feeds')
+      return syncAllUserCalendarFeeds(supabase as any, userId)
     }
   )
 }

@@ -1,10 +1,13 @@
 'use client'
 
+import React from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { TagLibraryItem } from '@/components/tags'
+import { TagViewDialog } from '@/components/tags/TagViewDialog'
 import { Settings, Plus, ArrowLeftRight, RefreshCw, Zap, Tag } from 'lucide-react'
 import { Tag as TagType } from '@/lib/types'
+import { EventTag } from '@/lib/event-types'
 import { RematchTagsButton } from './RematchEventsButton'
 import { useTranslation } from '@/lib/i18n/context'
 
@@ -51,6 +54,10 @@ export default function EventsControlPanel({
   onRefresh
 }: EventsControlPanelProps) {
   const { t } = useTranslation()
+  
+  // Tag view dialog state
+  const [selectedTag, setSelectedTag] = React.useState<EventTag | null>(null)
+  const [isTagDialogOpen, setIsTagDialogOpen] = React.useState(false)
 
   // Transform database tags to EventTag format for TagLibraryItem
   const transformToEventTag = (tag: TagType) => ({
@@ -66,6 +73,26 @@ export default function EventsControlPanel({
     userId: tag.user_id,
     imageUrl: tag.image_url
   })
+
+  // Handle tag click to open view dialog
+  const handleTagClick = (tag: TagType) => {
+    const eventTag = transformToEventTag(tag)
+    setSelectedTag(eventTag)
+    setIsTagDialogOpen(true)
+  }
+
+  // Handle closing tag view dialog
+  const handleTagDialogClose = () => {
+    setIsTagDialogOpen(false)
+    setSelectedTag(null)
+  }
+
+  // Handle tag edit - for now just close dialog and open create tag form
+  const handleTagEdit = () => {
+    setIsTagDialogOpen(false)
+    setSelectedTag(null)
+    onCreateTag() // This will open the create tag form
+  }
 
   return (
     <Card>
@@ -203,7 +230,7 @@ export default function EventsControlPanel({
                     key={tag.id} 
                     tag={transformToEventTag(tag)}
                     variant="compact"
-                    onClick={() => {}} // No action needed for display-only tags
+                    onClick={() => handleTagClick(tag)}
                   />
                 ))}
                 {globalTags?.map(tag => (
@@ -212,7 +239,7 @@ export default function EventsControlPanel({
                     tag={transformToEventTag(tag)}
                     variant="compact"
                     isGlobal={true}
-                    onClick={() => {}} // No action needed for display-only tags
+                    onClick={() => handleTagClick(tag)}
                   />
                 ))}
               </div>
@@ -220,6 +247,17 @@ export default function EventsControlPanel({
           )}
         </div>
       </CardContent>
+
+      {/* Tag View Dialog */}
+      {selectedTag && (
+        <TagViewDialog
+          tag={selectedTag}
+          isOpen={isTagDialogOpen}
+          onClose={handleTagDialogClose}
+          onEdit={handleTagEdit}
+          canEdit={selectedTag.userId === userId} // User can only edit their own tags
+        />
+      )}
     </Card>
   )
 } 

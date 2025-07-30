@@ -936,6 +936,16 @@ const translations: Translations = {
         syncDescription: 'Event-Tags reparieren oder frische Kalenderdaten herunterladen (~15-30s für Sync)',
         availableTags: 'Verfügbare Tags:'
       },
+      toast: {
+        syncSuccess: 'Synchronisation abgeschlossen: {successfulSyncs}/{totalFeeds} Feeds synchronisiert, {totalEvents} Veranstaltungen insgesamt',
+        syncError: 'Fehler beim Synchronisieren der Kalender-Feeds',
+        eventCreated: 'Veranstaltung erfolgreich erstellt! 🎉',
+        eventUpdated: 'Veranstaltung erfolgreich aktualisiert!',
+        eventDeleted: 'Veranstaltung erfolgreich gelöscht!',
+        eventCreateError: 'Fehler beim Erstellen der Veranstaltung',
+        eventUpdateError: 'Fehler beim Aktualisieren der Veranstaltung',
+        eventDeleteError: 'Fehler beim Löschen der Veranstaltung'
+      },
       emptyState: {
         noEvents: 'Keine Veranstaltungen gefunden',
         noEventsFiltered: 'Keine Veranstaltungen entsprechen Ihren Filtern',

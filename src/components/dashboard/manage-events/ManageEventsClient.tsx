@@ -17,17 +17,18 @@ import { RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import DataLoader from '@/components/ui/data-loader'
 import { ManageEventsSkeleton } from '@/components/ui/skeleton'
-import { useUserEvents, useCreateTag, useAllTags } from '@/lib/hooks/useAppQuery'
-import { useSupabaseMutation } from '@/lib/hooks/useQueryWithSupabase'
-// TanStack Query provides excellent caching and synchronization!
-import { useSmartCache } from '@/lib/hooks/useSmartCache'
-import { useCalendarSync } from '@/lib/hooks/useCalendarSync'
+import { 
+  useUserEvents, 
+  useCreateTag, 
+  useAllTags,
+  useCreateEvent,
+  useUpdateEvent,
+  useDeleteEvent,
+  useSyncAllCalendarFeeds
+} from '@/lib/hooks/useAppQuery'
 import { Event, Tag } from '@/lib/types'
-
-// TanStack Query provides powerful caching and optimistic updates!
 import { convertToEventTag, EventTag } from '@/lib/event-types'
 import { convertEventToCardProps } from '@/lib/event-utils'
-import { createBrowserClient } from '@supabase/ssr'
 import { VisibilityFilter, TimeFilter } from '@/components/events/EventsControlPanel'
 import { useTranslation } from '@/lib/i18n/context'
 
@@ -42,17 +43,8 @@ interface ManageEventsClientProps {
   userId: string
 }
 
-//TODO REFACTOR this after all other TODOs are done (make it more readable and remove unnecessary comments)
 export function ManageEventsClient({ userId }: ManageEventsClientProps) {
   const { t } = useTranslation()
-  //TODO:  Remove this if not needed anymore (i think we do have a proper tanstack query cache now)
-  const smartCache = useSmartCache()
-
-  //TODO: Remove when useCalendarSync was migrated to now QuerySystem
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
 
   // Filtering state
   const [visibilityFilter, setVisibilityFilter] = React.useState<VisibilityFilter>('all')
@@ -68,8 +60,7 @@ export function ManageEventsClient({ userId }: ManageEventsClientProps) {
   const [isEditEventFormOpen, setIsEditEventFormOpen] = React.useState(false)
   const [editingEvent, setEditingEvent] = React.useState<EditEventData | null>(null)
 
-  // ==================== DATA FETCHING ====================
-  // ✨ NEW: Use unified hooks
+  // Data fetching hooks
   const {
     data: events,
     isLoading: eventsLoading,
@@ -77,17 +68,17 @@ export function ManageEventsClient({ userId }: ManageEventsClientProps) {
     refetch: refetchEvents
   } = useUserEvents(userId, undefined, { enabled: !!userId })
 
-  // Use unified tags hook
   const { 
     data: tagsData,
     isLoading: tagsLoading, 
     refetch: refetchTags 
   } = useAllTags(userId, { enabled: !!userId })
   
-  // Extract allTags from the result
-  const allAvailableTags = tagsData?.allTags || []
+  const allAvailableTags = React.useMemo(() => {
+    return tagsData?.allTags || []
+  }, [tagsData?.allTags])
 
-  // ✨ NEW: Use unified tag creation
+  // Mutation hooks
   const createTagMutation = useCreateTag()
   
   // Handle tag creation with proper data transformation
@@ -117,125 +108,9 @@ export function ManageEventsClient({ userId }: ManageEventsClientProps) {
   }, [createTagMutation, refetchTags, userId])
 
 
-  //TODO: CURSOR Migrate to new query system (Utilise TanStack Query's optimistic updates, instead of manual state management)
-  const createEventMutation = useSupabaseMutation(
-    async (supabase, eventData: CreateEventData) => {
-      if (!userId) throw new Error('User not authenticated')
-
-      const response = await fetch('/api/calendar/events', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(eventData),
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Failed to create event')
-      }
-
-      return await response.json()
-    },
-    {
-      // ⚡ OPTIMISTIC UPDATE: Show success immediately
-      onMutate: async () => {
-        // Show optimistic success message
-        toast.success('Creating event... ⚡', { id: 'create-event' })
-        return { isOptimistic: true }
-      },
-      
-      // ✅ SUCCESS: Real success with smart cache invalidation
-      onSuccess: () => {
-        // Update success message
-        toast.success('Event created successfully! 🎉', { id: 'create-event' })
-        
-        // 🔄 SMART CACHE INVALIDATION: Automatically sync ALL related data!
-        smartCache.events.onCreate(userId)
-        
-        setIsCreateEventFormOpen(false)
-      },
-      
-      // ❌ ERROR: Show error and cleanup
-      onError: (error: Error) => {
-        toast.error(error.message || 'Failed to create event', { id: 'create-event' })
-      }
-    }
-  )
-
-  //TODO: CURSOR Migrate to new query system (Utilise TanStack Query's optimistic updates, instead of manual state management)
-  const updateEventMutation = useSupabaseMutation(
-    async (supabase, eventData: CreateEventData & { id: string }) => {
-      if (!userId) throw new Error('User not authenticated')
-
-      const response = await fetch('/api/calendar/events', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          eventId: eventData.id,
-          summary: eventData.summary,
-          description: eventData.description,
-          start: eventData.start,
-          end: eventData.end,
-          location: eventData.location,
-          custom_tags: eventData.custom_tags,
-          visibility: eventData.visibility
-        }),
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Failed to update event')
-      }
-
-      return await response.json()
-    },
-    {
-      onSuccess: () => {
-        refetchEvents()
-        setIsEditEventFormOpen(false)
-        setEditingEvent(null)
-        toast.success('Event updated successfully!')
-      },
-      onError: (error: Error) => {
-        const errorMessage = error instanceof Error ? error.message : 'Failed to update event'
-        toast.error(errorMessage)
-      }
-    }
-  )
-
-
-  //TODO: CURSOR Migrate to new query system (Utilise TanStack Query's optimistic updates, instead of manual state management)
-  const deleteEventMutation = useSupabaseMutation(
-    async (supabase, eventId: string) => {
-      if (!userId) throw new Error('User not authenticated')
-
-      const response = await fetch(`/api/calendar/events?eventId=${eventId}`, {
-        method: 'DELETE',
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Failed to delete event')
-      }
-
-      return await response.json()
-    },
-    {
-      onSuccess: () => {
-        refetchEvents()
-        setIsEditEventFormOpen(false)
-        setEditingEvent(null)
-        toast.success('Event deleted successfully!')
-      },
-      onError: (error: Error) => {
-        const errorMessage = error instanceof Error ? error.message : 'Failed to delete event'
-        toast.error(errorMessage)
-      }
-    }
-  )
+  const createEventMutation = useCreateEvent()
+  const updateEventMutation = useUpdateEvent()
+  const deleteEventMutation = useDeleteEvent()
 
 
   // Convert tags to EventTag format for the grid
@@ -243,8 +118,7 @@ export function ManageEventsClient({ userId }: ManageEventsClientProps) {
     return allAvailableTags.map((tag: Tag) => convertToEventTag(tag))
   }, [allAvailableTags])
 
-  // ==================== EVENT FILTERING & PROCESSING ====================
-  // Helper function to apply filters to events
+  // Event filtering and processing
   const applyEventFilters = React.useCallback((eventList: Event[]) => {
     const now = new Date()
     
@@ -275,19 +149,31 @@ export function ManageEventsClient({ userId }: ManageEventsClientProps) {
     })
   }, [events, allAvailableTags, applyEventFilters])
 
-  // ==================== EVENT HANDLERS ====================
+  // Event handlers
   const handleRefresh = React.useCallback(async () => {
     await refetchEvents()
   }, [refetchEvents])
 
-  // Calendar sync functionality using custom hook
-  //TODO: CURSOR Migrate to new query system (Utilise TanStack Query's optimistic updates, instead of manual state management) Be careful as this is a supabase edge function not a direct database query - This does not use the smart cache system
-  const { syncFeeds: handleSyncFeeds, isSyncing } = useCalendarSync({
-    userId,
-    supabase,
-    onSyncComplete: () => { refetchEvents() }
-  })
+  const syncCalendarFeedsMutation = useSyncAllCalendarFeeds()
+  
 
+  const handleSyncFeeds = React.useCallback(async () => {
+    if (!userId) return
+    
+    try {
+      const result = await syncCalendarFeedsMutation.mutateAsync(userId)
+      refetchEvents()
+      toast.success(t('pages.manageEvents.toast.syncSuccess', {
+        successfulSyncs: result.successfulSyncs.toString(),
+        totalFeeds: result.totalFeeds.toString(),
+        totalEvents: result.totalEvents.toString()
+      }))
+    } catch (error) {
+      console.error('Failed to sync calendar feeds:', error)
+      toast.error(t('pages.manageEvents.toast.syncError'))
+    }
+  }, [userId, syncCalendarFeedsMutation, refetchEvents, t])
+  
   // Handle create tag form
   const handleCreateTag = (tagData: EventTag) => {
     handleCreateTagWithRefetch(tagData)
@@ -337,18 +223,71 @@ export function ManageEventsClient({ userId }: ManageEventsClientProps) {
 
   // Unified event handler for both create and edit
   const handleUpdateEvent = async (eventData: CreateEventData | (CreateEventData & { id: string })) => {
-    if ('id' in eventData) {
-      // Edit mode
-      await updateEventMutation.mutateAsync(eventData)
-    } else {
-      // Create mode
-      await createEventMutation.mutateAsync(eventData)
+    try {
+      if ('id' in eventData) {
+        // Edit mode - extract id first, then sanitize the rest
+        const { id, ...updateData } = eventData
+        
+        // Ensure dateTime fields are required strings for API compatibility
+        const sanitizedUpdateData = {
+          ...updateData,
+          start: {
+            ...updateData.start,
+            dateTime: updateData.start.dateTime || ''
+          },
+          end: {
+            ...updateData.end,
+            dateTime: updateData.end.dateTime || ''
+          }
+        }
+        
+        const updateEventData = {
+          eventId: id,
+          ...sanitizedUpdateData
+        }
+        await updateEventMutation.mutateAsync(updateEventData)
+        refetchEvents()
+        setIsEditEventFormOpen(false)
+        setEditingEvent(null)
+        toast.success(t('pages.manageEvents.toast.eventUpdated'))
+      } else {
+        // Create mode - sanitize eventData
+        const sanitizedEventData = {
+          ...eventData,
+          start: {
+            ...eventData.start,
+            dateTime: eventData.start.dateTime || ''
+          },
+          end: {
+            ...eventData.end,
+            dateTime: eventData.end.dateTime || ''
+          }
+        }
+        
+        await createEventMutation.mutateAsync(sanitizedEventData)
+        refetchEvents()
+        setIsCreateEventFormOpen(false)
+        toast.success(t('pages.manageEvents.toast.eventCreated'))
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 
+        ('id' in eventData ? t('pages.manageEvents.toast.eventUpdateError') : t('pages.manageEvents.toast.eventCreateError'))
+      toast.error(errorMessage)
     }
   }
 
   // Handle delete event
   const handleDeleteEvent = async (eventId: string) => {
-    await deleteEventMutation.mutateAsync(eventId)
+    try {
+      await deleteEventMutation.mutateAsync(eventId)
+      refetchEvents()
+      setIsEditEventFormOpen(false)
+      setEditingEvent(null)
+      toast.success(t('pages.manageEvents.toast.eventDeleted'))
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : t('pages.manageEvents.toast.eventDeleteError')
+      toast.error(errorMessage)
+    }
   }
 
   // Handle create new tag from dialog
@@ -440,7 +379,7 @@ export function ManageEventsClient({ userId }: ManageEventsClientProps) {
               eventStats={eventStats}
               userTags={allAvailableTags.filter((tag: Tag) => tag.user_id) || undefined}
               globalTags={allAvailableTags.filter((tag: Tag) => !tag.user_id) || undefined}
-              isSyncing={isSyncing}
+              isSyncing={syncCalendarFeedsMutation.isPending}
               isLoading={false}
               userId={userId}
               onTimeFilterChange={setTimeFilter}

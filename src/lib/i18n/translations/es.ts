@@ -936,6 +936,16 @@ const translations: Translations = {
         syncDescription: 'Reparar etiquetas de eventos o descargar datos frescos del calendario (~15-30s para sincronizar)',
         availableTags: 'Etiquetas Disponibles:'
       },
+      toast: {
+        syncSuccess: 'Sincronización completada: {successfulSyncs}/{totalFeeds} feeds sincronizados, {totalEvents} eventos totales',
+        syncError: 'Error al sincronizar feeds del calendario',
+        eventCreated: '¡Evento creado exitosamente! 🎉',
+        eventUpdated: '¡Evento actualizado exitosamente!',
+        eventDeleted: '¡Evento eliminado exitosamente!',
+        eventCreateError: 'Error al crear el evento',
+        eventUpdateError: 'Error al actualizar el evento',
+        eventDeleteError: 'Error al eliminar el evento'
+      },
       emptyState: {
         noEvents: 'No se encontraron eventos',
         noEventsFiltered: 'Ningún evento coincide con tus filtros',
