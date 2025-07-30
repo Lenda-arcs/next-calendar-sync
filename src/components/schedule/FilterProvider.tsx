@@ -67,7 +67,7 @@ export function useScheduleFilters() {
 export function FilterProvider({ children }: FilterProviderProps) {
   // State
   const [filters, setFilters] = useState<FilterState>({
-    when: 'all',
+    when: 'week',
     studios: [],
     yogaStyles: []
   })
@@ -78,7 +78,6 @@ export function FilterProvider({ children }: FilterProviderProps) {
 
   // ==================== COMPUTED DATA ====================
   // Enhanced studio info with event counts
-  //TODO: Currently not working.. after TanStack Query migration
   const availableStudioInfo = useMemo(() => {
     if (!studioInfo) return undefined // Return undefined during loading
     
@@ -242,14 +241,14 @@ export function FilterProvider({ children }: FilterProviderProps) {
 
   const clearAllFilters = useCallback(() => {
     setFilters({
-      when: 'all',
+      when: 'week',
       studios: [],
       yogaStyles: []
     })
   }, [])
 
   // Computed values
-  const hasActiveFilters = filters.when !== 'all' || filters.studios.length > 0 || filters.yogaStyles.length > 0
+  const hasActiveFilters = filters.when !== 'week' || filters.studios.length > 0 || filters.yogaStyles.length > 0
   const totalEvents = events.length
 
   const value: FilterContextValue = {

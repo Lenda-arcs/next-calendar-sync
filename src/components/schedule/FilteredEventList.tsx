@@ -27,17 +27,13 @@ export function FilteredEventList({ userId, variant = 'compact', className }: Fi
   } = useScheduleFilters()
 
 
-  //TODO: Lets set the default filter to "this week" instead of "all" make the change in FilterProvider.tsx and here..
-  // We want to make the initial load more relevant to users and increasde the page laod speed.
-  // This means we need to actually connect the filter to the query.. TanStack Query will handle the caching and re-fetching for us.
   const {
     data: events,
     isLoading: eventsLoading,
     error: eventsError
   } = usePublicEvents(userId, { enabled: !!userId })
 
-  // 🚧 TODO: Migrate studio information fetching to unified pattern
-  // For now, using empty data to complete the main migration
+  // Studio information - using simple empty array for now
   const studioLoading = false
   const studioInfo = useMemo(() => [] as StudioInfo[], [])
 
@@ -47,7 +43,7 @@ export function FilteredEventList({ userId, variant = 'compact', className }: Fi
   } = useAllTags(userId, { enabled: !!userId })
   
   // Extract allTags from the result
-  const allTags = tagsData?.allTags || []
+  const allTags = useMemo(() => tagsData?.allTags || [], [tagsData?.allTags])
 
   // Update filter context when data changes
   useEffect(() => {

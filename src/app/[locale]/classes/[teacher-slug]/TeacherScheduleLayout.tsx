@@ -1,5 +1,6 @@
 'use client'
 
+import React from 'react'
 import { PublicProfile } from '@/lib/types'
 import DynamicNavbar from './components/DynamicNavbar'
 import { useHeroState } from './hooks/useHeroState'
