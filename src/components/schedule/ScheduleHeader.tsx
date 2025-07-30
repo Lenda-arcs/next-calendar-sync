@@ -7,7 +7,7 @@ import {useScheduleFilters} from '@/components'
 import {useTranslation} from '@/lib/i18n/context'
 
 export function ScheduleHeader() {
-  const { filteredEvents, totalEvents, hasActiveFilters, clearAllFilters } = useScheduleFilters()
+  const { filteredEvents, totalEvents, hasActiveFilters, clearAllFilters, isLoading } = useScheduleFilters()
   const { t } = useTranslation()
 
   return (
@@ -17,20 +17,23 @@ export function ScheduleHeader() {
           {t('pages.publicSchedule.schedule.header.title')}
         </h2>
         <p className="text-gray-600 dark:text-gray-300 mt-1">
-          {hasActiveFilters 
-            ? t('pages.publicSchedule.schedule.header.classesCountFiltered', { 
-                filtered: filteredEvents.length.toString(), 
-                total: totalEvents.toString() 
-              })
-            : t('pages.publicSchedule.schedule.header.classesCount', { 
-                filtered: filteredEvents.length.toString(), 
-                total: totalEvents.toString() 
-              })
-          }
+          {isLoading ? (
+            <span className="inline-block h-4 w-32 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></span>
+          ) : hasActiveFilters ? (
+            t('pages.publicSchedule.schedule.header.classesCountFiltered', { 
+              filtered: filteredEvents.length.toString(), 
+              total: totalEvents.toString() 
+            })
+          ) : (
+            t('pages.publicSchedule.schedule.header.classesCount', { 
+              filtered: filteredEvents.length.toString(), 
+              total: totalEvents.toString() 
+            })
+          )}
         </p>
       </div>
       
-      {hasActiveFilters && (
+      {hasActiveFilters && !isLoading && (
         <div className="hidden sm:flex items-center gap-2">
           <Button
             variant="outline"

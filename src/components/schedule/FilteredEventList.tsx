@@ -1,8 +1,8 @@
 'use client'
 
-import React, { useEffect, useMemo } from 'react'
-import { usePublicEvents, useAllTags } from '@/lib/hooks/useAppQuery'
-import { useScheduleFilters, type StudioInfo } from './FilterProvider'
+import React, { useMemo } from 'react'
+import { useAllTags } from '@/lib/hooks/useAppQuery'
+import { useScheduleFilters } from './FilterProvider'
 
 import { Button } from '@/components/ui/button'
 import { AlertTriangle, X } from 'lucide-react'
@@ -20,96 +20,48 @@ export function FilteredEventList({ userId, variant = 'compact', className }: Fi
   const { 
     filteredEvents, 
     hasActiveFilters, 
-    clearAllFilters, 
-    setEvents, 
-    setTags,
-    setStudioInfo
+    clearAllFilters,
+    isLoading: eventsLoading
   } = useScheduleFilters()
 
-
-  const {
-    data: events,
-    isLoading: eventsLoading,
-    error: eventsError
-  } = usePublicEvents(userId, { enabled: !!userId })
-
-  // Studio information - using simple empty array for now
-  const studioLoading = false
-  const studioInfo = useMemo(() => [] as StudioInfo[], [])
-
-  const {
-    data: tagsData,
-    isLoading: tagsLoading 
-  } = useAllTags(userId, { enabled: !!userId })
-  
-  // Extract allTags from the result
+  // For compatibility, we still need allTags for the PublicEventList component
+  const { data: tagsData, isLoading: tagsLoading } = useAllTags(userId, { enabled: !!userId })
   const allTags = useMemo(() => tagsData?.allTags || [], [tagsData?.allTags])
 
-  // Update filter context when data changes
-  useEffect(() => {
-    if (events) {
-      setEvents(events)
-    }
-  }, [events, setEvents])
-
-  useEffect(() => {
-    if (allTags.length > 0) {
-      setTags(allTags)
-    }
-  }, [allTags, setTags])
-
-  useEffect(() => {
-    if (studioInfo) {
-      setStudioInfo(studioInfo)
-    }
-  }, [studioInfo, setStudioInfo])
-
-  // Combined loading state
-  const isLoading = eventsLoading || tagsLoading || studioLoading
-  const errorMessage = eventsError?.message || null
-
-  if (isLoading) {
+  // Show loading skeleton when either events or tags are loading
+  if (eventsLoading || tagsLoading) {
     return <PublicEventListSkeleton variant={variant} />
   }
 
-  if (errorMessage) {
-    return (
-      <div className="text-center py-12">
-        <AlertTriangle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-        <p className="text-muted-foreground">Error loading events: {errorMessage}</p>
-      </div>
-    )
-  }
-
-  if (!events || events.length === 0) {
-    return (
-      <EventListEmptyState 
-        isInteractive={false}
-        totalEventsCount={0}
-      />
-    )
-  }
-
-  if (filteredEvents.length === 0 && hasActiveFilters) {
-    return (
-      <div className="text-center py-12">
-        <AlertTriangle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-        <h3 className="text-lg font-medium text-foreground mb-2">
-          No events match your filters
-        </h3>
-        <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-          Try adjusting your filters to see more events.
-        </p>
-        <Button
-          variant="outline"
-          onClick={clearAllFilters}
-          className="inline-flex items-center gap-2"
-        >
-          <X className="h-4 w-4" />
-          Clear All Filters
-        </Button>
-      </div>
-    )
+  if (!filteredEvents || filteredEvents.length === 0) {
+    if (hasActiveFilters) {
+      return (
+        <div className="text-center py-12">
+          <AlertTriangle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-foreground mb-2">
+            No events match your filters
+          </h3>
+          <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+            Try adjusting your filters to see more events.
+          </p>
+          <Button
+            variant="outline"
+            onClick={clearAllFilters}
+            className="inline-flex items-center gap-2"
+          >
+            <X className="h-4 w-4" />
+            Clear All Filters
+          </Button>
+        </div>
+      )
+    } else {
+      return (
+        <EventListEmptyState 
+          isInteractive={false}
+          totalEventsCount={0}
+        />
+      )
+    }
   }
 
   return (

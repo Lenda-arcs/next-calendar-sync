@@ -244,21 +244,36 @@ function StudioFilter() {
           <StudioFilterSkeleton />
         ) : availableStudioInfo.length === 0 ? null : (
           // Actual studio buttons - compact version
-          availableStudioInfo.map(studio => (
-            <Button
-              key={studio.id}
-              variant={filters.studios.includes(studio.id) ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => toggleStudio(studio.id)}
-              className="h-8 px-3 text-sm"
-              title={studio.address ? `${studio.name} - ${studio.address}` : studio.name}
-            >
-              {studio.name}
-              {studio.eventCount && (
-                <span className="ml-1 text-xs opacity-70">({studio.eventCount})</span>
-              )}
-            </Button>
-          ))
+          availableStudioInfo.map(studio => {
+            const isSelected = filters.studios.includes(studio.id)
+            const hasEventsInFilter = studio.hasEventsInFilter
+            
+            return (
+              <Button
+                key={studio.id}
+                variant={isSelected ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => toggleStudio(studio.id)}
+                className={`h-8 px-3 text-sm ${
+                  // Visual feedback for studios with/without events in current filter
+                  !hasEventsInFilter && !isSelected ? 'opacity-60' : ''
+                }`}
+                title={`${studio.name}${studio.address ? ` - ${studio.address}` : ''}${
+                  studio.isVerified ? ' ✓ Verified' : ''
+                }${hasEventsInFilter ? '' : ' (No events in current filter)'}`}
+              >
+                {studio.name}
+                {studio.eventCount && (
+                  <span className="ml-1 text-xs opacity-70">
+                    ({studio.eventCount})
+                  </span>
+                )}
+                {studio.isVerified && (
+                  <span className="ml-1 text-xs text-green-600">✓</span>
+                )}
+              </Button>
+            )
+          })
         )}
       </div>
     </div>

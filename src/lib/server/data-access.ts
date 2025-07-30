@@ -734,6 +734,10 @@ export interface PublicEventsOptions {
   offset?: number
   startDate?: string
   endDate?: string
+  // Server-side filtering options
+  studioIds?: string[]
+  yogaStyles?: string[]
+  weekdays?: string[] // for specific weekday filtering
 }
 
 export async function getPublicEvents(
@@ -750,7 +754,19 @@ export async function getPublicEvents(
     .eq('user_id', userId)
     .gte('start_time', options?.startDate || now.toISOString())
     .lte('start_time', options?.endDate || threeMonthsFromNow.toISOString())
-    .order('start_time', { ascending: true })
+
+  // Studio filtering
+  if (options?.studioIds && options.studioIds.length > 0) {
+    query = query.in('studio_id', options.studioIds)
+  }
+
+  // Tags filtering (yoga styles) - using array contains
+  if (options?.yogaStyles && options.yogaStyles.length > 0) {
+    // For array contains, we need to check if any of the yoga styles exist in the tags array
+    query = query.overlaps('tags', options.yogaStyles)
+  }
+
+  query = query.order('start_time', { ascending: true })
 
   if (options?.limit) {
     query = query.limit(options.limit)
@@ -760,9 +776,22 @@ export async function getPublicEvents(
     query = query.range(options.offset, options.offset + (options.limit || 50) - 1)
   }
 
-  const { data, error } = await query
+  const { data: initialData, error } = await query
 
   if (error) throw error
+  
+  let data = initialData
+  
+  // Handle weekday filtering client-side for now (since SQL weekday extraction is complex)
+  if (options?.weekdays && options.weekdays.length > 0 && data) {
+    data = data.filter(event => {
+      if (!event.start_time) return false
+      const eventDate = new Date(event.start_time)
+      const weekday = eventDate.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase()
+      return options.weekdays!.includes(weekday)
+    })
+  }
+
   return data || []
 }
 
