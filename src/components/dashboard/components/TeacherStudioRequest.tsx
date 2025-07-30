@@ -17,7 +17,6 @@ export function TeacherStudioRequest({ userId }: TeacherStudioRequestProps) {
   const { t } = useTranslationNamespace('dashboard.studioRequest')
   const [showRequestDialog, setShowRequestDialog] = useState(false)
 
-    //TODO: CURSOR Migrate to new query system
   // Fetch teacher's studio relationships
   const { data: teacherRelationships, isLoading } = useTeacherStudioRelationships({
     teacherId: userId,
