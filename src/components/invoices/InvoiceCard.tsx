@@ -16,6 +16,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { useTranslation } from '@/lib/i18n/context'
 
 interface InvoiceCardProps {
   invoice: InvoiceWithDetails
@@ -27,6 +28,7 @@ interface InvoiceCardProps {
 }
 
 export const InvoiceCard: React.FC<InvoiceCardProps> = ({ invoice, onEdit, onStatusChange, onGeneratePDF, onViewPDF, onDelete }) => {
+  const { t } = useTranslation()
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false)
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false)
   const getStatusBadge = (status: string) => {
@@ -259,20 +261,19 @@ export const InvoiceCard: React.FC<InvoiceCardProps> = ({ invoice, onEdit, onSta
                     </Button>
                   </AlertDialogTrigger>
                   <AlertDialogContent>
-                    {/*TODO: Translate Text*/}
                     <AlertDialogHeader>
-                      <AlertDialogTitle>Delete Invoice?</AlertDialogTitle>
+                      <AlertDialogTitle>{t('invoices.card.confirmDelete')}</AlertDialogTitle>
                       <AlertDialogDescription>
-                        This will permanently delete invoice <strong>{invoice.invoice_number || `#${invoice.id.slice(0, 8)}`}</strong> and free all associated events for future invoicing. This action cannot be undone.
+                        {t('invoices.card.confirmDeleteDesc')}
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogCancel>{t('common.actions.cancel')}</AlertDialogCancel>
                       <AlertDialogAction 
                         onClick={() => onDelete(invoice.id)}
                         className="bg-red-600 hover:bg-red-700 text-white"
                       >
-                        Delete Invoice
+                        {t('common.actions.delete')}
                       </AlertDialogAction>
                     </AlertDialogFooter>
                   </AlertDialogContent>

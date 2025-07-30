@@ -1,7 +1,7 @@
 import { Container } from '@/components/layout/container'
 import { generateInvoicesMetadata } from '@/lib/i18n/metadata'
 import type { Metadata } from 'next'
-import { ManageInvoicesClient } from '@/components/dashboard/manage-invoices/ManageInvoicesClient'
+import { InvoiceManagement } from '@/components/invoices/InvoiceManagement'
 import { createServerClient } from '@/lib/supabase-server'
 import { getValidLocale, getTranslations, createTranslator } from '@/lib/i18n/config'
 
@@ -34,7 +34,7 @@ export default async function ManageInvoicesPage({ params }: ManageInvoicesPageP
       title={t('invoices.management.title')}
       subtitle={t('invoices.management.subtitle')}
     >
-      <ManageInvoicesClient userId={user!.id} />
+      <InvoiceManagement userId={user!.id} />
     </Container>
   )
 } 

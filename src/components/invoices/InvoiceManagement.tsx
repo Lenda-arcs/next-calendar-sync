@@ -1,12 +1,11 @@
 'use client'
 
 import React, {useState} from 'react'
-import {useRouter, useSearchParams} from 'next/navigation'
 import {LoadingTabsTrigger, TabContent, Tabs, TabsContent, TabsList} from '@/components/ui'
 import {Card, CardContent} from '@/components/ui/card'
-import {Button} from '@/components/ui/button'
 import DataLoader from '@/components/ui/data-loader'
 import {InvoiceCard, InvoiceCreationModal, InvoiceSettings, UninvoicedEventsList} from '@/components'
+import {EmptyInvoicesState} from './EmptyInvoicesState'
 import {
   useDeleteInvoice,
   useGenerateInvoicePDF,
@@ -18,6 +17,7 @@ import {EventWithStudio, InvoiceWithDetails} from '@/lib/invoice-utils'
 import {toast} from 'sonner'
 import {FileText, Loader2, Receipt, Settings} from 'lucide-react'
 import {useTranslation} from '@/lib/i18n/context'
+import {useTabNavigation} from '@/lib/hooks/useTabNavigation'
 
 interface InvoiceManagementProps {
   userId: string
@@ -25,44 +25,22 @@ interface InvoiceManagementProps {
 
 type TabValue = 'uninvoiced' | 'invoices' | 'settings'
 
+const VALID_TABS = ['uninvoiced', 'invoices', 'settings'] as const
 
-//TODO: Make the SmartPreloading form ActiveNavigationLink even smarter by only preloading the active tab's data not all tabs.. and as soon as the page is loaded, load the other tabs' data in the background
 export function InvoiceManagement({ userId }: InvoiceManagementProps) {
   const { t } = useTranslation()
-  const router = useRouter()
-  const searchParams = useSearchParams()
   const [invoiceModalOpen, setInvoiceModalOpen] = useState(false)
   const [selectedStudioId, setSelectedStudioId] = useState<string>('')
   const [selectedEventIds, setSelectedEventIds] = useState<string[]>([])
   const [selectedEvents, setSelectedEvents] = useState<EventWithStudio[]>([])
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create')
   const [editingInvoice, setEditingInvoice] = useState<InvoiceWithDetails | null>(null)
-  const [tabSwitchLoading, setTabSwitchLoading] = useState<TabValue | null>(null)
 
-
-  // Get active tab from URL, default to 'uninvoiced'
-  //TODO: Separate the Tablogic into a hook for better reusability and readability
-  const getActiveTabFromUrl = (): TabValue => {
-    const tab = searchParams.get('tab') as TabValue
-    return ['uninvoiced', 'invoices', 'settings'].includes(tab) ? tab : 'uninvoiced'
-  }
-
-  // Use URL as source of truth for active tab
-  const activeTab = getActiveTabFromUrl()
-
-  // Update URL when tab changes with loading feedback
-  //TODO: Separate the Tablogic into a hook for better reusability and readability
-  const setActiveTab = (tab: TabValue) => {
-    if (tab === activeTab) return // Don't switch if already on the tab
-    
-    setTabSwitchLoading(tab)
-    const params = new URLSearchParams(searchParams)
-    params.set('tab', tab)
-    router.push(`?${params.toString()}`, { scroll: false })
-    
-    // Clear loading state after a short delay to ensure smooth transition
-    setTimeout(() => setTabSwitchLoading(null), 150)
-  }
+  // ✨ Use the new tab navigation hook
+  const { activeTab, setActiveTab, isTabLoading } = useTabNavigation({
+    validTabs: VALID_TABS,
+    defaultTab: 'uninvoiced' as const
+  })
 
   // ✨ NEW: Use unified hooks for data fetching
   // Fetch uninvoiced events only when on uninvoiced tab
@@ -71,7 +49,7 @@ export function InvoiceManagement({ userId }: InvoiceManagementProps) {
     isLoading: uninvoicedLoading,
     refetch: refetchUninvoiced 
   } = useUninvoicedEvents(userId, {
-    enabled: !!userId && (activeTab === 'uninvoiced' || tabSwitchLoading === 'uninvoiced')
+    enabled: !!userId && (activeTab === 'uninvoiced' || isTabLoading('uninvoiced'))
   })
 
   // Fetch user invoices only when on invoices tab
@@ -81,7 +59,7 @@ export function InvoiceManagement({ userId }: InvoiceManagementProps) {
     error: invoicesError,
     refetch: refetchInvoices 
   } = useUserInvoices(userId, {
-    enabled: !!userId && (activeTab === 'invoices' || tabSwitchLoading === 'invoices')
+    enabled: !!userId && (activeTab === 'invoices' || isTabLoading('invoices'))
   })
 
   const handleCreateInvoice = (studioId: string, eventIds: string[], events: EventWithStudio[]) => {
@@ -103,7 +81,6 @@ export function InvoiceManagement({ userId }: InvoiceManagementProps) {
   }
 
   // ✨ NEW: Use unified mutation hooks
-  //TODO: CURSOR Migrate to new query system (Utilise TanStack Query's optimistic updates, instead of manual state management) ...
   const updateInvoiceStatusMutation = useUpdateInvoiceStatus()
   const generateInvoicePDFMutation = useGenerateInvoicePDF()
   const deleteInvoiceMutation = useDeleteInvoice()
@@ -216,7 +193,7 @@ export function InvoiceManagement({ userId }: InvoiceManagementProps) {
             icon={Receipt}
             fullText={t('invoices.management.tabs.billing')}
             shortText={t('invoices.management.tabs.billingShort')}
-            isLoading={tabSwitchLoading === 'uninvoiced'}
+            isLoading={isTabLoading('uninvoiced')}
             count={totalUninvoicedEvents}
           />
           <LoadingTabsTrigger
@@ -224,7 +201,7 @@ export function InvoiceManagement({ userId }: InvoiceManagementProps) {
             icon={FileText}
             fullText={t('invoices.management.tabs.invoices')}
             shortText={t('invoices.management.tabs.invoicesShort')}
-            isLoading={tabSwitchLoading === 'invoices'}
+            isLoading={isTabLoading('invoices')}
             count={totalInvoices}
           />
           <LoadingTabsTrigger
@@ -232,7 +209,7 @@ export function InvoiceManagement({ userId }: InvoiceManagementProps) {
             icon={Settings}
             fullText={t('invoices.management.tabs.settings')}
             shortText={t('invoices.management.tabs.settingsShort')}
-            isLoading={tabSwitchLoading === 'settings'}
+            isLoading={isTabLoading('settings')}
           />
         </TabsList>
 
@@ -263,35 +240,15 @@ export function InvoiceManagement({ userId }: InvoiceManagementProps) {
             title={t('invoices.management.invoicesTab.title')}
             description={t('invoices.management.invoicesTab.description')}
           >
-            {/*TODO: fix linting*/}
             <DataLoader
-              data={userInvoices }
-              loading={invoicesLoading || tabSwitchLoading === 'invoices'}
+              data={userInvoices ?? null}
+              loading={invoicesLoading || isTabLoading('invoices')}
               error={invoicesError?.message || null}
               empty={
-              /*TODO: Create separate empty conmpoennt*/
-                <Card>
-                  <CardContent className="py-12 text-center">
-                    <div className="w-12 h-12 mx-auto mb-4 text-gray-300">
-                      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                      </svg>
-                    </div>
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">{t('invoices.management.invoicesTab.noInvoicesTitle')}</h3>
-                    <p className="text-sm text-gray-600 mb-4 max-w-sm mx-auto">
-                      {t('invoices.management.invoicesTab.noInvoicesDescription')}
-                    </p>
-                    <Button 
-                      onClick={() => setActiveTab('uninvoiced')}
-                      variant="outline"
-                    >
-                      {t('invoices.management.invoicesTab.viewUninvoiced')}
-                    </Button>
-                  </CardContent>
-                </Card>
+                <EmptyInvoicesState onCreateNewInvoice={() => setActiveTab('uninvoiced')} />
               }
             >
-              {(invoices: InvoiceWithDetails[]) => (
+              {(invoices) => (
                 <div className="space-y-4">
                   {invoices.map((invoice) => (
                     <InvoiceCard 
@@ -315,7 +272,7 @@ export function InvoiceManagement({ userId }: InvoiceManagementProps) {
             title={t('invoices.management.settingsTab.title')}
             description={t('invoices.management.settingsTab.description')}
           >
-            {tabSwitchLoading === 'settings' ? (
+            {isTabLoading('settings') ? (
               <Card>
                 <CardContent className="py-12 text-center">
                   <Loader2 className="w-8 h-8 mx-auto mb-4 animate-spin text-muted-foreground" />

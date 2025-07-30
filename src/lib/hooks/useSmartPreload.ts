@@ -4,8 +4,7 @@ import { createBrowserClient } from '@supabase/ssr'
 import { queryKeys } from '../query-keys'
 import * as dataAccess from '../server/data-access'
 import type { 
-  Event, 
-  Tag
+  Event
 } from '../types'
 
 /**
@@ -32,65 +31,18 @@ export function useSmartPreload() {
     },
 
     preloadUserTags: (userId: string): Promise<void[]> => {
-      // ✅ Preload all tag query patterns used across the app
+      // ✅ Preload using the EXACT same query keys and data access functions as the hooks
       return Promise.all([
-        // User tags (for TagLibrary)
+        // All tags combined (matches useAllTags hook exactly)
         queryClient.prefetchQuery({
-          queryKey: ['user_tags', userId],
-          queryFn: async (): Promise<Tag[]> => {
-            const { data, error } = await supabase
-              .from('tags')
-              .select('*')
-              .eq('user_id', userId)
-              .order('priority', { ascending: false, nullsFirst: false })
-            
-            if (error) throw error
-            return data || []
-          },
+          queryKey: queryKeys.tags.allForUser(userId), // ['tags', 'all', userId]
+          queryFn: () => dataAccess.getAllTags(supabase, userId), // Returns AllTagsResult
           staleTime: 60 * 1000, // 1 minute
         }),
-        // Global tags (for TagLibrary)
+        // Tag rules (matches useTagRules hook exactly)
         queryClient.prefetchQuery({
-          queryKey: ['global_tags'],
-          queryFn: async (): Promise<Tag[]> => {
-            const { data, error } = await supabase
-              .from('tags')
-              .select('*')
-              .is('user_id', null)
-              .order('priority', { ascending: false, nullsFirst: false })
-            
-            if (error) throw error
-            return data || []
-          },
-          staleTime: 60 * 1000, // 1 minute
-        }),
-        // All tags combined (for TagRuleManager and useAppQuery)
-        queryClient.prefetchQuery({
-          queryKey: ['tags', 'all', userId],
-          queryFn: async (): Promise<Tag[]> => {
-            const { data, error } = await supabase
-              .from('tags')
-              .select('*')
-              .or(`user_id.eq.${userId},user_id.is.null`)
-              .order('priority', { ascending: false, nullsFirst: false })
-            
-            if (error) throw error
-            return data || []
-          },
-          staleTime: 60 * 1000, // 1 minute
-        }),
-        // Tag rules (often used with tags)
-        queryClient.prefetchQuery({
-          queryKey: ['tag-rules', userId],
-          queryFn: async (): Promise<Array<{ id: string; keyword: string | null; keywords: string[] | null; location_keywords: string[] | null; tag_id: string; updated_at: string | null; user_id: string }>> => {
-            const { data, error } = await supabase
-              .from('tag_rules')
-              .select('*')
-              .eq('user_id', userId)
-            
-            if (error) throw error
-            return data || []
-          },
+          queryKey: queryKeys.tags.tagRules(userId), // ['tags', 'rules', userId] 
+          queryFn: () => dataAccess.getTagRules(supabase, userId), // Returns TagRuleWithTag[]
           staleTime: 60 * 1000, // 1 minute
         })
       ])

@@ -30,7 +30,6 @@ export function InvoiceSettings({ userId }: InvoiceSettingsProps) {
   const [isPreviewLoading, setIsPreviewLoading] = useState(false)
 
   // Load user invoice settings
-  //TODO: CURSOR Migrate to new query system
   const { 
     data: userSettings, 
     isLoading: loadingSettings, 
@@ -65,7 +64,6 @@ export function InvoiceSettings({ userId }: InvoiceSettingsProps) {
   }, [userSettings])
 
   // Mutation for updating PDF template settings
-  //TODO: CURSOR Migrate to new query system (Utilise TanStack Query's optimistic updates, instead of manual state management)
   const pdfTemplateMutation = useSupabaseMutation(
     async (supabase, data: { pdf_template_config: PDFTemplateConfig | null; template_theme: PDFTemplateTheme }) => {
       // First, try to update existing record

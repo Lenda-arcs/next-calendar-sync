@@ -84,7 +84,6 @@ export function InvoiceCreationModal({
   }, [isOpen])
 
   // Get studio details
-  //TODO: CURSOR Migrate to new query system
   const { data: studios } = useSupabaseQuery(
     ['user-studios', userId],
     () => getUserStudios(userId),
@@ -94,7 +93,6 @@ export function InvoiceCreationModal({
   const studio = studios?.find((s) => s.id === studioId) || existingInvoice?.studio
 
   // Invoice creation/update mutation
-  //TODO: CURSOR Migrate to new query system (Utilise TanStack Query's optimistic updates, instead of manual state management)
   const invoiceMutation = useSupabaseMutation(
     async (supabase, data: { type: 'create'; invoice: InvoiceInsert } | { type: 'update'; id: string; updates: Partial<InvoiceInsert> }) => {
       if (data.type === 'update') {
@@ -279,16 +277,15 @@ export function InvoiceCreationModal({
                   disabled={isGeneratingPDF || !createdInvoiceId}
                   className="flex items-center gap-2"
                 >
-                  {/*TODO: Translate texts*/}
                   {isGeneratingPDF ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin" />
-                      Generating PDF...
+                      {t('invoices.creation.generating')}
                     </>
                   ) : (
                     <>
                       <FileText className="w-4 h-4" />
-                      Generate PDF
+                      {t('invoices.creation.generatePDF')}
                     </>
                   )}
                 </Button>

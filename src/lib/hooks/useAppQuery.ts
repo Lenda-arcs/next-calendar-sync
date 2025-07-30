@@ -10,6 +10,7 @@ import type {
   Event,
   CalendarFeed,
   Invoice,
+  InvoiceWithDetails,
   UserUpdate
 } from '../types'
 
@@ -124,9 +125,12 @@ export function useUserStudios(userId: string, options?: { enabled?: boolean }) 
 // ===== INVOICE QUERIES =====
 
 export function useInvoices(userId: string, options?: { enabled?: boolean }) {
-  return useSupabaseQuery<Invoice[]>(
+  return useSupabaseQuery<InvoiceWithDetails[]>(
     queryKeys.invoices.userInvoices(userId),
-    (supabase) => dataAccess.getUserInvoices(supabase, userId),
+    async () => {
+      const { getUserInvoices } = await import('@/lib/invoice-utils')
+      return getUserInvoices(userId)
+    },
     { enabled: options?.enabled ?? !!userId, staleTime: 2 * 60 * 1000 }
   )
 }
