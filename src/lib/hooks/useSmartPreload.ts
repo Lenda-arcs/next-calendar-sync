@@ -1,17 +1,14 @@
 'use client'
 import { useQueryClient } from '@tanstack/react-query'
 import { createBrowserClient } from '@supabase/ssr'
-import { queryKeys } from '../query-keys'
-import * as dataAccess from '../server/data-access'
-import type { 
-  Event
-} from '../types'
+import { QUERY_CONFIGS } from '../query-constants'
 
 /**
  * Hook for intelligent data preloading based on user intent signals
  * Optimized for better UX with predictive loading
  * 
- * ✅ Fixed: Uses same query keys and data access functions as actual hooks
+ * ✅ SIMPLE: Uses shared constants to ensure identical configurations
+ * ✅ MAINTAINABLE: Single source of truth for query configs
  */
 export function useSmartPreload() {
   const queryClient = useQueryClient()
@@ -22,45 +19,46 @@ export function useSmartPreload() {
 
   return {
     preloadUserEvents: (userId: string): Promise<void> => {
-      // ✅ Uses same query key as useUserEvents hook (without filters for general preload)
+      // ✅ Uses shared constants - guaranteed to match hooks
+      const config = QUERY_CONFIGS.userEvents
       return queryClient.prefetchQuery({
-        queryKey: queryKeys.events.list(userId),
-        queryFn: () => dataAccess.getUserEvents(supabase, userId),
-        staleTime: 30 * 1000, // 30 seconds
+        queryKey: config.queryKey(userId),
+        queryFn: () => config.queryFn(supabase, userId),
+        staleTime: config.staleTime,
       })
     },
 
     preloadUserTags: (userId: string): Promise<void[]> => {
-      // ✅ Preload using the EXACT same query keys and data access functions as the hooks
+      // ✅ Uses shared constants - guaranteed to match hooks
       return Promise.all([
-        // All tags combined (matches useAllTags hook exactly)
         queryClient.prefetchQuery({
-          queryKey: queryKeys.tags.allForUser(userId), // ['tags', 'all', userId]
-          queryFn: () => dataAccess.getAllTags(supabase, userId), // Returns AllTagsResult
-          staleTime: 60 * 1000, // 1 minute
+          queryKey: QUERY_CONFIGS.allTags.queryKey(userId),
+          queryFn: () => QUERY_CONFIGS.allTags.queryFn(supabase, userId),
+          staleTime: QUERY_CONFIGS.allTags.staleTime,
         }),
-        // Tag rules (matches useTagRules hook exactly)
         queryClient.prefetchQuery({
-          queryKey: queryKeys.tags.tagRules(userId), // ['tags', 'rules', userId] 
-          queryFn: () => dataAccess.getTagRules(supabase, userId), // Returns TagRuleWithTag[]
-          staleTime: 60 * 1000, // 1 minute
+          queryKey: QUERY_CONFIGS.tagRules.queryKey(userId),
+          queryFn: () => QUERY_CONFIGS.tagRules.queryFn(supabase, userId),
+          staleTime: QUERY_CONFIGS.tagRules.staleTime,
         })
       ])
     },
 
     preloadPublicEvents: (teacherSlug: string): Promise<void> => {
+      const config = QUERY_CONFIGS.publicEvents
       return queryClient.prefetchQuery({
-        queryKey: queryKeys.events.public(teacherSlug),
-        queryFn: () => dataAccess.getPublicEvents(supabase, teacherSlug),
-        staleTime: 30 * 1000, // 30 seconds
+        queryKey: config.queryKey(teacherSlug),
+        queryFn: () => config.queryFn(supabase, teacherSlug),
+        staleTime: config.staleTime,
       })
     },
 
     preloadUserStudios: (userId: string): Promise<void> => {
+      const config = QUERY_CONFIGS.userStudios
       return queryClient.prefetchQuery({
-        queryKey: queryKeys.studios.userStudios(userId),
-        queryFn: () => dataAccess.getUserStudios(supabase, userId),
-        staleTime: 5 * 60 * 1000, // 5 minutes
+        queryKey: config.queryKey(userId),
+        queryFn: () => config.queryFn(supabase, userId),
+        staleTime: config.staleTime,
       })
     },
 
@@ -68,56 +66,43 @@ export function useSmartPreload() {
       return Promise.all([
         // Basic user invoices (for InvoiceManagement.tsx)
         queryClient.prefetchQuery({
-          queryKey: queryKeys.invoices.userInvoices(userId),
-          queryFn: () => dataAccess.getUserInvoices(supabase, userId),
-          staleTime: 2 * 60 * 1000, // 2 minutes
+          queryKey: QUERY_CONFIGS.userInvoices.queryKey(userId),
+          queryFn: () => QUERY_CONFIGS.userInvoices.queryFn(supabase, userId),
+          staleTime: QUERY_CONFIGS.userInvoices.staleTime,
         }),
         
         // Uninvoiced events (useAppQuery version - for InvoiceManagement.tsx)
         queryClient.prefetchQuery({
-          queryKey: queryKeys.invoices.uninvoicedEvents(userId),
-          queryFn: () => dataAccess.getUninvoicedEvents(supabase, userId),
-          staleTime: 30 * 1000, // 30 seconds
+          queryKey: QUERY_CONFIGS.uninvoicedEvents.queryKey(userId),
+          queryFn: () => QUERY_CONFIGS.uninvoicedEvents.queryFn(supabase, userId),
+          staleTime: QUERY_CONFIGS.uninvoicedEvents.staleTime,
         }),
         
         // Calendar feeds (for UninvoicedEventsList.tsx)
         queryClient.prefetchQuery({
-          queryKey: queryKeys.calendarFeeds.userFeeds(userId),
-          queryFn: () => dataAccess.getUserCalendarFeeds(supabase, userId),
-          staleTime: 60 * 1000, // 1 minute
+          queryKey: QUERY_CONFIGS.userCalendarFeeds.queryKey(userId),
+          queryFn: () => QUERY_CONFIGS.userCalendarFeeds.queryFn(supabase, userId),
+          staleTime: QUERY_CONFIGS.userCalendarFeeds.staleTime,
         }),
         
         // Invoice Events queries (for UninvoicedEventsList.tsx via useInvoiceEvents)
-        // These use invoice-utils.ts functions with different cache keys
         queryClient.prefetchQuery({
-          queryKey: ['uninvoiced-events', userId],
-          queryFn: async (): Promise<Event[]> => {
-            const { getUninvoicedEvents } = await import('@/lib/invoice-utils')
-            return getUninvoicedEvents(userId)
-          },
-          staleTime: 30 * 1000,
+          queryKey: QUERY_CONFIGS.invoiceUninvoicedEvents.queryKey(userId),
+          queryFn: () => QUERY_CONFIGS.invoiceUninvoicedEvents.queryFn(supabase, userId),
+          staleTime: QUERY_CONFIGS.invoiceUninvoicedEvents.staleTime,
         }),
         
         queryClient.prefetchQuery({
-          queryKey: ['unmatched-events', userId],
-          queryFn: async (): Promise<Event[]> => {
-            const { getUnmatchedEvents } = await import('@/lib/invoice-utils')
-            return getUnmatchedEvents(userId)
-          },
-          staleTime: 30 * 1000,
+          queryKey: QUERY_CONFIGS.invoiceUnmatchedEvents.queryKey(userId),
+          queryFn: () => QUERY_CONFIGS.invoiceUnmatchedEvents.queryFn(supabase, userId),
+          staleTime: QUERY_CONFIGS.invoiceUnmatchedEvents.staleTime,
         }),
         
         queryClient.prefetchQuery({
-          queryKey: ['excluded-events', userId],
-          queryFn: async (): Promise<Event[]> => {
-            const { getExcludedEvents } = await import('@/lib/invoice-utils')
-            return getExcludedEvents(userId)
-          },
-          staleTime: 30 * 1000,
+          queryKey: QUERY_CONFIGS.invoiceExcludedEvents.queryKey(userId),
+          queryFn: () => QUERY_CONFIGS.invoiceExcludedEvents.queryFn(supabase, userId),
+          staleTime: QUERY_CONFIGS.invoiceExcludedEvents.staleTime,
         }),
-        
-        // Note: uninvoiced-events-by-studio is now calculated from uninvoiced-events
-        // No need to preload separately as it would cause duplicate billing entity fetches
       ])
     },
 
@@ -125,33 +110,34 @@ export function useSmartPreload() {
       return Promise.all([
         // User profile (for dashboard header and user info)
         queryClient.prefetchQuery({
-          queryKey: queryKeys.users.profile(userId),
-          queryFn: () => dataAccess.getUserProfile(supabase, userId),
-          staleTime: 5 * 60 * 1000, // 5 minutes
+          queryKey: QUERY_CONFIGS.userProfile.queryKey(userId),
+          queryFn: () => QUERY_CONFIGS.userProfile.queryFn(supabase, userId),
+          staleTime: QUERY_CONFIGS.userProfile.staleTime,
         }),
         
         // Calendar feeds (for dashboard calendar section)
         queryClient.prefetchQuery({
-          queryKey: queryKeys.calendarFeeds.userFeeds(userId),
-          queryFn: () => dataAccess.getUserCalendarFeeds(supabase, userId),
-          staleTime: 60 * 1000, // 1 minute
+          queryKey: QUERY_CONFIGS.userCalendarFeeds.queryKey(userId),
+          queryFn: () => QUERY_CONFIGS.userCalendarFeeds.queryFn(supabase, userId),
+          staleTime: QUERY_CONFIGS.userCalendarFeeds.staleTime,
         }),
         
         // User events (for upcoming events list - 3 events)
         queryClient.prefetchQuery({
-          queryKey: queryKeys.events.list(userId, { limit: 3, futureOnly: true }),
-          queryFn: () => dataAccess.getUserEvents(supabase, userId, { limit: 3, futureOnly: true }),
-          staleTime: 30 * 1000, // 30 seconds
+          queryKey: QUERY_CONFIGS.userEvents.queryKey(userId, { limit: 3, futureOnly: true }),
+          queryFn: () => QUERY_CONFIGS.userEvents.queryFn(supabase, userId, { limit: 3, futureOnly: true }),
+          staleTime: QUERY_CONFIGS.userEvents.staleTime,
         })
       ])
     },
 
     preloadProfile: (userId: string): Promise<void> => {
+      const config = QUERY_CONFIGS.userProfile
       return queryClient.prefetchQuery({
-        queryKey: queryKeys.users.profile(userId),
-        queryFn: () => dataAccess.getUserProfile(supabase, userId),
-        staleTime: 5 * 60 * 1000, // 5 minutes
+        queryKey: config.queryKey(userId),
+        queryFn: () => config.queryFn(supabase, userId),
+        staleTime: config.staleTime,
       })
     },
   }
-} 
+}

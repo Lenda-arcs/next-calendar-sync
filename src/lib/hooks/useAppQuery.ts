@@ -2,6 +2,7 @@
 
 import { useSupabaseQuery, useSupabaseMutation } from './useQueryWithSupabase'
 import { queryKeys } from '../query-keys'
+import { QUERY_CONFIGS } from '../query-constants'
 import * as dataAccess from '../server/data-access'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { 
@@ -45,101 +46,153 @@ import type { Database } from '../../../database-generated.types'
 // ===== USER QUERIES =====
 
 export function useUserProfile(userId: string, options?: { enabled?: boolean }) {
+  // ✅ Using shared constants - guaranteed to match preload functions
+  const config = QUERY_CONFIGS.userProfile
   return useSupabaseQuery<User>(
-    queryKeys.users.profile(userId),
-    (supabase) => dataAccess.getUserProfile(supabase, userId),
-    { enabled: options?.enabled ?? !!userId }
+    config.queryKey(userId),
+    (supabase) => config.queryFn(supabase, userId),
+    { 
+      enabled: options?.enabled ?? !!userId, 
+      staleTime: config.staleTime 
+    }
   )
 }
 
 export function useUserRole(userId: string, options?: { enabled?: boolean }) {
+  // ✅ Using shared constants - guaranteed to match preload functions
+  const config = QUERY_CONFIGS.userRole
   return useSupabaseQuery<Database['public']['Enums']['user_role']>(
-    queryKeys.users.role(userId),
-    (supabase) => dataAccess.getUserRole(supabase, userId),
-    { enabled: options?.enabled ?? !!userId }
+    config.queryKey(userId),
+    (supabase) => config.queryFn(supabase, userId),
+    { 
+      enabled: options?.enabled ?? !!userId, 
+      staleTime: config.staleTime 
+    }
   )
 }
 
 // ===== TAG QUERIES =====
 
 export function useAllTags(userId: string, options?: { enabled?: boolean }) {
+  // ✅ Using shared constants - guaranteed to match preload functions
+  const config = QUERY_CONFIGS.allTags
   return useSupabaseQuery<AllTagsResult>(
-    queryKeys.tags.allForUser(userId),
-    (supabase) => dataAccess.getAllTags(supabase, userId),
-    { enabled: options?.enabled ?? !!userId }
+    config.queryKey(userId),
+    (supabase) => config.queryFn(supabase, userId),
+    { 
+      enabled: options?.enabled ?? !!userId,
+      staleTime: config.staleTime 
+    }
   )
 }
 
 export function useTagRules(userId: string, options?: { enabled?: boolean }) {
+  // ✅ Using shared constants - guaranteed to match preload functions
+  const config = QUERY_CONFIGS.tagRules
   return useSupabaseQuery<TagRuleWithTag[]>(
-    queryKeys.tags.tagRules(userId),
-    (supabase) => dataAccess.getTagRules(supabase, userId),
-    { enabled: options?.enabled ?? !!userId }
+    config.queryKey(userId),
+    (supabase) => config.queryFn(supabase, userId),
+    { 
+      enabled: options?.enabled ?? !!userId,
+      staleTime: config.staleTime 
+    }
   )
 }
 
 // ===== EVENT QUERIES =====
 
 export function useEvents(userId: string, options?: { enabled?: boolean }) {
+  // ✅ Using shared constants - guaranteed to match preload functions
+  const config = QUERY_CONFIGS.events
   return useSupabaseQuery<Event[]>(
-    queryKeys.events.list(userId),
-    (supabase) => dataAccess.getUserEvents(supabase, userId),
-    { enabled: options?.enabled ?? !!userId, staleTime: 30 * 1000 }
+    config.queryKey(userId),
+    (supabase) => config.queryFn(supabase, userId),
+    { 
+      enabled: options?.enabled ?? !!userId, 
+      staleTime: config.staleTime 
+    }
   )
 }
 
 export function usePublicEvents(userId: string, options?: PublicEventsOptions & { enabled?: boolean }) {
+  // ✅ Using shared constants - guaranteed to match preload functions
+  const config = QUERY_CONFIGS.publicEvents
   return useSupabaseQuery<PublicEvent[]>(
-    queryKeys.events.public(userId, options),
-    (supabase) => dataAccess.getPublicEvents(supabase, userId, options),
-    { enabled: options?.enabled ?? !!userId, staleTime: 60 * 1000 }
+    config.queryKey(userId, options as Record<string, unknown>),
+    (supabase) => config.queryFn(supabase, userId, options as Record<string, unknown>),
+    { 
+      enabled: options?.enabled ?? !!userId, 
+      staleTime: config.staleTime 
+    }
   )
 }
 
 export function useEventActivity(userId: string, options?: { enabled?: boolean }) {
+  // ✅ Using shared constants - guaranteed to match preload functions
+  const config = QUERY_CONFIGS.eventActivity
   return useSupabaseQuery<RecentActivityResult>(
-    queryKeys.events.recentActivity(userId),
-    (supabase) => dataAccess.getRecentActivity(supabase, userId),
-    { enabled: options?.enabled ?? !!userId, staleTime: 2 * 60 * 1000 }
+    config.queryKey(userId),
+    (supabase) => config.queryFn(supabase, userId),
+    { 
+      enabled: options?.enabled ?? !!userId, 
+      staleTime: config.staleTime 
+    }
   )
 }
 
 export function useCalendarFeeds(userId: string, options?: { enabled?: boolean }) {
+  // ✅ Using shared constants - guaranteed to match preload functions
+  const config = QUERY_CONFIGS.userCalendarFeeds
   return useSupabaseQuery<CalendarFeed[]>(
-    queryKeys.calendarFeeds.userFeeds(userId),
-    (supabase) => dataAccess.getUserCalendarFeeds(supabase, userId),
-    { enabled: options?.enabled ?? !!userId, staleTime: 5 * 60 * 1000 }
+    config.queryKey(userId),
+    (supabase) => config.queryFn(supabase, userId),
+    { 
+      enabled: options?.enabled ?? !!userId, 
+      staleTime: config.staleTime 
+    }
   )
 }
 
 // ===== STUDIO QUERIES =====
 
 export function useUserStudios(userId: string, options?: { enabled?: boolean }) {
+  // ✅ Using shared constants - guaranteed to match preload functions
+  const config = QUERY_CONFIGS.userStudios
   return useSupabaseQuery<TeacherStudioRelationship[]>(
-    queryKeys.studios.userStudios(userId),
-    (supabase) => dataAccess.getUserStudios(supabase, userId),
-    { enabled: options?.enabled ?? !!userId, staleTime: 5 * 60 * 1000 }
+    config.queryKey(userId),
+    (supabase) => config.queryFn(supabase, userId),
+    { 
+      enabled: options?.enabled ?? !!userId, 
+      staleTime: config.staleTime 
+    }
   )
 }
 
 // ===== INVOICE QUERIES =====
 
 export function useInvoices(userId: string, options?: { enabled?: boolean }) {
+  // ✅ Using shared constants - guaranteed to match preload functions
+  const config = QUERY_CONFIGS.userInvoices
   return useSupabaseQuery<InvoiceWithDetails[]>(
-    queryKeys.invoices.userInvoices(userId),
-    async () => {
-      const { getUserInvoices } = await import('@/lib/invoice-utils')
-      return getUserInvoices(userId)
-    },
-    { enabled: options?.enabled ?? !!userId, staleTime: 2 * 60 * 1000 }
+    config.queryKey(userId),
+    (supabase) => config.queryFn(supabase, userId),
+    { 
+      enabled: options?.enabled ?? !!userId, 
+      staleTime: config.staleTime 
+    }
   )
 }
 
 export function useUninvoicedEvents(userId: string, options?: { enabled?: boolean }) {
+  // ✅ Using shared constants - guaranteed to match preload functions
+  const config = QUERY_CONFIGS.uninvoicedEvents
   return useSupabaseQuery<Event[]>(
-    queryKeys.invoices.uninvoicedEvents(userId),
-    (supabase) => dataAccess.getUninvoicedEvents(supabase, userId),
-    { enabled: options?.enabled ?? !!userId, staleTime: 30 * 1000 }
+    config.queryKey(userId),
+    (supabase) => config.queryFn(supabase, userId),
+    { 
+      enabled: options?.enabled ?? !!userId, 
+      staleTime: config.staleTime 
+    }
   )
 }
 
@@ -202,7 +255,7 @@ export function useSyncAllCalendarFeeds() {
     async (supabase: SupabaseClient, userId: string) => {
       // Import the function dynamically to avoid circular dependency issues
       const { syncAllUserCalendarFeeds } = await import('../calendar-feeds')
-      return syncAllUserCalendarFeeds(supabase as any, userId)
+      return syncAllUserCalendarFeeds(supabase, userId)
     }
   )
 }
@@ -265,10 +318,15 @@ export function useUpdateUserRole() {
 // These provide compatibility for components that haven't been updated yet
 
 export function useUserEvents(userId: string, filters?: EventFilters, options?: { enabled?: boolean }) {
+  // ✅ Using shared constants - guaranteed to match preload functions
+  const config = QUERY_CONFIGS.userEvents
   return useSupabaseQuery<Event[]>(
-    queryKeys.events.list(userId, filters as Record<string, unknown>),
-    (supabase) => dataAccess.getUserEvents(supabase, userId, filters),
-    { enabled: options?.enabled ?? !!userId, staleTime: 30 * 1000 }
+    config.queryKey(userId, filters as Record<string, unknown>),
+    (supabase) => config.queryFn(supabase, userId, filters as Record<string, unknown>),
+    { 
+      enabled: options?.enabled ?? !!userId, 
+      staleTime: config.staleTime 
+    }
   )
 }
 

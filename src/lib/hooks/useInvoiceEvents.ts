@@ -2,12 +2,8 @@
 
 import { useMemo } from 'react'
 import { useSupabaseQuery } from '@/lib/hooks'
-import {
-  getUninvoicedEvents,
-  getUnmatchedEvents,
-  getExcludedEvents,
-  type EventWithSubstituteTeacher
-} from '@/lib/invoice-utils'
+import { QUERY_CONFIGS } from '@/lib/query-constants'
+import { type EventWithSubstituteTeacher } from '@/lib/invoice-utils'
 import { Event } from '@/lib/types'
 
 interface UseInvoiceEventsResult {
@@ -34,40 +30,49 @@ interface UseInvoiceEventsResult {
  */
 
 export function useInvoiceEvents(userId: string): UseInvoiceEventsResult {
-  // Fetch uninvoiced events
+  // ✅ Using shared constants - guaranteed to match preload functions
   const {
     data: uninvoicedEvents,
     isLoading,
     error,
     refetch: refetchUninvoiced
   } = useSupabaseQuery(
-    ['uninvoiced-events', userId],
-    () => getUninvoicedEvents(userId),
-    { enabled: !!userId }
+    QUERY_CONFIGS.invoiceUninvoicedEvents.queryKey(userId),
+    (supabase) => QUERY_CONFIGS.invoiceUninvoicedEvents.queryFn(supabase, userId),
+    { 
+      enabled: !!userId,
+      staleTime: QUERY_CONFIGS.invoiceUninvoicedEvents.staleTime 
+    }
   )
 
-  // Fetch unmatched events  
+  // ✅ Using shared constants - guaranteed to match preload functions
   const {
     data: unmatchedEvents,
     isLoading: isUnmatchedLoading,
     error: unmatchedError,
     refetch: refetchUnmatched
   } = useSupabaseQuery(
-    ['unmatched-events', userId],
-    () => getUnmatchedEvents(userId),
-    { enabled: !!userId }
+    QUERY_CONFIGS.invoiceUnmatchedEvents.queryKey(userId),
+    (supabase) => QUERY_CONFIGS.invoiceUnmatchedEvents.queryFn(supabase, userId),
+    { 
+      enabled: !!userId,
+      staleTime: QUERY_CONFIGS.invoiceUnmatchedEvents.staleTime 
+    }
   )
 
-  // Fetch excluded events
+  // ✅ Using shared constants - guaranteed to match preload functions
   const {
     data: excludedEvents,
     isLoading: isExcludedLoading,
     error: excludedError,
     refetch: refetchExcluded
   } = useSupabaseQuery(
-    ['excluded-events', userId],
-    () => getExcludedEvents(userId),
-    { enabled: !!userId }
+    QUERY_CONFIGS.invoiceExcludedEvents.queryKey(userId),
+    (supabase) => QUERY_CONFIGS.invoiceExcludedEvents.queryFn(supabase, userId),
+    { 
+      enabled: !!userId,
+      staleTime: QUERY_CONFIGS.invoiceExcludedEvents.staleTime 
+    }
   )
 
   // Calculate events grouped by studio/teacher from already-fetched uninvoiced events
