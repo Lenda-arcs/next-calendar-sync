@@ -192,23 +192,20 @@ export function FilterProvider({ children, userId }: FilterProviderProps) {
     enabled: !!userId 
   })
   
-  // Stable events query for consistent studio discovery (time-independent)
+  // Future events query for studio discovery (optimized)
   const { data: stableEvents } = useSupabaseQuery<PublicEvent[]>(
-    ['user-stable-events', userId],
+    ['user-future-events', userId],
     async (supabase) => {
       if (!userId) return []
       
-      // Wide time range for stable studio discovery and counting
+      // Only future events - much more efficient!
       const now = new Date()
-      const oneYearAgo = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate())
-      const oneYearAhead = new Date(now.getFullYear() + 1, now.getMonth(), now.getDate())
       
       const { data, error } = await supabase
         .from('public_events')
         .select('*')
         .eq('user_id', userId)
-        .gte('start_time', oneYearAgo.toISOString())
-        .lte('start_time', oneYearAhead.toISOString())
+        .gte('start_time', now.toISOString())
         .not('studio_id', 'is', null)
         .order('start_time', { ascending: true })
       
