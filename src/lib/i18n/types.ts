@@ -1066,6 +1066,16 @@ export interface PagesTranslations {
       syncDescription: string
       availableTags: string
     }
+    toast: {
+      syncSuccess: string
+      syncError: string
+      eventCreated: string
+      eventUpdated: string
+      eventDeleted: string
+      eventCreateError: string
+      eventUpdateError: string
+      eventDeleteError: string
+    }
     emptyState: {
       noEvents: string
       noEventsFiltered: string

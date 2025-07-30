@@ -155,7 +155,7 @@ const PublicEventList: React.FC<PublicEventListProps> = ({
       ...event,
       matchedTags: processAllEventTags(
         event.tags, 
-        'custom_tags' in event ? event.custom_tags : null, 
+        'custom_tags' in event ? (event.custom_tags as string[] | null) : null, 
         allAvailableTags
       )
     }))

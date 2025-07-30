@@ -224,7 +224,7 @@ export function InvitationManagement() {
         ) : (
           <div className="space-y-4">
             {invitations && invitations.length > 0 ? (
-              invitations.map((invitation: Invitation) => (
+              invitations.map((invitation: UserInvitation) => (
                 <Card key={invitation.id}>
                   <CardContent className="pt-6">
                     <div className="flex justify-between items-start">

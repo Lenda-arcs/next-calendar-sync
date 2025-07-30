@@ -784,7 +784,7 @@ export async function getPublicEvents(
   
   // Handle weekday filtering client-side for now (since SQL weekday extraction is complex)
   if (options?.weekdays && options.weekdays.length > 0 && data) {
-    data = data.filter(event => {
+    data = data.filter((event: PublicEvent) => {
       if (!event.start_time) return false
       const eventDate = new Date(event.start_time)
       const weekday = eventDate.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase()

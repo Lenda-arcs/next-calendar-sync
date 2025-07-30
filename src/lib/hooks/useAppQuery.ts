@@ -34,6 +34,7 @@ import type {
   CreateEventResult,
   UpdateEventData
 } from '../server/data-access'
+import type { ImportPreviewResult } from '../calendar-import-service'
 import type { Database } from '../../../database-generated.types'
 
 /**
@@ -388,10 +389,6 @@ interface ImportableCalendar {
   primary?: boolean
 }
 
-interface CalendarPreviewResult {
-  events: Event[]
-  total: number
-}
 
 // Calendar import hooks (API-based)
 export function useGetAvailableCalendars(options?: { enabled?: boolean }) {
@@ -409,7 +406,7 @@ export function useGetAvailableCalendars(options?: { enabled?: boolean }) {
 }
 
 export function usePreviewCalendarImport() {
-  return useSupabaseMutation<CalendarPreviewResult, {
+  return useSupabaseMutation<ImportPreviewResult, {
     source: 'google' | 'ics';
     sourceCalendarId?: string;
     icsContent?: string;

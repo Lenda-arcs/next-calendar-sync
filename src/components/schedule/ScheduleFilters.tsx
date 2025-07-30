@@ -16,7 +16,6 @@ export function ScheduleFilters() {
   const {
     filters,
     hasActiveFilters,
-    clearAllFilters
   } = useScheduleFilters()
 
   const { t } = useTranslation()

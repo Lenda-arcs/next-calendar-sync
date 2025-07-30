@@ -43,8 +43,7 @@ export function CalendarSelectionModal({
 
       // ✨ NEW: Use unified mutation for calendar selection
       await saveCalendarSelectionMutation.mutateAsync({
-        selections: selectionArray,
-        syncApproach: 'yoga_only' // Always use yoga_only for legacy API compatibility
+        selections: selectionArray
       })
 
       const selectedCount = Object.values(state.selections).filter(Boolean).length
