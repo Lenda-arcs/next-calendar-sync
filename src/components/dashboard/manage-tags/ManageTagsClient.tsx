@@ -72,15 +72,19 @@ export function ManageTagsClient({ userId }: Props) {
   }, [allTags])
 
   const resolvedUserRole = (userRole || 'user') as UserRole
-  const isLoading = tagsLoading || roleLoading || rulesLoading
+  
+  // Only show loading state for initial loads, not background refetches
+  const isInitialLoading = tagsLoading || roleLoading || rulesLoading
+  const hasData = allTags.length > 0
+  
   const error = tagsError || roleError || rulesError
   const errorMessage = error?.message || null
 
   return (
     <>
       <DataLoader
-        data={allTags}
-        loading={isLoading}
+        data={hasData ? allTags : null}
+        loading={isInitialLoading}
         error={errorMessage}
         skeleton={TagLibraryGridSkeleton}
         skeletonCount={1}
