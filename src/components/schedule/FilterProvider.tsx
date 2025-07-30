@@ -234,16 +234,14 @@ export function FilterProvider({ children, userId }: FilterProviderProps) {
       if (billingEntityIds.length === 0) return []
 
       try {
-        // Get billing entities with linked studio info
+        // Get billing entities with linked studio info (optimized fields)
         const { data: enrichedEntities, error } = await supabase
           .from('billing_entities')
           .select(`
             id,
             entity_name,
-            entity_type,
             studio_id,
             studios:studio_id (
-              id,
               name,
               address,
               verified
