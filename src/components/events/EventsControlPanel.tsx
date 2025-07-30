@@ -255,7 +255,7 @@ export default function EventsControlPanel({
           isOpen={isTagDialogOpen}
           onClose={handleTagDialogClose}
           onEdit={handleTagEdit}
-          canEdit={selectedTag.userId === userId} // User can only edit their own tags
+          canEdit={false} 
         />
       )}
     </Card>

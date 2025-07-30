@@ -28,7 +28,7 @@ export function ManageTagsClient({ userId }: Props) {
   // Extract tag data
   const userTags = tagsData?.userTags || []
   const globalTags = tagsData?.globalTags || []
-  const allTags = tagsData?.allTags || []
+  const allTags = tagsData?.allTags || [] //TODO make this a useMemo
 
   const { 
     data: userRole, 
