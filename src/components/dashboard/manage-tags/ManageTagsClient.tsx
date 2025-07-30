@@ -28,7 +28,7 @@ export function ManageTagsClient({ userId }: Props) {
   // Extract tag data
   const userTags = tagsData?.userTags || []
   const globalTags = tagsData?.globalTags || []
-  const allTags = tagsData?.allTags || [] //TODO make this a useMemo
+  const allTags = React.useMemo(() => tagsData?.allTags || [], [tagsData?.allTags])
 
   const { 
     data: userRole, 
@@ -101,7 +101,6 @@ export function ManageTagsClient({ userId }: Props) {
               userId={userId} 
               availableTags={allTags}
               tagRules={tagRules}
-              isLoadingRules={rulesLoading}
               rulesError={rulesError?.message || null}
             />
             
@@ -111,8 +110,6 @@ export function ManageTagsClient({ userId }: Props) {
               userRole={resolvedUserRole}
               globalTags={globalTags}
               customTags={userTags}
-              isLoading={tagsLoading}
-              error={tagsError?.message || null}
               // Pass down the unified tag operations
               tagOperations={{
                 onTagClick: handleTagClick,

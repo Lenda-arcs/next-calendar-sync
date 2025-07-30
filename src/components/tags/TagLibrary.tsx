@@ -3,10 +3,8 @@
 import React, { useMemo } from 'react'
 import { Tag, UserRole } from '@/lib/types'
 import { convertToEventTag, EventTag } from '@/lib/event-types'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { AlertCircle } from 'lucide-react'
-import DataLoader from '@/components/ui/data-loader'
-import { TagLibraryGridSkeleton } from '@/components/ui/skeleton'
+import { toast } from 'sonner'
+
 import { TagLibraryGrid } from './TagLibraryGrid'
 import { useTranslation } from '@/lib/i18n/context'
 
@@ -26,8 +24,6 @@ interface Props {
   globalTags: Tag[] // Required - passed from parent
   customTags: Tag[] // Required - passed from parent
   tagOperations?: TagOperations // Accept tag operations as props
-  isLoading?: boolean // Loading state from parent
-  error?: string | null // Error state from parent
 }
 
 export const TagLibrary: React.FC<Props> = ({ 
@@ -35,9 +31,7 @@ export const TagLibrary: React.FC<Props> = ({
   userRole = 'user', 
   globalTags,
   customTags,
-  tagOperations,
-  isLoading = false,
-  error = null
+  tagOperations
 }) => {
   const { t } = useTranslation()
   
@@ -49,8 +43,6 @@ export const TagLibrary: React.FC<Props> = ({
   const customEventTags = useMemo(() => {
     return customTags?.map(convertToEventTag) || []
   }, [customTags])
-
-  const data = globalTags && customTags ? { globalTags: globalEventTags, customTags: customEventTags } : null
 
   // If no tag operations provided, create default handlers (fallback)
   const defaultTagOperations: TagOperations = {
@@ -65,52 +57,27 @@ export const TagLibrary: React.FC<Props> = ({
 
   const operations = tagOperations || defaultTagOperations
 
+  // Show loading toasts for operations only
+  React.useEffect(() => {
+    if (operations.creating) {
+      toast.loading(t('pages.manageTags.tagLibraryComponent.creating'))
+    } else if (operations.updating) {
+      toast.loading(t('pages.manageTags.tagLibraryComponent.updating'))
+    } else if (operations.deleting) {
+      toast.loading(t('pages.manageTags.tagLibraryComponent.deleting'))
+    }
+  }, [operations.creating, operations.updating, operations.deleting, t])
+
   return (
-    <div className="space-y-8">
-      {/*TODO: USE SONNER instead of custom uI alerts*/}
-      {error && (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>{t('common.messages.error')}</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
-
-      {(operations.creating || operations.updating || operations.deleting) && (
-        <Alert>
-          <AlertDescription>
-            {operations.creating && t('pages.manageTags.tagLibraryComponent.creating')}
-            {operations.updating && t('pages.manageTags.tagLibraryComponent.updating')}
-            {operations.deleting && t('pages.manageTags.tagLibraryComponent.deleting')}
-          </AlertDescription>
-        </Alert>
-      )}
-
-      <DataLoader
-        data={data}
-        loading={isLoading}
-        error={error}
-        skeleton={TagLibraryGridSkeleton}
-        skeletonCount={1}
-        empty={
-          <p className="text-muted-foreground text-center">
-            {t('pages.manageTags.tagLibraryComponent.noTagsFound')}
-          </p>
-        }
-      >
-        {(data) => (
-          <TagLibraryGrid
-            globalTags={data.globalTags}
-            customTags={data.customTags}
-            onTagClick={operations.onTagClick}
-            onEditClick={operations.onEditClick}
-            onDeleteClick={operations.onDeleteClick}
-            onCreateNew={operations.onCreateNew}
-            userId={userId}
-            userRole={userRole}
-          />
-        )}
-      </DataLoader>
-    </div>
+    <TagLibraryGrid
+      globalTags={globalEventTags}
+      customTags={customEventTags}
+      onTagClick={operations.onTagClick}
+      onEditClick={operations.onEditClick}
+      onDeleteClick={operations.onDeleteClick}
+      onCreateNew={operations.onCreateNew}
+      userId={userId}
+      userRole={userRole}
+    />
   )
 } 

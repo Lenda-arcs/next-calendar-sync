@@ -6,11 +6,9 @@ import { useTagRules } from '@/lib/hooks/useAppQuery'
 import { useKeywordSuggestions } from '@/lib/hooks/useKeywordSuggestions'
 import { TagRule, Tag } from '@/lib/types'
 import { rematchUserTags } from '@/lib/rematch-utils'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { AlertCircle } from 'lucide-react'
+
 import { toast } from 'sonner'
-import DataLoader from '@/components/ui/data-loader'
-import { TagRulesSkeleton } from '@/components/ui/skeleton'
+
 import { TagRulesCard } from './TagRulesCard'
 import { TagRuleFormDialog } from './TagRuleFormDialog'
 import { clearTagMapCache } from '@/lib/event-utils'
@@ -48,7 +46,6 @@ interface Props {
   userId: string
   availableTags: Tag[] // Required - passed from parent
   tagRules?: ExtendedTagRule[] // Optional - can be passed from parent
-  isLoadingRules?: boolean // Loading state from parent
   rulesError?: string | null // Error state from parent
 }
 
@@ -56,24 +53,20 @@ export const TagRuleManager: React.FC<Props> = ({
   userId, 
   availableTags, 
   tagRules: propTagRules,
-  isLoadingRules = false,
   rulesError = null
 }) => {
   const { t } = useTranslation()
   const [state, setState] = useState<TagRuleState>(initialState)
-  const [optimisticRules, setOptimisticRules] = useState<ExtendedTagRule[]>([])
-  const [deletedRuleIds, setDeletedRuleIds] = useState<Set<string>>(new Set())
 
   // ✨ Use unified hook only if tagRules not provided as props
   const { 
     data: fetchedTagRules, 
-    isLoading: rulesLoading, 
-    error: fetchedRulesError
+    error: fetchedRulesError,
+    refetch: refetchTagRules
   } = useTagRules(userId, { enabled: !propTagRules && !!userId })
 
   // Use provided tagRules or fetched tagRules
   const tagRules = propTagRules || (fetchedTagRules as ExtendedTagRule[])
-  const actualRulesLoading = propTagRules ? isLoadingRules : rulesLoading
   const actualRulesError = propTagRules ? rulesError : fetchedRulesError?.message
 
   // Fetch keyword suggestions
@@ -83,7 +76,6 @@ export const TagRuleManager: React.FC<Props> = ({
   })
 
 
-  //TODO: CURSOR Migrate to new query system (Utilise TanStack Query's optimistic updates, instead of manual state management)
   const { mutate: createRule, isPending: creating } = useSupabaseMutation(
     async (supabase, variables: { 
       user_id: string;
@@ -105,7 +97,7 @@ export const TagRuleManager: React.FC<Props> = ({
       return data
     },
     {
-      onSuccess: async (data) => {
+      onSuccess: async () => {
         // Clear form and close dialog
         setState(prev => ({
           ...prev,
@@ -113,9 +105,9 @@ export const TagRuleManager: React.FC<Props> = ({
           dialogOpen: false,
         }))
         
-        // Add the new rule to optimistic state
-        if (data && data[0]) {
-          setOptimisticRules(prev => [...prev, data[0]])
+        // Refetch data to update UI
+        if (!propTagRules) {
+          refetchTagRules()
         }
         
         // Clear tag cache since rules changed
@@ -141,14 +133,13 @@ export const TagRuleManager: React.FC<Props> = ({
           })
         }
       },
-      onError: () => {
-        // Clear optimistic state on error
-        setOptimisticRules([])
-        console.error('Failed to create tag rule')
+      onError: (error) => {
+        console.error('Failed to create tag rule:', error)
+        toast.error(t('pages.manageTags.tagRuleManager.toasts.createError'))
       }
     }
   )
-  //TODO: CURSOR Migrate to new query system (Utilise TanStack Query's optimistic updates, instead of manual state management)
+  
   const { mutate: updateRule, isPending: updating } = useSupabaseMutation(
     async (supabase, variables: { 
       id: string;
@@ -171,7 +162,7 @@ export const TagRuleManager: React.FC<Props> = ({
       return data
     },
     {
-      onSuccess: async (data) => {
+      onSuccess: async () => {
         // Clear editing state and close dialog
         setState(prev => ({
           ...prev,
@@ -180,11 +171,9 @@ export const TagRuleManager: React.FC<Props> = ({
           dialogOpen: false,
         }))
         
-        // Update optimistic state
-        if (data && data[0]) {
-          setOptimisticRules(prev => prev.map(rule => 
-            rule.id === data[0].id ? { ...rule, ...data[0] } : rule
-          ))
+        // Refetch data to update UI
+        if (!propTagRules) {
+          refetchTagRules()
         }
         
         // Clear tag cache since rules changed
@@ -210,13 +199,13 @@ export const TagRuleManager: React.FC<Props> = ({
           })
         }
       },
-      onError: () => {
-        console.error('Failed to update tag rule')
+      onError: (error) => {
+        console.error('Failed to update tag rule:', error)
+        toast.error(t('pages.manageTags.tagRuleManager.toasts.updateError'))
       }
     }
   )
 
-  //TODO: CURSOR Migrate to new query system (Utilise TanStack Query's optimistic updates, instead of manual state management)
   const { mutate: deleteRule, isPending: deleting } = useSupabaseMutation(
     async (supabase, ruleId: string) => {
       const { data, error } = await supabase
@@ -229,12 +218,11 @@ export const TagRuleManager: React.FC<Props> = ({
       return data
     },
     {
-      onSuccess: async (_, ruleId) => {
-        // Mark as deleted in optimistic state
-        setDeletedRuleIds(prev => new Set([...prev, ruleId]))
-        
-        // Remove from optimistic additions if it was recently added
-        setOptimisticRules(prev => prev.filter(rule => rule.id !== ruleId))
+      onSuccess: async () => {
+        // Refetch data to update UI
+        if (!propTagRules) {
+          refetchTagRules()
+        }
         
         // Clear tag cache since rules changed
         clearTagMapCache()
@@ -253,20 +241,15 @@ export const TagRuleManager: React.FC<Props> = ({
           })
         } catch (error) {
           console.error('Failed to rematch tags after rule deletion:', error)
-          toast.error(t('pages.manageTags.tagRuleManager.toasts.deleteError'), {
-            description: t('pages.manageTags.tagRuleManager.toasts.deleteErrorDesc'),
+          toast.error(t('pages.manageTags.tagRuleManager.toasts.applyError'), {
+            description: t('pages.manageTags.tagRuleManager.toasts.applyErrorDesc'),
             duration: 5000,
           })
         }
       },
-      onError: (_, ruleId) => {
-        // Remove from deleted set to restore the rule
-        setDeletedRuleIds(prev => {
-          const newSet = new Set(prev)
-          newSet.delete(ruleId)
-          return newSet
-        })
-        console.error('Failed to delete tag rule')
+      onError: (error) => {
+        console.error('Failed to delete tag rule:', error)
+        toast.error(t('pages.manageTags.tagRuleManager.toasts.deleteError'))
       }
     }
   )
@@ -338,107 +321,95 @@ export const TagRuleManager: React.FC<Props> = ({
     }))
   }
 
-  const error = actualRulesError
-  const errorMessage = error ? error.toString() : null
-  const initialLoading = actualRulesLoading
-  const hasData = tagRules
+  const hasData = tagRules && availableTags
 
-  // Combine server data with optimistic updates
-  const displayRules = hasData ? [
-    // Server rules that haven't been deleted
-    ...(tagRules || []).filter(rule => !deletedRuleIds.has(rule.id)),
-    // Optimistically added rules
-    ...optimisticRules
-  ] : []
+  // Use server data directly (no optimistic updates)
+  const displayRules = hasData ? tagRules || [] : []
 
-  const data = hasData ? { 
-    rules: displayRules, 
-    tags: availableTags, 
-    keywordSuggestions: keywordSuggestions || [] 
-  } : null
+  // Show error toast
+  React.useEffect(() => {
+    if (actualRulesError) {
+      toast.error(actualRulesError)
+    }
+  }, [actualRulesError])
+
+  // Show loading toasts for operations
+  React.useEffect(() => {
+    if (creating) {
+      toast.loading(t('pages.manageTags.tagRuleManager.creating'), {
+        description: t('pages.manageTags.tagRuleManager.creatingDesc')
+      })
+    } else if (updating) {
+      toast.loading(t('pages.manageTags.tagRuleManager.updating'), {
+        description: t('pages.manageTags.tagRuleManager.updatingDesc')
+      })
+    } else if (deleting) {
+      toast.loading(t('pages.manageTags.tagRuleManager.deleting'), {
+        description: t('pages.manageTags.tagRuleManager.deletingDesc')
+      })
+    }
+  }, [creating, updating, deleting, t])
+
+  // Don't render if no data (parent DataLoader handles loading states)
+  if (!hasData) {
+    return (
+      <div className="text-center py-8 text-muted-foreground">
+        <p>{t('pages.manageTags.tagRuleManager.noTagsAvailable')}</p>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-8">
-      {/* Loading States */}
-      {/*TODO: USE Sonner */}
-      {(creating || updating || deleting || (error && !initialLoading)) && (
-        <Alert variant={error ? "destructive" : "default"}>
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>
-            {error ? t('common.messages.error') : creating ? t('pages.manageTags.tagRuleManager.creating') : updating ? t('pages.manageTags.tagRuleManager.updating') : t('pages.manageTags.tagRuleManager.deleting')}
-          </AlertTitle>
-          <AlertDescription>
-            {error ? errorMessage : creating ? t('pages.manageTags.tagRuleManager.creatingDesc') : updating ? t('pages.manageTags.tagRuleManager.updatingDesc') : t('pages.manageTags.tagRuleManager.deletingDesc')}
-          </AlertDescription>
-        </Alert>
-      )}
-
-      <DataLoader
-        data={data}
-        loading={initialLoading}
-        error={errorMessage}
-        skeleton={TagRulesSkeleton}
-        skeletonCount={1}
-        empty={
-          <div className="text-center py-8 text-muted-foreground">
-            <p>{t('pages.manageTags.tagRuleManager.noTagsAvailable')}</p>
-          </div>
+      <TagRulesCard
+        rules={displayRules}
+        tags={availableTags}
+        onDeleteRule={handleDeleteRule}
+        onEditRule={handleEditRule}
+        onCreateRule={handleOpenCreateDialog}
+        isCreating={creating}
+        isUpdating={updating}
+      />
+      
+      <TagRuleFormDialog
+        isOpen={state.dialogOpen}
+        onClose={handleCloseDialog}
+        onSave={state.isEditing ? handleUpdateRule : handleAddRule}
+        isEditing={state.isEditing}
+        keywords={state.newRule.keywords}
+        setKeywords={(value: string[]) =>
+          setState(prev => ({
+            ...prev,
+            newRule: { ...prev.newRule, keywords: value },
+          }))
         }
-      >
-        {(data) => (
-          <>
-            <TagRulesCard
-              rules={data.rules}
-              tags={data.tags}
-              onDeleteRule={handleDeleteRule}
-              onEditRule={handleEditRule}
-              onCreateRule={handleOpenCreateDialog}
-              isCreating={creating}
-              isUpdating={updating}
-            />
-            
-            <TagRuleFormDialog
-              isOpen={state.dialogOpen}
-              onClose={handleCloseDialog}
-              onSave={state.isEditing ? handleUpdateRule : handleAddRule}
-              isEditing={state.isEditing}
-              keywords={state.newRule.keywords}
-              setKeywords={(value: string[]) =>
-                setState(prev => ({
-                  ...prev,
-                  newRule: { ...prev.newRule, keywords: value },
-                }))
-              }
-              locationKeywords={state.newRule.locationKeywords}
-              setLocationKeywords={(value: string[]) =>
-                setState(prev => ({
-                  ...prev,
-                  newRule: { ...prev.newRule, locationKeywords: value },
-                }))
-              }
-              selectedTag={state.newRule.selectedTag}
-              setSelectedTag={(value: string) =>
-                setState(prev => ({
-                  ...prev,
-                  newRule: { ...prev.newRule, selectedTag: value },
-                }))
-              }
-              editingRule={state.editingRule}
-              setEditingRule={(rule: ExtendedTagRule | null) =>
-                setState(prev => ({
-                  ...prev,
-                  editingRule: rule,
-                }))
-              }
-              tags={data.tags}
-              keywordSuggestions={data.keywordSuggestions}
-              isCreating={creating}
-              isUpdating={updating}
-              userId={userId}
-            />
-          </>
-        )}
-      </DataLoader>
+        locationKeywords={state.newRule.locationKeywords}
+        setLocationKeywords={(value: string[]) =>
+          setState(prev => ({
+            ...prev,
+            newRule: { ...prev.newRule, locationKeywords: value },
+          }))
+        }
+        selectedTag={state.newRule.selectedTag}
+        setSelectedTag={(value: string) =>
+          setState(prev => ({
+            ...prev,
+            newRule: { ...prev.newRule, selectedTag: value },
+          }))
+        }
+        editingRule={state.editingRule}
+        setEditingRule={(rule: ExtendedTagRule | null) =>
+          setState(prev => ({
+            ...prev,
+            editingRule: rule,
+          }))
+        }
+        tags={availableTags}
+        keywordSuggestions={keywordSuggestions || []}
+        isCreating={creating}
+        isUpdating={updating}
+        userId={userId}
+      />
     </div>
   )
 } 

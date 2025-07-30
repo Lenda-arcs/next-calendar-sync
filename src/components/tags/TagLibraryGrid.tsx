@@ -140,7 +140,6 @@ const TagLibraryItem: React.FC<TagLibraryItemProps> = ({
 export const TagLibraryGrid: React.FC<Props> = ({
   globalTags,
   customTags,
-    //TODO : Fix this linter error
   onTagClick,
   onEditClick,
   onDeleteClick,
