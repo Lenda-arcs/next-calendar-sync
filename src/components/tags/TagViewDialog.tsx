@@ -140,7 +140,7 @@ export const TagViewDialog: React.FC<Props> = ({
                 <p className="text-sm">{tag.name || 'N/A'}</p>
               </InfoRow>
               <InfoRow label="Slug">
-                <p className="text-sm font-mono bg-gray-100 px-2 py-1 rounded text-xs">
+                <p className="text-xs font-mono bg-gray-100 px-2 py-1 rounded">
                   {tag.slug || 'N/A'}
                 </p>
               </InfoRow>

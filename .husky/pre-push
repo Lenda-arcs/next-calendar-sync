@@ -1,0 +1,20 @@
+#!/bin/sh
+echo "🔍 Running pre-push checks..."
+
+echo "📋 Running linter..."
+npm run lint
+
+if [ $? -ne 0 ]; then
+  echo "❌ Linting failed. Please fix the issues before pushing."
+  exit 1
+fi
+
+echo "🏗️  Running build check..."
+npm run build
+
+if [ $? -ne 0 ]; then
+  echo "❌ Build failed. Please fix the issues before pushing."
+  exit 1
+fi
+
+echo "✅ All pre-push checks passed!"

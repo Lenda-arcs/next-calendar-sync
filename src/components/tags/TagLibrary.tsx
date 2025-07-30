@@ -3,10 +3,8 @@
 import React, { useMemo } from 'react'
 import { Tag, UserRole } from '@/lib/types'
 import { convertToEventTag, EventTag } from '@/lib/event-types'
-import { toast } from 'sonner'
 
 import { TagLibraryGrid } from './TagLibraryGrid'
-import { useTranslation } from '@/lib/i18n/context'
 
 interface TagOperations {
   onTagClick: (tag: EventTag) => void
@@ -33,8 +31,6 @@ export const TagLibrary: React.FC<Props> = ({
   customTags,
   tagOperations
 }) => {
-  const { t } = useTranslation()
-  
   // Convert database tags to EventTags
   const globalEventTags = useMemo(() => {
     return globalTags?.map(convertToEventTag) || []
