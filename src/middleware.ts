@@ -6,7 +6,6 @@ import { isAuthRoute, getAuthRedirectUrl, isProtectedRoute, AUTH_PATHS, getSignI
 import { getClientIdentifier, authRateLimiter, generalRateLimiter } from './lib/rate-limit'
 
 export async function middleware(req: NextRequest) {
-  console.debug('🔥 Middleware triggered at:', req.nextUrl.pathname)
   let supabaseResponse = NextResponse.next({
     request: req,
   })
@@ -91,11 +90,9 @@ export async function middleware(req: NextRequest) {
     // Handle auth routes (should redirect authenticated users)
     if (isAuthRoute(pathname)) {
       if (user) {
-        console.debug('👤 Authenticated user on auth route — redirecting to app')
         const redirectUrl = getAuthRedirectUrl(req)
         return NextResponse.redirect(new URL(redirectUrl, req.url))
       }
-      console.debug('👤 Unauthenticated user on auth route — allowing through')
       // DO NOT return — let the rest of the debugic continue
     }
 
@@ -104,12 +101,9 @@ export async function middleware(req: NextRequest) {
       return supabaseResponse
     }
 
-    console.debug('👤 User authentication status:', user ? 'Authenticated' : 'Unauthenticated')
     // Handle protected routes (require authentication)
     if (isProtectedRoute(pathname)) {
-      console.debug('🔒 Protected route accessed:', pathname)
       if (!user) {
-        console.debug('🚫 No authenticated user, redirecting to sign-in')
         // Get locale-aware sign-in URL
         const signInPath = getSignInUrl(pathname)
         const signInUrl = new URL(signInPath, req.url)
