@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase-server'
-import { cancelInvitation } from '@/lib/server/invitation-service'
+import { InvitationService } from '@/lib/server/cleaned-invitation-service'
 
 /**
  * DELETE /api/invitations/[id] - Cancel an invitation
@@ -31,7 +31,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
     }
     
-    const result = await cancelInvitation(id)
+    const result = await InvitationService.cancelInvitation(id)
     
     if (!result.success) {
       return NextResponse.json({ error: result.error }, { status: 400 })

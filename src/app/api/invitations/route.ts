@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase-server'
-import { createInvitation, getAllInvitations } from '@/lib/server/invitation-service'
+import { InvitationService } from '@/lib/server/cleaned-invitation-service'
+import type { CreateInvitationForm } from '@/lib/types/invitation'
 
 /**
  * POST /api/invitations - Create a new invitation
@@ -27,8 +28,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
     }
     
-    const body = await request.json()
-    const { email, invitedName, personalMessage, expiryDays, notes } = body
+                    const body: CreateInvitationForm = await request.json()
+                const { email, invitedName, personalMessage, role, language } = body
     
     // Validate required fields
     if (!email) {
@@ -41,16 +42,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid email format' }, { status: 400 })
     }
     
-    const result = await createInvitation(
-      {
-        email,
-        invitedName,
-        personalMessage,
-        expiryDays,
-        notes
-      },
-      user.id
-    )
+                    // Use cleaned invitation service
+                const result = await InvitationService.inviteUser(
+                  {
+                    email,
+                    invitedName,
+                    personalMessage,
+                    role: role || 'teacher',
+                    language: language || 'en'
+                  },
+                  user.id
+                )
     
     if (!result.success) {
       return NextResponse.json({ error: result.error }, { status: 400 })
@@ -58,8 +60,8 @@ export async function POST(request: NextRequest) {
     
     return NextResponse.json({
       success: true,
-      invitation: result.invitation,
-      invitationLink: result.invitationLink
+      user: result.user,
+      message: 'Invitation sent successfully using Supabase built-in system'
     }, { status: 201 })
     
   } catch (error) {
@@ -72,7 +74,8 @@ export async function POST(request: NextRequest) {
 }
 
 /**
- * GET /api/invitations - Get all invitations (admin only)
+ * GET /api/invitations - Get all users (admin only)
+ * Now uses Supabase Auth directly instead of custom table
  */
 export async function GET() {
   try {
@@ -96,10 +99,11 @@ export async function GET() {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
     }
     
-    const result = await getAllInvitations()
+    // Get users directly from Supabase Auth
+    const result = await InvitationService.getPendingInvitations()
     
     if (!result.success) {
-      return NextResponse.json({ error: result.error }, { status: 500 })
+      return NextResponse.json({ error: result.error }, { status: 400 })
     }
     
     return NextResponse.json({

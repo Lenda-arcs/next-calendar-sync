@@ -28,32 +28,34 @@ interface AdminStats {
 export function AdminDashboardClient({ userRole, locale }: AdminDashboardClientProps) {
   const { t } = useTranslation()
 
-  // Fetch admin stats
+  // Fetch admin stats via API endpoint
   const { 
     data: stats, 
     isLoading: statsLoading, 
     error: statsError 
   } = useSupabaseQuery<AdminStats>(
     ['admin-stats'],
-    async (supabase) => {
-      const [
-        { count: totalUsers },
-        { count: totalInvitations },
-        { count: pendingInvitations },
-        { count: totalStudios }
-      ] = await Promise.all([
-        supabase.from('users').select('*', { count: 'exact', head: true }),
-        supabase.from('user_invitations').select('*', { count: 'exact', head: true }),
-        supabase.from('user_invitations').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
-        supabase.from('studios').select('*', { count: 'exact', head: true })
-      ])
-
-      return {
-        totalUsers: totalUsers || 0,
-        totalInvitations: totalInvitations || 0,
-        pendingInvitations: pendingInvitations || 0,
-        totalStudios: totalStudios || 0
+    async () => {
+      console.log('🔍 Fetching admin stats from API...')
+      
+      const response = await fetch('/api/admin/stats', {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' }
+      })
+      
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Failed to fetch admin stats')
       }
+      
+      const data = await response.json()
+      
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to fetch admin stats')
+      }
+      
+      console.log('✅ Admin stats fetched:', data.stats)
+      return data.stats
     },
     {
       enabled: userRole === 'admin'

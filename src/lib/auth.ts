@@ -19,10 +19,14 @@ export const AUTH_PATHS = {
   DEFAULT_REDIRECT: '/app',
 } as const
 
-export const AUTH_ROUTES = SUPPORTED_LOCALES.flatMap(locale =>
-  BASE_AUTH_PATHS.map(path => `/${locale}/auth${path}`
+export const AUTH_ROUTES = [
+  // Base auth routes (English/default)
+  ...BASE_AUTH_PATHS.map(path => `/auth${path}`),
+  // Localized auth routes
+  ...SUPPORTED_LOCALES.flatMap(locale =>
+    BASE_AUTH_PATHS.map(path => `/${locale}/auth${path}`)
   )
-)
+]
 
 /**
  * Public routes that don't require authentication

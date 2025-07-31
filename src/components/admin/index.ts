@@ -1,3 +1,5 @@
 export { AdminDashboardClient } from './AdminDashboardClient'
-export { InvitationManagement } from './InvitationManagement'
-export { UserManagement } from './UserManagement' 
+export { UserManagement } from './UserManagement'
+
+// New modular invitation components (replaces legacy InvitationManagement)
+export * from './invitation' 

@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Form, FormField, Button, useForm } from '@/components/ui'
 import { createClient } from '@/lib/supabase'
-import { useMarkInvitationAsUsed } from '@/lib/hooks/useAppQuery'
+
 import { Mail, Lock, Eye, EyeOff, AlertCircle, Loader2, User } from 'lucide-react'
 
 interface RegisterFormProps {
@@ -21,14 +21,18 @@ interface RegisterFormData {
   fullName: string
 }
 
-export function RegisterForm({ redirectTo = '/app', className, invitationToken }: RegisterFormProps) {
+export function RegisterForm({ 
+  redirectTo = '/app', 
+  className, 
+  invitationToken: _invitationToken // eslint-disable-line @typescript-eslint/no-unused-vars
+}: RegisterFormProps) {
   const router = useRouter()
   const supabase = createClient()
   const [showPassword, setShowPassword] = React.useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = React.useState(false)
   const [authError, setAuthError] = React.useState<string>('')
 
-  const markInvitationMutation = useMarkInvitationAsUsed()
+
 
   const {
     values,
@@ -102,19 +106,9 @@ export function RegisterForm({ redirectTo = '/app', className, invitationToken }
         }
 
         if (data.user) {
-          // ✨ NEW: Mark invitation as used if we have an invitation token
-          if (invitationToken) {
-            try {
-              await markInvitationMutation.mutateAsync({
-                token: invitationToken,
-                userId: data.user.id
-              })
-            } catch (error) {
-              console.error('Failed to mark invitation as used:', error)
-              // Don't block the registration flow if this fails
-            }
-          }
-
+          // Note: With Supabase's built-in invitation system, invitation marking
+          // is handled automatically - no need for manual API calls!
+          
           // Check if email confirmation is required
           if (!data.session) {
             // Redirect to email confirmation page
