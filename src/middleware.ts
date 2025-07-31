@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { Database } from '../database-generated.types'
 import { createServerClient } from '@supabase/ssr'
-import { isAuthRoute, getAuthRedirectUrl, isProtectedRoute, AUTH_PATHS, getSignInUrl, SUPPORTED_LOCALES } from './lib/auth'
+import { isAuthRoute, getAuthRedirectUrl, isProtectedRoute, AUTH_PATHS, getSignInUrl } from './lib/auth'
 import { getClientIdentifier, authRateLimiter, generalRateLimiter } from './lib/rate-limit'
 
 export async function middleware(req: NextRequest) {
@@ -126,9 +126,17 @@ export async function middleware(req: NextRequest) {
 
 export const config = {
   matcher: [
-    ...SUPPORTED_LOCALES.map(locale => `/${locale}/app/:path*`),
-    ...SUPPORTED_LOCALES.map(locale => `/${locale}/auth/:path*`),
+    // Localized app routes
+    '/en/app/:path*',
+    '/de/app/:path*', 
+    '/es/app/:path*',
+    // Localized auth routes
+    '/en/auth/:path*',
+    '/de/auth/:path*',
+    '/es/auth/:path*',
+    // Global auth routes
     '/auth/:path*',
+    // API routes
     '/api/:path*',
   ],
 }

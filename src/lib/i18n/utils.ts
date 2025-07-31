@@ -1,4 +1,4 @@
-import { Language, Translations, DEFAULT_LANGUAGE, SUPPORTED_LANGUAGES, LOCALES } from './types'
+import { Language, Translations, DEFAULT_LANGUAGE, SUPPORTED_LANGUAGES, LOCALES } from './derived-types'
 import { useState, useEffect } from 'react'
 
 // Validation function

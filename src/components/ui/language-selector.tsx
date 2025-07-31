@@ -9,7 +9,7 @@ import {
   PopoverTrigger 
 } from './popover'
 import { usePathname, useRouter } from 'next/navigation'
-import { Language, LOCALES, DEFAULT_LANGUAGE } from '@/lib/i18n/types'
+import { Language, LOCALES, DEFAULT_LANGUAGE } from '@/lib/i18n/derived-types'
 
 interface LanguageSelectorProps {
   className?: string

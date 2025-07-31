@@ -1,7 +1,7 @@
 'use client'
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react'
-import { Language, Translations, DEFAULT_LANGUAGE } from './types'
+import { Language, Translations, DEFAULT_LANGUAGE } from './derived-types'
 import { 
   loadTranslations, 
   saveLanguage, 

@@ -1,6 +1,6 @@
-import { Translations } from '../types'
+import { TranslationStructure } from '../derived-types'
 
-const translations: Translations = {
+const translations: TranslationStructure = {
   common: {
     nav: {
       home: 'Startseite',

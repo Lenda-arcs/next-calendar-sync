@@ -1,6 +1,4 @@
-import { Translations } from '../types'
-
-const translations: Translations = {
+const translations = {
   common: {
     nav: {
       home: 'Home',
@@ -1672,6 +1670,6 @@ const translations: Translations = {
       maxTagsAllowed: 'Maximum of {count} tags allowed. Remove a tag to select another.'
     }
   }
-}
+} as const
 
 export default translations 

@@ -1,5 +1,5 @@
 // Export all i18n types and utilities
-export * from './types'
+export * from './derived-types'
 export * from './utils'
 
 // Export translation loading function
