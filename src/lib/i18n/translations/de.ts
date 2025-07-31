@@ -432,6 +432,7 @@ const translations: Translations = {
       createStudio: 'Studio erstellen',
       accessRestricted: 'Zugriff eingeschränkt',
       accessRestrictedDesc: 'Nur Administratoren können Studios verwalten.',
+      loadError: 'Fehler beim Laden der Studio-Daten',
       overview: {
         totalStudios: 'Studios gesamt',
         activeTeachers: 'Aktive Lehrer',
@@ -440,6 +441,15 @@ const translations: Translations = {
       tabs: {
         studios: 'Studios',
         teacherRequests: 'Lehrer-Anfragen'
+      },
+      emptyState: {
+        title: 'Noch keine Studios',
+        description: 'Erstellen Sie Ihr erstes Studio, um Lehrer und Abrechnung zu verwalten.'
+      },
+      toast: {
+        studioCreated: 'Studio erfolgreich erstellt',
+        studioUpdated: 'Studio erfolgreich aktualisiert',
+        studioDeleted: 'Studio erfolgreich gelöscht'
       }
     }
   },
@@ -883,6 +893,37 @@ const translations: Translations = {
       requestMore: 'Weitere Studios anfordern',
       requestAccess: 'Studio-Zugang anfordern',
       moreStudios: '+{count} weitere{plural} Studio{plural} verbunden'
+    },
+    admin: {
+      title: 'Admin-Dashboard',
+      subtitle: 'Willkommen zurück, {userName}. Verwalten Sie Ihre Plattform und Benutzer.',
+      subtitleFallback: 'Willkommen zurück, Administrator. Verwalten Sie Ihre Plattform und Benutzer.',
+      accessBadge: 'Administrator-Zugang',
+      stats: {
+        totalUsers: 'Benutzer gesamt',
+        totalInvitations: 'Einladungen gesamt',
+        pendingInvites: 'Ausstehende Einladungen',
+        totalStudios: 'Studios gesamt'
+      },
+      quickActions: {
+        title: 'Schnellaktionen',
+        description: 'Häufige administrative Aufgaben und Verknüpfungen',
+        manageStudios: 'Studios verwalten',
+        manageStudiosDesc: 'Studio-Partnerschaften & Einstellungen',
+        inviteTeachers: 'Lehrer einladen',
+        inviteTeachersDesc: 'Unten verwalten ↓',
+        analytics: 'Analytik',
+        analyticsDesc: 'Demnächst verfügbar'
+      },
+      loadError: 'Fehler beim Laden der Admin-Daten',
+      sections: {
+        invitations: 'Lehrer-Einladungsverwaltung',
+        users: 'Benutzerverwaltung'
+      },
+      loading: {
+        invitations: 'Lade Einladungsverwaltung...',
+        users: 'Lade Benutzerverwaltung...'
+      }
     },
     profilePage: {
       title: 'Profil-Einstellungen',

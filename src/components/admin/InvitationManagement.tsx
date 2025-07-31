@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
+import DataLoader from '@/components/ui/data-loader'
 import { useAllInvitations, useCreateInvitation, useCancelInvitation } from '@/lib/hooks/useAppQuery'
 import { UserPlus, Copy, X, Clock, CheckCircle, XCircle, AlertCircle } from 'lucide-react'
 import { toast } from 'sonner'
@@ -32,7 +33,7 @@ export function InvitationManagement() {
   })
 
   // ✨ NEW: Use unified hooks
-  const { data: invitations, isLoading, refetch } = useAllInvitations()
+  const { data: invitations, isLoading, error: invitationsError, refetch } = useAllInvitations()
   const createInvitationMutation = useCreateInvitation()
   const cancelInvitationMutation = useCancelInvitation()
 
@@ -217,14 +218,25 @@ export function InvitationManagement() {
           </Card>
         )}
 
-        {isLoading ? (
-          <div className="text-center py-8">
-            <div className="text-sm text-muted-foreground">Loading invitations...</div>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {invitations && invitations.length > 0 ? (
-              invitations.map((invitation: UserInvitation) => (
+        <DataLoader
+          data={invitations}
+          loading={isLoading}
+          error={invitationsError ? 'Failed to load invitations' : null}
+          empty={
+            <div className="text-center py-12">
+              <UserPlus className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+              <h3 className="text-lg font-medium mb-2">No Invitations Yet</h3>
+              <p className="text-muted-foreground mb-4">Create your first teacher invitation to get started.</p>
+              <Button onClick={() => setShowCreateForm(true)}>
+                <UserPlus className="w-4 h-4 mr-2" />
+                Create Invitation
+              </Button>
+            </div>
+          }
+        >
+          {(loadedInvitations) => (
+            <div className="space-y-4">
+              {loadedInvitations?.map((invitation: UserInvitation) => (
                 <Card key={invitation.id}>
                   <CardContent className="pt-6">
                     <div className="flex justify-between items-start">
@@ -278,14 +290,10 @@ export function InvitationManagement() {
                     </div>
                   </CardContent>
                 </Card>
-              ))
-            ) : (
-              <div className="text-center py-8">
-                <div className="text-sm text-muted-foreground">No invitations created yet</div>
-              </div>
-            )}
-          </div>
-        )}
+              )) || []}
+            </div>
+          )}
+        </DataLoader>
       </CardContent>
     </Card>
   )

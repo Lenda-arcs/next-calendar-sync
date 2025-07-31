@@ -432,6 +432,7 @@ const translations: Translations = {
       createStudio: 'Create Studio',
       accessRestricted: 'Access Restricted',
       accessRestrictedDesc: 'Only administrators can manage studios.',
+      loadError: 'Failed to load studios data',
       overview: {
         totalStudios: 'Total Studios',
         activeTeachers: 'Active Teachers',
@@ -440,6 +441,15 @@ const translations: Translations = {
       tabs: {
         studios: 'Studios',
         teacherRequests: 'Teacher Requests'
+      },
+      emptyState: {
+        title: 'No Studios Yet',
+        description: 'Get started by creating your first studio to manage teachers and billing.'
+      },
+      toast: {
+        studioCreated: 'Studio created successfully',
+        studioUpdated: 'Studio updated successfully',
+        studioDeleted: 'Studio deleted successfully'
       }
     }
   },
@@ -883,6 +893,37 @@ const translations: Translations = {
       requestMore: 'Request More Studios',
       requestAccess: 'Request Studio Access',
       moreStudios: '+{count} more studio{plural} connected'
+    },
+    admin: {
+      title: 'Admin Dashboard',
+      subtitle: 'Welcome back, {userName}. Manage your platform and users.',
+      subtitleFallback: 'Welcome back, Admin. Manage your platform and users.',
+      accessBadge: 'Administrator Access',
+      stats: {
+        totalUsers: 'Total Users',
+        totalInvitations: 'Total Invitations',
+        pendingInvites: 'Pending Invites',
+        totalStudios: 'Total Studios'
+      },
+      quickActions: {
+        title: 'Quick Actions',
+        description: 'Common administrative tasks and shortcuts',
+        manageStudios: 'Manage Studios',
+        manageStudiosDesc: 'Studio partnerships & settings',
+        inviteTeachers: 'Invite Teachers',
+        inviteTeachersDesc: 'Manage below ↓',
+        analytics: 'Analytics',
+        analyticsDesc: 'Coming soon'
+      },
+      loadError: 'Failed to load admin data',
+      sections: {
+        invitations: 'Teacher Invitation Management',
+        users: 'User Management'
+      },
+      loading: {
+        invitations: 'Loading invitation management...',
+        users: 'Loading user management...'
+      }
     },
     profilePage: {
       title: 'Profile Settings',

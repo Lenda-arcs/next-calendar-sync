@@ -2,9 +2,10 @@ import { Suspense } from 'react'
 import { generateStudiosMetadata } from '@/lib/i18n/metadata'
 import type { Metadata } from 'next'
 import { StudioManagement } from '@/components/studios'
+import { Container } from '@/components/layout/container'
 import { createServerClient } from '@/lib/supabase-server'
 import { redirect } from 'next/navigation'
-import { getValidLocale } from '@/lib/i18n/config'
+import { getValidLocale, getTranslations, createTranslator } from '@/lib/i18n/config'
 
 interface StudiosPageProps {
   params: Promise<{ locale: string }>
@@ -41,11 +42,18 @@ export default async function StudiosPage({ params }: StudiosPageProps) {
     redirect(dashboardPath)
   }
 
+  // Get translations for the page
+  const translations = await getTranslations(locale)
+  const t = createTranslator(translations)
+
   return (
-    <div className="container mx-auto">
+    <Container 
+      title={t('dashboard.studios.title')}
+      subtitle={t('dashboard.studios.subtitle')}
+    >
       <Suspense fallback={<div>Loading...</div>}>
         <StudioManagement userId={user!.id} userRole={userRole} />
       </Suspense>
-    </div>
+    </Container>
   )
 } 

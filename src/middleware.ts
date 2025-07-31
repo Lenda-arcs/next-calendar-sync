@@ -86,7 +86,6 @@ export async function middleware(req: NextRequest) {
     // Get authenticated user
     const {
       data: { user },
-      error,
     } = await supabase.auth.getUser()
 
     // Handle auth routes (should redirect authenticated users)

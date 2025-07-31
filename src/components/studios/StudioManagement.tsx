@@ -7,11 +7,13 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import DataLoader from '@/components/ui/data-loader'
 import { Plus, Users, MapPin, Star, Shield } from 'lucide-react'
 import { StudioForm } from './StudioForm'
 import { StudioList } from './StudioList'
 import { StudioTeacherRequests } from './StudioTeacherRequests'
 import { useTranslation } from '@/lib/i18n/context'
+import { toast } from 'sonner'
 
 interface StudioManagementProps {
   userId: string
@@ -27,7 +29,12 @@ export function StudioManagement({ userRole }: StudioManagementProps) {
   const hasAccess = userRole === 'admin' || userRole === 'moderator'
 
   // Fetch studios with stats
-  const { data: studios, isLoading, refetch } = useSupabaseQuery(
+  const { 
+    data: studios, 
+    isLoading: studiosLoading, 
+    error: studiosError, 
+    refetch: refetchStudios 
+  } = useSupabaseQuery(
     ['studios-with-stats'],
     async (supabase) => {
       const { data, error } = await supabase
@@ -64,7 +71,12 @@ export function StudioManagement({ userRole }: StudioManagementProps) {
   )
 
   // Fetch pending teacher requests
-  const { data: pendingRequests } = useSupabaseQuery(
+  const { 
+    data: pendingRequests, 
+    isLoading: requestsLoading,
+    error: requestsError,
+    refetch: refetchRequests 
+  } = useSupabaseQuery(
     ['studio-teacher-requests', 'pending'],
     async (supabase) => {
       const { data, error } = await supabase
@@ -77,10 +89,7 @@ export function StudioManagement({ userRole }: StudioManagementProps) {
         .or('status.eq.pending,status.is.null')
         .order('created_at', { ascending: false })
 
-      if (error) {
-        console.error('Error fetching teacher requests:', error)
-        return []
-      }
+      if (error) throw error
 
       return data || []
     },
@@ -92,19 +101,17 @@ export function StudioManagement({ userRole }: StudioManagementProps) {
   // Only admins and moderators can access studio management
   if (!hasAccess) {
     return (
-      <div className="p-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Shield className="w-5 h-5" />
-              {t('studios.management.accessRestricted')}
-            </CardTitle>
-            <CardDescription>
-              {t('studios.management.accessRestrictedDesc')}
-            </CardDescription>
-          </CardHeader>
-        </Card>
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Shield className="w-5 h-5" />
+            {t('studios.management.accessRestricted')}
+          </CardTitle>
+          <CardDescription>
+            {t('studios.management.accessRestrictedDesc')}
+          </CardDescription>
+        </CardHeader>
+      </Card>
     )
   }
 
@@ -124,40 +131,54 @@ export function StudioManagement({ userRole }: StudioManagementProps) {
   const handleStudioSaved = () => {
     setShowCreateForm(false)
     setEditingStudio(null)
-    refetch()
+    refetchStudios()
+    toast.success(editingStudio ? t('studios.management.toast.studioUpdated') : t('studios.management.toast.studioCreated'))
   }
 
   const handleStudioDeleted = () => {
-    refetch()
+    refetchStudios()
+    toast.success(t('studios.management.toast.studioDeleted'))
   }
 
-  if (isLoading) {
-    return (
-      <div className="p-6">
-        <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-gray-200 rounded w-1/4"></div>
-          <div className="h-32 bg-gray-200 rounded"></div>
-          <div className="h-32 bg-gray-200 rounded"></div>
-        </div>
-      </div>
-    )
+  const handleRequestProcessed = () => {
+    refetchRequests()
+    refetchStudios() // Refresh studios as teacher counts might change
   }
+
+  const isLoading = studiosLoading || requestsLoading
+  const hasError = studiosError || requestsError
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">{t('studios.management.title')}</h1>
-          <p className="text-gray-600">{t('studios.management.subtitle')}</p>
-        </div>
-        <Button onClick={handleCreateStudio} className="flex items-center gap-2">
-          <Plus className="w-4 h-4" />
-          {t('studios.management.createStudio')}
-        </Button>
-      </div>
-
-      {/* Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <DataLoader
+      data={studios}
+      loading={isLoading}
+      error={hasError ? t('studios.management.loadError') : null}
+      empty={
+        <Card>
+          <CardContent className="py-12 text-center">
+            <MapPin className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+            <h3 className="text-lg font-medium mb-2">{t('studios.management.emptyState.title')}</h3>
+            <p className="text-muted-foreground mb-4">{t('studios.management.emptyState.description')}</p>
+            <Button onClick={handleCreateStudio} className="flex items-center gap-2">
+              <Plus className="w-4 h-4" />
+              {t('studios.management.createStudio')}
+            </Button>
+          </CardContent>
+        </Card>
+      }
+    >
+      {(loadedStudios) => (
+        <div className="space-y-6">
+          {/* Overview Cards with Create Button */}
+          <div className="space-y-4">
+            <div className="flex justify-end">
+              <Button onClick={handleCreateStudio} className="flex items-center gap-2">
+                <Plus className="w-4 h-4" />
+                {t('studios.management.createStudio')}
+              </Button>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
@@ -166,7 +187,7 @@ export function StudioManagement({ userRole }: StudioManagementProps) {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{studios?.length || 0}</div>
+            <div className="text-2xl font-bold">{loadedStudios?.length || 0}</div>
           </CardContent>
         </Card>
 
@@ -179,7 +200,7 @@ export function StudioManagement({ userRole }: StudioManagementProps) {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {studios?.reduce((sum, studio) => sum + (studio.teacher_count || 0), 0) || 0}
+              {loadedStudios?.reduce((sum, studio) => sum + (studio.teacher_count || 0), 0) || 0}
             </div>
           </CardContent>
         </Card>
@@ -193,11 +214,12 @@ export function StudioManagement({ userRole }: StudioManagementProps) {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {studios?.filter(studio => studio.verified).length || 0}
+              {loadedStudios?.filter(studio => studio.verified).length || 0}
             </div>
           </CardContent>
         </Card>
-      </div>
+            </div>
+          </div>
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -213,30 +235,32 @@ export function StudioManagement({ userRole }: StudioManagementProps) {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="studios">
-          <StudioList
-            studios={studios || []}
-            onEdit={handleEditStudio}
-            onDelete={handleStudioDeleted}
-            userRole={userRole}
-          />
-        </TabsContent>
+          <TabsContent value="studios">
+            <StudioList
+              studios={loadedStudios || []}
+              onEdit={handleEditStudio}
+              onDelete={handleStudioDeleted}
+              userRole={userRole}
+            />
+          </TabsContent>
 
-        <TabsContent value="requests">
-          <StudioTeacherRequests
-            requests={pendingRequests || []}
-            onRequestProcessed={refetch}
-          />
-        </TabsContent>
-      </Tabs>
+          <TabsContent value="requests">
+            <StudioTeacherRequests
+              requests={pendingRequests || []}
+              onRequestProcessed={handleRequestProcessed}
+            />
+          </TabsContent>
+        </Tabs>
 
-      {/* Create/Edit Form Modal */}
-      <StudioForm
-        studio={editingStudio}
-        onSave={handleStudioSaved}
-        onCancel={() => setShowCreateForm(false)}
-        isOpen={showCreateForm}
-      />
-    </div>
+        {/* Create/Edit Form Modal */}
+        <StudioForm
+          studio={editingStudio}
+          onSave={handleStudioSaved}
+          onCancel={() => setShowCreateForm(false)}
+          isOpen={showCreateForm}
+        />
+        </div>
+      )}
+    </DataLoader>
   )
 }

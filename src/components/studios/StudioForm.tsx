@@ -119,7 +119,6 @@ export function StudioForm({ studio, onSave, onCancel, isOpen = true }: StudioFo
           .eq('id', studio.id)
 
         if (error) throw error
-        toast.success('Studio updated successfully')
       } else {
         // Create new studio - include created_by_user_id
         const submitData: StudioInsert = {
@@ -132,7 +131,6 @@ export function StudioForm({ studio, onSave, onCancel, isOpen = true }: StudioFo
           .insert([submitData])
 
         if (error) throw error
-        toast.success('Studio created successfully')
       }
 
       onSave()

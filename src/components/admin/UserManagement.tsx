@@ -4,6 +4,7 @@ import React from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import DataLoader from '@/components/ui/data-loader'
 import { useAllUsers, useDeleteUser } from '@/lib/hooks/useAppQuery'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog'
 import { Users, Trash2, Crown, Star, Calendar, ExternalLink } from 'lucide-react'
@@ -26,7 +27,7 @@ export function UserManagement() {
   const [deletingUserId, setDeletingUserId] = React.useState<string | null>(null)
 
   // ✨ NEW: Use unified hooks
-  const { data: users, isLoading, refetch } = useAllUsers()
+  const { data: users, isLoading, error: usersError, refetch } = useAllUsers()
   const deleteUserMutation = useDeleteUser()
 
   const handleDeleteUser = async (userId: string, userName: string | null, userEmail: string | null) => {
@@ -112,14 +113,21 @@ export function UserManagement() {
         </div>
       </CardHeader>
       <CardContent>
-        {isLoading ? (
-          <div className="text-center py-8">
-            <div className="text-sm text-muted-foreground">Loading users...</div>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {users && users.length > 0 ? (
-              users.map((user: User) => (
+        <DataLoader
+          data={users}
+          loading={isLoading}
+          error={usersError ? 'Failed to load users' : null}
+          empty={
+            <div className="text-center py-12">
+              <Users className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+              <h3 className="text-lg font-medium mb-2">No Users Found</h3>
+              <p className="text-muted-foreground">No users are currently registered in the system.</p>
+            </div>
+          }
+        >
+          {(loadedUsers) => (
+            <div className="space-y-4">
+              {(loadedUsers || []).map((user: User) => (
                 <Card key={user.id}>
                   <CardContent className="pt-6">
                     <div className="flex justify-between items-start">
@@ -149,21 +157,18 @@ export function UserManagement() {
                             </div>
                           )}
                         </div>
-                        
-                        <div className="text-xs text-muted-foreground">
-                          ID: {user.id}
-                        </div>
                       </div>
                       
-                      <div className="flex gap-2 ml-4">
+                      <div className="flex items-center gap-2">
+                        {/* Only allow deletion of non-admin users */}
                         {user.role !== 'admin' && (
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
                               <Button
                                 variant="outline"
                                 size="sm"
+                                className="text-destructive hover:text-destructive"
                                 disabled={deletingUserId === user.id}
-                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
                               >
                                 <Trash2 className="h-4 w-4" />
                               </Button>
@@ -172,30 +177,17 @@ export function UserManagement() {
                               <AlertDialogHeader>
                                 <AlertDialogTitle>Delete User Account</AlertDialogTitle>
                                 <AlertDialogDescription>
-                                  Are you sure you want to delete <strong>{user.name || user.email}</strong>?
+                                  Are you sure you want to permanently delete {user.name || user.email}?
+                                  This will remove all associated data including events, tags, calendar feeds, and invoices.
+                                  This action cannot be undone.
                                 </AlertDialogDescription>
                               </AlertDialogHeader>
-                              <div className="space-y-4">
-                                <div className="text-sm text-red-600 font-medium">
-                                  This will permanently delete:
-                                </div>
-                                <ul className="text-sm text-red-600 list-disc list-inside space-y-1">
-                                  <li>User profile and authentication</li>
-                                  <li>All calendar feeds and events</li>
-                                  <li>All invoices and billing data</li>
-                                  <li>All tags and settings</li>
-                                  <li>Any associated data</li>
-                                </ul>
-                                <div className="text-sm font-medium">
-                                  This action cannot be undone!
-                                </div>
-                              </div>
                               <AlertDialogFooter>
                                 <AlertDialogCancel>Cancel</AlertDialogCancel>
                                 <AlertDialogAction
                                   onClick={() => handleDeleteUser(user.id, user.name, user.email)}
+                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                                   disabled={deletingUserId === user.id}
-                                  className="bg-red-600 hover:bg-red-700"
                                 >
                                   {deletingUserId === user.id ? 'Deleting...' : 'Delete User'}
                                 </AlertDialogAction>
@@ -203,10 +195,8 @@ export function UserManagement() {
                             </AlertDialogContent>
                           </AlertDialog>
                         )}
-                        
                         {user.role === 'admin' && (
-                          <div className="text-xs text-muted-foreground flex items-center">
-                            <Crown className="w-3 h-3 mr-1" />
+                          <div className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">
                             Protected
                           </div>
                         )}
@@ -214,15 +204,11 @@ export function UserManagement() {
                     </div>
                   </CardContent>
                 </Card>
-              ))
-            ) : (
-              <div className="text-center py-8">
-                <div className="text-sm text-muted-foreground">No users found</div>
-              </div>
-            )}
-          </div>
-        )}
+              ))}
+            </div>
+          )}
+        </DataLoader>
       </CardContent>
     </Card>
   )
-} 
+}

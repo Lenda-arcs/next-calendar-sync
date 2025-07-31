@@ -484,6 +484,7 @@ export interface StudioTranslations {
     createStudio: string
     accessRestricted: string
     accessRestrictedDesc: string
+    loadError: string
     overview: {
       totalStudios: string
       activeTeachers: string
@@ -492,6 +493,15 @@ export interface StudioTranslations {
     tabs: {
       studios: string
       teacherRequests: string
+    }
+    emptyState: {
+      title: string
+      description: string
+    }
+    toast: {
+      studioCreated: string
+      studioUpdated: string
+      studioDeleted: string
     }
   }
 }
@@ -949,6 +959,37 @@ export interface DashboardTranslations {
     requestMore: string
     requestAccess: string
     moreStudios: string
+  }
+  admin: {
+    title: string
+    subtitle: string
+    subtitleFallback: string
+    accessBadge: string
+    stats: {
+      totalUsers: string
+      totalInvitations: string
+      pendingInvites: string
+      totalStudios: string
+    }
+    quickActions: {
+      title: string
+      description: string
+      manageStudios: string
+      manageStudiosDesc: string
+      inviteTeachers: string
+      inviteTeachersDesc: string
+      analytics: string
+      analyticsDesc: string
+    }
+    loadError: string
+    sections: {
+      invitations: string
+      users: string
+    }
+    loading: {
+      invitations: string
+      users: string
+    }
   }
 }
 

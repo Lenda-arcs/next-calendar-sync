@@ -432,6 +432,7 @@ const translations: Translations = {
       createStudio: 'Crear Estudio',
       accessRestricted: 'Acceso Restringido',
       accessRestrictedDesc: 'Solo los administradores pueden gestionar estudios.',
+      loadError: 'Error al cargar datos de estudios',
       overview: {
         totalStudios: 'Estudios Totales',
         activeTeachers: 'Instructores Activos',
@@ -440,6 +441,15 @@ const translations: Translations = {
       tabs: {
         studios: 'Estudios',
         teacherRequests: 'Solicitudes de Instructores'
+      },
+      emptyState: {
+        title: 'Aún No Hay Estudios',
+        description: 'Comienza creando tu primer estudio para gestionar instructores y facturación.'
+      },
+      toast: {
+        studioCreated: 'Estudio creado exitosamente',
+        studioUpdated: 'Estudio actualizado exitosamente',
+        studioDeleted: 'Estudio eliminado exitosamente'
       }
     }
   },
@@ -883,6 +893,37 @@ const translations: Translations = {
       requestMore: 'Solicitar Más Studios',
       requestAccess: 'Solicitar Acceso al Studio',
       moreStudios: '+{count} studio{plural} más conectado{plural}'
+    },
+    admin: {
+      title: 'Panel de Administración',
+      subtitle: 'Bienvenido, {userName}. Gestiona tu plataforma y usuarios.',
+      subtitleFallback: 'Bienvenido, Administrador. Gestiona tu plataforma y usuarios.',
+      accessBadge: 'Acceso de Administrador',
+      stats: {
+        totalUsers: 'Usuarios Totales',
+        totalInvitations: 'Invitaciones Totales',
+        pendingInvites: 'Invitaciones Pendientes',
+        totalStudios: 'Estudios Totales'
+      },
+      quickActions: {
+        title: 'Acciones Rápidas',
+        description: 'Tareas administrativas comunes y accesos directos',
+        manageStudios: 'Gestionar Estudios',
+        manageStudiosDesc: 'Asociaciones de estudios y configuraciones',
+        inviteTeachers: 'Invitar Instructores',
+        inviteTeachersDesc: 'Gestionar abajo ↓',
+        analytics: 'Analíticas',
+        analyticsDesc: 'Próximamente'
+      },
+      loadError: 'Error al cargar datos de administración',
+      sections: {
+        invitations: 'Gestión de Invitaciones de Instructores',
+        users: 'Gestión de Usuarios'
+      },
+      loading: {
+        invitations: 'Cargando gestión de invitaciones...',
+        users: 'Cargando gestión de usuarios...'
+      }
     },
     profilePage: {
       title: 'Configuración del Perfil',
