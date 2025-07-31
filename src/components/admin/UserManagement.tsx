@@ -34,10 +34,10 @@ export function UserManagement() {
     setDeletingUserId(userId)
 
     try {
-      // ✨ NEW: Use unified mutation
-      await deleteUserMutation.mutateAsync(userId)
+      // Call the admin API endpoint that uses delete_user_cascade
+      const result = await deleteUserMutation.mutateAsync(userId)
 
-      toast.success(`User ${userName || userEmail} has been completely removed`)
+      toast.success(result.message || `User ${userName || userEmail} has been completely removed`)
       refetch()
 
     } catch (error) {

@@ -106,9 +106,8 @@ export async function deleteUser(userId: string): Promise<DeleteUserResult> {
     
     // Use the SQL function for reliable database deletion
     try {
-      // Call the custom SQL function (type assertion needed since it's not in generated types)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: sqlResult, error: sqlError } = await (supabase as any)
+      // Call the delete_user_cascade function (properly typed)
+      const { data: sqlResult, error: sqlError } = await supabase
         .rpc('delete_user_cascade', { target_user_id: userId })
       
       if (sqlError) {
@@ -119,14 +118,14 @@ export async function deleteUser(userId: string): Promise<DeleteUserResult> {
         }
       }
       
-      // Type the result properly
+      // Type the result based on the actual SQL function return type
       const result = sqlResult as {
         success: boolean
         error?: string
         message?: string
         user_id: string
-        user_email: string
-        user_name: string
+        user_email?: string
+        user_name?: string
         note?: string
       }
       

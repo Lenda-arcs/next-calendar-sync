@@ -1,6 +1,7 @@
 'use client'
 
 import { useSupabaseQuery, useSupabaseMutation } from './useQueryWithSupabase'
+import { useMutation } from '@tanstack/react-query'
 import { queryKeys } from '../query-keys'
 import { QUERY_CONFIGS } from '../query-constants'
 import * as dataAccess from '../server/data-access'
@@ -296,11 +297,23 @@ export function useCreateUserInvitation() {
 }
 
 export function useDeleteUser() {
-  return useSupabaseMutation<User[], string>(
-    async (supabase: SupabaseClient, userId: string) => {
-      return dataAccess.deleteUser(supabase, userId)
+  return useMutation<{ success: boolean; message: string }, Error, string>({
+    mutationFn: async (userId: string) => {
+      const response = await fetch(`/api/admin/users/${userId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to delete user')
+      }
+
+      return response.json()
     }
-  )
+  })
 }
 
 export function useUpdateUserRole() {
