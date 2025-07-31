@@ -6,6 +6,7 @@ import { createServerClient, createAdminClient } from '@/lib/supabase-server'
 import type { 
   SupabaseInvitationRequest, 
   SupabaseInvitationResult,
+  SupabaseUser,
   UserRole 
 } from '@/lib/types/invitation'
 
@@ -94,18 +95,24 @@ export class EnhancedInvitationService {
             invited_by: invitedById,
             status: 'pending',
             expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-            supabase_user_id: data.user.id,
-            notes: `Enhanced invitation: ${language}, ${source}`,
-            // Additional metadata
-            language,
-            time_zone: timeZone,
-            invitation_source: source
+            token: crypto.randomUUID(),
+            notes: `Enhanced invitation: ${language}, ${source}, timezone: ${timeZone}`
           })
+      }
+
+      // Transform User to SupabaseUser format
+      const supabaseUser: SupabaseUser = {
+        id: data.user.id,
+        email: data.user.email || email, // Fallback to invitation email
+        email_confirmed_at: data.user.email_confirmed_at,
+        last_sign_in_at: data.user.last_sign_in_at,
+        created_at: data.user.created_at,
+        user_metadata: data.user.user_metadata || {}
       }
 
       return {
         success: true,
-        user: data.user
+        user: supabaseUser
       }
     } catch (error) {
       console.error('Error in enhanced inviteUser:', error)
