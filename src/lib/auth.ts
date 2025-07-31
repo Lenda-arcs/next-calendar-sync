@@ -1,37 +1,37 @@
 import { NextRequest } from 'next/server'
 
-/**
- * Routes that require authentication (including locale variants)
- */
-export const PROTECTED_ROUTES = [
-  '/app',
-  '/de/app',
-  '/es/app',
-] as const
+// Locale support
+export const SUPPORTED_LOCALES = ['en', 'de', 'es'] as const
+export type Locale = typeof SUPPORTED_LOCALES[number]
 
-/**
- * Routes that should redirect authenticated users (including locale variants)
- */
-export const AUTH_ROUTES = [
-  '/auth/sign-in',
-  '/auth/register',
-  '/auth/forgot-password',
-  '/de/auth/sign-in',
-  '/de/auth/register', 
-  '/de/auth/forgot-password',
-  '/es/auth/sign-in',
-  '/es/auth/register',
-  '/es/auth/forgot-password',
-] as const
+// Base route paths
+const BASE_AUTH_PATHS = ['/sign-in', '/register', '/forgot-password'] as const
+const BASE_PUBLIC_PATHS = ['/', '/classes', '/test'] as const
+
+export const PROTECTED_ROUTES = SUPPORTED_LOCALES.map(locale => `/${locale}/app`
+)
+
+export const AUTH_PATHS = {
+  SIGN_IN: '/auth/sign-in',
+  REGISTER: '/auth/register',
+  CALLBACK: '/auth/callback',
+  FORGOT_PASSWORD: '/auth/forgot-password',
+  DEFAULT_REDIRECT: '/app',
+} as const
+
+export const AUTH_ROUTES = SUPPORTED_LOCALES.flatMap(locale =>
+  BASE_AUTH_PATHS.map(path => `/${locale}/auth${path}`
+  )
+)
 
 /**
  * Public routes that don't require authentication
  */
-export const PUBLIC_ROUTES = [
-  '/',
-  '/schedule',
-  '/test',
-] as const
+export const PUBLIC_ROUTES = SUPPORTED_LOCALES.flatMap(locale =>
+  BASE_PUBLIC_PATHS.map(path =>
+    locale === 'en' ? path : `/${locale}${path}`
+  )
+)
 
 /**
  * Check if a route requires authentication
@@ -58,13 +58,16 @@ export function isPublicRoute(pathname: string): boolean {
  * Extract locale from pathname
  */
 export function extractLocale(pathname: string): { locale: string; cleanPath: string } {
-  const localeMatch = pathname.match(/^\/([a-z]{2})(\/.*)?$/)
-  if (localeMatch && ['de', 'es'].includes(localeMatch[1])) {
+  const match = pathname.match(/^\/([a-z]{2})(\/.*)?$/)
+  const locale = match?.[1]
+
+  if (locale && SUPPORTED_LOCALES.includes(locale as Locale)) {
     return {
-      locale: localeMatch[1],
-      cleanPath: localeMatch[2] || '/'
+      locale,
+      cleanPath: match?.[2] || '/'
     }
   }
+
   return { locale: 'en', cleanPath: pathname }
 }
 
@@ -73,12 +76,12 @@ export function extractLocale(pathname: string): { locale: string; cleanPath: st
  */
 export function getAuthRedirectUrl(request: NextRequest): string {
   const returnTo = request.nextUrl.searchParams.get('returnTo')
-  
+
   // Validate returnTo URL to prevent open redirects
   if (returnTo && returnTo.startsWith('/') && !returnTo.startsWith('//')) {
     return returnTo
   }
-  
+
   // Extract locale from current path
   const { locale } = extractLocale(request.nextUrl.pathname)
   return locale === 'en' ? '/app' : `/${locale}/app`
@@ -92,13 +95,3 @@ export function getSignInUrl(pathname: string): string {
   return locale === 'en' ? '/auth/sign-in' : `/${locale}/auth/sign-in`
 }
 
-/**
- * Auth-related paths
- */
-export const AUTH_PATHS = {
-  SIGN_IN: '/auth/sign-in',
-  REGISTER: '/auth/register',
-  CALLBACK: '/auth/callback',
-  FORGOT_PASSWORD: '/auth/forgot-password',
-  DEFAULT_REDIRECT: '/app',
-} as const 

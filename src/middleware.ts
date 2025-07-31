@@ -1,11 +1,12 @@
-import { createServerClient } from '@supabase/ssr'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import type { Database } from './database-generated.types'
-import { isProtectedRoute, isAuthRoute, getAuthRedirectUrl, AUTH_PATHS } from './src/lib/auth'
-import { authRateLimiter, generalRateLimiter, getClientIdentifier } from './src/lib/rate-limit'
+import { Database } from '../database-generated.types'
+import { createServerClient } from '@supabase/ssr'
+import { isAuthRoute, getAuthRedirectUrl, isProtectedRoute, AUTH_PATHS, getSignInUrl, SUPPORTED_LOCALES } from './lib/auth'
+import { getClientIdentifier, authRateLimiter, generalRateLimiter } from './lib/rate-limit'
 
 export async function middleware(req: NextRequest) {
+  console.debug('🔥 Middleware triggered at:', req.nextUrl.pathname)
   let supabaseResponse = NextResponse.next({
     request: req,
   })
@@ -35,12 +36,10 @@ export async function middleware(req: NextRequest) {
     const { pathname } = req.nextUrl
     const clientId = getClientIdentifier(req)
 
-    // Language is now handled via URL-based routing
-
     // Apply rate limiting for auth routes
     if (pathname.startsWith('/auth/') || pathname.startsWith('/api/auth/')) {
       const rateLimitResult = await authRateLimiter.check(clientId)
-      
+
       if (!rateLimitResult.success) {
         return new NextResponse(
           JSON.stringify({
@@ -64,7 +63,7 @@ export async function middleware(req: NextRequest) {
     // Apply general rate limiting for API routes
     if (pathname.startsWith('/api/')) {
       const rateLimitResult = await generalRateLimiter.check(clientId)
-      
+
       if (!rateLimitResult.success) {
         return new NextResponse(
           JSON.stringify({
@@ -90,18 +89,15 @@ export async function middleware(req: NextRequest) {
       error,
     } = await supabase.auth.getUser()
 
-    // If there's an error getting the user, treat as unauthenticated
-    if (error) {
-      console.error('Auth error in middleware:', error)
-    }
-
     // Handle auth routes (should redirect authenticated users)
     if (isAuthRoute(pathname)) {
       if (user) {
+        console.debug('👤 Authenticated user on auth route — redirecting to app')
         const redirectUrl = getAuthRedirectUrl(req)
         return NextResponse.redirect(new URL(redirectUrl, req.url))
       }
-      return supabaseResponse
+      console.debug('👤 Unauthenticated user on auth route — allowing through')
+      // DO NOT return — let the rest of the debugic continue
     }
 
     // Allow auth callback to process without interference
@@ -109,11 +105,13 @@ export async function middleware(req: NextRequest) {
       return supabaseResponse
     }
 
+    console.debug('👤 User authentication status:', user ? 'Authenticated' : 'Unauthenticated')
     // Handle protected routes (require authentication)
     if (isProtectedRoute(pathname)) {
+      console.debug('🔒 Protected route accessed:', pathname)
       if (!user) {
+        console.debug('🚫 No authenticated user, redirecting to sign-in')
         // Get locale-aware sign-in URL
-        const { getSignInUrl } = await import('./src/lib/auth')
         const signInPath = getSignInUrl(pathname)
         const signInUrl = new URL(signInPath, req.url)
         signInUrl.searchParams.set('returnTo', pathname)
@@ -132,15 +130,12 @@ export async function middleware(req: NextRequest) {
   }
 }
 
+
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public assets
-     */
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    ...SUPPORTED_LOCALES.map(locale => `/${locale}/app/:path*`),
+    ...SUPPORTED_LOCALES.map(locale => `/${locale}/auth/:path*`),
+    '/auth/:path*',
+    '/api/:path*',
   ],
-} 
+}
