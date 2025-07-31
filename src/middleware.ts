@@ -35,27 +35,33 @@ export async function middleware(req: NextRequest) {
     const { pathname } = req.nextUrl
     const clientId = getClientIdentifier(req)
 
-    // Apply rate limiting for auth routes
+    // Apply rate limiting for auth routes (except invitation processing)
     if (pathname.startsWith('/auth/') || pathname.startsWith('/api/auth/')) {
-      const rateLimitResult = await authRateLimiter.check(clientId)
+      // Skip rate limiting for invitation flows to avoid blocking valid invitations
+      const isInvitationFlow = req.nextUrl.searchParams.has('access_token') && 
+                              req.nextUrl.searchParams.get('type') === 'invite'
+      
+      if (!isInvitationFlow) {
+        const rateLimitResult = await authRateLimiter.check(clientId)
 
-      if (!rateLimitResult.success) {
-        return new NextResponse(
-          JSON.stringify({
-            error: 'Too many authentication attempts',
-            retryAfter: Math.ceil((rateLimitResult.resetTime - Date.now()) / 1000)
-          }),
-          {
-            status: 429,
-            headers: {
-              'Content-Type': 'application/json',
-              'X-RateLimit-Limit': '5',
-              'X-RateLimit-Remaining': '0',
-              'X-RateLimit-Reset': rateLimitResult.resetTime.toString(),
-              'Retry-After': Math.ceil((rateLimitResult.resetTime - Date.now()) / 1000).toString()
+        if (!rateLimitResult.success) {
+          return new NextResponse(
+            JSON.stringify({
+              error: 'Too many authentication attempts',
+              retryAfter: Math.ceil((rateLimitResult.resetTime - Date.now()) / 1000)
+            }),
+            {
+              status: 429,
+              headers: {
+                'Content-Type': 'application/json',
+                'X-RateLimit-Limit': '5',
+                'X-RateLimit-Remaining': '0',
+                'X-RateLimit-Reset': rateLimitResult.resetTime.toString(),
+                'Retry-After': Math.ceil((rateLimitResult.resetTime - Date.now()) / 1000).toString()
+              }
             }
-          }
-        )
+          )
+        }
       }
     }
 
@@ -90,10 +96,16 @@ export async function middleware(req: NextRequest) {
     // Handle auth routes (should redirect authenticated users)
     if (isAuthRoute(pathname)) {
       if (user) {
-        const redirectUrl = getAuthRedirectUrl(req)
-        return NextResponse.redirect(new URL(redirectUrl, req.url))
+        // Don't redirect if this is an invitation flow (user needs to complete setup)
+        const isInvitationFlow = req.nextUrl.searchParams.has('access_token') && 
+                                req.nextUrl.searchParams.get('type') === 'invite'
+        
+        if (!isInvitationFlow) {
+          const redirectUrl = getAuthRedirectUrl(req)
+          return NextResponse.redirect(new URL(redirectUrl, req.url))
+        }
       }
-      // DO NOT return — let the rest of the debugic continue
+      // DO NOT return — let the rest of the logic continue
     }
 
     // Allow auth callback to process without interference
