@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { LoadingLink } from '@/components/ui'
 import DataLoader from '@/components/ui/data-loader'
-import { InvitationManagement, UserManagement } from '@/components/admin'
+import { InvitationManagement } from '@/components/admin'
 import { PageSection } from '@/components/layout/page-section'
 import { PATHS } from '@/lib/paths'
 import { Shield, Users, Building, UserPlus, BarChart } from 'lucide-react'
@@ -193,24 +193,7 @@ export function AdminDashboardClient({ userRole, locale }: AdminDashboardClientP
         </Card>
       </PageSection>
 
-      {/* Teacher Invitation Management */}
-      <PageSection>
-        <DataLoader
-          data={true} // Always show this section
-          loading={false}
-          error={null}
-          empty={null}
-        >
-          {() => (
-            <div>
-              <h2 className="text-xl font-semibold mb-4">{t('dashboard.admin.sections.invitations')}</h2>
-              <InvitationManagement />
-            </div>
-          )}
-        </DataLoader>
-      </PageSection>
-
-      {/* User Management */}
+      {/* Unified User & Invitation Management */}
       <PageSection>
         <DataLoader
           data={true} // Always show this section
@@ -221,7 +204,7 @@ export function AdminDashboardClient({ userRole, locale }: AdminDashboardClientP
           {() => (
             <div>
               <h2 className="text-xl font-semibold mb-4">{t('dashboard.admin.sections.users')}</h2>
-              <UserManagement />
+              <InvitationManagement />
             </div>
           )}
         </DataLoader>

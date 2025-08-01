@@ -3,13 +3,15 @@
 import React, { useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Alert, AlertDescription } from '@/components/ui/alert'
+
 import DataLoader from '@/components/ui/data-loader'
-import { UserPlus, Info, Sparkles } from 'lucide-react'
+import { UserPlus } from 'lucide-react'
 import { useInvitationManagement } from '@/hooks/useInvitationManagement'
+import { useAllUsers, useDeleteUser } from '@/lib/hooks/useAppQuery'
 import { EnhancedInvitationForm } from './EnhancedInvitationForm'
 import { InvitationStats } from './InvitationStats'
-import { UserList } from './UserList'
+import { UnifiedUserList } from './UnifiedUserList'
+import { toast } from 'sonner'
 
 /**
  * Main invitation management component
@@ -17,14 +19,16 @@ import { UserList } from './UserList'
  */
 export function InvitationManagement() {
   const [showInvitationDialog, setShowInvitationDialog] = useState(false)
+  const [deletingUserId, setDeletingUserId] = useState<string | null>(null)
   
+  // Auth users (for invitations)
   const {
-    allUsers,
+    allUsers: authUsers,
     stats,
     formData,
     formErrors,
-    isLoading,
-    usersError,
+    isLoading: authLoading,
+    usersError: authError,
     isSubmitting,
     isCancelling,
     submitError,
@@ -33,6 +37,16 @@ export function InvitationManagement() {
     handleCancelInvitation,
     resetForm
   } = useInvitationManagement()
+
+  // App users (for app data and delete functionality)
+  const { 
+    data: appUsers, 
+    isLoading: appLoading, 
+    error: appError, 
+    refetch: refetchAppUsers 
+  } = useAllUsers()
+  
+  const deleteUserMutation = useDeleteUser()
 
   const handleFormSubmit = async (e: React.FormEvent) => {
     try {
@@ -52,41 +66,71 @@ export function InvitationManagement() {
     }
   }
 
+  // Handle delete user (cascade delete for app users)
+  const handleDeleteUser = async (userId: string, userName: string | null, userEmail: string | null) => {
+    setDeletingUserId(userId)
+
+    try {
+      const result = await deleteUserMutation.mutateAsync(userId)
+      toast.success(result.message || `User ${userName || userEmail} has been completely removed`)
+      refetchAppUsers()
+    } catch (error) {
+      console.error('Error deleting user:', error)
+      toast.error(error instanceof Error ? error.message : 'Failed to delete user')
+    } finally {
+      setDeletingUserId(null)
+    }
+  }
+
+  // Merge auth users with app users data
+  const mergedUsers = React.useMemo(() => {
+    if (!authUsers || !appUsers) return authUsers || []
+    
+    return authUsers.map(authUser => {
+      // Find matching app user by email
+      const appUser = appUsers.find(app => app.email === authUser.email)
+      
+      return {
+        ...authUser,
+        // Add app-specific data if available
+        appData: appUser ? {
+          id: appUser.id,
+          name: appUser.name,
+          role: appUser.role,
+          calendar_feed_count: appUser.calendar_feed_count,
+          is_featured: appUser.is_featured,
+          public_url: appUser.public_url,
+          created_at: appUser.created_at
+        } : null
+      }
+    })
+  }, [authUsers, appUsers])
+
+  const isLoading = authLoading || appLoading
+  const usersError = authError || appError
+
   return (
     <div className="space-y-6">
-      {/* System Info Alert */}
-      <Alert>
-        <Info className="h-4 w-4" />
-        <AlertDescription>
-          <strong>Upgraded System:</strong> Now using Supabase&apos;s built-in invitation system. 
-          Users are tracked directly in Supabase Auth with automatic email handling and state management.
-        </AlertDescription>
-      </Alert>
+
 
       {/* Enhanced Create Invitation Section */}
-      <Card className="bg-gradient-to-br from-white to-pink-50/30">
+      <Card>
         <CardHeader>
           <div className="flex justify-between items-center">
             <div>
               <CardTitle className="flex items-center gap-2">
-                <div className="relative">
-                  <Sparkles className="h-5 w-5 text-pink-500" />
-                  <div className="absolute -top-1 -right-1 w-2 h-2 bg-gradient-to-r from-pink-500 to-purple-500 rounded-full animate-pulse" />
-                </div>
-                <span className="bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent">
-                  Send Branded Beta Invitation
-                </span>
+                <UserPlus className="h-5 w-5" />
+                Send Beta Invitation
               </CardTitle>
               <CardDescription className="flex items-center gap-2">
-                <UserPlus className="h-4 w-4 text-purple-500" />
-                Create beautiful yoga instructor invitations with multi-language support
+                <UserPlus className="h-4 w-4" />
+                Create yoga instructor invitations with multi-language support
               </CardDescription>
             </div>
             <Button 
               onClick={() => setShowInvitationDialog(true)}
-              className="bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white border-0"
             >
-              <Sparkles className="w-4 h-4 mr-2" />
+              <UserPlus className="w-4 h-4 mr-2" />
               Create Invitation
             </Button>
           </div>
@@ -111,22 +155,22 @@ export function InvitationManagement() {
       {/* Statistics */}
       <InvitationStats stats={stats} />
 
-      {/* Users List */}
+      {/* Unified Users List */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <UserPlus className="h-5 w-5" />
-            All Users & Invitations
+            Users & Invitations
           </CardTitle>
           <CardDescription>
-            Real-time data from Supabase Auth - including pending invitations and confirmed users
+            Complete user lifecycle: invitations, confirmations, and app activity
           </CardDescription>
         </CardHeader>
         <CardContent>
           <DataLoader
-            data={allUsers}
+            data={mergedUsers}
             loading={isLoading}
-            error={usersError ? 'Failed to load users from Supabase Auth' : null}
+            error={usersError ? 'Failed to load user data' : null}
             empty={
               <div className="text-center py-12">
                 <UserPlus className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
@@ -140,10 +184,12 @@ export function InvitationManagement() {
             }
           >
             {(users) => (
-              <UserList
+              <UnifiedUserList
                 users={users}
                 onCancelInvitation={handleCancelInvitation}
+                onDeleteUser={handleDeleteUser}
                 isCancelling={isCancelling}
+                isDeletingUserId={deletingUserId}
               />
             )}
           </DataLoader>

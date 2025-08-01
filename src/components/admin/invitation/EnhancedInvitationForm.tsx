@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Alert, AlertDescription } from '@/components/ui/alert'
+
 import { UnifiedDialog } from '@/components/ui/unified-dialog'
 import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogAction, AlertDialogCancel } from '@/components/ui/alert-dialog'
 import { AlertCircle, Mail, Globe, Sparkles, Users, MessageSquare, Crown } from 'lucide-react'
@@ -107,19 +107,16 @@ export function EnhancedInvitationForm({
         size="lg"
         title={
           <div className="flex items-center gap-3">
-            <div className="relative">
-              <Sparkles className="h-6 w-6 text-pink-500" />
-              <div className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-r from-pink-500 to-purple-500 rounded-full animate-pulse" />
-            </div>
-            <span className="bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent">
-              Send Branded Beta Invitation
+            <Mail className="h-6 w-6 text-foreground" />
+            <span className="text-foreground">
+              Send Beta Invitation
             </span>
           </div>
         }
         description={
           <span className="flex items-center gap-2 text-muted-foreground">
             <Users className="h-4 w-4" />
-            Create a beautifully designed yoga instructor invitation with multi-language support
+            Create a yoga instructor invitation with multi-language support
           </span>
         }
         footer={
@@ -137,7 +134,8 @@ export function EnhancedInvitationForm({
               type="submit" 
               disabled={isSubmitting} 
               form="invitation-form"
-              className="flex-1 sm:flex-none bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white border-0"
+              className="flex-1 sm:flex-none"
+              loading={isSubmitting}
             >
               <Mail className="w-4 h-4 mr-2" />
               {isSubmitting ? 'Sending...' : 'Send Invitation'}
@@ -148,15 +146,15 @@ export function EnhancedInvitationForm({
         <form id="invitation-form" onSubmit={handleFormSubmit} className="space-y-6">
           {/* Enhanced Basic Information */}
           <div className="space-y-4">
-            <div className="flex items-center gap-2 pb-2 border-b border-pink-100">
-              <Users className="h-5 w-5 text-pink-500" />
-              <h3 className="font-medium text-gray-900">Instructor Details</h3>
+            <div className="flex items-center gap-2 pb-2 border-b border-border">
+              <Users className="h-5 w-5 text-muted-foreground" />
+              <h3 className="font-medium text-foreground">Instructor Details</h3>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="email" className="flex items-center gap-2">
-                  <Mail className="h-4 w-4 text-pink-500" />
+                  <Mail className="h-4 w-4 text-muted-foreground" />
                   Email Address *
                 </Label>
                 <Input
@@ -166,7 +164,6 @@ export function EnhancedInvitationForm({
                   onChange={handleInputChange('email')}
                   placeholder="yoga.instructor@example.com"
                   disabled={isSubmitting}
-                  className="border-pink-200 focus:border-pink-400 focus:ring-pink-200"
                 />
                 {formErrors.email && (
                   <p className="text-sm text-destructive flex items-center gap-1">
@@ -178,7 +175,7 @@ export function EnhancedInvitationForm({
               
               <div className="space-y-2">
                 <Label htmlFor="invitedName" className="flex items-center gap-2">
-                  <Users className="h-4 w-4 text-purple-500" />
+                  <Users className="h-4 w-4 text-muted-foreground" />
                   Full Name *
                 </Label>
                 <Input
@@ -187,7 +184,6 @@ export function EnhancedInvitationForm({
                   onChange={handleInputChange('invitedName')}
                   placeholder="Sarah Johnson"
                   disabled={isSubmitting}
-                  className="border-purple-200 focus:border-purple-400 focus:ring-purple-200"
                 />
                 {formErrors.invitedName && (
                   <p className="text-sm text-destructive flex items-center gap-1">
@@ -201,15 +197,15 @@ export function EnhancedInvitationForm({
 
           {/* Enhanced Role and Language Selection */}
           <div className="space-y-4">
-            <div className="flex items-center gap-2 pb-2 border-b border-purple-100">
-              <Crown className="h-5 w-5 text-purple-500" />
-              <h3 className="font-medium text-gray-900">Access & Language</h3>
+            <div className="flex items-center gap-2 pb-2 border-b border-border">
+              <Crown className="h-5 w-5 text-muted-foreground" />
+              <h3 className="font-medium text-foreground">Access & Language</h3>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="role" className="flex items-center gap-2">
-                  <Crown className="h-4 w-4 text-pink-500" />
+                  <Crown className="h-4 w-4 text-muted-foreground" />
                   Role
                 </Label>
                 <div className="relative">
@@ -217,20 +213,20 @@ export function EnhancedInvitationForm({
                     value={formData.role} 
                     onChange={(e) => onFormDataChange({ role: e.target.value as UserRole })}
                     disabled={isSubmitting}
-                    className="flex h-12 w-full rounded-lg border border-pink-200 bg-white/50 backdrop-blur-sm px-4 py-2 text-sm focus:border-pink-400 focus:ring-2 focus:ring-pink-200 disabled:cursor-not-allowed disabled:opacity-50 appearance-none"
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 appearance-none"
                   >
                     <option value="teacher">🧘‍♀️ Yoga Instructor</option>
                     <option value="admin">👑 Admin</option>
                   </select>
                   <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                    <Crown className="h-4 w-4 text-pink-400" />
+                    <Crown className="h-4 w-4 text-muted-foreground" />
                   </div>
                 </div>
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="language" className="flex items-center gap-2">
-                  <Globe className="h-4 w-4 text-blue-500" />
+                  <Globe className="h-4 w-4 text-muted-foreground" />
                   Email Language
                 </Label>
                 <div className="relative">
@@ -238,7 +234,7 @@ export function EnhancedInvitationForm({
                     value={formData.language} 
                     onChange={(e) => onFormDataChange({ language: e.target.value as 'en' | 'de' | 'es' })}
                     disabled={isSubmitting}
-                    className="flex h-12 w-full rounded-lg border border-blue-200 bg-white/50 backdrop-blur-sm px-4 py-2 text-sm focus:border-blue-400 focus:ring-2 focus:ring-blue-200 disabled:cursor-not-allowed disabled:opacity-50 appearance-none"
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 appearance-none"
                   >
                     {languageOptions.map(option => (
                       <option key={option.value} value={option.value}>
@@ -247,7 +243,7 @@ export function EnhancedInvitationForm({
                     ))}
                   </select>
                   <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                    <Globe className="h-4 w-4 text-blue-400" />
+                    <Globe className="h-4 w-4 text-muted-foreground" />
                   </div>
                 </div>
               </div>
@@ -256,14 +252,14 @@ export function EnhancedInvitationForm({
 
           {/* Enhanced Personal Message */}
           <div className="space-y-4">
-            <div className="flex items-center gap-2 pb-2 border-b border-green-100">
-              <MessageSquare className="h-5 w-5 text-green-500" />
-              <h3 className="font-medium text-gray-900">Personal Touch</h3>
+            <div className="flex items-center gap-2 pb-2 border-b border-border">
+              <MessageSquare className="h-5 w-5 text-muted-foreground" />
+              <h3 className="font-medium text-foreground">Personal Touch</h3>
             </div>
             
             <div className="space-y-2">
               <Label htmlFor="personalMessage" className="flex items-center gap-2">
-                <MessageSquare className="h-4 w-4 text-green-500" />
+                <MessageSquare className="h-4 w-4 text-muted-foreground" />
                 Personal Welcome Message (Optional)
               </Label>
               <Textarea
@@ -273,20 +269,20 @@ export function EnhancedInvitationForm({
                 placeholder="Add a personal welcome message that will make this yoga instructor feel special..."
                 rows={4}
                 disabled={isSubmitting}
-                className="border-green-200 focus:border-green-400 focus:ring-green-200 resize-none"
+                className="resize-none"
               />
-              <p className="text-xs text-green-600 flex items-center gap-1">
-                <Sparkles className="h-3 w-3" />
-                This message will be beautifully highlighted in the invitation email
+              <p className="text-xs text-muted-foreground flex items-center gap-1">
+                <MessageSquare className="h-3 w-3" />
+                This message will be highlighted in the invitation email
               </p>
             </div>
           </div>
 
           {/* Enhanced Email Preview */}
           <div className="space-y-4">
-            <div className="flex items-center gap-2 pb-2 border-b border-orange-100">
-              <Mail className="h-5 w-5 text-orange-500" />
-              <h3 className="font-medium text-gray-900">Email Preview</h3>
+            <div className="flex items-center gap-2 pb-2 border-b border-border">
+              <Mail className="h-5 w-5 text-muted-foreground" />
+              <h3 className="font-medium text-foreground">Email Preview</h3>
             </div>
             
             <div className="relative">
@@ -317,23 +313,23 @@ export function EnhancedInvitationForm({
 
           {/* Enhanced Advanced Options */}
           <details className="group">
-            <summary className="flex items-center gap-2 cursor-pointer p-3 rounded-lg bg-gradient-to-r from-gray-50 to-slate-50 hover:from-gray-100 hover:to-slate-100 transition-all border border-gray-200">
+            <summary className="flex items-center gap-2 cursor-pointer p-3 rounded-lg bg-muted/50 hover:bg-muted transition-all border border-border">
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500"></div>
-                <span className="text-sm font-medium text-gray-700 group-hover:text-gray-900">
+                <div className="w-2 h-2 rounded-full bg-muted-foreground"></div>
+                <span className="text-sm font-medium text-foreground group-hover:text-foreground">
                   Advanced Options (Optional)
                 </span>
               </div>
               <div className="ml-auto transform group-open:rotate-180 transition-transform">
-                <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
               </div>
             </summary>
-            <div className="mt-4 pl-6 space-y-4 border-l-2 border-gradient-to-b from-indigo-200 to-purple-200">
+            <div className="mt-4 pl-6 space-y-4 border-l-2 border-border">
               <div className="space-y-2">
                 <Label htmlFor="timeZone" className="flex items-center gap-2">
-                  <Globe className="h-4 w-4 text-indigo-500" />
+                  <Globe className="h-4 w-4 text-muted-foreground" />
                   Time Zone
                 </Label>
                 <Input
@@ -342,9 +338,8 @@ export function EnhancedInvitationForm({
                   onChange={handleInputChange('timeZone')}
                   placeholder="Europe/Berlin, America/New_York, etc."
                   disabled={isSubmitting}
-                  className="border-indigo-200 focus:border-indigo-400 focus:ring-indigo-200"
                 />
-                <p className="text-xs text-indigo-600 flex items-center gap-1">
+                <p className="text-xs text-muted-foreground flex items-center gap-1">
                   <Users className="h-3 w-3" />
                   Helps optimize scheduling experience for the yoga instructor
                 </p>
@@ -353,39 +348,33 @@ export function EnhancedInvitationForm({
           </details>
           
           {submitError && (
-            <Alert variant="destructive" className="border-red-200 bg-red-50/50">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription className="flex items-center gap-2">
-                <span>Failed to send invitation:</span>
-                <span className="font-medium">{submitError}</span>
-              </AlertDescription>
-            </Alert>
+            <div className="flex items-center gap-2 p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md dark:text-red-400 dark:bg-red-950/50 dark:border-red-800">
+              <AlertCircle className="h-4 w-4 flex-shrink-0" />
+              <span>Failed to send invitation: {submitError}</span>
+            </div>
           )}
         </form>
       </UnifiedDialog>
 
       {/* Cancel Confirmation Dialog */}
       <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
-        <AlertDialogContent className="border-orange-200 bg-gradient-to-br from-orange-50/80 to-red-50/80 backdrop-blur-sm">
+        <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2 text-orange-800">
-              <AlertCircle className="h-5 w-5 text-orange-500" />
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertCircle className="h-5 w-5 text-destructive" />
               Discard Invitation?
             </AlertDialogTitle>
-            <AlertDialogDescription className="text-orange-700">
+            <AlertDialogDescription>
               You have unsaved changes in the invitation form. Are you sure you want to discard them?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel 
-              onClick={() => setShowCancelDialog(false)}
-              className="border-orange-200 hover:bg-orange-100"
-            >
+            <AlertDialogCancel onClick={() => setShowCancelDialog(false)}>
               Keep Editing
             </AlertDialogCancel>
             <AlertDialogAction 
               onClick={confirmCancel}
-              className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white border-0"
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Discard Changes
             </AlertDialogAction>
