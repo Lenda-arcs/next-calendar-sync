@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { RegisterForm } from '@/components/auth/register-form'
 
-import { InvitationPasswordClient } from '@/components/auth/invitation-password-client'
+import { RegisterPageClient } from '@/components/auth/register-page-client'
 import Link from 'next/link'
 import { PATHS } from '@/lib/paths'
 import { ArrowLeft, Lock, UserPlus } from 'lucide-react'
@@ -36,9 +36,6 @@ export default async function RegisterPage({ params, searchParams }: RegisterPag
   const locale = getValidLocale(localeParam)
   const { 
     token, 
-    access_token, 
-    refresh_token, 
-    type, 
     error, 
     error_description 
   } = await searchParams
@@ -57,19 +54,16 @@ export default async function RegisterPage({ params, searchParams }: RegisterPag
   const homePath = locale === 'en' ? PATHS.HOME : `/${locale}`
   const signInPath = locale === 'en' ? PATHS.AUTH.SIGN_IN : `/${locale}/auth/sign-in`
 
-  // Check for Supabase invitation flow
-  const isSupabaseInvitation = access_token && type === 'invite'
-  
   // Check for old token-based invitation (legacy support)
   let validInvitation = null
-  if (token && !isSupabaseInvitation) {
+  if (token) {
     const validationResult = await validateInvitation(token)
     if (validationResult.valid) {
       validInvitation = validationResult.invitation
     }
   }
 
-  // Handle Supabase invitation errors
+  // Handle Supabase invitation errors from query params
   if (error) {
     return (
       <>
@@ -112,26 +106,6 @@ export default async function RegisterPage({ params, searchParams }: RegisterPag
             </div>
           </CardContent>
         </Card>
-      </>
-    )
-  }
-
-  // Handle Supabase invitation flow (new approach)
-  if (isSupabaseInvitation) {
-    return (
-      <>
-        <div className="text-center mb-8">
-          <Link href={homePath} className="inline-flex items-center text-sm text-foreground/70 hover:text-foreground font-sans transition-colors">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to home
-          </Link>
-        </div>
-
-        <InvitationPasswordClient 
-          accessToken={access_token}
-          refreshToken={refresh_token}
-          locale={locale}
-        />
       </>
     )
   }
@@ -191,8 +165,7 @@ export default async function RegisterPage({ params, searchParams }: RegisterPag
     )
   }
 
-  // Show closed beta message if no valid invitation
-  //TODO: translate this texts
+  // Default: Use client component to handle both normal registration and fragment-based invitations
   return (
     <>
       <div className="text-center mb-8">
@@ -202,48 +175,11 @@ export default async function RegisterPage({ params, searchParams }: RegisterPag
         </Link>
       </div>
 
-      <Card variant="glass">
-        <CardHeader className="text-center">
-          <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Lock className="h-8 w-8 text-primary" />
-          </div>
-          <CardTitle className="text-2xl">Closed Beta</CardTitle>
-          <CardDescription className="text-lg">
-            We&apos;re currently in closed beta and testing with select yoga instructors
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="text-center space-y-6">
-          <div className="space-y-4">
-            <p className="text-foreground/70">
-              Thank you for your interest in avara.! We&apos;re working hard to perfect the experience
-              for yoga instructors before opening to everyone.
-            </p>
-            <p className="text-foreground/70">
-              <strong>Already have an account?</strong> You can still sign in below.
-            </p>
-          </div>
-
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Button asChild size="lg">
-              <Link href={signInPath}>Sign In</Link>
-            </Button>
-            <Button asChild variant="outline" size="lg">
-              <Link href="mailto:hello@avara.studio?subject=Beta%20Access%20Request">
-                Request Beta Access
-              </Link>
-            </Button>
-          </div>
-
-          <div className="pt-4 border-t border-border/50">
-            <p className="text-sm text-foreground/60">
-              Want to see how it works? Check out our{' '}
-              <Link href={PATHS.DYNAMIC.TEACHER_SCHEDULE('demo')} className="text-primary hover:text-primary/80 font-medium">
-                example schedule page
-              </Link>
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+      <RegisterPageClient 
+        locale={locale}
+        homePath={homePath}
+        signInPath={signInPath}
+      />
     </>
   )
 } 

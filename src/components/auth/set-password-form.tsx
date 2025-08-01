@@ -5,8 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Form, FormField, Button, useForm } from '@/components/ui'
 import { createClient } from '@/lib/supabase'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Lock, Eye, EyeOff, AlertCircle, CheckCircle, Loader2 } from 'lucide-react'
+import { Lock, Eye, EyeOff, AlertCircle, Loader2 } from 'lucide-react'
 
 interface SetPasswordFormProps {
   invitationData?: {
@@ -99,18 +98,18 @@ export function SetPasswordForm({ invitationData, className }: SetPasswordFormPr
 
   return (
     <div className={`w-full max-w-md mx-auto ${className || ''}`}>
-      <Card className="border-pink-200 bg-gradient-to-br from-pink-50/50 to-purple-50/50 backdrop-blur-sm">
+      <Card className="border-border bg-background">
         <CardHeader className="text-center space-y-4">
           <div className="flex justify-center">
-            <div className="p-3 rounded-full bg-gradient-to-r from-pink-500 to-purple-500">
-              <CheckCircle className="h-6 w-6 text-white" />
+            <div className="p-3 rounded-full bg-primary">
+              <Lock className="h-6 w-6 text-primary-foreground" />
             </div>
           </div>
           <div>
-            <CardTitle className="text-2xl font-bold bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent">
-              🎉 Welcome to avara.studio!
+            <CardTitle className="text-2xl font-bold text-foreground">
+              Welcome to avara.studio!
             </CardTitle>
-            <CardDescription className="mt-2 text-gray-600">
+            <CardDescription className="mt-2 text-muted-foreground">
               {invitationData?.full_name ? (
                 <>Hi {invitationData.full_name}! Complete your yoga instructor account by setting a password.</>
               ) : (
@@ -151,92 +150,84 @@ export function SetPasswordForm({ invitationData, className }: SetPasswordFormPr
             </div>
           )}
 
-          <Form onSubmit={handleSubmit} className="space-y-4">
-            {/* Password Field */}
+          <Form onSubmit={handleSubmit} loading={loading || isProcessing}>
             <FormField
               label="Create Password"
+              type={showPassword ? 'text' : 'password'}
+              placeholder="Create a secure password"
+              value={(values as unknown as SetPasswordFormData).password}
+              onChange={(e) => setValue('password', e.target.value)}
+              onBlur={() => validateFieldOnBlur('password')}
               error={errors.password}
-              required
-              className="space-y-2"
-            >
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-pink-400 h-4 w-4" />
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  value={(values as unknown as SetPasswordFormData).password}
-                  onChange={(e) => setValue('password', e.target.value)}
-                  onBlur={() => validateFieldOnBlur('password')}
-                  placeholder="Create a secure password"
-                  disabled={loading || isProcessing}
-                  className="w-full pl-10 pr-10 py-3 border border-pink-200 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent bg-white/70 backdrop-blur-sm transition-all"
-                />
+              leftIcon={<Lock className="h-4 w-4" />}
+              rightIcon={
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-pink-400 hover:text-pink-600"
+                  className="hover:text-foreground transition-colors"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
                   disabled={loading || isProcessing}
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
-              </div>
-            </FormField>
+              }
+              required
+              autoComplete="new-password"
+            />
 
-            {/* Confirm Password Field */}
             <FormField
               label="Confirm Password"
+              type={showConfirmPassword ? 'text' : 'password'}
+              placeholder="Confirm your password"
+              value={(values as unknown as SetPasswordFormData).confirmPassword}
+              onChange={(e) => setValue('confirmPassword', e.target.value)}
+              onBlur={() => validateFieldOnBlur('confirmPassword')}
               error={errors.confirmPassword}
-              required
-              className="space-y-2"
-            >
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-purple-400 h-4 w-4" />
-                <input
-                  type={showConfirmPassword ? 'text' : 'password'}
-                  value={(values as unknown as SetPasswordFormData).confirmPassword}
-                  onChange={(e) => setValue('confirmPassword', e.target.value)}
-                  onBlur={() => validateFieldOnBlur('confirmPassword')}
-                  placeholder="Confirm your password"
-                  disabled={loading || isProcessing}
-                  className="w-full pl-10 pr-10 py-3 border border-purple-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white/70 backdrop-blur-sm transition-all"
-                />
+              leftIcon={<Lock className="h-4 w-4" />}
+              rightIcon={
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-purple-400 hover:text-purple-600"
+                  className="hover:text-foreground transition-colors"
+                  aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
                   disabled={loading || isProcessing}
                 >
                   {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
-              </div>
-            </FormField>
+              }
+              required
+              autoComplete="new-password"
+            />
 
             {/* Error Display */}
             {authError && (
-              <Alert variant="destructive" className="border-red-200 bg-red-50/50">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{authError}</AlertDescription>
-              </Alert>
+              <div className="flex items-center gap-2 p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md dark:text-red-400 dark:bg-red-950/50 dark:border-red-800">
+                <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                <span>{authError}</span>
+              </div>
             )}
 
             {/* Submit Button */}
             <Button
               type="submit"
               disabled={loading || isProcessing}
-              className="w-full py-3 bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white font-medium rounded-lg transition-all transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+              className="w-full"
+              size="lg"
+              loading={loading || isProcessing}
             >
               {loading || isProcessing ? (
-                <div className="flex items-center justify-center gap-2">
+                <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Setting Password...
-                </div>
+                  Setting up your account...
+                </>
               ) : (
-                'Complete Setup & Enter avara.studio'
+                "Complete Setup"
               )}
             </Button>
           </Form>
 
           {/* Security Notice */}
-          <div className="text-center text-xs text-gray-500 bg-gray-50/50 p-3 rounded-lg">
+          <div className="text-center text-xs text-muted-foreground bg-muted/50 p-3 rounded-lg">
             🔒 Your password is encrypted and secure. You can change it anytime in your profile settings.
           </div>
         </CardContent>
