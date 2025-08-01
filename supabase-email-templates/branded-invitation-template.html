@@ -5,153 +5,82 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ if eq .Data.language "de" }}Willkommen bei avara.studio{{ else if eq .Data.language "es" }}Bienvenido a avara.studio{{ else }}Welcome to avara.studio{{ end }}</title>
 </head>
-    <body style="margin: 0; padding: 0; font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f8fafc; color: #0f172a;">
-    <div style="max-width: 600px; margin: 40px auto; background: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); border: 1px solid #e2e8f0;">
+    <body style="margin: 0; padding: 0; font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: radial-gradient(at 20% 20%, #fadadd 10%, transparent 40%), radial-gradient(at 80% 30%, #e2a8d1 10%, transparent 40%), radial-gradient(at 40% 80%, #a3bfd9 10%, transparent 40%), radial-gradient(at 60% 60%, #fce5ec 10%, transparent 40%), #f8f8f8; color: #3f3f3f; line-height: 1.6;">
+    <!-- Container -->
+    <div style="max-width: 600px; margin: 0 auto; background: transparent;">
         
-        <!-- Header -->
-        <div style="background: #ffffff; padding: 40px 30px; text-align: center; border-bottom: 1px solid #e2e8f0;">
-            <!-- Logo/Brand -->
-            <div style="margin-bottom: 20px;">
-                <div style="display: inline-block; padding: 8px 16px; background: #f8fafc; border-radius: 8px; color: #0f172a; font-weight: 600; font-size: 18px; letter-spacing: 0.5px; border: 1px solid #e2e8f0;">
-                    🧘‍♀️ avara
-                </div>
+        <!-- Header with glass effect -->
+        <div style="background: rgba(255, 255, 255, 0.4); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.4); padding: 40px 20px; text-align: center; border-radius: 12px 12px 0 0;">
+            <!-- Simple logo -->
+            <div style="margin-bottom: 24px;">
+                <span style="font-size: 24px; font-weight: 700; color: #3f3f3f; letter-spacing: 1px;">
+                    avara.
+                </span>
             </div>
             
-            {{ if eq .Data.language "de" }}
-                <h1 style="font-family: 'DM Serif Display', serif; font-size: 24px; font-weight: 600; color: #0f172a; margin: 0;">
-                    avara.studio Beta
-                </h1>
-                <p style="font-size: 14px; color: #64748b; margin: 6px 0 0 0;">
-                    Yoga-Klassen Planer mit öffentlichen Seiten
-                </p>
-            {{ else if eq .Data.language "es" }}
-                <h1 style="font-family: 'DM Serif Display', serif; font-size: 24px; font-weight: 600; color: #0f172a; margin: 0;">
-                    avara.studio Beta
-                </h1>
-                <p style="font-size: 14px; color: #64748b; margin: 6px 0 0 0;">
-                    Planificador de clases de yoga con páginas públicas
-                </p>
-            {{ else }}
-                <h1 style="font-family: 'DM Serif Display', serif; font-size: 24px; font-weight: 600; color: #0f172a; margin: 0;">
-                    avara.studio Beta
-                </h1>
-                <p style="font-size: 14px; color: #64748b; margin: 6px 0 0 0;">
-                    Yoga class planner with public student pages
-                </p>
-            {{ end }}
+            <h1 style="font-family: 'DM Serif Display', serif; font-size: 32px; font-weight: 600; color: #3f3f3f; margin: 0 0 8px 0; line-height: 1.2; letter-spacing: -0.02em;">
+                avara.studio Beta
+            </h1>
+            <p style="font-size: 16px; color: #3f3f3f; margin: 0; font-weight: 400; opacity: 0.8;">
+                {{ if eq .Data.language "de" }}Yoga-Klassen Planer mit öffentlichen Seiten{{ else if eq .Data.language "es" }}Planificador de clases de yoga con páginas públicas{{ else }}Yoga class planner with public student pages{{ end }}
+            </p>
         </div>
         
         <!-- Content -->
-        <div style="padding: 32px 30px;">
-            {{ if eq .Data.language "de" }}
-                <h2 style="font-family: 'DM Serif Display', serif; font-size: 20px; color: #0f172a; margin: 0 0 16px 0; text-align: center; font-weight: 500;">
-                    Beta-Einladung ✨
-                </h2>
-                
-                <p style="font-size: 15px; line-height: 1.5; color: #475569; margin: 0 0 24px 0; text-align: center;">
-                    {{ if .Data.full_name }}Hallo {{ .Data.full_name }}, {{ end }}Sie sind eingeladen, <strong>avara.studio</strong> Beta zu testen – den Yoga-Klassen Planer mit öffentlichen Schülerseiten und Rechnungsmanagement.
-                </p>
-            {{ else if eq .Data.language "es" }}
-                <h2 style="font-family: 'DM Serif Display', serif; font-size: 20px; color: #0f172a; margin: 0 0 16px 0; text-align: center; font-weight: 500;">
-                    Invitación Beta ✨
-                </h2>
-                
-                <p style="font-size: 15px; line-height: 1.5; color: #475569; margin: 0 0 24px 0; text-align: center;">
-                    {{ if .Data.full_name }}Hola {{ .Data.full_name }}, {{ end }}estás invitado a probar <strong>avara.studio</strong> Beta – el planificador de clases de yoga con páginas públicas para estudiantes y gestión de facturas.
-                </p>
-            {{ else }}
-                <h2 style="font-family: 'DM Serif Display', serif; font-size: 20px; color: #0f172a; margin: 0 0 16px 0; text-align: center; font-weight: 500;">
-                    Beta Invitation ✨
-                </h2>
-                
-                <p style="font-size: 15px; line-height: 1.5; color: #475569; margin: 0 0 24px 0; text-align: center;">
-                    {{ if .Data.full_name }}Hi {{ .Data.full_name }}, {{ end }}you're invited to try <strong>avara.studio</strong> Beta – the yoga class planner with public student pages and invoice management.
-                </p>
-            {{ end }}
+        <div style="background: rgba(255, 255, 255, 0.5); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.4); padding: 40px 20px;">
+            <h2 style="font-family: 'DM Serif Display', serif; font-size: 28px; color: #3f3f3f; margin: 0 0 20px 0; text-align: center; font-weight: 600; line-height: 1.3; letter-spacing: -0.02em;">
+                {{ if eq .Data.language "de" }}Beta-Einladung ✨{{ else if eq .Data.language "es" }}Invitación Beta ✨{{ else }}Beta Invitation ✨{{ end }}
+            </h2>
+            
+            <p style="font-size: 18px; line-height: 1.7; color: #3f3f3f; margin: 0 0 32px 0; text-align: center; max-width: 500px; margin-left: auto; margin-right: auto;">
+                {{ if eq .Data.language "de" }}
+                    {{ if .Data.full_name }}Hallo {{ .Data.full_name }}, {{ end }}Sie sind eingeladen, <strong style="color: #3f3f3f;">avara.studio</strong> Beta zu testen – den Yoga-Klassen Planer mit öffentlichen Schülerseiten und Rechnungsmanagement.
+                {{ else if eq .Data.language "es" }}
+                    {{ if .Data.full_name }}Hola {{ .Data.full_name }}, {{ end }}estás invitado a probar <strong style="color: #3f3f3f;">avara.studio</strong> Beta – el planificador de clases de yoga con páginas públicas para estudiantes y gestión de facturas.
+                {{ else }}
+                    {{ if .Data.full_name }}Hi {{ .Data.full_name }}, {{ end }}you're invited to try <strong style="color: #3f3f3f;">avara.studio</strong> Beta – the yoga class planner with public student pages and invoice management.
+                {{ end }}
+            </p>
             
             <!-- Personal Message -->
             {{ if .Data.invitation_message }}
-                <div style="background: #f8fafc; border-radius: 8px; padding: 20px; margin: 20px 0; border-left: 4px solid #e2e8f0; border: 1px solid #e2e8f0;">
-                    {{ if eq .Data.language "de" }}
-                        <p style="margin: 0 0 10px 0; font-size: 14px; color: #0f172a; font-weight: 600;">
-                            Persönliche Nachricht:
-                        </p>
-                    {{ else if eq .Data.language "es" }}
-                        <p style="margin: 0 0 10px 0; font-size: 14px; color: #0f172a; font-weight: 600;">
-                            Mensaje personal:
-                        </p>
-                    {{ else }}
-                        <p style="margin: 0 0 10px 0; font-size: 14px; color: #0f172a; font-weight: 600;">
-                            Personal message:
-                        </p>
-                    {{ end }}
-                    <p style="margin: 0; font-size: 14px; color: #475569; font-style: italic;">
+                <div style="background: rgba(250, 218, 221, 0.6); border-radius: 12px; padding: 24px; margin: 24px auto; max-width: 480px; border-left: 4px solid #fadadd; backdrop-filter: blur(8px);">
+                    <p style="margin: 0 0 12px 0; font-size: 16px; color: #3f3f3f; font-weight: 600;">
+                        {{ if eq .Data.language "de" }}Persönliche Nachricht:{{ else if eq .Data.language "es" }}Mensaje personal:{{ else }}Personal message:{{ end }}
+                    </p>
+                    <p style="margin: 0; font-size: 16px; color: #3f3f3f; font-style: italic; line-height: 1.5; opacity: 0.9;">
                         "{{ .Data.invitation_message }}"
                     </p>
                 </div>
             {{ end }}
             
             <!-- CTA Button -->
-            <div style="text-align: center; margin: 32px 0;">
-                {{ if eq .Data.language "de" }}
-                    <a href="{{ .ConfirmationURL }}" 
-                       style="display: inline-block; 
-                              background: #0f172a; 
-                              border: 1px solid #0f172a; 
-                              color: #ffffff; text-decoration: none; 
-                              padding: 12px 24px; border-radius: 6px; 
-                              font-weight: 500; font-size: 14px; 
-                              box-shadow: 0 1px 2px rgba(0,0,0,0.05); 
-                              transition: all 0.2s ease;">
-                        Beta beitreten
-                    </a>
-                {{ else if eq .Data.language "es" }}
-                    <a href="{{ .ConfirmationURL }}" 
-                       style="display: inline-block; 
-                              background: #0f172a; 
-                              border: 1px solid #0f172a; 
-                              color: #ffffff; text-decoration: none; 
-                              padding: 12px 24px; border-radius: 6px; 
-                              font-weight: 500; font-size: 14px; 
-                              box-shadow: 0 1px 2px rgba(0,0,0,0.05); 
-                              transition: all 0.2s ease;">
-                        Unirse a Beta
-                    </a>
-                {{ else }}
-                    <a href="{{ .ConfirmationURL }}" 
-                       style="display: inline-block; 
-                              background: #0f172a; 
-                              border: 1px solid #0f172a; 
-                              color: #ffffff; text-decoration: none; 
-                              padding: 12px 24px; border-radius: 6px; 
-                              font-weight: 500; font-size: 14px; 
-                              box-shadow: 0 1px 2px rgba(0,0,0,0.05); 
-                              transition: all 0.2s ease;">
-                        Join Beta
-                    </a>
-                {{ end }}
+            <div style="text-align: center; margin: 40px 0;">
+                <a href="{{ .ConfirmationURL }}" 
+                   style="display: inline-block; 
+                          background: #3f3f3f; 
+                          color: #ffffff; 
+                          text-decoration: none; 
+                          padding: 16px 32px; 
+                          border-radius: 12px; 
+                          font-weight: 600; 
+                          font-size: 18px; 
+                          box-shadow: 0 8px 32px 0 rgba(63, 63, 63, 0.37); 
+                          transition: all 0.2s ease;
+                          border: 1px solid rgba(255, 255, 255, 0.3);">
+                    {{ if eq .Data.language "de" }}Beta beitreten{{ else if eq .Data.language "es" }}Unirse a Beta{{ else }}Join Beta{{ end }}
+                </a>
             </div>
-            
-
-            
-
         </div>
         
         <!-- Footer -->
-        <div style="background: #f8fafc; padding: 16px; text-align: center; border-top: 1px solid #e2e8f0;">
-            {{ if eq .Data.language "de" }}
-                <p style="margin: 0; font-size: 11px; color: #64748b;">
-                    Beta-Einladung von avara.studio • {{ .SiteURL }}
-                </p>
-            {{ else if eq .Data.language "es" }}
-                <p style="margin: 0; font-size: 11px; color: #64748b;">
-                    Invitación Beta de avara.studio • {{ .SiteURL }}
-                </p>
-            {{ else }}
-                <p style="margin: 0; font-size: 11px; color: #64748b;">
-                    Beta invitation from avara.studio • {{ .SiteURL }}
-                </p>
-            {{ end }}
+        <div style="background: rgba(255, 255, 255, 0.3); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.4); padding: 20px; text-align: center; border-radius: 0 0 12px 12px;">
+            <p style="margin: 0; font-size: 14px; color: #3f3f3f;">
+                {{ if eq .Data.language "de" }}Beta-Einladung von avara.studio{{ else if eq .Data.language "es" }}Invitación Beta de avara.studio{{ else }}Beta invitation from avara.studio{{ end }}
+            </p>
+            <p style="margin: 8px 0 0 0; font-size: 12px; color: #3f3f3f; opacity: 0.7;">
+                {{ .SiteURL }}
+            </p>
         </div>
     </div>
 </body>
