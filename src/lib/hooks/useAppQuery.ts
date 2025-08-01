@@ -29,7 +29,6 @@ import type {
   InvitationData,
   InvitationResult,
   CalendarSelection,
-  MarkInvitationUsedResult,
   InvoiceStatus,
   CreateEventData,
   CreateEventResult,
@@ -340,14 +339,6 @@ export function useUserEvents(userId: string, filters?: EventFilters, options?: 
     { 
       enabled: options?.enabled ?? !!userId, 
       staleTime: config.staleTime 
-    }
-  )
-}
-
-export function useMarkInvitationAsUsed() {
-  return useSupabaseMutation<MarkInvitationUsedResult, { token: string; userId: string }>(
-    async (supabase: SupabaseClient, { token, userId }: { token: string; userId: string }) => {
-      return dataAccess.markInvitationAsUsed(supabase, token, userId)
     }
   )
 }
