@@ -122,6 +122,16 @@ export async function middleware(req: NextRequest) {
         signInUrl.searchParams.set('returnTo', pathname)
         return NextResponse.redirect(signInUrl)
       }
+      
+      // ✨ For authenticated users on protected routes, add user data to headers
+      // This allows server components to access user info without additional Supabase calls
+      if (user) {
+        supabaseResponse.headers.set('x-user-id', user.id)
+        supabaseResponse.headers.set('x-user-data', JSON.stringify({
+          id: user.id,
+          email: user.email || ''
+        }))
+      }
     }
 
     return supabaseResponse

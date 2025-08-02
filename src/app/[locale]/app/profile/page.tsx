@@ -1,7 +1,7 @@
 import { generateProfileMetadata } from '@/lib/i18n/metadata'
 import type { Metadata } from 'next'
 import ProfileClient from '@/components/dashboard/profile/ProfileClient'
-import { createServerClient } from '@/lib/supabase-server'
+import { getAuthenticatedUserId } from '@/lib/server-user'
 import { getValidLocale } from '@/lib/i18n/config'
 
 
@@ -16,13 +16,11 @@ export async function generateMetadata({ params }: ProfilePageProps): Promise<Me
 }
 
 export default async function ProfilePage() {
-  const supabase = await createServerClient()
-
-  // ✨ Middleware already handles auth protection for /app routes
-  // Just get the user ID - no need for redundant auth checks
-  const { data: { user: authUser } } = await supabase.auth.getUser()
+  // ✨ Get user ID from middleware headers - no Supabase call needed!
+  // Middleware already authenticated the user and cached the ID
+  const userId = await getAuthenticatedUserId()
 
   // ✨ Client-side data fetching for better cache integration
   // Just pass the userId - let ProfileClient handle data fetching with TanStack Query
-  return <ProfileClient userId={authUser!.id} />
+  return <ProfileClient userId={userId} />
 } 

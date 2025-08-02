@@ -2,7 +2,7 @@ import { Container } from '@/components/layout/container'
 import { generateInvoicesMetadata } from '@/lib/i18n/metadata'
 import type { Metadata } from 'next'
 import { InvoiceManagement } from '@/components/invoices/InvoiceManagement'
-import { createServerClient } from '@/lib/supabase-server'
+import { getAuthenticatedUserId } from '@/lib/server-user'
 import { getValidLocale, getTranslations, createTranslator } from '@/lib/i18n/config'
 
 interface ManageInvoicesPageProps {
@@ -19,11 +19,8 @@ export default async function ManageInvoicesPage({ params }: ManageInvoicesPageP
   const { locale: localeParam } = await params
   const locale = getValidLocale(localeParam)
   
-  const supabase = await createServerClient()
-  
-  const { data: { user } } = await supabase.auth.getUser()
-  
-  // Note: Auth is handled by middleware, user should exist
+  // ✨ Get user ID from middleware headers - no Supabase call needed!
+  const userId = await getAuthenticatedUserId()
 
   // Get translations for the page
   const translations = await getTranslations(locale)
@@ -34,7 +31,7 @@ export default async function ManageInvoicesPage({ params }: ManageInvoicesPageP
       title={t('invoices.management.title')}
       subtitle={t('invoices.management.subtitle')}
     >
-      <InvoiceManagement userId={user!.id} />
+      <InvoiceManagement userId={userId} />
     </Container>
   )
 } 
