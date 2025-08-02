@@ -1,6 +1,6 @@
 'use client'
 
-import React, { createContext, useContext, useEffect, useState } from 'react'
+import React, { createContext, useContext, useEffect, useLayoutEffect, useState } from 'react'
 import { themeConfig, themeUtils } from '@/lib/design-system'
 import { useAuthUser } from '@/lib/hooks/useAuthUser'
 import { createClient } from '@/lib/supabase'
@@ -30,7 +30,8 @@ export function ThemeProvider({
   defaultVariant = 'default'
 }: ThemeProviderProps) {
   const [variant, setVariant] = useState<ThemeVariant>(defaultVariant)
-  const [isLoading, setIsLoading] = useState(true)
+  // Start as not loading if we have a server-provided theme
+  const [isLoading, setIsLoading] = useState(defaultVariant === 'default')
   const { user } = useAuthUser()
   const supabase = createClient()
 
@@ -55,13 +56,18 @@ export function ThemeProvider({
     }
   }
 
-  // Apply theme on variant change
-  useEffect(() => {
+  // Apply theme synchronously to prevent flicker
+  useLayoutEffect(() => {
     themeUtils.applyTheme(variant)
   }, [variant])
 
-  // Load theme preference on mount and when user changes
+  // Load theme preference only if no server-provided theme
   useEffect(() => {
+    // If we already have a server-provided theme (not default), skip loading
+    if (defaultVariant !== 'default') {
+      return
+    }
+
     const loadTheme = async () => {
       setIsLoading(true)
 
@@ -104,7 +110,7 @@ export function ThemeProvider({
     }
 
     loadTheme()
-  }, [user?.id, supabase])
+  }, [user?.id, supabase, defaultVariant])
 
   const availableVariants = Object.entries(themeConfig.variants).map(([key, config]) => ({
     key: key as ThemeVariant,

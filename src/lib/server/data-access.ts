@@ -700,7 +700,7 @@ export async function deleteInvoice(supabase: SupabaseClient, invoiceId: string)
   const { data, error } = await supabase
     .from("invoices")
     .delete()
-    .eq("id", invoiceId)
+    .eq("id",   invoiceId)
     .select()
 
   if (error) throw error

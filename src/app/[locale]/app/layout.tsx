@@ -14,6 +14,7 @@ import { ActiveNavLinks } from '@/components/navigation/ActiveNavLinks'
 import { ActiveHomeLink } from '@/components/navigation/ActiveHomeLink'
 import { getValidLocale, getTranslations, createTranslator } from '@/lib/i18n/config'
 import { ThemeProvider } from '@/components/providers'
+import { themeUtils } from '@/lib/design-system'
 
 interface AppLayoutProps {
   children: React.ReactNode
@@ -87,8 +88,17 @@ export default async function LocalizedAppLayout({ children, params }: AppLayout
     iconName
   }))
 
+  // Generate server-side theme CSS to prevent flicker
+  const themeVariant = (userProfile?.theme_variant as 'default' | 'ocean' | 'sunset') || 'default'
+  const serverThemeCSS = themeVariant !== 'default' ? themeUtils.generateThemeCSS(themeVariant) : null
+
   return (
-    <ThemeProvider defaultVariant={(userProfile?.theme_variant as 'default' | 'ocean' | 'sunset') || 'default'}>
+    <>
+      {/* Inject server-side theme CSS to prevent flicker */}
+      {serverThemeCSS && (
+        <style dangerouslySetInnerHTML={{ __html: serverThemeCSS }} />
+      )}
+      <ThemeProvider defaultVariant={themeVariant}>
       <div className="min-h-screen">
         {/* Navigation Header with Glassmorphism */}
         <header className="backdrop-blur-md bg-gradient-to-r from-white/70 via-white/50 to-transparent border-b border-white/40 shadow-xl sticky top-0 z-50">
@@ -135,5 +145,6 @@ export default async function LocalizedAppLayout({ children, params }: AppLayout
       </main>
     </div>
     </ThemeProvider>
+    </>
   )
 } 

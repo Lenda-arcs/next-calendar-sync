@@ -4,8 +4,13 @@ import React, {useState} from 'react'
 import {LoadingTabsTrigger, TabContent, Tabs, TabsContent, TabsList} from '@/components/ui'
 import {Card, CardContent} from '@/components/ui/card'
 import DataLoader from '@/components/ui/data-loader'
-import {InvoiceCard, InvoiceCreationModal, InvoiceSettings, UninvoicedEventsList} from '@/components'
-import {EmptyInvoicesState} from './EmptyInvoicesState'
+import {
+  EmptyInvoicesState,
+  InvoiceCard,
+  InvoiceCreationModal,
+  InvoiceSettings,
+  UninvoicedEventsList
+} from '@/components'
 import {
   useDeleteInvoice,
   useGenerateInvoicePDF,

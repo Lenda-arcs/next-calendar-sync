@@ -1109,6 +1109,7 @@ export type Database = {
           name: string | null
           profile_image_url: string | null
           public_url: string | null
+          theme_variant: string | null
           timezone: string | null
           website_url: string | null
           yoga_styles: string[] | null
@@ -1124,6 +1125,7 @@ export type Database = {
           name?: string | null
           profile_image_url?: string | null
           public_url?: string | null
+          theme_variant?: string | null
           timezone?: string | null
           website_url?: string | null
           yoga_styles?: string[] | null
@@ -1139,6 +1141,7 @@ export type Database = {
           name?: string | null
           profile_image_url?: string | null
           public_url?: string | null
+          theme_variant?: string | null
           timezone?: string | null
           website_url?: string | null
           yoga_styles?: string[] | null

@@ -3,6 +3,8 @@ import { createServerClient } from '@/lib/supabase-server'
 import { getValidLocale } from '@/lib/i18n/config'
 import { generateYogaInstructorStructuredData } from '@/lib/i18n/metadata'
 import { StructuredData } from '@/components/seo/StructuredData'
+import { ThemeProvider } from '@/components/providers'
+import { themeUtils } from '@/lib/design-system'
 import TeacherScheduleLayout from './TeacherScheduleLayout'
 
 interface LayoutProps {
@@ -47,18 +49,29 @@ export default async function Layout({ children, params }: LayoutProps) {
     profile.profile_image_url
   )
 
+  // Generate server-side theme CSS to prevent flicker
+  const themeVariant = (profile.theme_variant as 'default' | 'ocean' | 'sunset') || 'default'
+  const serverThemeCSS = themeVariant !== 'default' ? themeUtils.generateThemeCSS(themeVariant) : null
+
   return (
     <>
       {/* Add structured data for SEO */}
       <StructuredData data={structuredData} />
       
-      <TeacherScheduleLayout 
-        profile={profile} 
-        user={user}
-        teacherSlug={teacherSlug}
-      >
-        {children}
-      </TeacherScheduleLayout>
+      {/* Inject server-side theme CSS to prevent flicker */}
+      {serverThemeCSS && (
+        <style dangerouslySetInnerHTML={{ __html: serverThemeCSS }} />
+      )}
+      
+      <ThemeProvider defaultVariant={themeVariant}>
+        <TeacherScheduleLayout 
+          profile={profile} 
+          user={user}
+          teacherSlug={teacherSlug}
+        >
+          {children}
+        </TeacherScheduleLayout>
+      </ThemeProvider>
     </>
   )
 } 

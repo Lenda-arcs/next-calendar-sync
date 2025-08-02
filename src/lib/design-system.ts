@@ -290,7 +290,7 @@ export const themeConfig = {
 
 // Theme Management Utilities
 export const themeUtils = {
-  // Apply theme variant
+  // Apply theme variant (client-side)
   applyTheme: (variant: keyof typeof themeConfig.variants) => {
     const theme = themeConfig.variants[variant]
     if (typeof document !== 'undefined') {
@@ -298,6 +298,18 @@ export const themeUtils = {
       document.documentElement.style.setProperty('--glass-opacity', theme.glassOpacity.toString())
       document.documentElement.style.setProperty('--glass-border-opacity', theme.borderOpacity.toString())
     }
+  },
+
+  // Generate CSS string for server-side injection
+  generateThemeCSS: (variant: keyof typeof themeConfig.variants) => {
+    const theme = themeConfig.variants[variant]
+    return `
+      :root {
+        --app-background: ${theme.background};
+        --glass-opacity: ${theme.glassOpacity};
+        --glass-border-opacity: ${theme.borderOpacity};
+      }
+    `.trim()
   },
 
   // Get current theme classes
