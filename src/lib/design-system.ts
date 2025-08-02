@@ -1,7 +1,13 @@
 /**
  * Design System Foundation
  * Centralized design tokens and utilities for consistent UI with glassmorphism theme
+ * Integrates with shadcn CSS variables for seamless theming
  */
+
+// CSS Variable Helpers for shadcn integration
+export const cssVar = (name: string) => `hsl(var(--${name}))`
+export const cssVarWithOpacity = (name: string, opacity: number) => 
+  `hsl(var(--${name}) / ${opacity})`
 
 export const designTokens = {
   // Spacing Scale (based on 4px grid)
@@ -107,6 +113,46 @@ export const designTokens = {
     fast: '150ms',
     normal: '300ms',
     slow: '500ms',
+  },
+
+  // Semantic Colors (integrates with shadcn CSS variables)
+  colors: {
+    // Core semantic colors
+    primary: cssVar('primary'),
+    primaryForeground: cssVar('primary-foreground'),
+    secondary: cssVar('secondary'),
+    secondaryForeground: cssVar('secondary-foreground'),
+    muted: cssVar('muted'),
+    mutedForeground: cssVar('muted-foreground'),
+    accent: cssVar('accent'),
+    accentForeground: cssVar('accent-foreground'),
+    destructive: cssVar('destructive'),
+    background: cssVar('background'),
+    foreground: cssVar('foreground'),
+    card: cssVar('card'),
+    cardForeground: cssVar('card-foreground'),
+    border: cssVar('border'),
+    input: cssVar('input'),
+    ring: cssVar('ring'),
+
+    // Glass-specific color functions
+    glass: {
+      primary: (opacity = 0.2) => cssVarWithOpacity('primary', opacity),
+      secondary: (opacity = 0.2) => cssVarWithOpacity('secondary', opacity),
+      accent: (opacity = 0.2) => cssVarWithOpacity('accent', opacity),
+      muted: (opacity = 0.2) => cssVarWithOpacity('muted', opacity),
+      white: (opacity = 0.5) => `rgb(255 255 255 / ${opacity})`,
+      black: (opacity = 0.1) => `rgb(0 0 0 / ${opacity})`,
+    },
+
+    // Glassmorphism specific colors
+    glassmorphism: {
+      background: '#fce5ec',
+      accent: '#fadadd',
+      muted: '#e2a8d1', 
+      surface: '#a3bfd9',
+      text: '#3f3f3f',
+    },
   },
 }
 
@@ -215,4 +261,58 @@ export const colorPalette = {
     accent: 'bg-accent/20 backdrop-blur-md border border-accent/30',
     muted: 'bg-muted/20 backdrop-blur-md border border-muted/30',
   },
-} 
+}
+
+// Theme Configuration
+export const themeConfig = {
+  // Glassmorphism theme variants
+  variants: {
+    default: {
+      name: 'Default Glassmorphism',
+      background: 'radial-gradient(at 20% 20%, #fadadd 10%, transparent 40%), radial-gradient(at 80% 30%, #e2a8d1 10%, transparent 40%), radial-gradient(at 40% 80%, #a3bfd9 10%, transparent 40%), radial-gradient(at 60% 60%, #fce5ec 10%, transparent 40%), #f8f8f8',
+      glassOpacity: 0.5,
+      borderOpacity: 0.4,
+    },
+    ocean: {
+      name: 'Ocean Breeze',
+      background: 'radial-gradient(at 20% 20%, #a3bfd9 15%, transparent 40%), radial-gradient(at 80% 30%, #87ceeb 10%, transparent 40%), radial-gradient(at 40% 80%, #b0e0e6 10%, transparent 40%), #f0f8ff',
+      glassOpacity: 0.6,
+      borderOpacity: 0.3,
+    },
+    sunset: {
+      name: 'Sunset Glow',
+      background: 'radial-gradient(at 20% 20%, #fadadd 15%, transparent 40%), radial-gradient(at 80% 30%, #ffb6c1 10%, transparent 40%), radial-gradient(at 40% 80%, #ffd1dc 10%, transparent 40%), #fff5ee',
+      glassOpacity: 0.4,
+      borderOpacity: 0.5,
+    },
+  },
+}
+
+// Theme Management Utilities
+export const themeUtils = {
+  // Apply theme variant
+  applyTheme: (variant: keyof typeof themeConfig.variants) => {
+    const theme = themeConfig.variants[variant]
+    if (typeof document !== 'undefined') {
+      document.documentElement.style.setProperty('--app-background', theme.background)
+      document.documentElement.style.setProperty('--glass-opacity', theme.glassOpacity.toString())
+      document.documentElement.style.setProperty('--glass-border-opacity', theme.borderOpacity.toString())
+    }
+  },
+
+  // Get current theme classes
+  getThemeClasses: (variant: keyof typeof themeConfig.variants = 'default') => {
+    const theme = themeConfig.variants[variant]
+    return {
+      background: `bg-[image:var(--app-background)]`,
+      glass: `backdrop-blur-md bg-white/${Math.round(theme.glassOpacity * 100)} border border-white/${Math.round(theme.borderOpacity * 100)}`,
+      glassHeavy: `backdrop-blur-lg bg-white/${Math.round(theme.glassOpacity * 100 + 20)} border border-white/${Math.round(theme.borderOpacity * 100 + 10)}`,
+    }
+  },
+}
+
+// Export everything for easy access
+export { designTokens as tokens }
+export { componentVariants as variants }
+export { styleUtils as utils }
+export { colorPalette as colors } 

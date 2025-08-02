@@ -47,6 +47,11 @@
   --radius: 0.625rem;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
+  
+  /* App-specific theme variables */
+  --app-background: radial-gradient(at 20% 20%, #fadadd 10%, transparent 40%), radial-gradient(at 80% 30%, #e2a8d1 10%, transparent 40%), radial-gradient(at 40% 80%, #a3bfd9 10%, transparent 40%), radial-gradient(at 60% 60%, #fce5ec 10%, transparent 40%), #f8f8f8;
+  --glass-opacity: 0.5;
+  --glass-border-opacity: 0.4;
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
@@ -117,10 +122,7 @@
     @apply border-border outline-ring/50;
   }
   body {
-    background: radial-gradient(at 20% 20%, #fadadd 10%, transparent 40%),
-      radial-gradient(at 80% 30%, #e2a8d1 10%, transparent 40%),
-      radial-gradient(at 40% 80%, #a3bfd9 10%, transparent 40%),
-      radial-gradient(at 60% 60%, #fce5ec 10%, transparent 40%), #f8f8f8;
+    background: var(--app-background);
     background-attachment: fixed;
     background-size: cover;
     font-family: "Outfit", sans-serif;
