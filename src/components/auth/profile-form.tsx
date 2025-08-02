@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { Form, FormField, Button, useForm, Select } from '@/components/ui'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { 
   User as UserIcon, 
   Mail, 
@@ -415,20 +415,32 @@ export function ProfileForm({ user, onUpdate }: ProfileFormProps) {
               <Clock className="h-5 w-5" />
               Settings
             </CardTitle>
+            <CardDescription>
+              Configure your display preferences and theme. Theme changes will also apply to your public student-facing pages.
+            </CardDescription>
           </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Select
-              label="Timezone"
-              value={values.timezone as string}
-              onChange={(value) => setValue('timezone', value)}
-              options={timezoneOptions}
-            />
+          <CardContent className="space-y-6">
+            {/* Basic Settings Row */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Select
+                label="Timezone"
+                value={values.timezone as string}
+                onChange={(value) => setValue('timezone', value)}
+                options={timezoneOptions}
+              />
 
-            <Select
-              label="Event Display Style"
-              value={values.event_display_variant as string}
-              onChange={(value) => setValue('event_display_variant', value)}
-              options={displayVariantOptions}
+              <Select
+                label="Event Display Style"
+                value={values.event_display_variant as string}
+                onChange={(value) => setValue('event_display_variant', value)}
+                options={displayVariantOptions}
+              />
+            </div>
+
+            {/* Theme Preferences */}
+            <ProfileThemeSwitcher
+              value={String(values.theme_variant || 'default') as 'default' | 'ocean' | 'sunset'}
+              onChange={(variant) => setValue('theme_variant', variant)}
             />
           </CardContent>
         </Card>
@@ -437,12 +449,6 @@ export function ProfileForm({ user, onUpdate }: ProfileFormProps) {
         <YogaStylesSelect
           value={values.yoga_styles as string[]}
           onChange={(styles) => setValue('yoga_styles', styles)}
-        />
-
-        {/* Theme Preferences */}
-        <ProfileThemeSwitcher
-          value={String(values.theme_variant || 'default') as 'default' | 'ocean' | 'sunset'}
-          onChange={(variant) => setValue('theme_variant', variant)}
         />
 
       </Form>
