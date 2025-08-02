@@ -11,10 +11,8 @@ import { Container } from '@/components/layout/container'
 import { InfoSection, InfoItem } from '@/components/ui/info-section'
 import { CheckCircle2, Calendar, ExternalLink, Loader2 } from 'lucide-react'
 import { useTranslation } from '@/lib/i18n/context'
-import { User } from '@supabase/supabase-js'
 
 interface YogaCalendarOnboardingProps {
-  user?: User
   success?: string
   error?: string
   message?: string

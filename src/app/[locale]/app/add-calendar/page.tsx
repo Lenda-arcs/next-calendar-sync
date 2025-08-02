@@ -2,10 +2,10 @@ import { generateAddCalendarMetadata } from '@/lib/i18n/metadata'
 import type { Metadata } from 'next'
 // Removed legacy components - now only using EnhancedYogaOnboarding
 import { EnhancedYogaOnboarding } from '@/components/calendar-feeds/EnhancedYogaOnboarding'
-import { createServerClient } from '@/lib/supabase-server'
-import { redirect } from 'next/navigation'
+import { getAuthenticatedUserId } from '@/lib/server-user'
 import { getValidLocale } from '@/lib/i18n/config'
 import { getUserCalendarFeeds } from '@/lib/calendar-feeds'
+import { createServerClient } from '@/lib/supabase-server'
 // Removed fetchOAuthCalendars - no longer needed for simplified flow
 
 interface AddCalendarPageProps {
@@ -27,23 +27,18 @@ export async function generateMetadata({ params }: AddCalendarPageProps): Promis
 
 export default async function AddCalendarPage({ params, searchParams }: AddCalendarPageProps) {
   const { locale: localeParam } = await params
-  const locale = getValidLocale(localeParam)
+  getValidLocale(localeParam) // Validate locale
   
+  // ✨ Get user ID from middleware headers - no Supabase call needed!
+  // Middleware already authenticated the user and cached the ID
+  const userId = await getAuthenticatedUserId()
+  
+  // Create supabase client only for data fetching
   const supabase = await createServerClient()
-
-  // Get the current user (guaranteed by middleware)
-  const { data: { user: authUser }, error: authError } = await supabase.auth.getUser()
-
-  //TODO: Check if this is still needed, as auth should be handled by middleware
-  if (authError || !authUser) {
-    // This should rarely happen due to middleware, but kept as failsafe
-    const signInPath = locale === 'en' ? '/auth/sign-in' : `/${locale}/auth/sign-in`
-    redirect(signInPath)
-  }
 
   // Fetch user profile and existing calendar feeds
   const [existingFeeds, resolvedSearchParams] = await Promise.all([
-    getUserCalendarFeeds({ supabase, userId: authUser.id }).catch(() => []),
+    getUserCalendarFeeds({ supabase, userId }).catch(() => []),
     searchParams
   ])
 
@@ -63,7 +58,6 @@ export default async function AddCalendarPage({ params, searchParams }: AddCalen
   return (
     <div className="min-h-screen">
       <EnhancedYogaOnboarding 
-        user={authUser} 
         success={success} 
         error={error} 
         message={message}

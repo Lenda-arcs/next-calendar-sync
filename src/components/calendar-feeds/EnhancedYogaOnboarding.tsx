@@ -5,10 +5,8 @@ import { toast } from 'sonner'
 import { YogaCalendarOnboarding } from './YogaCalendarOnboarding'
 import { CalendarImportStep } from './CalendarImportStep'
 import { useTranslation } from '@/lib/i18n/context'
-import { User } from '@supabase/supabase-js'
 
 interface EnhancedYogaOnboardingProps {
-  user?: User
   success?: string
   error?: string
   message?: string
@@ -16,7 +14,6 @@ interface EnhancedYogaOnboardingProps {
 }
 
 export function EnhancedYogaOnboarding({ 
-  user, 
   success, 
   error, 
   message, 
@@ -56,7 +53,6 @@ export function EnhancedYogaOnboarding({
   if (step === 'create-calendar') {
     return (
       <YogaCalendarOnboarding
-        user={user}
         success={success}
         error={error}
         message={message}
