@@ -445,4 +445,94 @@ export const exampleEvents: Array<{
 ]
 
 // Calendar types
-export * from './types/calendar' 
+export * from './types/calendar'
+
+// ===== RPC FUNCTION TYPES =====
+
+// Base RPC function types from generated database types
+export type RPCFunctions = Database['public']['Functions']
+
+// Delete Invoice Cascade Function
+export type DeleteInvoiceCascadeArgs = RPCFunctions['delete_invoice_cascade']['Args']
+export type DeleteInvoiceCascadeReturn = {
+  success: boolean
+  message?: string
+  error?: string
+  invoice_id: string
+  user_id?: string
+  studio_id?: string
+  events_unlinked?: number
+  pdf_url?: string | null
+  note?: string
+}
+
+// Delete User Cascade Function  
+export type DeleteUserCascadeArgs = RPCFunctions['delete_user_cascade']['Args']
+export type DeleteUserCascadeReturn = {
+  success: boolean
+  message?: string
+  error?: string
+  user_id: string
+  user_email?: string
+  user_name?: string
+  note?: string
+}
+
+// Other RPC functions
+export type GenerateInvitationEmailArgs = RPCFunctions['generate_invitation_email']['Args']
+export type GetUserImageCountArgs = RPCFunctions['get_user_image_count']['Args']
+
+// Helper type for RPC function calls
+export type RPCCall<
+  FunctionName extends keyof RPCFunctions,
+  Args = RPCFunctions[FunctionName]['Args'],
+  Returns = RPCFunctions[FunctionName]['Returns']
+> = {
+  functionName: FunctionName
+  args: Args
+  returns: Returns
+}
+
+// Convenience types for commonly used RPC calls
+export type InvoiceDeletionCall = RPCCall<'delete_invoice_cascade', DeleteInvoiceCascadeArgs, DeleteInvoiceCascadeReturn>
+export type UserDeletionCall = RPCCall<'delete_user_cascade', DeleteUserCascadeArgs, DeleteUserCascadeReturn>
+
+// Helper for creating type-safe RPC function wrappers
+export type TypedRPCFunction<
+  FunctionName extends keyof RPCFunctions,
+  ReturnType
+> = (
+  supabase: { rpc: (name: string, params?: Record<string, unknown>) => Promise<{ data: unknown; error: { message?: string } | null }> },
+  args: RPCFunctions[FunctionName]['Args']
+) => Promise<ReturnType>
+
+// Specific typed RPC function types
+export type TypedDeleteInvoiceCascade = TypedRPCFunction<'delete_invoice_cascade', DeleteInvoiceCascadeReturn>
+export type TypedDeleteUserCascade = TypedRPCFunction<'delete_user_cascade', DeleteUserCascadeReturn>
+
+/* USAGE EXAMPLES:
+
+// Using typed RPC function arguments:
+const deleteArgs: DeleteInvoiceCascadeArgs = { target_invoice_id: 'invoice-123' }
+
+// With proper return type checking:
+const result = await supabase.rpc('delete_invoice_cascade', deleteArgs)
+const typedResult = result.data as DeleteInvoiceCascadeReturn
+
+if (typedResult.success) {
+  console.log(`Deleted invoice, unlinked ${typedResult.events_unlinked} events`)
+  if (typedResult.pdf_url) {
+    // Handle PDF cleanup
+  }
+} else {
+  console.error(`Failed to delete invoice: ${typedResult.error}`)
+}
+
+// Type-safe function wrapper example:
+const deleteInvoiceSafely: TypedDeleteInvoiceCascade = async (supabase, args) => {
+  const { data, error } = await supabase.rpc('delete_invoice_cascade', args)
+  if (error) throw error
+  return data as DeleteInvoiceCascadeReturn
+}
+
+*/ 

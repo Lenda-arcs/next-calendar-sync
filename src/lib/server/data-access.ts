@@ -9,6 +9,7 @@ import type {
   Invoice,
   Studio
 } from '../types'
+import { deleteInvoiceWithCleanup } from './rpc-utils'
 
 // Types
 type SupabaseClient = ReturnType<typeof createServerClient> | ReturnType<typeof createBrowserClient>
@@ -661,53 +662,41 @@ export async function generateInvoicePDF(
 }
 
 export async function deleteInvoice(supabase: SupabaseClient, invoiceId: string): Promise<Invoice[]> {
-  // Use the database function for safe invoice deletion
-  const { data: result, error: functionError } = await supabase
-    .rpc('delete_invoice_cascade', { target_invoice_id: invoiceId })
-
-  if (functionError) {
-    console.error("Error calling delete_invoice_cascade function:", functionError)
-    throw new Error(`Failed to delete invoice: ${functionError.message}`)
-  }
-
-  // Check if the function succeeded
-  if (!result?.success) {
-    console.error("Invoice deletion failed:", result?.error)
-    throw new Error(`Failed to delete invoice: ${result?.error || 'Unknown error'}`)
-  }
+  // Use the reusable type-safe RPC utility
+  const deleteResult = await deleteInvoiceWithCleanup(supabase, invoiceId)
 
   // Handle PDF file cleanup if there was a PDF URL
-  if (result.pdf_url) {
+  if (deleteResult.pdf_url) {
     try {
-      const userId = result.user_id
-      const folderPath = `invoices/${userId}/${invoiceId}`
-      
-      // List all files in the invoice folder
-      const { data: fileList, error: listError } = await supabase.storage
-        .from('invoice-pdfs')
-        .list(folderPath)
-
-      if (!listError && fileList && fileList.length > 0) {
-        // Delete all files in the invoice folder
-        const filesToDelete = fileList.map((file: { name: string }) => `${folderPath}/${file.name}`)
+      const userId = deleteResult.user_id
+      if (userId) {
+        const folderPath = `invoices/${userId}/${invoiceId}`
         
-        const { error: storageDeleteError } = await supabase.storage
+        // List all files in the invoice folder
+        const { data: fileList, error: listError } = await supabase.storage
           .from('invoice-pdfs')
-          .remove(filesToDelete)
+          .list(folderPath)
 
-        if (storageDeleteError) {
-          console.warn("Warning: Failed to delete PDF files from storage:", storageDeleteError)
-          // Don't throw error here - the invoice was already deleted successfully
+        if (!listError && fileList && fileList.length > 0) {
+          // Delete all files in the invoice folder
+          const filesToDelete = fileList.map((file: { name: string }) => `${folderPath}/${file.name}`)
+          
+          const { error: storageDeleteError } = await supabase.storage
+            .from('invoice-pdfs')
+            .remove(filesToDelete)
+
+          if (storageDeleteError) {
+            console.warn("Warning: Failed to delete PDF files from storage:", storageDeleteError)
+            // Don't throw error here - the invoice was already deleted successfully
+          }
         }
       }
     } catch (storageError) {
       console.warn("Warning: Error during PDF file cleanup:", storageError)
       // Don't throw error here - the invoice was already deleted successfully
     }
-  }
-
-  console.log(`Successfully deleted invoice ${invoiceId}, unlinked ${result.events_unlinked} events`)
-  
+  }  
+  // Return empty array since the invoice was deleted
   // Return empty array since the invoice was deleted
   return []
 }

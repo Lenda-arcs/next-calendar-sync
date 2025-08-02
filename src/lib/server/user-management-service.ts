@@ -1,4 +1,5 @@
 import { createServerClient, createAdminClient } from '@/lib/supabase-server'
+import { deleteUserWithCleanup } from './rpc-utils'
 
 export interface UserData {
   id: string
@@ -141,36 +142,8 @@ export async function deleteUser(userId: string): Promise<DeleteUserResult> {
     
     // Use the SQL function for reliable database deletion
     try {
-      // Call the delete_user_cascade function (properly typed)
-      const { data: sqlResult, error: sqlError } = await supabase
-        .rpc('delete_user_cascade', { target_user_id: userId })
-      
-      if (sqlError) {
-        console.error('Error calling delete_user_cascade function:', sqlError)
-        return {
-          success: false,
-          error: `Database function error: ${sqlError.message}`
-        }
-      }
-      
-      // Type the result based on the actual SQL function return type
-      const result = sqlResult as {
-        success: boolean
-        error?: string
-        message?: string
-        user_id: string
-        user_email?: string
-        user_name?: string
-        note?: string
-      }
-      
-      if (!result || !result.success) {
-        console.error('SQL function returned error:', result)
-        return {
-          success: false,
-          error: result?.error || 'Unknown database deletion error'
-        }
-      }
+      // Use the reusable type-safe RPC utility
+      const result = await deleteUserWithCleanup(supabase, userId)
       
       console.log('Database deletion successful:', result.message)
       
