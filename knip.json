@@ -1,0 +1,47 @@
+{
+  "$schema": "https://unpkg.com/knip@latest/schema.json",
+  "workspaces": {
+    ".": {
+      "entry": [
+        "src/app/**/page.{js,ts,jsx,tsx}",
+        "src/app/**/layout.{js,ts,jsx,tsx}",
+        "src/app/**/not-found.{js,ts,jsx,tsx}",
+        "src/app/**/route.{js,ts}",
+        "src/middleware.{js,ts}",
+        "next.config.{js,mjs,ts}",
+        "postcss.config.{js,mjs}",
+        "src/app/apple-icon.png",
+        "src/app/favicon.ico"
+      ],
+      "project": [
+        "src/**/*.{js,ts,jsx,tsx}",
+        "supabase/**/*.ts"
+      ]
+    }
+  },
+  "ignore": [
+    "**/*.d.ts",
+    "database-generated.types.ts",
+    "src/components/examples/**",
+    "src/lib/test-utils/**",
+    "supabase/functions/**"
+  ],
+  "ignoreDependencies": [
+    "postcss"
+  ],
+  "ignoreExportsUsedInFile": true,
+  "rules": {
+    "files": "error",
+    "dependencies": "error", 
+    "devDependencies": "error",
+    "unlisted": "error",
+    "exports": "error",
+    "nsExports": "error",
+    "classMembers": "error",
+    "types": "error",
+    "nsTypes": "error",
+    "enumMembers": "error",
+    "duplicates": "error"
+  },
+
+}
