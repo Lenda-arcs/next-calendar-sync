@@ -7,7 +7,7 @@ import type {
   Event, EventUpdate,
   CalendarFeed,
   Invoice,
-  Studio
+  Studio, StudioInsert
 } from '../types'
 import { deleteInvoiceWithCleanup } from './rpc-utils'
 
@@ -280,6 +280,50 @@ export async function getStudioById(supabase: SupabaseClient, studioId: string):
     .from('studios')
     .select('*')
     .eq('id', studioId)
+    .single()
+  
+  if (error) throw error
+  return data
+}
+
+export async function createStudio(
+  supabase: SupabaseClient,
+  studioData: StudioInsert
+): Promise<Studio> {
+  console.log('Data access - creating studio with:', studioData)
+  
+  const { data, error } = await supabase
+    .from('studios')
+    .insert(studioData)
+    .select()
+    .single()
+  
+  console.log('Data access - create result:', { data, error })
+  
+  if (error) {
+    console.error('Data access - create error:', error)
+    throw error
+  }
+  return data
+}
+
+export async function updateStudio(
+  supabase: SupabaseClient,
+  studioId: string,
+  updates: Partial<Omit<Studio, 'id' | 'created_at' | 'created_by_user_id'>>
+): Promise<Studio> {
+  const updateData = {
+    ...updates,
+    updated_at: new Date().toISOString()
+  }
+  
+  // Basic update operation with RLS policy check
+  
+  const { data, error } = await supabase
+    .from('studios')
+    .update(updateData)
+    .eq('id', studioId)
+    .select()
     .single()
   
   if (error) throw error

@@ -3,8 +3,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useState, useEffect } from 'react'
-import { createClient } from '@/lib/supabase'
 import { Studio, StudioInsert } from '@/lib/types'
+import { useCreateStudio, useUpdateStudio } from '@/lib/hooks/useAppQuery'
+import { useAuthUser } from '@/lib/hooks/useAuthUser'
 
 // Types for tiered rate management
 interface RateTier {
@@ -64,8 +65,15 @@ export function StudioForm({ studio, onSave, onCancel, isOpen = true }: StudioFo
 
   const [locationPattern, setLocationPattern] = useState('')
   const [amenity, setAmenity] = useState('')
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const supabase = createClient()
+  
+  // Get authenticated user
+  const { user } = useAuthUser()
+  
+  // Setup mutations
+  const createStudioMutation = useCreateStudio()
+  const updateStudioMutation = useUpdateStudio()
+  
+  const isSubmitting = createStudioMutation.isPending || updateStudioMutation.isPending
 
   // Initialize form data with existing studio data
   useEffect(() => {
@@ -92,12 +100,13 @@ export function StudioForm({ studio, onSave, onCancel, isOpen = true }: StudioFo
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setIsSubmitting(true)
+
+    if (!user) {
+      toast.error('No authenticated user')
+      return
+    }
 
     try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error('No authenticated user')
-
       const baseData = {
         ...formData,
         slug: formData.slug || formData.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
@@ -111,14 +120,12 @@ export function StudioForm({ studio, onSave, onCancel, isOpen = true }: StudioFo
       if (studio) {
         // Update existing studio - exclude fields that shouldn't be updated
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { id, created_at, updated_at, created_by_user_id, ...updateData } = baseData
+        const { id, created_at, created_by_user_id, ...updateData } = baseData
         
-        const { error } = await supabase
-          .from('studios')
-          .update(updateData)
-          .eq('id', studio.id)
-
-        if (error) throw error
+        await updateStudioMutation.mutateAsync({
+          studioId: studio.id,
+          updates: updateData
+        })
       } else {
         // Create new studio - include created_by_user_id
         const submitData: StudioInsert = {
@@ -126,19 +133,21 @@ export function StudioForm({ studio, onSave, onCancel, isOpen = true }: StudioFo
           created_by_user_id: user.id
         }
 
-        const { error } = await supabase
-          .from('studios')
-          .insert([submitData])
-
-        if (error) throw error
+        await createStudioMutation.mutateAsync(submitData)
       }
 
       onSave()
     } catch (error) {
       console.error('Error saving studio:', error)
-      toast.error('Failed to save studio')
-    } finally {
-      setIsSubmitting(false)
+      
+      // Extract meaningful error message
+      let errorMessage = studio ? 'Failed to update studio' : 'Failed to create studio'
+      
+      if (error && typeof error === 'object' && 'message' in error && error.message) {
+        errorMessage += ': ' + error.message
+      }
+      
+      toast.error(errorMessage)
     }
   }
 

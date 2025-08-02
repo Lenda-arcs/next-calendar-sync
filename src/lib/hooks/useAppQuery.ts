@@ -13,7 +13,8 @@ import type {
   CalendarFeed,
   Invoice,
   InvoiceWithDetails,
-  UserUpdate
+  UserUpdate,
+  Studio, StudioInsert
 } from '../types'
 
 // Import types defined in data-access.ts
@@ -247,6 +248,24 @@ export function useDeleteTag() {
   return useSupabaseMutation<Tag[], string>(
     async (supabase: SupabaseClient, tagId: string) => {
       return dataAccess.deleteTag(supabase, tagId)
+    }
+  )
+}
+
+// ===== STUDIO MUTATIONS =====
+
+export function useCreateStudio() {
+  return useSupabaseMutation<Studio, StudioInsert>(
+    async (supabase: SupabaseClient, studioData: StudioInsert) => {
+      return dataAccess.createStudio(supabase, studioData)
+    }
+  )
+}
+
+export function useUpdateStudio() {
+  return useSupabaseMutation<Studio, { studioId: string; updates: Partial<Omit<Studio, 'id' | 'created_at' | 'created_by_user_id'>> }>(
+    async (supabase: SupabaseClient, { studioId, updates }: { studioId: string; updates: Partial<Omit<Studio, 'id' | 'created_at' | 'created_by_user_id'>> }) => {
+      return dataAccess.updateStudio(supabase, studioId, updates)
     }
   )
 }
