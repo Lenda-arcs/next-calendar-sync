@@ -3,7 +3,7 @@
 import {Container} from '@/components/layout/container'
 import {PageSection} from '@/components/layout/page-section'
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from '@/components/ui/card'
-import {CopyLinkButton, LoadingButtonLink, LoadingLink} from '@/components/ui'
+import {LoadingButtonLink, LoadingLink} from '@/components/ui'
 import {PrivateEventList} from '@/components/events'
 import {CalendarFeedsProfileSection} from '@/components/calendar-feeds'
 import {PATHS} from '@/lib/paths'
@@ -40,9 +40,7 @@ export default function DashboardContent({
     preloadPublicEvents
   } = useSmartPreload()
 
-  const shareLabel = hasCustomUrl
-    ? t('publicSchedule.yourSchedule')
-    : t('publicSchedule.yourScheduleCustomize')
+
 
   return (
     <div className="min-h-screen">
@@ -99,26 +97,18 @@ export default function DashboardContent({
                    </CardDescription>
                  </CardHeader>
                  <CardContent>
-                   <div className="flex items-center gap-2">
-                     <CopyLinkButton
-                       url={publicPath}
-                       showLabel={false}
-                       label={shareLabel}
-                       buttonText={t('publicSchedule.share')}
-                     />
-                     <div
-                       onMouseEnter={() => preloadPublicEvents(userId)}
-                       onFocus={() => preloadPublicEvents(userId)}
+                   <div
+                     onMouseEnter={() => preloadPublicEvents(userId)}
+                     onFocus={() => preloadPublicEvents(userId)}
+                   >
+                     <LoadingButtonLink
+                       href={publicPath}
+                       variant="secondary"
+                       className="w-full"
+                       iconName="Eye"
                      >
-                       <LoadingButtonLink
-                         href={publicPath}
-                         variant="secondary"
-                         className="flex-1"
-                         iconName="Eye"
-                       >
-                         {t('publicSchedule.viewPublic')}
-                       </LoadingButtonLink>
-                     </div>
+                       {t('publicSchedule.viewPublic')}
+                     </LoadingButtonLink>
                    </div>
                  </CardContent>
                </Card>

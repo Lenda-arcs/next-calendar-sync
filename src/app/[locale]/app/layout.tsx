@@ -120,10 +120,7 @@ export default async function LocalizedAppLayout({ children, params }: AppLayout
                 {/* Language Selector */}
                 <CompactLanguageSelector />
 
-                {/* Desktop User Info */}
-                <span className="text-sm font-sans text-foreground/70 hidden sm:block">
-                  {user.email}
-                </span>
+
                 
                 {/* Profile Link with Avatar */}
                 <ActiveProfileLink 
