@@ -675,79 +675,7 @@ export async function generatePDFPreview(
   return { pdf_url: data.pdf_url }
 }
 
-/**
- * Delete an invoice and free all associated events
- * Also removes the PDF file from storage if it exists
- */
-export async function deleteInvoice(invoiceId: string): Promise<void> {
-  const supabase = createClient()
-  
-  // First, get the invoice details to check for PDF file
-  const { data: invoice, error: fetchError } = await supabase
-    .from("invoices")
-    .select("pdf_url, user_id")
-    .eq("id", invoiceId)
-    .single()
 
-  if (fetchError) {
-    console.error("Error fetching invoice for deletion:", fetchError)
-    throw new Error(`Failed to fetch invoice: ${fetchError.message}`)
-  }
-
-  // Delete PDF file from storage if it exists
-  if (invoice?.pdf_url) {
-    try {
-      // Extract file path from URL or reconstruct it
-      // PDF files are stored as: invoices/{user_id}/{invoice_id}/filename.pdf
-      const userId = invoice.user_id
-      const folderPath = `invoices/${userId}/${invoiceId}`
-      
-      // List all files in the invoice folder
-      const { data: fileList, error: listError } = await supabase.storage
-        .from('invoice-pdfs')
-        .list(folderPath)
-
-      if (!listError && fileList && fileList.length > 0) {
-        // Delete all files in the invoice folder
-        const filesToDelete = fileList.map(file => `${folderPath}/${file.name}`)
-        
-        const { error: storageDeleteError } = await supabase.storage
-          .from('invoice-pdfs')
-          .remove(filesToDelete)
-
-        if (storageDeleteError) {
-          console.warn("Warning: Failed to delete PDF files from storage:", storageDeleteError)
-          // Don't throw error here - continue with database deletion
-        }
-      }
-    } catch (storageError) {
-      console.warn("Warning: Error during PDF file cleanup:", storageError)
-      // Don't throw error here - continue with database deletion
-    }
-  }
-
-  // Unlink all events from this invoice
-  const { error: unlinkError } = await supabase
-    .from("events")
-    .update({ invoice_id: null })
-    .eq("invoice_id", invoiceId)
-
-  if (unlinkError) {
-    console.error("Error unlinking events from invoice:", unlinkError)
-    throw new Error(`Failed to unlink events: ${unlinkError.message}`)
-  }
-
-  // Finally, delete the invoice record
-  const { error: deleteError } = await supabase
-    .from("invoices")
-    .delete()
-    .eq("id", invoiceId)
-
-  if (deleteError) {
-    console.error("Error deleting invoice:", deleteError)
-    throw new Error(`Failed to delete invoice: ${deleteError.message}`)
-  }
-}
 
 /**
  * Link events to an invoice

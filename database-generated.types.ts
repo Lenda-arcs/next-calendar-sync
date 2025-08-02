@@ -1181,6 +1181,10 @@ export type Database = {
         }
         Returns: Json
       }
+      delete_invoice_cascade: {
+        Args: { target_invoice_id: string }
+        Returns: Json
+      }
       delete_user_cascade: {
         Args: { target_user_id: string }
         Returns: Json

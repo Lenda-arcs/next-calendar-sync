@@ -661,50 +661,55 @@ export async function generateInvoicePDF(
 }
 
 export async function deleteInvoice(supabase: SupabaseClient, invoiceId: string): Promise<Invoice[]> {
-  // First, get the invoice details to check for PDF file
-  const { data: invoice, error: fetchError } = await supabase
-    .from("invoices")
-    .select("pdf_url, user_id")
-    .eq("id", invoiceId)
-    .single()
+  // Use the database function for safe invoice deletion
+  const { data: result, error: functionError } = await supabase
+    .rpc('delete_invoice_cascade', { target_invoice_id: invoiceId })
 
-  if (fetchError) {
-    console.error("Error fetching invoice for deletion:", fetchError)
-    throw new Error(`Failed to fetch invoice: ${fetchError.message}`)
+  if (functionError) {
+    console.error("Error calling delete_invoice_cascade function:", functionError)
+    throw new Error(`Failed to delete invoice: ${functionError.message}`)
   }
 
-  // Delete PDF file from storage if it exists
-  if (invoice?.pdf_url) {
+  // Check if the function succeeded
+  if (!result?.success) {
+    console.error("Invoice deletion failed:", result?.error)
+    throw new Error(`Failed to delete invoice: ${result?.error || 'Unknown error'}`)
+  }
+
+  // Handle PDF file cleanup if there was a PDF URL
+  if (result.pdf_url) {
     try {
-      // Extract file path from URL - assuming it follows the pattern /storage/v1/object/public/bucket/path
-      const url = new URL(invoice.pdf_url)
-      const pathParts = url.pathname.split('/')
-      const fileName = pathParts[pathParts.length - 1]
-      const filePath = `invoices/${invoice.user_id}/${fileName}`
+      const userId = result.user_id
+      const folderPath = `invoices/${userId}/${invoiceId}`
       
-      const { error: deleteFileError } = await supabase.storage
+      // List all files in the invoice folder
+      const { data: fileList, error: listError } = await supabase.storage
         .from('invoice-pdfs')
-        .remove([filePath])
+        .list(folderPath)
+
+      if (!listError && fileList && fileList.length > 0) {
+        // Delete all files in the invoice folder
+        const filesToDelete = fileList.map((file: { name: string }) => `${folderPath}/${file.name}`)
         
-      if (deleteFileError) {
-        console.warn('Failed to delete PDF file:', deleteFileError)
-        // Continue with invoice deletion even if file deletion fails
+        const { error: storageDeleteError } = await supabase.storage
+          .from('invoice-pdfs')
+          .remove(filesToDelete)
+
+        if (storageDeleteError) {
+          console.warn("Warning: Failed to delete PDF files from storage:", storageDeleteError)
+          // Don't throw error here - the invoice was already deleted successfully
+        }
       }
-    } catch (urlError) {
-      console.warn('Failed to parse PDF URL for deletion:', urlError)
-      // Continue with invoice deletion even if file deletion fails
+    } catch (storageError) {
+      console.warn("Warning: Error during PDF file cleanup:", storageError)
+      // Don't throw error here - the invoice was already deleted successfully
     }
   }
 
-  // Delete the invoice from database
-  const { data, error } = await supabase
-    .from("invoices")
-    .delete()
-    .eq("id",   invoiceId)
-    .select()
-
-  if (error) throw error
-  return data || []
+  console.log(`Successfully deleted invoice ${invoiceId}, unlinked ${result.events_unlinked} events`)
+  
+  // Return empty array since the invoice was deleted
+  return []
 }
 
 // ===== TEACHER STUDIO RELATIONSHIPS =====
