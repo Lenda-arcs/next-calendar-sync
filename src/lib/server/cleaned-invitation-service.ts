@@ -39,7 +39,7 @@ export class InvitationService {
       }
 
       // Use Supabase's built-in invitation system with admin client
-      const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
       const finalRedirectTo = redirectTo || `${baseUrl}/auth/register`
       
       const { data, error } = await adminClient.auth.admin.inviteUserByEmail(email, {

@@ -9,7 +9,7 @@ import { themeConfig } from '@/lib/design-system'
 import { Palette, Check } from 'lucide-react'
 
 export function ThemeSwitcher() {
-  const { variant, setVariant, availableVariants } = useAppTheme()
+  const { variant, setVariantPreview, availableVariants } = useAppTheme()
 
   return (
     <Card variant="default" className="w-full max-w-md">
@@ -19,7 +19,7 @@ export function ThemeSwitcher() {
           Theme Variants
         </CardTitle>
         <CardDescription>
-          Choose your preferred glassmorphism theme variant
+          Choose your preferred glassmorphism theme variant (preview only)
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -28,7 +28,7 @@ export function ThemeSwitcher() {
             key={themeVariant.key}
             variant={variant === themeVariant.key ? "default" : "secondary"}
             className="w-full justify-between"
-            onClick={() => setVariant(themeVariant.key)}
+            onClick={() => setVariantPreview(themeVariant.key)}
           >
             <span>{themeVariant.name}</span>
             {variant === themeVariant.key && (
@@ -44,17 +44,18 @@ export function ThemeSwitcher() {
   )
 }
 
-// Compact version for navigation/settings
+// Compact version for navigation/settings (preview only)
 export function CompactThemeSwitcher() {
-  const { variant, setVariant, availableVariants } = useAppTheme()
+  const { variant, setVariantPreview, availableVariants } = useAppTheme()
 
   return (
     <div className="flex items-center gap-2">
       <Palette className="h-4 w-4 text-muted-foreground" />
       <select
         value={variant}
-        onChange={(e) => setVariant(e.target.value as keyof typeof themeConfig.variants)}
+        onChange={(e) => setVariantPreview(e.target.value as keyof typeof themeConfig.variants)}
         className="px-2 py-1 rounded-md bg-white/50 border border-white/40 text-sm backdrop-blur-md"
+        title="Theme preview (save in profile to persist)"
       >
         {availableVariants.map((themeVariant) => (
           <option key={themeVariant.key} value={themeVariant.key}>

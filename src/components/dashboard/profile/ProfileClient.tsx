@@ -33,6 +33,7 @@ export default function ProfileClient({ userId }: ProfileClientProps) {
     website_url: null,
     yoga_styles: null,
     event_display_variant: null,
+    theme_variant: 'default', // Add theme_variant with default
     role: 'user' as const,
     calendar_feed_count: 0,
     is_featured: null,

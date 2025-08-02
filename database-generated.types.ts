@@ -978,6 +978,7 @@ export type Database = {
           profile_image_url: string | null
           public_url: string | null
           role: Database["public"]["Enums"]["user_role"]
+          theme_variant: string
           timezone: string | null
           website_url: string | null
           yoga_styles: string[] | null
@@ -997,6 +998,7 @@ export type Database = {
           profile_image_url?: string | null
           public_url?: string | null
           role?: Database["public"]["Enums"]["user_role"]
+          theme_variant?: string
           timezone?: string | null
           website_url?: string | null
           yoga_styles?: string[] | null
@@ -1016,6 +1018,7 @@ export type Database = {
           profile_image_url?: string | null
           public_url?: string | null
           role?: Database["public"]["Enums"]["user_role"]
+          theme_variant?: string
           timezone?: string | null
           website_url?: string | null
           yoga_styles?: string[] | null

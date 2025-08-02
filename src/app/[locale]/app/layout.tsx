@@ -13,6 +13,7 @@ import { ActiveProfileLink } from '@/components/navigation/ActiveProfileLink'
 import { ActiveNavLinks } from '@/components/navigation/ActiveNavLinks'
 import { ActiveHomeLink } from '@/components/navigation/ActiveHomeLink'
 import { getValidLocale, getTranslations, createTranslator } from '@/lib/i18n/config'
+import { ThemeProvider } from '@/components/providers'
 
 interface AppLayoutProps {
   children: React.ReactNode
@@ -87,50 +88,52 @@ export default async function LocalizedAppLayout({ children, params }: AppLayout
   }))
 
   return (
-    <div className="min-h-screen">
-      {/* Navigation Header with Glassmorphism */}
-      <header className="backdrop-blur-md bg-gradient-to-r from-white/70 via-white/50 to-transparent border-b border-white/40 shadow-xl sticky top-0 z-50">
-        <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            {/* Logo */}
-            <div className="flex items-center">
-              <ActiveHomeLink userId={user.id} />
-            </div>
+    <ThemeProvider defaultVariant={(userProfile?.theme_variant as 'default' | 'ocean' | 'sunset') || 'default'}>
+      <div className="min-h-screen">
+        {/* Navigation Header with Glassmorphism */}
+        <header className="backdrop-blur-md bg-gradient-to-r from-white/70 via-white/50 to-transparent border-b border-white/40 shadow-xl sticky top-0 z-50">
+          <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center h-16">
+              {/* Logo */}
+              <div className="flex items-center">
+                <ActiveHomeLink userId={user.id} />
+              </div>
 
-            {/* Navigation */}
-            <ActiveNavLinks navigation={desktopNavigation} userId={user.id} />
+              {/* Navigation */}
+              <ActiveNavLinks navigation={desktopNavigation} userId={user.id} />
 
-            {/* User Menu */}
-            <div className="flex items-center space-x-4">
-              {/* Mobile Navigation Menu */}
-              <MobileNavMenu navigation={mobileNavigation} />
+              {/* User Menu */}
+              <div className="flex items-center space-x-4">
+                {/* Mobile Navigation Menu */}
+                <MobileNavMenu navigation={mobileNavigation} />
 
-              {/* Language Selector */}
-              <CompactLanguageSelector />
+                {/* Language Selector */}
+                <CompactLanguageSelector />
 
-              {/* Desktop User Info */}
-              <span className="text-sm font-sans text-foreground/70 hidden sm:block">
-                {user.email}
-              </span>
-              
-              {/* Profile Link with Avatar */}
-              <ActiveProfileLink 
-                profileImage={profileImage}
-                userProfile={userProfile}
-                user={user}
-              />
-              
-              <LogoutButton className="sm:hidden" />
-              <LogoutButton className="hidden sm:flex" showTextOnMobile={true} />
+                {/* Desktop User Info */}
+                <span className="text-sm font-sans text-foreground/70 hidden sm:block">
+                  {user.email}
+                </span>
+                
+                {/* Profile Link with Avatar */}
+                <ActiveProfileLink 
+                  profileImage={profileImage}
+                  userProfile={userProfile}
+                  user={user}
+                />
+                
+                <LogoutButton className="sm:hidden" />
+                <LogoutButton className="hidden sm:flex" showTextOnMobile={true} />
+              </div>
             </div>
           </div>
-        </div>
-      </header>
+        </header>
 
-      {/* Main Content */}
-      <main className="flex-1 pt-8 pb-16">
-              {children}
-    </main>
-  </div>
-)
+        {/* Main Content */}
+        <main className="flex-1 pt-8 pb-16">
+                {children}
+      </main>
+    </div>
+    </ThemeProvider>
+  )
 } 

@@ -2,16 +2,20 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import { themeConfig, themeUtils } from '@/lib/design-system'
+import { useAuthUser } from '@/lib/hooks/useAuthUser'
+import { createClient } from '@/lib/supabase'
 
 type ThemeVariant = keyof typeof themeConfig.variants
 
 interface ThemeContextType {
   variant: ThemeVariant
-  setVariant: (variant: ThemeVariant) => void
+  setVariant: (variant: ThemeVariant) => void // Final UI state update
+  setVariantPreview: (variant: ThemeVariant) => void // Preview only
   availableVariants: Array<{
     key: ThemeVariant
     name: string
   }>
+  isLoading: boolean
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
@@ -23,29 +27,84 @@ interface ThemeProviderProps {
 
 export function ThemeProvider({ 
   children, 
-  defaultVariant = 'default' 
+  defaultVariant = 'default'
 }: ThemeProviderProps) {
   const [variant, setVariant] = useState<ThemeVariant>(defaultVariant)
+  const [isLoading, setIsLoading] = useState(true)
+  const { user } = useAuthUser()
+  const supabase = createClient()
+
+
+
+
+
+  // Preview function - changes UI immediately but doesn't save
+  const handleSetVariantPreview = (newVariant: ThemeVariant) => {
+    setVariant(newVariant)
+    // No database save - just visual preview
+  }
+
+  // Final save function - only updates UI state and localStorage
+  // Database save is handled by ProfileClient's existing update mechanism
+  const handleSetVariant = (newVariant: ThemeVariant) => {
+    setVariant(newVariant)
+    
+    // Save to localStorage as backup
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('app-theme-variant', newVariant)
+    }
+  }
 
   // Apply theme on variant change
   useEffect(() => {
     themeUtils.applyTheme(variant)
-    
-    // Store preference in localStorage
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('app-theme-variant', variant)
-    }
   }, [variant])
 
-  // Load saved preference on mount
+  // Load theme preference on mount and when user changes
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('app-theme-variant') as ThemeVariant
-      if (saved && saved in themeConfig.variants) {
-        setVariant(saved)
+    const loadTheme = async () => {
+      setIsLoading(true)
+
+      if (user?.id) {
+        // Try to load from database first
+        try {
+          const { data, error } = await supabase
+            .from('users')
+            .select('theme_variant')
+            .eq('id', user.id)
+            .single()
+
+          if (!error && data?.theme_variant && data.theme_variant in themeConfig.variants) {
+            setVariant(data.theme_variant as ThemeVariant)
+          } else {
+            // Fallback to localStorage if no database preference
+            const localTheme = localStorage.getItem('app-theme-variant') as ThemeVariant
+            if (localTheme && localTheme in themeConfig.variants) {
+              setVariant(localTheme)
+              // Note: Database sync happens through ProfileClient's update mechanism
+            }
+          }
+        } catch (error) {
+          console.error('Error loading theme preference:', error)
+          // Fallback to localStorage
+          const localTheme = localStorage.getItem('app-theme-variant') as ThemeVariant
+          if (localTheme && localTheme in themeConfig.variants) {
+            setVariant(localTheme)
+          }
+        }
+      } else {
+        // Not logged in, use localStorage
+        const localTheme = localStorage.getItem('app-theme-variant') as ThemeVariant
+        if (localTheme && localTheme in themeConfig.variants) {
+          setVariant(localTheme)
+        }
       }
+
+      setIsLoading(false)
     }
-  }, [])
+
+    loadTheme()
+  }, [user?.id, supabase])
 
   const availableVariants = Object.entries(themeConfig.variants).map(([key, config]) => ({
     key: key as ThemeVariant,
@@ -54,8 +113,10 @@ export function ThemeProvider({
 
   const value: ThemeContextType = {
     variant,
-    setVariant,
+    setVariant: handleSetVariant,
+    setVariantPreview: handleSetVariantPreview,
     availableVariants,
+    isLoading,
   }
 
   return (

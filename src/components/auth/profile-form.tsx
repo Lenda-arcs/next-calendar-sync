@@ -18,6 +18,7 @@ import { User } from '@/lib/types'
 import { useUpdateUserProfile } from '@/lib/hooks/useAppQuery'
 import ImageUpload from '@/components/ui/image-upload'
 import { YogaStylesSelect } from '@/components/ui/yoga-styles-select'
+import { ProfileThemeSwitcher } from '@/components/ui/profile-theme-switcher'
 import { cn, urlValidation } from '@/lib/utils'
 import { PATHS } from '@/lib/paths'
 
@@ -43,7 +44,7 @@ const ProfileUpdateFAB: React.FC<{
           variant="outline"
           size="sm"
           onClick={onReset}
-          className="bg-background shadow-lg border-2"
+          className="shadow-lg border-2"
           disabled={isSaving}
           title="Reset all changes"
         >
@@ -102,7 +103,7 @@ const TextArea: React.FC<{
         placeholder={placeholder}
         maxLength={maxLength}
         rows={rows}
-        className={`flex w-full rounded-xl bg-background text-sm ring-offset-background backdrop-blur-sm bg-white/50 border border-white/40 shadow-md placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-inset disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-300 ease-in-out p-3 resize-none font-sans ${
+        className={`flex w-full rounded-xl text-sm ring-offset-background backdrop-blur-sm bg-white/50 border border-white/40 shadow-md placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-inset disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-300 ease-in-out p-3 resize-none font-sans ${
           error ? 'border-red-300 focus:ring-red-500' : ''
         }`}
       />
@@ -122,6 +123,7 @@ export function ProfileForm({ user, onUpdate }: ProfileFormProps) {
 
   // ✨ NEW: Use unified mutation hook for updating user profile
   const updateUserMutation = useUpdateUserProfile()
+  
 
   const timezoneOptions = [
     { value: 'UTC', label: 'UTC' },
@@ -149,6 +151,7 @@ export function ProfileForm({ user, onUpdate }: ProfileFormProps) {
     website_url: user.website_url ?? '',
     yoga_styles: user.yoga_styles ?? [],
     event_display_variant: user.event_display_variant ?? 'compact',
+    theme_variant: user.theme_variant ?? 'default',
   }), [user])
 
   const {
@@ -210,6 +213,7 @@ export function ProfileForm({ user, onUpdate }: ProfileFormProps) {
         website_url: normalizedWebsiteUrl,
         yoga_styles: formData.yoga_styles as string[],
         event_display_variant: formData.event_display_variant as 'minimal' | 'compact' | 'full',
+        theme_variant: formData.theme_variant as string,
       }
 
       // ✨ NEW: Use unified mutation to update the user profile
@@ -221,6 +225,8 @@ export function ProfileForm({ user, onUpdate }: ProfileFormProps) {
       // Handle success
       toast.success('Profile updated successfully!')
       setHasFormChanges(false) // Reset changes flag on successful save
+      
+
       onUpdate?.(result) // Call the optional callback with updated user data
     }
   })
@@ -238,9 +244,10 @@ export function ProfileForm({ user, onUpdate }: ProfileFormProps) {
         return JSON.stringify(initial.sort()) !== JSON.stringify(current.sort())
       }
       
-      return initialValue !== currentValue
+      return  initialValue !== currentValue
+
     })
-    
+
     setHasFormChanges(hasChanges)
   }, [values, initialValues])
 
@@ -251,9 +258,7 @@ export function ProfileForm({ user, onUpdate }: ProfileFormProps) {
   }
 
   // Handle save action from FAB
-  const handleSave = () => {
-    handleSubmit()
-  }
+  const handleSave = () => handleSubmit()
 
   // Update public URL preview
   useEffect(() => {
@@ -434,6 +439,11 @@ export function ProfileForm({ user, onUpdate }: ProfileFormProps) {
           onChange={(styles) => setValue('yoga_styles', styles)}
         />
 
+        {/* Theme Preferences */}
+        <ProfileThemeSwitcher
+          value={String(values.theme_variant || 'default') as 'default' | 'ocean' | 'sunset'}
+          onChange={(variant) => setValue('theme_variant', variant)}
+        />
 
       </Form>
 
