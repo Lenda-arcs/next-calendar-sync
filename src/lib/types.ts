@@ -479,7 +479,6 @@ export type DeleteUserCascadeReturn = {
 }
 
 // Other RPC functions
-export type GenerateInvitationEmailArgs = RPCFunctions['generate_invitation_email']['Args']
 export type GetUserImageCountArgs = RPCFunctions['get_user_image_count']['Args']
 
 // Helper type for RPC function calls

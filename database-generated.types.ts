@@ -1169,18 +1169,6 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
-      cleanup_old_rejected_requests: {
-        Args: { cleanup_age_months?: number }
-        Returns: number
-      }
-      create_calendar_invitation: {
-        Args: {
-          p_user_id: string
-          p_expiry_hours?: number
-          p_base_domain?: string
-        }
-        Returns: Json
-      }
       delete_invoice_cascade: {
         Args: { target_invoice_id: string }
         Returns: Json
@@ -1189,21 +1177,9 @@ export type Database = {
         Args: { target_user_id: string }
         Returns: Json
       }
-      generate_invitation_email: {
-        Args: { p_user_id: string; p_base_domain?: string }
-        Returns: string
-      }
-      get_my_uid: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
       get_user_image_count: {
         Args: { user_id: string; folder_type?: string }
         Returns: number
-      }
-      set_role_context: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
       }
     }
     Enums: {
