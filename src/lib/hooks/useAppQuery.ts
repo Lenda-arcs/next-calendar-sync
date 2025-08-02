@@ -154,6 +154,34 @@ export function useCalendarFeeds(userId: string, options?: { enabled?: boolean }
   )
 }
 
+// ===== OAUTH INTEGRATION QUERIES =====
+
+export function useOAuthIntegration(userId: string, options?: { enabled?: boolean }) {
+  return useSupabaseQuery<Database['public']['Tables']['oauth_calendar_integrations']['Row'] | null>(
+    ['oauth-integration', userId],
+    async (supabase) => {
+      if (!userId) return null
+      
+      const { data, error } = await supabase
+        .from('oauth_calendar_integrations')
+        .select('*')
+        .eq('user_id', userId)
+        .maybeSingle()
+      
+      if (error) {
+        console.error('Error fetching OAuth integration:', error)
+        return null
+      }
+      
+      return data
+    },
+    { 
+      enabled: options?.enabled ?? !!userId,
+      staleTime: 5 * 60 * 1000 // 5 minutes - OAuth status doesn't change frequently
+    }
+  )
+}
+
 // ===== STUDIO QUERIES =====
 
 export function useUserStudios(userId: string, options?: { enabled?: boolean }) {

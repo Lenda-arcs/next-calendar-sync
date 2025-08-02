@@ -22,8 +22,8 @@ export function EnhancedYogaOnboarding({
   const { t } = useTranslation()
   //TODO: USe type safe values for this state ans use enum if possible and make use of it in the component
   const [step, setStep] = useState<'create-calendar' | 'import-events'>(() => {
-    // If there's a success message, assume calendar is already created and force import step
-    if (success || forceImportStep) {
+    // Only move to import step if explicitly forced or if calendar creation was successful
+    if (forceImportStep || success === 'calendar_created') {
       return 'import-events'
     }
     return 'create-calendar'
@@ -43,7 +43,7 @@ export function EnhancedYogaOnboarding({
   }
 
   const handleSkipImport = () => {
-    toast.info(t('calendar.yogaOnboarding.completion.skipped'))
+    toast.info(t('calendar.yogaO  nboarding.completion.skipped'))
     // Redirect to dashboard
     setTimeout(() => {
       window.location.href = '/app' //TODO: use PATHS for constancy

@@ -2,7 +2,8 @@
 
 import { useState } from 'react'
 import { toast } from 'sonner'
-import { useCreateYogaCalendar } from '@/lib/hooks/useAppQuery'
+import { useCreateYogaCalendar, useOAuthIntegration } from '@/lib/hooks/useAppQuery'
+import { useAuthUser } from '@/lib/hooks/useAuthUser'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -21,9 +22,16 @@ interface YogaCalendarOnboardingProps {
 
 export function YogaCalendarOnboarding({ error, message, onCalendarCreated }: YogaCalendarOnboardingProps) {
   const { t } = useTranslation()
+  const { user } = useAuthUser()
+  
+  // Check for existing OAuth integration
+  const { data: oauthIntegration, isLoading: oauthLoading } = useOAuthIntegration(user?.id || '')
+  
   const [isConnecting, setIsConnecting] = useState(false)
   const [calendarCreated, setCalendarCreated] = useState(false)
-  const [oauthConnected, setOauthConnected] = useState(false)
+  
+  // ✨ Check if OAuth is already connected
+  const oauthConnected = !!oauthIntegration
   
   // ✨ NEW: Use unified mutation for calendar creation
   const createYogaCalendarMutation = useCreateYogaCalendar()
@@ -48,7 +56,6 @@ export function YogaCalendarOnboarding({ error, message, onCalendarCreated }: Yo
 
       if (result.success) {
         setCalendarCreated(true)
-        setOauthConnected(true)
         // Notify parent component that calendar was created
         if (onCalendarCreated) {
           setTimeout(() => {
@@ -67,6 +74,21 @@ export function YogaCalendarOnboarding({ error, message, onCalendarCreated }: Yo
       console.error('Calendar creation error:', error)
       toast.error(error instanceof Error ? error.message : 'Failed to create calendar')
     }
+  }
+
+  // Show loading while checking OAuth status
+  if (oauthLoading) {
+    return (
+      <Container 
+        title={t('calendar.yogaOnboarding.setup.title')}
+        subtitle={t('calendar.yogaOnboarding.setup.subtitle')}
+        maxWidth="2xl"
+      >
+        <div className="flex justify-center py-8">
+          <Loader2 className="w-8 h-8 animate-spin" />
+        </div>
+      </Container>
+    )
   }
 
   return (
