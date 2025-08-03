@@ -9,4 +9,5 @@ export { StudioManagement } from './StudioManagement';
 export { StudioRateConfig } from './StudioRateConfig';
 export { StudioRequestDialog } from './StudioRequestDialog';
 export { StudioTeacherRequests } from './StudioTeacherRequests';
-export { TeacherDepartureDialog } from './TeacherDepartureDialog'; 
+export { TeacherDepartureDialog } from './TeacherDepartureDialog';
+export { ActiveTeachersTab } from './ActiveTeachersTab'; 

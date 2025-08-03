@@ -12,6 +12,7 @@ import { Plus, Users, MapPin, Star, Shield } from 'lucide-react'
 import { StudioForm } from './StudioForm'
 import { StudioList } from './StudioList'
 import { StudioTeacherRequests } from './StudioTeacherRequests'
+import { ActiveTeachersTab } from './ActiveTeachersTab'
 import { useTranslation } from '@/lib/i18n/context'
 import { toast } from 'sonner'
 
@@ -256,6 +257,12 @@ export function StudioManagement({ userRole }: StudioManagementProps) {
               </Badge>
             )}
           </TabsTrigger>
+          <TabsTrigger value="teachers">
+            Active Teachers
+            <Badge variant="secondary" className="ml-2">
+              {loadedStudios?.reduce((sum, studio) => sum + (studio.teacher_count || 0), 0) || 0}
+            </Badge>
+          </TabsTrigger>
         </TabsList>
 
           <TabsContent value="studios">
@@ -271,6 +278,15 @@ export function StudioManagement({ userRole }: StudioManagementProps) {
             <StudioTeacherRequests
               requests={pendingRequests || []}
               onRequestProcessed={handleRequestProcessed}
+            />
+          </TabsContent>
+
+          <TabsContent value="teachers">
+            <ActiveTeachersTab
+              onTeacherUpdated={() => {
+                refetchStudios()
+                refetchRequests()
+              }}
             />
           </TabsContent>
         </Tabs>
