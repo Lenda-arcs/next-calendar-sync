@@ -28,9 +28,11 @@ export default function ProfileClient({ userId }: ProfileClientProps) {
     bio: null,
     profile_image_url: null,
     public_url: null,
+    contact_email: null, // New field
     timezone: null,
     instagram_url: null,
     website_url: null,
+    spotify_url: null, // New field
     yoga_styles: null,
     event_display_variant: null,
     theme_variant: 'default', // Add theme_variant with default
