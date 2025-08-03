@@ -262,15 +262,16 @@ export async function getCalendarFeedById(supabase: SupabaseClient, feedId: stri
 
 // ===== STUDIOS DATA ACCESS =====
 
-export type TeacherStudioRelationship = Database['public']['Tables']['studio_teacher_requests']['Row']
+// Updated to use the new optimized studio_teachers table
+export type TeacherStudioRelationship = Database['public']['Tables']['studio_teachers']['Row']
 
 export async function getUserStudios(supabase: SupabaseClient, userId: string): Promise<TeacherStudioRelationship[]> {
   const { data, error } = await supabase
-    .from('studio_teacher_requests')
+    .from('studio_teachers')
     .select('*')
     .eq('teacher_id', userId)
-    .eq('status', 'approved')
-    .order('processed_at', { ascending: false })
+    .eq('is_active', true)
+    .order('approved_at', { ascending: false })
   
   if (error) throw error
   return data || []
@@ -747,22 +748,8 @@ export async function deleteInvoice(supabase: SupabaseClient, invoiceId: string)
 }
 
 // ===== TEACHER STUDIO RELATIONSHIPS =====
-
-export async function getTeacherStudioRelationships(supabase: SupabaseClient, teacherId: string): Promise<TeacherStudioRelationship[]> {
-  const { data, error } = await supabase
-    .from('studio_teacher_requests')
-    .select('*')
-    .eq('teacher_id', teacherId)
-    .eq('status', 'approved')
-    .order('processed_at', { ascending: false })
-
-  if (error) {
-    console.error('Error fetching teacher-studio relationships:', error)
-    return []
-  }
-
-  return data || []
-}
+// Note: getTeacherStudioRelationships removed - use useTeacherStudioRelationships hook instead
+// The hook now uses the optimized studio_teachers table
 
 // ===== PUBLIC EVENTS DATA ACCESS =====
 

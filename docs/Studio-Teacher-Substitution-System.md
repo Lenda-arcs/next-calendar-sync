@@ -41,6 +41,8 @@ CREATE TABLE studio_teachers (
   substitution_notice_hours INTEGER DEFAULT 24,
   rate_config JSONB,
   notes TEXT,
+  deactivated_at TIMESTAMPTZ,
+  deactivated_by UUID REFERENCES users(id),
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW(),
   UNIQUE(studio_id, teacher_id)
@@ -85,8 +87,9 @@ CREATE TABLE billing_entities (
 > **Note:** The system includes intelligent availability checking and database triggers for automated billing entity creation.
 
 #### Database Triggers ⚡
-- **`handle_studio_teacher_request_approval_trigger`**: Automatically creates billing entities when requests are approved
-- **Trigger Logic**: Creates `billing_entity` with name pattern `"[Studio Name] - Teacher Contract"` and `entity_type: 'studio'`
+- **`studio_teacher_billing_trigger`**: Automatically creates billing entities when `studio_teachers` relationships are created
+- **`studio_teacher_deactivation_trigger`**: Marks billing entities when teacher relationships are deactivated
+- **Trigger Logic**: Creates `billing_entity` with name pattern `"[Studio Name] - [Teacher Name]"` and `entity_type: 'studio'`
 
 #### 1. Teacher Request Flow ✅
 ```mermaid
@@ -107,9 +110,8 @@ graph TD
     M -->|Approve| N[Update request status to approved]
     M -->|Reject| O[Update request status to rejected]
     N --> P[Code creates studio_teachers relationship]
-    N --> Q[Database trigger creates billing_entity]
-    P --> R[Teacher sees connected studio in dashboard]
-    Q --> R
+    P --> Q[Database trigger creates billing_entity]
+    Q --> R[Teacher sees connected studio in dashboard]
 ```
 
 #### 2. Studio Management Flow ✅
@@ -318,6 +320,7 @@ src/
 │   ├── studios/
 │   │   ├── StudioManagement.tsx           # ✅ Admin studio overview
 │   │   ├── StudioTeacherRequests.tsx      # ✅ Request approval
+│   │   ├── TeacherDepartureDialog.tsx     # ✅ Teacher departure management
 │   │   ├── StudioTeacherManagement.tsx    # 🚀 Teacher role management
 │   │   └── SubstitutionRequestPanel.tsx   # 🚀 Substitute management
 │   ├── dashboard/
@@ -329,6 +332,7 @@ src/
 ├── lib/
 │   ├── hooks/
 │   │   ├── useTeacherStudioRelationships.ts  # ✅ Optimized relationships
+│   │   ├── useTeacherManagement.ts           # ✅ Teacher departure/reactivation
 │   │   ├── useSubstitutionRequests.ts         # 🚀 Substitute request hooks
 │   │   └── useSubstituteMatching.ts           # 🚀 Smart matching
 │   └── services/
@@ -376,8 +380,9 @@ CREATE POLICY "Substitution request access" ON substitution_requests
 
 ### Data Integrity
 - **Single source of truth** for teacher-studio relationships
-- **Automated billing entity creation** via `handle_studio_teacher_request_approval_trigger`
-- **Consistent billing patterns** with `"[Studio Name] - Teacher Contract"` naming
+- **Automated billing entity creation** via `studio_teacher_billing_trigger`
+- **Consistent billing patterns** with `"[Studio Name] - [Teacher Name]"` naming
+- **Teacher departure tracking** with `deactivated_at` and `deactivated_by` fields
 - **Automatic cleanup** with CASCADE delete constraints
 
 ### User Experience
@@ -415,11 +420,12 @@ CREATE POLICY "Substitution request access" ON substitution_requests
 ## Quick Start Guide
 
 ### For Developers
-1. **Database**: All migrations applied, `studio_teachers` table ready
+1. **Database**: All migrations applied, `studio_teachers` table ready with departure tracking
 2. **Components**: Updated to use optimized queries with smart availability checking
 3. **Types**: Enhanced with substitute-specific fields
-4. **Triggers**: `handle_studio_teacher_request_approval_trigger` handles billing automation
-5. **Next Steps**: Implement Phase 1 teacher management features
+4. **Triggers**: `studio_teacher_billing_trigger` handles billing automation, `studio_teacher_deactivation_trigger` manages departures
+5. **Teacher Management**: Complete departure/reactivation system with impact analysis
+6. **Next Steps**: Implement Phase 1 teacher management features
 
 ### For Product Managers
 1. **Current**: Teacher request/approval flow fully functional
@@ -440,13 +446,27 @@ CREATE POLICY "Substitution request access" ON substitution_requests
 ## Important Implementation Details
 
 ### Database Triggers 🔧
-The system includes automated database triggers that handle billing entity creation:
+The system includes automated database triggers that handle the complete teacher lifecycle:
 
 ```sql
--- Trigger: handle_studio_teacher_request_approval_trigger
--- Executes on: studio_teacher_requests status change to 'approved'
--- Creates: billing_entity with pattern "[Studio Name] - Teacher Contract"
--- Type: entity_type = 'studio' (not 'teacher')
+-- Trigger: studio_teacher_billing_trigger
+-- Executes on: studio_teachers INSERT (when relationship created)
+-- Creates: billing_entity with pattern "[Studio Name] - [Teacher Name]"
+-- Type: entity_type = 'studio'
+
+-- Trigger: studio_teacher_deactivation_trigger  
+-- Executes on: studio_teachers UPDATE (when is_active changes to false)
+-- Action: Marks billing_entity with deactivation notes (preserves for history)
+```
+
+### Teacher Departure Management 🚪
+The system includes comprehensive teacher departure functionality:
+
+```sql
+-- Functions available:
+-- analyze_teacher_departure_impact(studio_id, teacher_id) - Impact analysis
+-- deactivate_teacher_studio_relationship(studio_id, teacher_id, reason) - Safe removal
+-- reactivate_teacher_studio_relationship(studio_id, teacher_id) - Re-engagement
 ```
 
 ### Smart Availability Logic 🧠
@@ -457,5 +477,29 @@ The TeacherStudioRequest component includes intelligent availability checking:
 
 ---
 
+---
+
+## Current System Status (✅ Complete)
+
+### Database Infrastructure
+- ✅ **Optimized `studio_teachers` table** with departure tracking (`deactivated_at`, `deactivated_by`)
+- ✅ **Automated triggers**: Billing entity creation and deactivation handling
+- ✅ **Teacher lifecycle functions**: Departure impact analysis, safe deactivation, reactivation
+- ✅ **Performance indexes** for active relationships and substitution availability
+
+### Component Architecture  
+- ✅ **Teacher departure management**: `TeacherDepartureDialog` with impact analysis
+- ✅ **Teacher management hooks**: `useTeacherManagement` with departure/reactivation
+- ✅ **Standardized billing**: Automated creation with `"[Studio Name] - [Teacher Name]"` pattern
+- ✅ **Smart availability checking**: Request buttons only when studios available
+
+### Enterprise Features
+- ✅ **Soft delete pattern**: All data preserved for historical reference
+- ✅ **Impact analysis**: Future events, unpaid invoices, financial impact before departure
+- ✅ **Audit trail**: Complete tracking of teacher lifecycle changes
+- ✅ **Reversible operations**: Teachers can be reactivated with full history
+
+---
+
 *Last Updated: December 2024*  
-*Status: Phase 0 Complete ✅ | Phase 1 Ready 🚀*
+*Status: Phase 0 Complete ✅ | Teacher Lifecycle Management Complete ✅ | Phase 1 Ready 🚀*
