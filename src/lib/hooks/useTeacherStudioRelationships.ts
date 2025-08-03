@@ -5,6 +5,8 @@ interface TeacherStudioRelationship {
   id: string
   studio: Studio
   approved_at: string
+  role: string
+  available_for_substitution: boolean
   default_rate_config: RateConfig | null
   location_patterns: string[]
 }
@@ -21,15 +23,17 @@ export function useTeacherStudioRelationships({ teacherId, enabled = true }: Use
       if (!teacherId) return []
       
       const { data, error } = await supabase
-        .from('studio_teacher_requests')
+        .from('studio_teachers')
         .select(`
           id,
-          processed_at,
+          approved_at,
+          role,
+          available_for_substitution,
           studio:studios(*)
         `)
         .eq('teacher_id', teacherId)
-        .eq('status', 'approved')
-        .order('processed_at', { ascending: false })
+        .eq('is_active', true)
+        .order('approved_at', { ascending: false })
 
       if (error) {
         console.error('Error fetching teacher-studio relationships:', error)
@@ -37,12 +41,20 @@ export function useTeacherStudioRelationships({ teacherId, enabled = true }: Use
       }
 
       // Transform the data to include the studio's default configuration
-      const relationships: TeacherStudioRelationship[] = data?.map((request: { id: string; processed_at: string | null; studio: Studio }) => ({
-        id: request.id,
-        studio: request.studio,
-        approved_at: request.processed_at || new Date().toISOString(),
-        default_rate_config: request.studio?.default_rate_config as RateConfig | null,
-        location_patterns: request.studio?.location_patterns || []
+      const relationships: TeacherStudioRelationship[] = data?.map((relationship: { 
+        id: string; 
+        approved_at: string; 
+        role: string;
+        available_for_substitution: boolean;
+        studio: Studio 
+      }) => ({
+        id: relationship.id,
+        studio: relationship.studio,
+        approved_at: relationship.approved_at,
+        role: relationship.role,
+        available_for_substitution: relationship.available_for_substitution,
+        default_rate_config: relationship.studio?.default_rate_config as RateConfig | null,
+        location_patterns: relationship.studio?.location_patterns || []
       })) || []
 
       return relationships

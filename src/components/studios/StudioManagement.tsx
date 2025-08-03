@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useSupabaseQuery } from '@/lib/hooks/useQueryWithSupabase'
-import { Studio, StudioWithStats } from '@/lib/types'
+import { Studio, StudioWithStats, StudioTeacherWithInfo } from '@/lib/types'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -28,7 +28,7 @@ export function StudioManagement({ userRole }: StudioManagementProps) {
 
   const hasAccess = userRole === 'admin' || userRole === 'moderator'
 
-  // Fetch studios with stats
+  // Fetch studios with stats using the new studio_teachers table
   const { 
     data: studios, 
     isLoading: studiosLoading, 
@@ -41,11 +41,13 @@ export function StudioManagement({ userRole }: StudioManagementProps) {
         .from('studios')
         .select(`
           *,
-          billing_entities!studio_id (
+          studio_teachers!studio_id (
             id,
-            entity_name,
-            user_id,
-            users!billing_entities_user_id_fkey (
+            teacher_id,
+            role,
+            available_for_substitution,
+            is_active,
+            teacher:users!studio_teachers_teacher_id_fkey (
               id,
               name,
               email
@@ -56,12 +58,19 @@ export function StudioManagement({ userRole }: StudioManagementProps) {
 
       if (error) throw error
 
-      // Transform data to include stats
-      const studiosWithStats: StudioWithStats[] = data?.map((studio: Record<string, unknown>) => ({
-        ...studio,
-        teacher_count: (studio.billing_entities as unknown[])?.length || 0,
-        billing_entities: (studio.billing_entities as unknown[]) || []
-      })) || []
+      // Transform data to include stats from studio_teachers
+      const studiosWithStats: StudioWithStats[] = data?.map((studio: Record<string, unknown>) => {
+        const studioTeachers = (studio.studio_teachers as StudioTeacherWithInfo[]) || []
+        const activeTeachers = studioTeachers.filter((st: StudioTeacherWithInfo) => st.is_active)
+        
+        return {
+          ...studio,
+          teacher_count: activeTeachers.length,
+          substitute_teacher_count: activeTeachers.filter((st: StudioTeacherWithInfo) => st.available_for_substitution).length,
+          billing_entities: activeTeachers, // For backward compatibility
+          studio_teachers: studioTeachers // New field with full teacher data
+        }
+      }) || []
 
       return studiosWithStats
     },
@@ -178,7 +187,7 @@ export function StudioManagement({ userRole }: StudioManagementProps) {
               </Button>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
@@ -201,6 +210,20 @@ export function StudioManagement({ userRole }: StudioManagementProps) {
           <CardContent>
             <div className="text-2xl font-bold">
               {loadedStudios?.reduce((sum, studio) => sum + (studio.teacher_count || 0), 0) || 0}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <Users className="w-4 h-4 text-blue-500" />
+              Available Substitutes
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-blue-600">
+              {loadedStudios?.reduce((sum, studio) => sum + (studio.substitute_teacher_count || 0), 0) || 0}
             </div>
           </CardContent>
         </Card>

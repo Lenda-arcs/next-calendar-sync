@@ -266,10 +266,11 @@ export type TeacherStudioRelationship = Database['public']['Tables']['studio_tea
 
 export async function getUserStudios(supabase: SupabaseClient, userId: string): Promise<TeacherStudioRelationship[]> {
   const { data, error } = await supabase
-    .from('teacher_studio_relationships')
+    .from('studio_teacher_requests')
     .select('*')
     .eq('teacher_id', userId)
-    .order('created_at', { ascending: false })
+    .eq('status', 'approved')
+    .order('processed_at', { ascending: false })
   
   if (error) throw error
   return data || []

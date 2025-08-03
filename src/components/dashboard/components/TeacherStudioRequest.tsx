@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { StudioRequestDialog } from '@/components/studios'
 import { useTeacherStudioRelationships } from '@/lib/hooks/useTeacherStudioRelationships'
+import { useSupabaseQuery } from '@/lib/hooks/useQueryWithSupabase'
 import { useTranslationNamespace } from '@/lib/i18n/context'
 import { Building, Send, MapPin, CheckCircle, Plus, Clock } from 'lucide-react'
 
@@ -22,6 +23,32 @@ export function TeacherStudioRequest({ userId }: TeacherStudioRequestProps) {
     teacherId: userId,
     enabled: !!userId
   })
+
+  // Check if there are studios available to request access to
+  const { data: availableStudiosCount } = useSupabaseQuery(
+    ['available-studios-count', userId],
+    async (supabase) => {
+      // Get all verified studios
+      const { count: totalStudios, error: studiosError } = await supabase
+        .from('studios')
+        .select('*', { count: 'exact' })
+        .eq('verified', true)
+
+      if (studiosError) throw studiosError
+
+      // Get existing requests for this user
+      const { count: existingRequests, error: requestsError } = await supabase
+        .from('studio_teacher_requests')
+        .select('*', { count: 'exact' })
+        .eq('teacher_id', userId)
+        .in('status', ['pending', 'approved'])
+
+      if (requestsError) throw requestsError
+
+      return (totalStudios || 0) - (existingRequests || 0)
+    },
+    { enabled: !!userId }
+  )
 
   const hasConnectedStudios = teacherRelationships && teacherRelationships.length > 0
 
@@ -74,6 +101,16 @@ export function TeacherStudioRequest({ userId }: TeacherStudioRequestProps) {
                             <CheckCircle className="w-3 h-3 mr-1" />
                             {t('approved')}
                           </Badge>
+                          {relationship.role && relationship.role !== 'teacher' && (
+                            <Badge variant="outline" className="text-xs capitalize">
+                              {relationship.role}
+                            </Badge>
+                          )}
+                          {relationship.available_for_substitution && (
+                            <Badge variant="outline" className="text-xs text-blue-600">
+                              Available for substitution
+                            </Badge>
+                          )}
                         </h4>
                         {relationship.studio.address && (
                           <div className="flex items-center gap-1 text-sm text-gray-500 mt-1">
@@ -121,29 +158,37 @@ export function TeacherStudioRequest({ userId }: TeacherStudioRequestProps) {
                 )}
               </div>
 
-              {/* Add more studios button */}
-              <div className="flex gap-2 pt-2">
-                <Button 
-                  onClick={() => setShowRequestDialog(true)}
-                  variant="secondary"
-                  size="sm"
-                  className="flex-1"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  {t('requestMore')}
-                </Button>
-              </div>
+              {/* Add more studios button - only show if there are studios available */}
+              {availableStudiosCount && availableStudiosCount > 0 && (
+                <div className="flex gap-2 pt-2">
+                  <Button 
+                    onClick={() => setShowRequestDialog(true)}
+                    variant="secondary"
+                    size="sm"
+                    className="flex-1"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    {t('requestMore')}
+                  </Button>
+                </div>
+              )}
             </div>
           ) : (
             /* Show CTA when no connections */
-            <Button 
-              onClick={() => setShowRequestDialog(true)}
-              variant="default"
-              className="w-full flex items-center gap-2"
-            >
-              <Send className="h-4 w-4" />
-              {t('requestAccess')}
-            </Button>
+            availableStudiosCount && availableStudiosCount > 0 ? (
+              <Button 
+                onClick={() => setShowRequestDialog(true)}
+                variant="default"
+                className="w-full flex items-center gap-2"
+              >
+                <Send className="h-4 w-4" />
+                {t('requestAccess')}
+              </Button>
+            ) : (
+              <div className="text-center py-4 text-gray-500">
+                <p className="text-sm">All available studios have been requested</p>
+              </div>
+            )
           )}
         </CardContent>
       </Card>

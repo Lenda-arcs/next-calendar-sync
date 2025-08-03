@@ -594,6 +594,90 @@ export type Database = {
           },
         ]
       }
+      studio_teachers: {
+        Row: {
+          approved_at: string
+          approved_by: string | null
+          available_for_substitution: boolean
+          created_at: string
+          id: string
+          is_active: boolean
+          notes: string | null
+          rate_config: Json | null
+          role: string
+          studio_id: string
+          substitution_notice_hours: number | null
+          teacher_id: string
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string
+          approved_by?: string | null
+          available_for_substitution?: boolean
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          notes?: string | null
+          rate_config?: Json | null
+          role?: string
+          studio_id: string
+          substitution_notice_hours?: number | null
+          teacher_id: string
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string
+          approved_by?: string | null
+          available_for_substitution?: boolean
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          notes?: string | null
+          rate_config?: Json | null
+          role?: string
+          studio_id?: string
+          substitution_notice_hours?: number | null
+          teacher_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "studio_teachers_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "studio_teachers_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "studio_teachers_studio_id_fkey"
+            columns: ["studio_id"]
+            isOneToOne: false
+            referencedRelation: "studios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "studio_teachers_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "studio_teachers_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       studios: {
         Row: {
           address: string | null

@@ -22,7 +22,13 @@ interface StudioRequestDialogProps {
   userId: string
 }
 
-interface RelevantStudio extends Studio {
+interface StudioWithBillingEntities extends Studio {
+  billing_entities?: Array<{
+    location_match: string[] | null
+  }>
+}
+
+interface RelevantStudio extends StudioWithBillingEntities {
   matchScore: number
   matchedLocations: string[]
   matchedPatterns: string[]
@@ -72,14 +78,34 @@ export function StudioRequestDialog({ isOpen, onClose, userId }: StudioRequestDi
     { enabled: isOpen && !!userId }
   )
 
+  // First check total studios available (before filtering by existing requests)
+  const { data: totalStudiosCount } = useSupabaseQuery(
+    ['total-studios-count'],
+    async (supabase) => {
+      const { count, error } = await supabase
+        .from('studios')
+        .select('*', { count: 'exact' })
+        .eq('verified', true)
+
+      if (error) throw error
+      return count || 0
+    },
+    { enabled: isOpen }
+  )
+
   // Fetch available studios and calculate relevance
   const { data: relevantStudios, isLoading } = useSupabaseQuery<RelevantStudio[]>(
     ['relevant-studios', userId, String(userEventLocations?.locations?.length || 0)],
     async (supabase) => {
-      // Get all verified studios
+      // Get all verified studios with their related billing entities for location matching
       const { data: studiosData, error: studiosError } = await supabase
         .from('studios')
-        .select('*')
+        .select(`
+          *,
+          billing_entities:billing_entities!billing_entities_studio_id_fkey(
+            location_match
+          )
+        `)
         .eq('verified', true)
         .order('name')
 
@@ -95,11 +121,11 @@ export function StudioRequestDialog({ isOpen, onClose, userId }: StudioRequestDi
       if (requestsError) throw requestsError
 
       const existingStudioIds = new Set(existingRequests?.map((req: { studio_id: string; status: string }) => req.studio_id) || [])
-      const availableStudios = studiosData?.filter((studio: Studio) => !existingStudioIds.has(studio.id)) || []
+      const availableStudios = studiosData?.filter((studio: StudioWithBillingEntities) => !existingStudioIds.has(studio.id)) || []
 
       // If no user event data yet, return all available studios with score 0
       if (!userEventLocations?.locations || userEventLocations.locations.length === 0) {
-        return availableStudios.map((studio: Studio) => ({
+        return availableStudios.map((studio: StudioWithBillingEntities) => ({
           ...studio,
           matchScore: 0,
           matchedLocations: [],
@@ -112,6 +138,13 @@ export function StudioRequestDialog({ isOpen, onClose, userId }: StudioRequestDi
 
       for (const studio of availableStudios) {
         const locationPatterns = studio.location_patterns || []
+        // Also check billing entities for location_match patterns
+        // Note: This fixes the schema mismatch where some studios store location patterns
+        // in studios.location_patterns while others store them in billing_entities.location_match
+        const billingEntityPatterns = studio.billing_entities?.flatMap((entity: any) => entity.location_match || []) || []
+        // Combine both location pattern sources for comprehensive matching
+        const allLocationPatterns = [...locationPatterns, ...billingEntityPatterns]
+        
         const studioName = studio.name.toLowerCase()
         const studioAddress = (studio.address || '').toLowerCase()
         
@@ -121,7 +154,7 @@ export function StudioRequestDialog({ isOpen, onClose, userId }: StudioRequestDi
 
         // Check if studio location patterns match user's event locations
         for (const userLocation of userEventLocations.locations) {
-          for (const pattern of locationPatterns) {
+          for (const pattern of allLocationPatterns) {
             const patternLower = pattern.toLowerCase()
             
             // Strong match: pattern is contained in user location or vice versa
@@ -146,16 +179,13 @@ export function StudioRequestDialog({ isOpen, onClose, userId }: StudioRequestDi
           }
         }
 
-        // Only include studios with actual relevance to user's events
-        // If user has no events, show all studios but with 0 score
-        if (matchScore > 0) {
-          relevantStudios.push({
-            ...studio,
-            matchScore,
-            matchedLocations,
-            matchedPatterns
-          })
-        }
+        // Include all studios - both with and without matches
+        relevantStudios.push({
+          ...studio,
+          matchScore,
+          matchedLocations,
+          matchedPatterns
+        })
       }
 
       // Sort by relevance score (highest first), then by name
@@ -165,17 +195,6 @@ export function StudioRequestDialog({ isOpen, onClose, userId }: StudioRequestDi
         }
         return a.name.localeCompare(b.name)
       })
-
-      // If user has events but no studios match, show a few fallback studios
-      if (userEventLocations?.locations?.length > 0 && sortedStudios.length === 0) {
-        const fallbackStudios = availableStudios.slice(0, 3).map((studio: Studio) => ({
-          ...studio,
-          matchScore: 0,
-          matchedLocations: [],
-          matchedPatterns: []
-        }))
-        return fallbackStudios
-      }
 
       return sortedStudios
     },
@@ -197,7 +216,12 @@ export function StudioRequestDialog({ isOpen, onClose, userId }: StudioRequestDi
     async (supabase) => {
       const { data: studiosData, error: studiosError } = await supabase
         .from('studios')
-        .select('*')
+        .select(`
+          *,
+          billing_entities:billing_entities!billing_entities_studio_id_fkey(
+            location_match
+          )
+        `)
         .eq('verified', true)
         .order('name')
 
@@ -213,7 +237,7 @@ export function StudioRequestDialog({ isOpen, onClose, userId }: StudioRequestDi
       if (requestsError) throw requestsError
 
       const existingStudioIds = new Set(existingRequests?.map((req: { studio_id: string; status: string }) => req.studio_id) || [])
-      return studiosData?.filter((studio: Studio) => !existingStudioIds.has(studio.id)) || []
+      return studiosData?.filter((studio: StudioWithBillingEntities) => !existingStudioIds.has(studio.id)) || []
     },
     { enabled: isOpen && !!userId }
   )
@@ -230,16 +254,24 @@ export function StudioRequestDialog({ isOpen, onClose, userId }: StudioRequestDi
     // When searching, search through ALL available studios, not just relevant ones
     if (!allStudios) return []
     
-    const searchResults = allStudios.filter((studio: Studio) =>
-      studio.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      studio.address?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (studio.location_patterns || []).some((pattern: string) => 
-        pattern.toLowerCase().includes(searchTerm.toLowerCase())
+    const searchResults = allStudios.filter((studio: StudioWithBillingEntities) => {
+      const searchLower = searchTerm.toLowerCase()
+      const nameMatch = studio.name.toLowerCase().includes(searchLower)
+      const addressMatch = studio.address?.toLowerCase().includes(searchLower)
+      const locationPatternsMatch = (studio.location_patterns || []).some((pattern: string) => 
+        pattern.toLowerCase().includes(searchLower)
       )
-    ).slice(0, 8)
+      const billingEntityPatternsMatch = studio.billing_entities?.some((entity: any) =>
+        (entity.location_match || []).some((pattern: string) =>
+          pattern.toLowerCase().includes(searchLower)
+        )
+      ) || false
+      
+      return nameMatch || addressMatch || locationPatternsMatch || billingEntityPatternsMatch
+    }).slice(0, 8)
 
     // Convert to RelevantStudio format with calculated relevance
-    return searchResults.map((studio: Studio) => {
+    return searchResults.map((studio: StudioWithBillingEntities) => {
       const relevantStudio = relevantStudios.find((rs: RelevantStudio) => rs.id === studio.id)
       
       if (relevantStudio) {
@@ -383,10 +415,36 @@ export function StudioRequestDialog({ isOpen, onClose, userId }: StudioRequestDi
                 ) : filteredStudios.length === 0 ? (
                   <div className="text-center py-8 text-gray-500">
                     <Calendar className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                    <p className="font-medium">No matching studios found</p>
-                    <p className="text-sm text-gray-400 mt-1">
-                      {searchTerm ? 'Try adjusting your search terms' : 'Add some events to get personalized studio recommendations'}
-                    </p>
+                    {/* Show different messages based on the situation */}
+                    {searchTerm ? (
+                      <>
+                        <p className="font-medium">No matching studios found</p>
+                        <p className="text-sm text-gray-400 mt-1">
+                          Try adjusting your search terms
+                        </p>
+                      </>
+                    ) : totalStudiosCount === 0 ? (
+                      <>
+                        <p className="font-medium">No studios available</p>
+                        <p className="text-sm text-gray-400 mt-1">
+                          There are currently no verified studios in the system
+                        </p>
+                      </>
+                    ) : relevantStudios && relevantStudios.length === 0 ? (
+                      <>
+                        <p className="font-medium">You&apos;re connected to all available studios!</p>
+                        <p className="text-sm text-gray-400 mt-1">
+                          You already have approved requests for all {totalStudiosCount} studios. Check your profile to manage your studio connections.
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <p className="font-medium">No matching studios found</p>
+                        <p className="text-sm text-gray-400 mt-1">
+                          Add some events to get personalized studio recommendations
+                        </p>
+                      </>
+                    )}
                   </div>
                 ) : (
                   filteredStudios.map((studio: RelevantStudio) => (

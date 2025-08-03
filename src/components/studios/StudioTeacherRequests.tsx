@@ -1,11 +1,9 @@
 'use client'
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase'
 import { useAuthUser } from '@/lib/hooks/useAuthUser'
-import { StudioTeacherRequest, RecipientInfo } from '@/lib/types'
+import { StudioTeacherRequest } from '@/lib/types'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -63,55 +61,42 @@ export function StudioTeacherRequests({ requests, onRequestProcessed }: StudioTe
         throw updateError
       }
 
-      // If approved, create a billing entity for the teacher with studio's default config
+      // If approved, create studio_teachers relationship and billing entity
       if (action === 'approve' && requestData) {
         const studio = requestData.studio
         const teacher = requestData.teacher
         
         if (studio && teacher) {
-          // Build the billing entity data
-          const recipientInfo: RecipientInfo = {
-            type: 'external_teacher',
-            name: teacher.name || 'Unknown Teacher',
-            email: teacher.email || '',
-          }
-          
-          // Use studio's location patterns as location match
-          const locationMatch = studio.location_patterns || []
-
-          const billingEntity = {
-            entity_name: teacher.name || 'Unknown Teacher',
-            entity_type: 'teacher',
-            studio_id: studio.id,
-            user_id: teacher.id,
-            location_match: locationMatch,
-            rate_config: null, // Teachers inherit studio rates by default
-            custom_rate_override: null, // Can be customized later
-            recipient_info: recipientInfo as any,
-            banking_info: null,
-            currency: 'EUR',
-            notes: `Teacher billing profile created from approved studio request for ${studio.name}`
-          }
-
-          // Create the billing entity
-          const { error: billingError } = await supabase
-            .from('billing_entities')
-            .insert(billingEntity)
-
-          if (billingError) {
-            console.error('Error creating billing entity:', billingError)
-            // Don't throw here - the approval was successful, billing entity creation is a bonus
-            toast.warning('Request approved, but there was an issue creating the billing profile', {
-              description: 'The teacher can manually create their billing profile later.'
+          // 1. Create studio_teachers relationship (new optimized table)
+          const { error: relationshipError } = await supabase
+            .from('studio_teachers')
+            .insert({
+              studio_id: studio.id,
+              teacher_id: teacher.id,
+              approved_by: user.id,
+              approved_at: now,
+              role: 'teacher',
+              is_active: true,
+              available_for_substitution: false, // Default to false, can be updated later
+              notes: `Approved teacher request for ${studio.name}`
             })
-          } else {
-            toast.success('Request approved and billing profile created!', {
-              description: `${teacher.name} can now be billed through ${studio.name} with the studio's default rates.`
+
+          if (relationshipError) {
+            console.error('Error creating studio-teacher relationship:', relationshipError)
+            // Don't continue if we can't create the relationship
+            toast.error('Failed to create teacher-studio relationship', {
+              description: 'Please try again or contact support.'
             })
+            return
           }
+
+          // Billing entity creation is handled automatically by database trigger
+          toast.success('Request approved and teacher connected!', {
+            description: `${teacher.name} is now connected to ${studio.name} and can be billed with studio's default rates.`
+          })
         } else {
           toast.success('Request approved successfully', {
-            description: 'The teacher can now be associated with this studio for billing purposes.'
+            description: 'The teacher can now be associated with this studio.'
           })
         }
       } else {

@@ -61,10 +61,26 @@ export type StudioInsert = Omit<Studio, 'id' | 'created_at' | 'updated_at'> & {
 
 export type StudioUpdate = Partial<StudioInsert>
 
+// Studio-Teacher relationship with nested teacher info
+export interface StudioTeacherWithInfo {
+  id: string
+  teacher_id: string
+  role: string
+  available_for_substitution: boolean
+  is_active: boolean
+  teacher: {
+    id: string
+    name: string | null
+    email: string | null
+  }
+}
+
 export type StudioWithStats = Studio & {
   teacher_count?: number
+  substitute_teacher_count?: number
   event_count?: number
-  billing_entities?: BillingEntity[]
+  billing_entities?: BillingEntity[] // For backward compatibility
+  studio_teachers?: StudioTeacherWithInfo[] // New optimized teacher relationships
 }
 
 // Studio-Teacher relationship types
