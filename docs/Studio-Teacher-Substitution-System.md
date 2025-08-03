@@ -116,7 +116,7 @@ graph TD
 ```mermaid
 graph TD
     A[Admin/Moderator accesses Studio Management] --> B[View Dashboard with 4 metrics]
-    B --> C[Total Studios | Active Teachers | Available Substitutes | Verified Studios]
+    B --> C[Total Studios, Active Teachers, Available Substitutes, Verified Studios]
     C --> D{Choose Action}
     D -->|Manage Studios| E[Studios Tab - CRUD operations]
     D -->|Process Requests| F[Teacher Requests Tab]
