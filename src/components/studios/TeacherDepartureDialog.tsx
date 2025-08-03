@@ -11,7 +11,6 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -200,7 +199,7 @@ export function TeacherDepartureDialog({
             <div className="p-4 bg-red-50 rounded-lg border border-red-200">
               <div className="font-medium text-red-800">Confirm Deactivation</div>
               <div className="text-sm text-red-700 mt-1">
-                This will deactivate {teacherName}'s relationship with {studioName}.
+                This will deactivate {teacherName}&apos;s relationship with {studioName}.
                 {hasImpact && ' Please ensure future events and invoices are handled appropriately.'}
               </div>
             </div>

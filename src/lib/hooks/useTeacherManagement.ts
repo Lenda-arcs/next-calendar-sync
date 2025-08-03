@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { useSupabaseQuery, useSupabaseMutation } from './useQueryWithSupabase'
 import { SupabaseClient } from '@supabase/supabase-js'
 
