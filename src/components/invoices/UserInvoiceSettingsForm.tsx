@@ -5,7 +5,9 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { Select } from '@/components/ui/select'
 import { useSupabaseMutation } from '@/lib/hooks/useQueryWithSupabase'
+import { useUserProfile } from '@/lib/hooks/useAppQuery'
 import { UserInvoiceSettings, UserInvoiceSettingsInsert, UserInvoiceSettingsUpdate } from '@/lib/types'
 import { useTranslation } from '@/lib/i18n/context'
 import { Loader2 } from 'lucide-react'
@@ -28,6 +30,7 @@ export function UserInvoiceSettingsForm({
   formRef
 }: UserInvoiceSettingsFormProps) {
   const { t } = useTranslation()
+  
   const [formData, setFormData] = useState({
     full_name: '',
     email: '',
@@ -37,10 +40,14 @@ export function UserInvoiceSettingsForm({
     bic: '',
     tax_id: '',
     vat_id: '',
-    kleinunternehmerregelung: false
+    country: 'DE', // Default to Germany for now
+    small_business_tax_exemption: false
   })
 
-  // Populate form with existing settings
+  // Fetch user profile data for prefilling
+  const { data: userProfile } = useUserProfile(userId, { enabled: !!userId && !existingSettings })
+
+  // Populate form with existing settings or prefill from user profile
   useEffect(() => {
     if (existingSettings) {
       setFormData({
@@ -52,10 +59,18 @@ export function UserInvoiceSettingsForm({
         bic: existingSettings.bic || '',
         tax_id: existingSettings.tax_id || '',
         vat_id: existingSettings.vat_id || '',
-        kleinunternehmerregelung: false
+        country: 'DE', // Will be extended when country field is added to DB
+        small_business_tax_exemption: existingSettings.kleinunternehmerregelung || false
       })
+    } else if (userProfile && !existingSettings) {
+      // Prefill from user profile when creating new settings
+      setFormData(prev => ({
+        ...prev,
+        full_name: userProfile.name || '',
+        email: userProfile.email || ''
+      }))
     }
-  }, [existingSettings])
+  }, [existingSettings, userProfile])
 
   // Mutation for creating/updating settings
   const settingsMutation = useSupabaseMutation(
@@ -111,20 +126,24 @@ export function UserInvoiceSettingsForm({
       bic: formData.bic || null,
       tax_id: formData.tax_id || null,
       vat_id: formData.vat_id || null,
-      kleinunternehmerregelung: formData.kleinunternehmerregelung
+      kleinunternehmerregelung: formData.small_business_tax_exemption
     }
 
     await settingsMutation.mutateAsync(data)
   }, [formData, settingsMutation])
 
-  const handleInputChange = (field: string, value: string) => {
+  const handleInputChange = (field: string, value: string | boolean) => {
     setFormData(prev => ({
       ...prev,
-      [field]: field === 'kleinunternehmerregelung' ? value === 'true' : value
+      [field]: value
     }))
   }
 
-  const isFormValid = formData.full_name.trim() !== ''
+  const isFormValid = (
+    formData.full_name.trim() !== '' &&
+    formData.email.trim() !== '' &&
+    formData.address.trim() !== ''
+  )
 
   return (
     <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
@@ -144,12 +163,13 @@ export function UserInvoiceSettingsForm({
         </div>
 
         <div>
-          <Label htmlFor="email">{t('invoices.settingsForm.email')}</Label>
+          <Label htmlFor="email">{t('invoices.settingsForm.emailRequired')}</Label>
           <Input
             id="email"
             type="email"
             value={formData.email}
             onChange={(e) => handleInputChange('email', e.target.value)}
+            required
             disabled={settingsMutation.isPending}
           />
         </div>
@@ -165,12 +185,29 @@ export function UserInvoiceSettingsForm({
         </div>
 
         <div>
-          <Label htmlFor="address">{t('invoices.settingsForm.address')}</Label>
+          <Select
+            id="country"
+            label={t('invoices.settingsForm.country')}
+            options={[
+              { value: 'DE', label: t('invoices.settingsForm.germany') },
+              { value: 'ES', label: t('invoices.settingsForm.spain') },
+              { value: 'GB', label: t('invoices.settingsForm.unitedKingdom') }
+            ]}
+            value={formData.country}
+            onChange={(value) => handleInputChange('country', value)}
+            disabled={settingsMutation.isPending}
+            placeholder={t('invoices.settingsForm.selectCountry')}
+          />
+        </div>
+
+        <div>
+          <Label htmlFor="address">{t('invoices.settingsForm.addressRequired')}</Label>
           <Textarea
             id="address"
             value={formData.address}
             onChange={(e) => handleInputChange('address', e.target.value)}
             rows={3}
+            required
             disabled={settingsMutation.isPending}
           />
         </div>
@@ -228,22 +265,27 @@ export function UserInvoiceSettingsForm({
           />
         </div>
 
-        <div className="flex items-center space-x-2">
-          <input
-            type="checkbox"
-            id="kleinunternehmerregelung"
-            checked={formData.kleinunternehmerregelung}
-            onChange={(e) => handleInputChange('kleinunternehmerregelung', e.target.checked.toString())}
-            disabled={settingsMutation.isPending}
-            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-          />
-          <Label htmlFor="kleinunternehmerregelung" className="text-sm">
-            {t('invoices.settingsForm.kleinunternehmerregelung')}
-          </Label>
-        </div>
-        <p className="text-sm text-gray-500 ml-6">
-          {t('invoices.settingsForm.kleinunternehmerregelungDesc')}
-        </p>
+        {/* Country-specific tax regulations */}
+        {(formData.country === 'DE' || formData.country === 'ES') && (
+          <>
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id="small_business_tax_exemption"
+                checked={formData.small_business_tax_exemption}
+                onChange={(e) => handleInputChange('small_business_tax_exemption', e.target.checked)}
+                disabled={settingsMutation.isPending}
+                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              />
+              <Label htmlFor="small_business_tax_exemption" className="text-sm">
+                {t('invoices.settingsForm.smallBusinessTaxExemption')}
+              </Label>
+            </div>
+            <p className="text-sm text-gray-500 ml-6">
+              {t('invoices.settingsForm.smallBusinessTaxExemptionDesc')}
+            </p>
+          </>
+        )}
       </div>
 
       {/* Error Display */}
