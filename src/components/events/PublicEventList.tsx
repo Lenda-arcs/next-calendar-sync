@@ -149,7 +149,7 @@ const PublicEventList: React.FC<PublicEventListProps> = ({
 
   // Enhanced events with matched tags
   const enhancedEvents: EnhancedEventUnion[] = useMemo(() => {
-    if (!events || !allAvailableTags.length) return []
+    if (!events) return []
 
     return events.map(event => ({
       ...event,

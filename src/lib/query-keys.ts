@@ -40,8 +40,8 @@ export const queryKeys = {
     detail: (eventId: string) => ['events', 'detail', eventId] as const,
     unmatched: (userId: string) => ['events', 'unmatched', userId] as const,
     excluded: (userId: string) => ['events', 'excluded', userId] as const,
-    public: (userId: string, options?: { variant?: string; startDate?: string; endDate?: string }) => 
-      ['events', 'public', userId, ...(options ? [options.variant, options.startDate, options.endDate].filter(Boolean) : [])] as const,
+    public: (userId: string, options?: Record<string, unknown>) => 
+      ['events', 'public', userId, ...(options ? [JSON.stringify(options)] : [])] as const,
     byDateRange: (userId: string, start: string, end: string) => 
       ['events', 'range', userId, start, end] as const,
     byStudio: (userId: string, studioId: string) => 

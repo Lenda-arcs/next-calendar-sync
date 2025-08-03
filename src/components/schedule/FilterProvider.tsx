@@ -1,7 +1,8 @@
 'use client'
 
-import React, { createContext, useContext, useState, useCallback, useMemo } from 'react'
+import React, { createContext, useContext, useState, useCallback, useMemo, useEffect } from 'react'
 import { format, addDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns'
+import { toZonedTime, fromZonedTime } from 'date-fns-tz'
 import { PublicEvent, Tag } from '@/lib/types'
 import { usePublicEvents, useAllTags } from '@/lib/hooks/useAppQuery'
 import { useSupabaseQuery } from '@/lib/hooks/useQueryWithSupabase'
@@ -75,6 +76,7 @@ interface FilterContextValue {
 interface FilterProviderProps {
   children: React.ReactNode
   userId: string
+  userTimezone?: string | null
 }
 
 const FilterContext = createContext<FilterContextValue | undefined>(undefined)
@@ -91,12 +93,13 @@ export function useScheduleFilters() {
 function filtersToServerOptions(
   filters: FilterState, 
   allTags: Tag[], 
-  stableDates: { today: Date; now: Date }
+  stableDates: { today: Date; now: Date },
+  userTimezone?: string | null
 ): ExtendedPublicEventsOptions {
   const options: ExtendedPublicEventsOptions = {}
 
-  // Apply date filter
-  const dateRange = getDateRangeForFilter(filters.when, stableDates)
+  // Apply date filter (timezone-aware)
+  const dateRange = getDateRangeForFilter(filters.when, stableDates, userTimezone)
   if (dateRange) {
     options.startDate = dateRange.start.toISOString()
     options.endDate = dateRange.end.toISOString()
@@ -112,41 +115,77 @@ function filtersToServerOptions(
   return options
 }
 
-// Date range calculation for time filters
-function getDateRangeForFilter(filter: WhenFilter, stableDates: { today: Date; now: Date }) {
+// Date range calculation for time filters (timezone-aware)
+function getDateRangeForFilter(
+  filter: WhenFilter, 
+  stableDates: { today: Date; now: Date }, 
+  userTimezone?: string | null
+) {
+  const timezone = userTimezone || 'UTC'
   const { today, now } = stableDates
+  
+  // Convert browser times to user's timezone for accurate filtering
+  const userNow = userTimezone ? toZonedTime(now, timezone) : now
+  const userToday = userTimezone ? toZonedTime(today, timezone) : today
+  
+  let start: Date, end: Date
   
   switch (filter) {
     case 'today':
-      return { start: today, end: new Date(today.getTime() + 24 * 60 * 60 * 1000 - 1) }
+      start = userToday
+      end = new Date(userToday.getTime() + 24 * 60 * 60 * 1000 - 1)
+      break
     case 'week':
-      return { start: startOfWeek(now), end: endOfWeek(now) }
+      // Only future events in this week (from now until end of week)
+      // Use Monday as start of week (weekStartsOn: 1) - European standard
+      start = userNow
+      end = endOfWeek(userNow, { weekStartsOn: 1 })
+      break
     case 'nextweek':
-      const nextWeekStart = addDays(startOfWeek(now), 7)
-      const nextWeekEnd = addDays(endOfWeek(now), 7)
-      return { start: nextWeekStart, end: nextWeekEnd }
+      const nextWeekStart = addDays(startOfWeek(userNow, { weekStartsOn: 1 }), 7)
+      const nextWeekEnd = addDays(endOfWeek(userNow, { weekStartsOn: 1 }), 7)
+      start = nextWeekStart
+      end = nextWeekEnd
+      break
     case 'month':
-      // Upcoming events in current month only
-      return { start: today, end: endOfMonth(now) }
+      // Only future events in current month (from now until end of month)
+      start = userNow
+      end = endOfMonth(userNow)
+      break
     case 'nextmonth':
-      const nextMonth = addDays(now, 32)
-      return { start: startOfMonth(nextMonth), end: endOfMonth(nextMonth) }
+      const nextMonth = addDays(userNow, 32)
+      start = startOfMonth(nextMonth)
+      end = endOfMonth(nextMonth)
+      break
     case 'next3months':
-      const threeMonthsAhead = new Date(now)
+      const threeMonthsAhead = new Date(userNow)
       threeMonthsAhead.setMonth(threeMonthsAhead.getMonth() + 3)
-      return { start: today, end: threeMonthsAhead }
+      start = userNow
+      end = threeMonthsAhead
+      break
     default:
       return null
   }
+  
+  // Convert back to UTC for database queries (events are stored in UTC)
+  return {
+    start: userTimezone ? fromZonedTime(start, timezone) : start,
+    end: userTimezone ? fromZonedTime(end, timezone) : end
+  }
 }
 
-export function FilterProvider({ children, userId }: FilterProviderProps) {
+export function FilterProvider({ children, userId, userTimezone }: FilterProviderProps) {
   // State
   const [filters, setFilters] = useState<FilterState>({
-    when: 'week', // Initial load shows this week
+    when: 'week', // Start with this week, auto-upgrade if needed
     studios: [],
     yogaStyles: []
   })
+  
+  // Track if we've already auto-upgraded to prevent infinite loops
+  const [hasAutoUpgraded, setHasAutoUpgraded] = useState(false)
+  // Track if user has ever manually interacted with filters
+  const [hasUserInteracted, setHasUserInteracted] = useState(false)
   
   // Stable date ranges to prevent cache busting
   const stableDateRanges = useMemo(() => {
@@ -172,12 +211,12 @@ export function FilterProvider({ children, userId }: FilterProviderProps) {
   
   // Convert filters to server options
   const serverOptions = useMemo(() => {
-    const options = filtersToServerOptions(filters, allTags, stableDateRanges)
+    const options = filtersToServerOptions(filters, allTags, stableDateRanges, userTimezone)
     
     // Studio filtering enabled with server-side optimization
     
     return options
-  }, [filters, allTags, stableDateRanges])
+  }, [filters, allTags, stableDateRanges, userTimezone])
   
   // Fetch events with server-side filtering
   const { 
@@ -187,6 +226,27 @@ export function FilterProvider({ children, userId }: FilterProviderProps) {
     ...serverOptions,
     enabled: !!userId 
   })
+  
+  // Smart filter upgrading: auto-upgrade if current filter has too few events
+  // ONLY on initial load, never after user interaction
+  useEffect(() => {
+    if (!events || eventsLoading || hasAutoUpgraded || hasUserInteracted || filters.studios.length > 0 || filters.yogaStyles.length > 0) {
+      return // Don't auto-upgrade if loading, already upgraded, user has interacted, or user has applied filters
+    }
+    
+    const eventCount = events.length
+    
+    // Auto-upgrade logic based on current filter and event count
+    if (filters.when === 'week' && eventCount <= 3) {
+      // Upgrade from week to month
+      setFilters(prev => ({ ...prev, when: 'month' }))
+      setHasAutoUpgraded(true)
+    } else if (filters.when === 'month' && eventCount <= 3) {
+      // Upgrade from month to next3months
+      setFilters(prev => ({ ...prev, when: 'next3months' }))
+      setHasAutoUpgraded(true)
+    }
+  }, [events, eventsLoading, filters.when, filters.studios.length, filters.yogaStyles.length, hasAutoUpgraded, hasUserInteracted])
   
   // Future events query for studio discovery (optimized)
   const { data: stableEvents } = useSupabaseQuery<PublicEvent[]>(
@@ -373,6 +433,8 @@ export function FilterProvider({ children, userId }: FilterProviderProps) {
   // Event handlers
   const updateFilter = useCallback((key: keyof FilterState, value: WhenFilter | string[] | string) => {
     setFilters(prev => ({ ...prev, [key]: value }))
+    // Mark that user has interacted - disable auto-upgrading forever
+    setHasUserInteracted(true)
   }, [])
 
   const toggleStudio = useCallback((studioId: string) => {
@@ -382,6 +444,8 @@ export function FilterProvider({ children, userId }: FilterProviderProps) {
         ? prev.studios.filter(s => s !== studioId)
         : [...prev.studios, studioId]
     }))
+    // Mark that user has interacted - disable auto-upgrading forever
+    setHasUserInteracted(true)
   }, [])
 
   const toggleYogaStyle = useCallback((style: string) => {
@@ -391,18 +455,23 @@ export function FilterProvider({ children, userId }: FilterProviderProps) {
         ? prev.yogaStyles.filter(s => s !== style)
         : [...prev.yogaStyles, style]
     }))
+    // Mark that user has interacted - disable auto-upgrading forever
+    setHasUserInteracted(true)
   }, [])
 
   const clearAllFilters = useCallback(() => {
     setFilters({
-      when: 'next3months',
+      when: 'week', // Reset to week, let auto-upgrade handle it
       studios: [],
       yogaStyles: []
     })
+    // Reset both flags to allow auto-upgrading again (user is starting fresh)
+    setHasAutoUpgraded(false)
+    setHasUserInteracted(false)
   }, [])
 
-  // Active filters check (next3months is reset default, so week shows reset button)
-  const hasActiveFilters = filters.when !== 'next3months' || filters.studios.length > 0 || filters.yogaStyles.length > 0
+  // Active filters check (week is reset default, any manual filter changes show reset button)
+  const hasActiveFilters = (filters.when !== 'week' && !hasAutoUpgraded) || filters.studios.length > 0 || filters.yogaStyles.length > 0
   const totalEvents = filteredEvents.length
 
   const value: FilterContextValue = {

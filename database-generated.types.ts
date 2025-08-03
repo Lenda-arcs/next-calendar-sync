@@ -600,6 +600,8 @@ export type Database = {
           approved_by: string | null
           available_for_substitution: boolean
           created_at: string
+          deactivated_at: string | null
+          deactivated_by: string | null
           id: string
           is_active: boolean
           notes: string | null
@@ -615,6 +617,8 @@ export type Database = {
           approved_by?: string | null
           available_for_substitution?: boolean
           created_at?: string
+          deactivated_at?: string | null
+          deactivated_by?: string | null
           id?: string
           is_active?: boolean
           notes?: string | null
@@ -630,6 +634,8 @@ export type Database = {
           approved_by?: string | null
           available_for_substitution?: boolean
           created_at?: string
+          deactivated_at?: string | null
+          deactivated_by?: string | null
           id?: string
           is_active?: boolean
           notes?: string | null
@@ -651,6 +657,20 @@ export type Database = {
           {
             foreignKeyName: "studio_teachers_approved_by_fkey"
             columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "studio_teachers_deactivated_by_fkey"
+            columns: ["deactivated_by"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "studio_teachers_deactivated_by_fkey"
+            columns: ["deactivated_by"]
             isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
@@ -1245,6 +1265,16 @@ export type Database = {
       }
     }
     Functions: {
+      analyze_teacher_departure_impact: {
+        Args: { p_studio_id: string; p_teacher_id: string }
+        Returns: {
+          future_events_count: number
+          unpaid_invoices_count: number
+          total_unpaid_amount: number
+          last_event_date: string
+          relationship_duration_days: number
+        }[]
+      }
       cleanup_expired_invitations: {
         Args: Record<PropertyKey, never>
         Returns: number
@@ -1252,6 +1282,15 @@ export type Database = {
       cleanup_expired_rate_limits: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      deactivate_teacher_studio_relationship: {
+        Args: {
+          p_studio_id: string
+          p_teacher_id: string
+          p_deactivated_by: string
+          p_reason?: string
+        }
+        Returns: boolean
       }
       delete_invoice_cascade: {
         Args: { target_invoice_id: string }
@@ -1264,6 +1303,14 @@ export type Database = {
       get_user_image_count: {
         Args: { user_id: string; folder_type?: string }
         Returns: number
+      }
+      reactivate_teacher_studio_relationship: {
+        Args: {
+          p_studio_id: string
+          p_teacher_id: string
+          p_reactivated_by: string
+        }
+        Returns: boolean
       }
     }
     Enums: {
