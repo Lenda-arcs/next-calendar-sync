@@ -146,9 +146,11 @@ export function ProfileForm({ user, onUpdate }: ProfileFormProps) {
     bio: user.bio ?? '',
     profile_image_url: user.profile_image_url ?? '',
     public_url: user.public_url ?? '',
+    contact_email: user.contact_email ?? '',
     timezone: user.timezone ?? 'UTC',
     instagram_url: user.instagram_url ?? '',
     website_url: user.website_url ?? '',
+    spotify_url: user.spotify_url ?? '',
     yoga_styles: user.yoga_styles ?? [],
     event_display_variant: user.event_display_variant ?? 'compact',
     theme_variant: user.theme_variant ?? 'default',
@@ -195,6 +197,18 @@ export function ProfileForm({ user, onUpdate }: ProfileFormProps) {
           const validation = urlValidation.validateWebsiteUrl(value as string)
           return validation.isValid ? undefined : validation.error
         }
+      },
+      spotify_url: {
+        custom: (value) => {
+          const validation = urlValidation.validateSpotifyUrl(value as string)
+          return validation.isValid ? undefined : validation.error
+        }
+      },
+      contact_email: {
+        custom: (value) => {
+          const validation = urlValidation.validateEmail(value as string)
+          return validation.isValid ? undefined : validation.error
+        }
       }
     },
     onSubmit: async (formData) => {
@@ -202,15 +216,23 @@ export function ProfileForm({ user, onUpdate }: ProfileFormProps) {
       const normalizedInstagramUrl = urlValidation.normalizeUrl(formData.instagram_url as string)
       const normalizedWebsiteUrl = urlValidation.normalizeUrl(formData.website_url as string)
 
+      // Normalize Spotify URL to match database constraints
+      const normalizedSpotifyUrl = urlValidation.normalizeUrl(formData.spotify_url as string)
+      
+      // Normalize contact email
+      const normalizedContactEmail = urlValidation.validateEmail(formData.contact_email as string).normalizedEmail
+
       // Prepare the update data
       const updateData: Partial<User> = {
         name: formData.name as string,
         bio: formData.bio as string || null,
         profile_image_url: formData.profile_image_url as string || null,
         public_url: formData.public_url as string || null,
+        contact_email: normalizedContactEmail,
         timezone: formData.timezone as string,
         instagram_url: normalizedInstagramUrl,
         website_url: normalizedWebsiteUrl,
+        spotify_url: normalizedSpotifyUrl,
         yoga_styles: formData.yoga_styles as string[],
         event_display_variant: formData.event_display_variant as 'minimal' | 'compact' | 'full',
         theme_variant: formData.theme_variant as string,
@@ -367,12 +389,30 @@ export function ProfileForm({ user, onUpdate }: ProfileFormProps) {
               )}
             </div>
 
+            <FormField
+              label="Contact Email (Optional)"
+              type="email"
+              placeholder="contact@example.com"
+              value={values.contact_email as string}
+              onChange={(e) => setValue('contact_email', e.target.value)}
+              onBlur={() => {
+                const currentValue = values.contact_email as string
+                const validation = urlValidation.validateEmail(currentValue)
+                if (validation.normalizedEmail !== currentValue) {
+                  setValue('contact_email', validation.normalizedEmail || '')
+                }
+                validateFieldOnBlur('contact_email')
+              }}
+              error={errors.contact_email}
+              helperText="Email for student inquiries (if different from your account email)"
+            />
+
             {/* Social Links */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <FormField
                 label="Instagram URL"
                 type="url"
-                placeholder="instagram.com/yourusername or https://instagram.com/yourusername"
+                placeholder="instagram.com/yourusername"
                 value={values.instagram_url as string}
                 onChange={(e) => setValue('instagram_url', e.target.value)}
                 onBlur={() => {
@@ -390,7 +430,7 @@ export function ProfileForm({ user, onUpdate }: ProfileFormProps) {
               <FormField
                 label="Website URL"
                 type="url"
-                placeholder="your-website.com or https://your-website.com"
+                placeholder="your-website.com"
                 value={values.website_url as string}
                 onChange={(e) => setValue('website_url', e.target.value)}
                 onBlur={() => {
@@ -402,6 +442,24 @@ export function ProfileForm({ user, onUpdate }: ProfileFormProps) {
                   validateFieldOnBlur('website_url')
                 }}
                 error={errors.website_url}
+                helperText="We'll automatically add https:// if needed"
+              />
+
+              <FormField
+                label="Spotify URL"
+                type="url"
+                placeholder="open.spotify.com/user/username"
+                value={values.spotify_url as string}
+                onChange={(e) => setValue('spotify_url', e.target.value)}
+                onBlur={() => {
+                  const currentValue = values.spotify_url as string
+                  const validation = urlValidation.validateSpotifyUrl(currentValue)
+                  if (validation.normalizedUrl !== currentValue) {
+                    setValue('spotify_url', validation.normalizedUrl || '')
+                  }
+                  validateFieldOnBlur('spotify_url')
+                }}
+                error={errors.spotify_url}
                 helperText="We'll automatically add https:// if needed"
               />
             </div>

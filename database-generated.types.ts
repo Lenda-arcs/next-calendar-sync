@@ -1070,6 +1070,7 @@ export type Database = {
         Row: {
           bio: string | null
           calendar_feed_count: number
+          contact_email: string | null
           created_at: string | null
           email: string | null
           event_display_variant:
@@ -1082,6 +1083,7 @@ export type Database = {
           profile_image_url: string | null
           public_url: string | null
           role: Database["public"]["Enums"]["user_role"]
+          spotify_url: string | null
           theme_variant: string
           timezone: string | null
           website_url: string | null
@@ -1090,6 +1092,7 @@ export type Database = {
         Insert: {
           bio?: string | null
           calendar_feed_count?: number
+          contact_email?: string | null
           created_at?: string | null
           email?: string | null
           event_display_variant?:
@@ -1102,6 +1105,7 @@ export type Database = {
           profile_image_url?: string | null
           public_url?: string | null
           role?: Database["public"]["Enums"]["user_role"]
+          spotify_url?: string | null
           theme_variant?: string
           timezone?: string | null
           website_url?: string | null
@@ -1110,6 +1114,7 @@ export type Database = {
         Update: {
           bio?: string | null
           calendar_feed_count?: number
+          contact_email?: string | null
           created_at?: string | null
           email?: string | null
           event_display_variant?:
@@ -1122,6 +1127,7 @@ export type Database = {
           profile_image_url?: string | null
           public_url?: string | null
           role?: Database["public"]["Enums"]["user_role"]
+          spotify_url?: string | null
           theme_variant?: string
           timezone?: string | null
           website_url?: string | null
@@ -1204,6 +1210,7 @@ export type Database = {
       public_profiles: {
         Row: {
           bio: string | null
+          email: string | null
           event_display_variant:
             | Database["public"]["Enums"]["event_display_variant"]
             | null
@@ -1213,6 +1220,7 @@ export type Database = {
           name: string | null
           profile_image_url: string | null
           public_url: string | null
+          spotify_url: string | null
           theme_variant: string | null
           timezone: string | null
           website_url: string | null
@@ -1220,6 +1228,7 @@ export type Database = {
         }
         Insert: {
           bio?: string | null
+          email?: never
           event_display_variant?:
             | Database["public"]["Enums"]["event_display_variant"]
             | null
@@ -1229,6 +1238,7 @@ export type Database = {
           name?: string | null
           profile_image_url?: string | null
           public_url?: string | null
+          spotify_url?: string | null
           theme_variant?: string | null
           timezone?: string | null
           website_url?: string | null
@@ -1236,6 +1246,7 @@ export type Database = {
         }
         Update: {
           bio?: string | null
+          email?: never
           event_display_variant?:
             | Database["public"]["Enums"]["event_display_variant"]
             | null
@@ -1245,6 +1256,7 @@ export type Database = {
           name?: string | null
           profile_image_url?: string | null
           public_url?: string | null
+          spotify_url?: string | null
           theme_variant?: string | null
           timezone?: string | null
           website_url?: string | null

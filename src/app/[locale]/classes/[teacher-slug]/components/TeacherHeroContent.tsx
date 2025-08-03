@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { LoadingOverlay } from '@/components/ui'
 import TagList from '@/components/tags/TagList'
-import { Mail, Globe, Instagram, Clock, Share2, Download } from 'lucide-react'
+import { Mail, Globe, Instagram, Clock, Share2, Download, Music } from 'lucide-react'
 import { PublicProfile } from '@/lib/types'
 import { useScheduleFilters } from '@/components/schedule/FilterProvider'
 import { useScheduleExport, useOwnerAuth, useOrigin } from '@/lib/hooks'
@@ -67,13 +67,19 @@ export default function TeacherHeroContent({
     return t('pages.publicSchedule.hero.defaultBio', { name: profile.name })
   }
 
-  // Generate contact email placeholder
-  const getContactEmail = (name: string | null, publicUrl: string | null) => {
-    if (publicUrl) {
-      return `${publicUrl}@yogateacher.com`
+  // Get the contact email for the teacher
+  const getContactEmail = (profile: PublicProfile) => {
+    // The email field now automatically shows contact_email if present, otherwise default email
+    if (profile?.email) {
+      return profile.email
     }
-    if (name) {
-      return `${name.toLowerCase().replace(/\s+/g, '.')}@yogateacher.com`
+    
+    // Fallback to placeholder if no email available
+    if (profile?.public_url) {
+      return `${profile.public_url}@yogateacher.com`
+    }
+    if (profile?.name) {
+      return `${profile.name.toLowerCase().replace(/\s+/g, '.')}@yogateacher.com`
     }
     return 'contact@yogateacher.com'
   }
@@ -151,7 +157,7 @@ export default function TeacherHeroContent({
               asChild
             >
               <a
-                href={`mailto:${getContactEmail(teacherProfile?.name || null, teacherProfile?.public_url || null)}`}
+                href={`mailto:${getContactEmail(teacherProfile)}`}
                 className="flex items-center justify-center gap-2"
               >
                 <Mail className="h-4 w-4" />
@@ -193,6 +199,25 @@ export default function TeacherHeroContent({
                 >
                   <Globe className="h-4 w-4" />
                   {t('pages.publicSchedule.hero.website')}
+                </a>
+              </Button>
+            )}
+
+            {teacherProfile?.spotify_url && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="bg-white/70 hover:bg-white border-white/50 flex-1 min-w-[120px]"
+                asChild
+              >
+                <a
+                  href={teacherProfile.spotify_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-2"
+                >
+                  <Music className="h-4 w-4" />
+                  Spotify
                 </a>
               </Button>
             )}
@@ -309,7 +334,7 @@ export default function TeacherHeroContent({
                 asChild
               >
                 <a
-                  href={`mailto:${getContactEmail(teacherProfile?.name || null, teacherProfile?.public_url || null)}`}
+                  href={`mailto:${getContactEmail(teacherProfile)}`}
                   className="flex items-center gap-2"
                 >
                   <Mail className="h-4 w-4" />
@@ -351,6 +376,25 @@ export default function TeacherHeroContent({
                   >
                     <Globe className="h-4 w-4" />
                     {t('pages.publicSchedule.hero.website')}
+                  </a>
+                </Button>
+              )}
+
+              {teacherProfile?.spotify_url && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="bg-white/70 hover:bg-white border-white/50"
+                  asChild
+                >
+                  <a
+                    href={teacherProfile.spotify_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2"
+                  >
+                    <Music className="h-4 w-4" />
+                    Spotify
                   </a>
                 </Button>
               )}

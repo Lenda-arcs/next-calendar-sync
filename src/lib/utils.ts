@@ -79,5 +79,52 @@ export const urlValidation = {
         normalizedUrl: normalized
       }
     }
+  },
+
+  /**
+   * Validates Spotify URL against database constraint
+   * Constraint: ^https?:\/\/(www\.)?(open\.spotify\.com|spotify\.com)\/.*
+   */
+  validateSpotifyUrl(url: string | null | undefined): { isValid: boolean; error?: string; normalizedUrl?: string | null } {
+    const normalized = this.normalizeUrl(url)
+    
+    if (!normalized) {
+      return { isValid: true, normalizedUrl: null }
+    }
+
+    const spotifyRegex = /^https?:\/\/(www\.)?(open\.spotify\.com|spotify\.com)\/.*$/
+    
+    if (!spotifyRegex.test(normalized)) {
+      return {
+        isValid: false,
+        error: 'Please enter a valid Spotify URL (e.g., open.spotify.com/user/username)',
+        normalizedUrl: normalized
+      }
+    }
+
+    return { isValid: true, normalizedUrl: normalized }
+  },
+
+  /**
+   * Validates email address format
+   * Uses basic email regex pattern matching database constraint
+   */
+  validateEmail(email: string | null | undefined): { isValid: boolean; error?: string; normalizedEmail?: string | null } {
+    if (!email || !email.trim()) {
+      return { isValid: true, normalizedEmail: null }
+    }
+    
+    const trimmed = email.trim().toLowerCase()
+    const emailRegex = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/
+    
+    if (!emailRegex.test(trimmed)) {
+      return {
+        isValid: false,
+        error: 'Please enter a valid email address',
+        normalizedEmail: trimmed
+      }
+    }
+
+    return { isValid: true, normalizedEmail: trimmed }
   }
 }
