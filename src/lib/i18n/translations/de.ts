@@ -454,6 +454,27 @@ const translations: TranslationStructure = {
     }
   },
   invoices: {
+    overview: {
+      uninvoicedEvents: 'Nicht berechnete Events',
+      totalInvoices: 'Rechnungen gesamt',
+      pendingRevenue: 'Ausstehende Einnahmen',
+      thisMonthRevenue: 'Dieser Monat',
+      unpaidInvoices: 'unbezahlte Rechnungen',
+      paidInvoices: 'bezahlte Rechnungen',
+      swipeForMore: 'Wischen für mehr'
+    },
+    quickActions: {
+      invoiceSettings: 'Rechnungseinstellungen',
+      pdfThemes: 'PDF-Themes',
+      billingSetup: 'Abrechnung einrichten',
+      settings: 'Einstellungen',
+      themes: 'Themes',
+      billing: 'Abrechnung'
+    },
+    billing: {
+      configurationTitle: 'Abrechnungskonfiguration',
+      configurationDescription: 'Studio-Tarife und Zahlungseinstellungen für die Rechnungserstellung verwalten'
+    },
     list: {
       title: 'Rechnungen',
       noInvoices: 'Keine Rechnungen gefunden',

@@ -2,7 +2,6 @@
 
 import { useMemo } from 'react'
 import { useUninvoicedEvents, useUserInvoices } from './useAppQuery'
-import { calculateEventPayout } from '@/lib/invoice-utils'
 
 export interface InvoiceMetrics {
   // Uninvoiced Events
@@ -62,18 +61,10 @@ export function useInvoiceMetrics(userId: string): InvoiceMetrics {
     if (uninvoicedEvents && uninvoicedEvents.length > 0) {
       uninvoicedEventsCount = uninvoicedEvents.length
       
-      // Calculate total value of uninvoiced events
-      uninvoicedEventsValue = uninvoicedEvents.reduce((total, event) => {
-        try {
-          // Use the same calculation logic as invoice creation
-          const payout = calculateEventPayout(event)
-          return total + payout
-        } catch (error) {
-          // If calculation fails for an event, skip it but continue
-          console.warn('Failed to calculate payout for event:', event.id, error)
-          return total
-        }
-      }, 0)
+      // For overview metrics, we'll skip the exact value calculation since it requires
+      // billing entity information which is complex to fetch for each event.
+      // The exact values will be shown when creating actual invoices.
+      uninvoicedEventsValue = 0
     }
 
     // Calculate invoice metrics
@@ -81,6 +72,9 @@ export function useInvoiceMetrics(userId: string): InvoiceMetrics {
       totalInvoicesCount = userInvoices.length
       
       userInvoices.forEach((invoice) => {
+        // Handle null created_at case
+        if (!invoice.created_at) return
+        
         const invoiceDate = new Date(invoice.created_at)
         const invoiceMonth = invoiceDate.getMonth()
         const invoiceYear = invoiceDate.getFullYear()
@@ -91,12 +85,12 @@ export function useInvoiceMetrics(userId: string): InvoiceMetrics {
         // Calculate pending revenue (unpaid invoices)
         if (invoice.status === 'draft' || invoice.status === 'sent' || invoice.status === 'overdue') {
           pendingInvoicesCount++
-          pendingRevenue += invoice.total_amount || 0
+          pendingRevenue += invoice.amount_total || 0
         }
         
         // Calculate this month's revenue (paid invoices)
         if (invoice.status === 'paid' && isCurrentMonth) {
-          thisMonthRevenue += invoice.total_amount || 0
+          thisMonthRevenue += invoice.amount_total || 0
           thisMonthInvoicesCount++
         }
       })

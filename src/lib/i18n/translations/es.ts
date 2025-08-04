@@ -454,6 +454,27 @@ const translations: TranslationStructure = {
     }
   },
   invoices: {
+    overview: {
+      uninvoicedEvents: 'Eventos sin Facturar',
+      totalInvoices: 'Total de Facturas',
+      pendingRevenue: 'Ingresos Pendientes',
+      thisMonthRevenue: 'Este Mes',
+      unpaidInvoices: 'facturas sin pagar',
+      paidInvoices: 'facturas pagadas',
+      swipeForMore: 'Deslizar para más'
+    },
+    quickActions: {
+      invoiceSettings: 'Configuración de Facturas',
+      pdfThemes: 'Temas PDF',
+      billingSetup: 'Configurar Facturación',
+      settings: 'Configuración',
+      themes: 'Temas',
+      billing: 'Facturación'
+    },
+    billing: {
+      configurationTitle: 'Configuración de Facturación',
+      configurationDescription: 'Gestionar tarifas de estudio y configuración de pagos para la generación de facturas'
+    },
     list: {
       title: 'Facturas',
       noInvoices: 'No se encontraron facturas',
