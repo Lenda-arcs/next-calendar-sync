@@ -149,7 +149,7 @@ export function useInvoiceCreationState({
         generateNumber()
       }
     }
-  }, [isOpen, invoiceNumber, mode, existingInvoice, userId])
+  }, [isOpen, invoiceNumber, mode, existingInvoice, userId, selectedEvents])
 
   // Initialize notes from existing invoice in edit mode
   useEffect(() => {

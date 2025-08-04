@@ -1346,7 +1346,7 @@ export type Database = {
         Returns: Json
       }
       get_next_invoice_number: {
-        Args: { p_user_id: string; p_prefix?: string }
+        Args: { p_user_id: string; p_entity_name?: string; p_prefix?: string }
         Returns: string
       }
       get_user_image_count: {
