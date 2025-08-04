@@ -16,6 +16,7 @@ import {
   linkEventsToInvoice,
   unlinkEventsFromInvoice,
   generateInvoicePDF,
+  bulkUpdateEventStudentCounts,
   EventWithStudio,
   InvoiceWithDetails
 } from '@/lib/invoice-utils'
@@ -61,9 +62,11 @@ export function InvoiceCreationModal({
     selectedEvents,
     totalAmount,
     handleEventUpdate,
-    isReady
+    isReady,
+    hasChanges
   } = useInvoiceCreationState({
     isOpen,
+    userId,
     eventIds,
     events,
     mode,
@@ -103,6 +106,20 @@ export function InvoiceCreationModal({
     },
     {
       onSuccess: async (invoice) => {
+      // Update student counts for all events
+      const studentCountUpdates = editableEvents.map(event => ({
+        eventId: event.id,
+        studentsStudio: event.studentsStudio,
+        studentsOnline: event.studentsOnline
+      }))
+      
+      try {
+        await bulkUpdateEventStudentCounts(studentCountUpdates)
+      } catch (error) {
+        console.error('Failed to update student counts:', error)
+        // Don't fail the entire operation, just log the error
+      }
+      
       if (mode === 'create') {
         await linkEventsToInvoice(eventIds, invoice.id)
       } else if (mode === 'edit' && existingInvoice) {
@@ -119,6 +136,19 @@ export function InvoiceCreationModal({
         }
         if (eventsToLink.length > 0) {
           await linkEventsToInvoice(eventsToLink, invoice.id)
+        }
+        
+        // Auto-regenerate PDF for updated invoices
+        try {
+          const { pdf_url } = await generateInvoicePDF(invoice.id, 'en') // Default to English
+          window.open(pdf_url, '_blank')
+          toast('Invoice Updated & PDF Regenerated!', {
+            description: 'Your invoice has been updated and the PDF has been regenerated.',
+            duration: 4000
+          })
+        } catch (error) {
+          console.error('Failed to auto-regenerate PDF:', error)
+          // Don't fail the operation, just log the error
         }
       }
       
@@ -177,13 +207,12 @@ export function InvoiceCreationModal({
     try {
       const { pdf_url } = await generateInvoicePDF(createdInvoiceId, selectedLanguage)
       
+      // Auto-open PDF in new tab
+      window.open(pdf_url, '_blank')
+      
       toast('PDF Generated Successfully!', {
-        description: 'Your invoice PDF has been created and is ready to view.',
-        action: {
-          label: 'View PDF',
-          onClick: () => window.open(pdf_url, '_blank')
-        },
-        duration: 8000
+        description: 'Your invoice PDF has been created and opened in a new tab.',
+        duration: 4000
       })
       
     } catch (error) {
@@ -206,16 +235,16 @@ export function InvoiceCreationModal({
       </Button>
       <Button 
         onClick={handleSubmitInvoice} 
-        disabled={invoiceMutation.isPending || !studio || editableEvents.length === 0 || !isReady}
+        disabled={invoiceMutation.isPending || !studio || editableEvents.length === 0 || !isReady || (mode === 'edit' && !hasChanges)}
       >
-                 {invoiceMutation.isPending ? (
-           <>
-             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-             {mode === 'edit' ? 'Updating' : 'Creating'} Invoice...
-           </>
-         ) : (
-           `${mode === 'edit' ? 'Update' : 'Create'} Invoice (€${totalAmount.toFixed(2)})`
-         )}
+        {invoiceMutation.isPending ? (
+          <>
+            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            {mode === 'edit' ? 'Updating' : 'Creating'} Invoice...
+          </>
+        ) : (
+          `${mode === 'edit' ? 'Update' : 'Create'} Invoice (€${totalAmount.toFixed(2)})`
+        )}
       </Button>
     </>
   ) : undefined
@@ -353,6 +382,8 @@ export function InvoiceCreationModal({
                           title={item.title}
                           rate={item.rate}
                           date={item.date}
+                          studentsStudio={item.studentsStudio}
+                          studentsOnline={item.studentsOnline}
                           onUpdate={handleEventUpdate}
                           disabled={invoiceMutation.isPending}
                         />

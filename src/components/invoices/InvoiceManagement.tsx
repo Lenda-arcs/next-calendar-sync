@@ -6,16 +6,15 @@ import {Card, CardContent} from '@/components/ui/card'
 import DataLoader from '@/components/ui/data-loader'
 import {
   EmptyInvoicesState,
-  InvoiceCard,
   InvoiceCreationModal,
   UninvoicedEventsList
 } from '@/components'
+import { GroupedInvoicesList } from './GroupedInvoicesList'
 import { InvoiceOverviewCards } from './InvoiceOverviewCards'
 import { InvoiceQuickActions } from './InvoiceQuickActions'
 
 import {
   useDeleteInvoice,
-  useGenerateInvoicePDF,
   useUninvoicedEvents,
   useUpdateInvoiceStatus,
   useUserInvoices
@@ -89,7 +88,6 @@ export function InvoiceManagement({ userId }: InvoiceManagementProps) {
 
   // ✨ NEW: Use unified mutation hooks
   const updateInvoiceStatusMutation = useUpdateInvoiceStatus()
-  const generateInvoicePDFMutation = useGenerateInvoicePDF()
   const deleteInvoiceMutation = useDeleteInvoice()
 
   const handleStatusChange = (invoiceId: string, newStatus: 'sent' | 'paid' | 'overdue') => {
@@ -110,34 +108,7 @@ export function InvoiceManagement({ userId }: InvoiceManagementProps) {
     )
   }
 
-  const handleGeneratePDF = (invoiceId: string, language: 'en' | 'de' | 'es' = 'en') => {
-    generateInvoicePDFMutation.mutate(
-      { invoiceId, language },
-      {
-        onSuccess: ({ pdf_url }) => {
-          // Refresh invoices list to show updated PDF URL
-          refetchInvoices()
-          
-          // Show success toast with option to view PDF
-          toast(t('invoices.creation.pdfGenerated'), {
-            description: t('invoices.creation.pdfGeneratedDesc'),
-            action: {
-              label: t('invoices.creation.viewPDF'),
-              onClick: () => window.open(pdf_url, '_blank'),
-            },
-            duration: 8000
-          })
-        },
-        onError: (error) => {
-          console.error('Failed to generate PDF:', error)
-          toast.error(t('invoices.creation.pdfFailed'), {
-            description: t('invoices.creation.pdfFailedDesc'),
-            duration: 6000
-          })
-        }
-      }
-    )
-  }
+
 
   const handleViewPDF = (pdfUrl: string) => {
     window.open(pdfUrl, '_blank')
@@ -257,19 +228,13 @@ export function InvoiceManagement({ userId }: InvoiceManagementProps) {
               }
             >
               {(invoices) => (
-                <div className="space-y-4">
-                  {invoices.map((invoice) => (
-                    <InvoiceCard 
-                      key={invoice.id} 
-                      invoice={invoice} 
-                      onEdit={handleEditInvoice}
-                      onStatusChange={handleStatusChange}
-                      onGeneratePDF={handleGeneratePDF}
-                      onViewPDF={handleViewPDF}
-                      onDelete={handleDeleteInvoice}
-                    />
-                  ))}
-                </div>
+                <GroupedInvoicesList
+                  invoices={invoices}
+                  onEdit={handleEditInvoice}
+                  onStatusChange={handleStatusChange}
+                  onViewPDF={handleViewPDF}
+                  onDelete={handleDeleteInvoice}
+                />
               )}
             </DataLoader>
           </TabContent>

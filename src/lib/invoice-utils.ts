@@ -32,7 +32,8 @@ export interface InvoiceWithDetails extends Invoice {
 }
 
 /**
- * Generate a unique invoice number
+ * Generate a unique invoice number using the old timestamp-based approach
+ * @deprecated Use generateGermanCompliantInvoiceNumber instead for German compliance
  */
 export function generateInvoiceNumber(userPrefix: string = "INV"): string {
   const now = new Date()
@@ -41,6 +42,34 @@ export function generateInvoiceNumber(userPrefix: string = "INV"): string {
   const timestamp = now.getTime().toString().slice(-6)
   
   return `${userPrefix}-${year}${month}-${timestamp}`
+}
+
+/**
+ * Generate a German-compliant invoice number using the database sequence
+ * This ensures non-sequential invoice numbers per user as required by German law
+ * Enhanced with entity abbreviation and year for professional appearance
+ */
+export async function generateGermanCompliantInvoiceNumber(
+  userId: string, 
+  entityName?: string,
+  userPrefix?: string
+): Promise<string> {
+  const supabase = createClient()
+  
+  // Call the enhanced database function
+  const { data, error } = await supabase.rpc('get_next_invoice_number', {
+    p_user_id: userId,
+    p_entity_name: entityName || 'INV',
+    p_prefix: userPrefix || ''
+  })
+  
+  if (error) {
+    console.error('Error generating German-compliant invoice number:', error)
+    // Fallback to old method if database function fails
+    return generateInvoiceNumber(userPrefix || 'INV')
+  }
+  
+  return data || generateInvoiceNumber(userPrefix || 'INV')
 }
 
 // Note: RateTier interface is now defined in types.ts as part of RateConfigTiered

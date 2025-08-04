@@ -29,7 +29,11 @@ export async function fetchInvoiceData(invoiceId: string): Promise<InvoiceData> 
   // Fetch billing entity (studio) for this invoice using studio_id
   const { data: billingEntity, error: entityError } = await supabase
     .from('billing_entities')
-    .select('*')
+    .select(`
+      id, entity_name, entity_type,
+      recipient_info, banking_info,
+      rate_config
+    `)
     .eq('id', invoice.studio_id)
     .single()
 
@@ -82,7 +86,7 @@ export async function fetchInvoiceData(invoiceId: string): Promise<InvoiceData> 
   // Fetch user information
   const { data: user, error: userError } = await supabase
     .from('users')
-    .select('name, email')
+    .select('name, email, timezone')
     .eq('id', invoice.user_id)
     .single()
 
@@ -94,7 +98,13 @@ export async function fetchInvoiceData(invoiceId: string): Promise<InvoiceData> 
   // Fetch user invoice settings separately
   const { data: userSettings } = await supabase
     .from('user_invoice_settings')
-    .select('kleinunternehmerregelung, pdf_template_config, template_theme')
+    .select(`
+      full_name, email, phone, address, 
+      tax_id, vat_id, iban, bic, country,
+      payment_terms_days, invoice_number_prefix, 
+      business_signature, kleinunternehmerregelung,
+      pdf_template_config, template_theme
+    `)
     .eq('user_id', invoice.user_id)
     .single()
 

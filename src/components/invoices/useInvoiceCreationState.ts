@@ -3,9 +3,11 @@
 import { useState, useEffect, useMemo } from 'react'
 import { 
   generateInvoiceNumber, 
+  generateGermanCompliantInvoiceNumber,
   calculateEventPayout, 
   EventWithStudio,
-  InvoiceWithDetails
+  InvoiceWithDetails,
+  getUserInvoiceSettings
 } from '@/lib/invoice-utils'
 
 interface EditableEventData {
@@ -13,10 +15,13 @@ interface EditableEventData {
   title: string
   rate: number
   date: string
+  studentsStudio: number
+  studentsOnline: number
 }
 
 interface UseInvoiceCreationStateProps {
   isOpen: boolean
+  userId: string
   eventIds: string[]
   events: EventWithStudio[]
   mode?: 'create' | 'edit'
@@ -25,6 +30,7 @@ interface UseInvoiceCreationStateProps {
 
 export function useInvoiceCreationState({ 
   isOpen, 
+  userId,
   eventIds, 
   events, 
   mode, 
@@ -46,6 +52,39 @@ export function useInvoiceCreationState({
     return editableEvents.reduce((sum, item) => sum + item.rate, 0)
   }, [editableEvents])
 
+  // Detect if there are any changes (for edit mode)
+  const hasChanges = useMemo(() => {
+    if (mode !== 'edit' || !existingInvoice) return false
+    
+    // Check if invoice number changed
+    if (invoiceNumber !== existingInvoice.invoice_number) return true
+    
+    // Check if notes changed
+    if (notes !== (existingInvoice.notes || '')) return true
+    
+    // Check if any event data changed
+    const originalEvents = existingInvoice.events
+    if (editableEvents.length !== originalEvents.length) return true
+    
+    for (let i = 0; i < editableEvents.length; i++) {
+      const editable = editableEvents[i]
+      const original = originalEvents[i]
+      
+      if (!original) return true
+      
+      // Check title, student counts
+      if (editable.title !== (original.title || 'Untitled Event')) return true
+      if (editable.studentsStudio !== (original.students_studio || 0)) return true
+      if (editable.studentsOnline !== (original.students_online || 0)) return true
+      
+      // Check if rate changed (this would indicate student count changes affected the rate)
+      const originalRate = existingInvoice.studio ? calculateEventPayout(original, existingInvoice.studio) : 0
+      if (Math.abs(editable.rate - originalRate) > 0.01) return true
+    }
+    
+    return false
+  }, [mode, existingInvoice, invoiceNumber, notes, editableEvents])
+
   // Initialize editable events when modal opens with events
   useEffect(() => {
     if (isOpen && selectedEvents.length > 0 && editableEvents.length === 0) {
@@ -57,7 +96,9 @@ export function useInvoiceCreationState({
           id: event.id,
           title: event.title || 'Untitled Event',
           rate: existingInvoice.studio ? calculateEventPayout(event, existingInvoice.studio) : 0,
-          date: event.start_time ? new Date(event.start_time).toLocaleDateString() : 'No date'
+          date: event.start_time ? new Date(event.start_time).toLocaleDateString() : 'No date',
+          studentsStudio: event.students_studio || 0,
+          studentsOnline: event.students_online || 0
         }))
       } else {
         // In create mode, calculate from selected events
@@ -65,7 +106,9 @@ export function useInvoiceCreationState({
           id: event.id,
           title: event.title || 'Untitled Event',
           rate: event.studio ? calculateEventPayout(event, event.studio) : 0,
-          date: event.start_time ? new Date(event.start_time).toLocaleDateString() : 'No date'
+          date: event.start_time ? new Date(event.start_time).toLocaleDateString() : 'No date',
+          studentsStudio: event.students_studio || 0,
+          studentsOnline: event.students_online || 0
         }))
       }
       
@@ -80,11 +123,33 @@ export function useInvoiceCreationState({
         // In edit mode, use existing invoice number
         setInvoiceNumber(existingInvoice.invoice_number)
       } else {
-        // In create mode, generate new invoice number
-        setInvoiceNumber(generateInvoiceNumber('INV'))
+        // In create mode, generate new German-compliant invoice number
+        const generateNumber = async () => {
+          try {
+            // Get user's invoice settings to get their preferred prefix
+            const userSettings = await getUserInvoiceSettings(userId)
+            const userPrefix = userSettings?.invoice_number_prefix || ''
+            
+            // Get studio name for entity abbreviation
+            const studioName = selectedEvents[0]?.studio?.entity_name || 'INV'
+            
+            const newInvoiceNumber = await generateGermanCompliantInvoiceNumber(
+              userId, 
+              studioName,  // Pass studio name for entity abbreviation
+              userPrefix
+            )
+            setInvoiceNumber(newInvoiceNumber)
+          } catch (error) {
+            console.error('Error generating German-compliant invoice number:', error)
+            // Fallback to old method
+            setInvoiceNumber(generateInvoiceNumber('INV'))
+          }
+        }
+        
+        generateNumber()
       }
     }
-  }, [isOpen, invoiceNumber, mode, existingInvoice])
+  }, [isOpen, invoiceNumber, mode, existingInvoice, userId])
 
   // Initialize notes from existing invoice in edit mode
   useEffect(() => {
@@ -104,11 +169,17 @@ export function useInvoiceCreationState({
   }, [isOpen])
 
   // Handle event updates
-  const handleEventUpdate = (eventId: string, newTitle: string, newRate: number) => {
+  const handleEventUpdate = (eventId: string, newTitle: string, newRate: number, newStudentsStudio?: number, newStudentsOnline?: number) => {
     setEditableEvents(prev => 
       prev.map(item => 
         item.id === eventId 
-          ? { ...item, title: newTitle, rate: newRate }
+          ? { 
+              ...item, 
+              title: newTitle, 
+              rate: newRate,
+              studentsStudio: newStudentsStudio ?? item.studentsStudio,
+              studentsOnline: newStudentsOnline ?? item.studentsOnline
+            }
           : item
       )
     )
@@ -130,6 +201,7 @@ export function useInvoiceCreationState({
     handleEventUpdate,
     
     // Status
-    isReady: isOpen && editableEvents.length > 0
+    isReady: isOpen && editableEvents.length > 0,
+    hasChanges
   }
 } 

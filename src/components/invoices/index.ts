@@ -9,4 +9,5 @@ export { UninvoicedEventsList } from './UninvoicedEventsList';
 export { UserInvoiceSettingsForm } from './UserInvoiceSettingsForm';
 export { UserInvoiceSettingsModal } from './UserInvoiceSettingsModal';
 export { useInvoiceCreationState } from './useInvoiceCreationState';
-export { EmptyInvoicesState } from './EmptyInvoicesState'; 
+export { EmptyInvoicesState } from './EmptyInvoicesState';
+export { GroupedInvoicesList } from './GroupedInvoicesList'; 

@@ -7,6 +7,16 @@ import { getTranslations } from './translations.ts'
  * Enhanced PDF generator with DRAMATICALLY different themes
  */
 export async function generateDramaticPDF(invoiceData: InvoiceData, language: Language = 'en'): Promise<ArrayBuffer> {
+  // Check if this should use German compliance mode
+  const userCountry = invoiceData.user_invoice_settings?.country || 'DE'
+  const isGermanCompliance = userCountry === 'DE' && invoiceData.user_invoice_settings?.kleinunternehmerregelung !== undefined
+  
+  if (isGermanCompliance) {
+    console.log('Using German compliance PDF generation')
+    return generateGermanCompliantPDF(invoiceData, language)
+  }
+  
+  console.log('Using standard dramatic PDF generation')
   console.log('Generating DRAMATIC PDF with language:', language)
   
   // Get template configuration
@@ -44,6 +54,350 @@ export async function generateDramaticPDF(invoiceData: InvoiceData, language: La
   
   // Log final position for debugging
   console.log('Final yPosition:', yPosition)
+  
+  return doc.output('arraybuffer')
+}
+
+// ===== GERMAN COMPLIANCE SECTION FUNCTIONS =====
+
+/**
+ * 1. CONTRACTOR SECTION (Rechnungssteller)
+ */
+function addContractorSection(doc: jsPDF, t: any, data: InvoiceData, y: number): number {
+  const settings = data.user_invoice_settings
+  if (!settings) return y
+  
+  doc.setFontSize(12)
+  doc.setFont(undefined, 'bold')
+  doc.text(settings.full_name, 20, y)
+  y += 6
+  
+  doc.setFont(undefined, 'normal')
+  if (settings.address) {
+    // Split address by commas and display each part on a new line
+    const addressParts = settings.address.split(',').map(part => part.trim()).filter(part => part.length > 0)
+    addressParts.forEach(part => {
+      doc.text(part, 20, y)
+      y += 5
+    })
+  }
+  
+  if (settings.email) {
+    doc.text(settings.email, 20, y)
+    y += 6
+  }
+  
+  if (settings.phone) {
+    doc.text(settings.phone, 20, y)
+    y += 6
+  }
+  
+  if (settings.tax_id) {
+    doc.text(`${t.taxId}: ${settings.tax_id}`, 20, y)
+    y += 6
+  }
+  
+  if (settings.vat_id) {
+    doc.text(`${t.vatId}: ${settings.vat_id}`, 20, y)
+    y += 6
+  }
+  
+  return y + 10
+}
+
+/**
+ * 2. RECIPIENT SECTION (Rechnungsempfänger)
+ */
+function addRecipientSection(doc: jsPDF, t: any, data: InvoiceData, y: number): number {
+  doc.setFontSize(11)
+  doc.setFont(undefined, 'bold')
+  doc.text(`${t.recipient}:`, 20, y)
+  y += 8
+  
+  doc.setFont(undefined, 'normal')
+  doc.text(data.studio.entity_name, 20, y)
+  y += 6
+  
+  if (data.studio.address) {
+    // Split address by commas and display each part on a new line
+    const addressParts = data.studio.address.split(',').map(part => part.trim()).filter(part => part.length > 0)
+    addressParts.forEach(part => {
+      doc.text(part, 20, y)
+      y += 5
+    })
+  }
+  
+  return y + 10
+}
+
+/**
+ * 3. INVOICE DETAILS SECTION
+ */
+function addInvoiceDetailsSection(doc: jsPDF, t: any, data: InvoiceData, y: number): number {
+  doc.setFontSize(11)
+  doc.setFont(undefined, 'bold')
+  
+  // Format invoice number for better display
+  const invoiceNumber = data.invoice_number
+  const formattedNumber = invoiceNumber.includes('-') 
+    ? `${t.invoiceNumber} ${invoiceNumber}` 
+    : `${t.invoiceNumber} #${invoiceNumber}`
+  
+  doc.text(formattedNumber, 120, y)
+  y += 6
+  
+  doc.setFont(undefined, 'normal')
+  const invoiceDate = new Date(data.created_at).toLocaleDateString('de-DE')
+  doc.text(`${t.date}: ${invoiceDate}`, 120, y)
+  y += 6
+  
+  const periodStart = new Date(data.period_start).toLocaleDateString('de-DE')
+  const periodEnd = new Date(data.period_end).toLocaleDateString('de-DE')
+  doc.text(`${t.servicesPeriod}: ${periodStart} - ${periodEnd}`, 120, y)
+  y += 10
+  
+  return y
+}
+
+/**
+ * 4. SERVICE DESCRIPTION SECTION
+ */
+function addServiceDescriptionSection(doc: jsPDF, t: any, data: InvoiceData, y: number): number {
+  doc.setFontSize(11)
+  doc.setFont(undefined, 'bold')
+  doc.text(t.serviceDescription, 20, y)
+  y += 8
+  
+  doc.setFont(undefined, 'normal')
+  doc.text(t.serviceNote, 20, y)
+  y += 6
+  doc.text(t.avoidEmploymentTerms, 20, y)
+  y += 10
+  
+  return y
+}
+
+/**
+ * 5. GERMAN FEE CALCULATION
+ */
+function addGermanFeeCalculation(doc: jsPDF, t: any, data: InvoiceData, y: number): number {
+  doc.setFontSize(11)
+  doc.setFont(undefined, 'bold')
+  doc.text(t.feeCalculation, 20, y)
+  y += 10
+  
+  let netTotal = 0
+  let bonusTotal = 0
+  let totalHours = 0
+  
+  // Calculate totals from the actual invoice amount and events
+  // Use the invoice's total amount as the primary source
+  netTotal = data.amount_total || 0
+  
+  // Calculate total hours from events
+  data.events.forEach(event => {
+    const durationHours = event.duration_hours || 1
+    totalHours += durationHours
+  })
+  
+  // If we have events with rate calculations, use those for detailed breakdown
+  if (data.events.length > 0) {
+    let calculatedTotal = 0
+    data.events.forEach(event => {
+      // Calculate rate based on studio rate config if available
+      if (event.studio?.rate_config) {
+        const rateConfig = event.studio.rate_config as any
+        let eventRate = 0
+        
+        if (rateConfig.type === 'flat') {
+          eventRate = rateConfig.base_rate || 0
+          // Add bonuses if applicable
+          const totalStudents = (event.students_studio || 0) + (event.students_online || 0)
+          if (rateConfig.bonus_threshold && rateConfig.bonus_per_student && totalStudents > rateConfig.bonus_threshold) {
+            const bonusStudents = totalStudents - rateConfig.bonus_threshold
+            eventRate += bonusStudents * rateConfig.bonus_per_student
+          }
+          if (rateConfig.online_bonus_per_student && event.students_online) {
+            const eligibleOnlineStudents = rateConfig.online_bonus_ceiling 
+              ? Math.min(event.students_online, rateConfig.online_bonus_ceiling)
+              : event.students_online
+            eventRate += eligibleOnlineStudents * rateConfig.online_bonus_per_student
+          }
+        } else if (rateConfig.type === 'per_student') {
+          const totalStudents = (event.students_studio || 0) + (event.students_online || 0)
+          eventRate = totalStudents * (rateConfig.rate_per_student || 0)
+          if (rateConfig.online_bonus_per_student && event.students_online) {
+            const eligibleOnlineStudents = rateConfig.online_bonus_ceiling 
+              ? Math.min(event.students_online, rateConfig.online_bonus_ceiling)
+              : event.students_online
+            eventRate += eligibleOnlineStudents * rateConfig.online_bonus_per_student
+          }
+        } else if (rateConfig.type === 'tiered') {
+          const totalStudents = (event.students_studio || 0) + (event.students_online || 0)
+          const tier = rateConfig.tiers?.find(tier => {
+            return totalStudents >= tier.min && (tier.max === null || totalStudents <= tier.max)
+          })
+          eventRate = tier?.rate || 0
+          if (rateConfig.online_bonus_per_student && event.students_online) {
+            const eligibleOnlineStudents = rateConfig.online_bonus_ceiling 
+              ? Math.min(event.students_online, rateConfig.online_bonus_ceiling)
+              : event.students_online
+            eventRate += eligibleOnlineStudents * rateConfig.online_bonus_per_student
+          }
+        }
+        
+        calculatedTotal += eventRate
+      }
+    })
+    
+    // Use calculated total if it matches the invoice total, otherwise use invoice total
+    if (Math.abs(calculatedTotal - netTotal) < 0.01) {
+      netTotal = calculatedTotal
+    }
+  }
+  
+  // Hourly rate breakdown
+  doc.setFont(undefined, 'normal')
+  const avgHourlyRate = totalHours > 0 ? netTotal / totalHours : 0
+  
+  doc.text(`${t.hourlyRate}: ${avgHourlyRate.toFixed(2)} EUR`, 20, y)
+  y += 6
+  doc.text(`${t.totalHours}: ${totalHours} Stunden`, 20, y) 
+  y += 6
+  doc.text(`${t.netAmount}: ${netTotal.toFixed(2)} EUR`, 20, y)
+  y += 6
+  
+  if (bonusTotal > 0) {
+    doc.text(`${t.bonusPayments}: ${bonusTotal.toFixed(2)} EUR`, 20, y)
+    y += 6
+  }
+  
+  const subtotal = netTotal + bonusTotal
+  doc.setFont(undefined, 'bold')
+  doc.text(`${t.subtotal}: ${subtotal.toFixed(2)} EUR`, 20, y)
+  y += 10
+  
+  return y
+}
+
+/**
+ * 6. VAT SECTION
+ */
+function addVATSection(doc: jsPDF, t: any, data: InvoiceData, y: number): number {
+  const settings = data.user_invoice_settings
+  if (!settings) return y
+  
+  // Use the invoice's total amount as the subtotal
+  const subtotal = data.amount_total || 0
+  
+  if (settings.kleinunternehmerregelung) {
+    // Small business exemption
+    doc.setFont(undefined, 'italic')
+    doc.text(t.vatExemptNote, 20, y)
+    y += 8
+    
+    doc.setFontSize(12)
+    doc.setFont(undefined, 'bold')
+    doc.text(`${t.grossTotal}: ${subtotal.toFixed(2)} EUR`, 20, y)
+  } else {
+    // Standard VAT calculation
+    const vatRate = 0.19 // 19% German VAT
+    const vatAmount = subtotal * vatRate
+    const grossTotal = subtotal + vatAmount
+    
+    doc.text(`${t.vatRate} (19%): ${vatAmount.toFixed(2)} EUR`, 20, y)
+    y += 6
+    
+    doc.setFontSize(12) 
+    doc.setFont(undefined, 'bold')
+    doc.text(`${t.grossTotal}: ${grossTotal.toFixed(2)} EUR`, 20, y)
+  }
+  
+  return y + 15
+}
+
+/**
+ * 7. PAYMENT TERMS SECTION
+ */
+function addPaymentTermsSection(doc: jsPDF, t: any, data: InvoiceData, y: number): number {
+  const settings = data.user_invoice_settings
+  if (!settings) return y
+  
+  doc.setFontSize(11)
+  doc.setFont(undefined, 'bold')
+  doc.text(`${t.paymentTerms}:`, 20, y)
+  y += 8
+  
+  doc.setFont(undefined, 'normal')
+  const paymentText = t.payableWithin.replace('{days}', settings.payment_terms_days.toString())
+  doc.text(paymentText, 20, y)
+  y += 10
+  
+  doc.setFont(undefined, 'bold')
+  doc.text(`${t.bankDetails}:`, 20, y)
+  y += 6
+  
+  doc.setFont(undefined, 'normal')
+  if (settings.iban) {
+    doc.text(`${t.iban}: ${settings.iban}`, 20, y)
+    y += 6
+  }
+  
+  if (settings.bic) {
+    doc.text(`${t.bic}: ${settings.bic}`, 20, y)
+    y += 6
+  }
+  
+  y += 10
+  
+  if (settings.business_signature) {
+    doc.text(settings.business_signature, 20, y)
+    y += 6
+  }
+  
+  return y
+}
+
+/**
+ * Generate German-compliant PDF for contractor billing
+ * Implements "Hinweise zur Rechnungsstellung für Honorarkräfte" requirements
+ */
+export async function generateGermanCompliantPDF(
+  invoiceData: InvoiceData, 
+  language: Language = 'de'
+): Promise<ArrayBuffer> {
+  
+  const doc = new jsPDF({
+    orientation: 'portrait',
+    format: 'a4'
+  })
+  
+  const t = getTranslations(language)
+  let yPosition = 20
+  
+  // 1. Contractor Information (Rechnungssteller)
+  yPosition = addContractorSection(doc, t, invoiceData, yPosition)
+  
+  // 2. Recipient Information (Rechnungsempfänger) 
+  yPosition = addRecipientSection(doc, t, invoiceData, yPosition)
+  
+  // 3. Invoice Details (Legal Requirements)
+  yPosition = addInvoiceDetailsSection(doc, t, invoiceData, yPosition)
+  
+  // 4. Service Description (Avoiding Employment Terms)
+  yPosition = addServiceDescriptionSection(doc, t, invoiceData, yPosition)
+  
+  // 5. Fee Calculation (Detailed Breakdown)
+  yPosition = addGermanFeeCalculation(doc, t, invoiceData, yPosition)
+  
+  // 6. VAT Handling (With Legal Text)
+  yPosition = addVATSection(doc, t, invoiceData, yPosition)
+  
+  // 7. Payment Terms & Bank Details
+  yPosition = addPaymentTermsSection(doc, t, invoiceData, yPosition)
+  
+  // 8. Add detailed class table on second page
+  addDetailedClassTable(doc, t, invoiceData)
   
   return doc.output('arraybuffer')
 }
@@ -924,4 +1278,179 @@ function createSampleInvoiceData(
       pdf_template_config: templateConfig
     }
   }
+}
+
+/**
+ * 8. DETAILED CLASS TABLE (Second Page)
+ */
+function addDetailedClassTable(doc: jsPDF, t: any, data: InvoiceData): void {
+  // Add new page
+  doc.addPage()
+  
+  // Get user timezone from user profile (default to UTC)
+  const userTimezone = data.user?.timezone || 'UTC'
+  
+  // Page header
+  doc.setFontSize(14)
+  doc.setFont(undefined, 'bold')
+  doc.text(`${t.invoice} ${data.invoice_number} - ${t.serviceDescription}`, 20, 20)
+  doc.text(`${t.servicesPeriod}: ${new Date(data.period_start).toLocaleDateString('de-DE', { timeZone: userTimezone })} - ${new Date(data.period_end).toLocaleDateString('de-DE', { timeZone: userTimezone })}`, 20, 30)
+  
+  // Table headers - Adjusted column widths to fit page
+  const startY = 50
+  const colWidths = [15, 25, 50, 25, 20, 20, 25] // Nr, Date, Event Name, Time, Students, Bonus, Total
+  const headers = ['Nr.', 'Datum', 'Veranstaltung', 'Uhrzeit', 'Teilnehmer', 'Bonus', 'Gesamt']
+  
+  // Draw table header
+  doc.setFontSize(9) // Smaller font to fit better
+  doc.setFont(undefined, 'bold')
+  let x = 20
+  headers.forEach((header, index) => {
+    doc.text(header, x, startY)
+    x += colWidths[index]
+  })
+  
+  // Draw header line
+  doc.line(20, startY + 2, 20 + colWidths.reduce((sum, width) => sum + width, 0), startY + 2)
+  
+  // Add table rows
+  doc.setFont(undefined, 'normal')
+  let currentY = startY + 10
+  let rowNumber = 1
+  let totalAmount = 0
+  
+  data.events.forEach(event => {
+    // Check if we need a new page
+    if (currentY > 250) {
+      doc.addPage()
+      currentY = 20
+    }
+    
+    // Calculate event details with timezone conversion
+    const eventDate = event.start_time ? new Date(event.start_time).toLocaleDateString('de-DE', { timeZone: userTimezone }) : 'N/A'
+    const eventTime = getEventTimeRange(event, userTimezone)
+    const eventName = event.title || 'Unbenannte Veranstaltung'
+    const studentCount = (event.students_studio || 0) + (event.students_online || 0)
+    
+    // Calculate rate for this event
+    let eventRate = 0
+    let bonusAmount = 0
+    
+    if (event.studio?.rate_config) {
+      const rateConfig = event.studio.rate_config as any
+      
+      if (rateConfig.type === 'flat') {
+        eventRate = rateConfig.base_rate || 0
+        // Calculate bonus if applicable
+        if (rateConfig.bonus_threshold && rateConfig.bonus_per_student && studentCount > rateConfig.bonus_threshold) {
+          const bonusStudents = studentCount - rateConfig.bonus_threshold
+          bonusAmount = bonusStudents * rateConfig.bonus_per_student
+        }
+        if (rateConfig.online_bonus_per_student && event.students_online) {
+          const eligibleOnlineStudents = rateConfig.online_bonus_ceiling 
+            ? Math.min(event.students_online, rateConfig.online_bonus_ceiling)
+            : event.students_online
+          bonusAmount += eligibleOnlineStudents * rateConfig.online_bonus_per_student
+        }
+      } else if (rateConfig.type === 'per_student') {
+        eventRate = studentCount * (rateConfig.rate_per_student || 0)
+        if (rateConfig.online_bonus_per_student && event.students_online) {
+          const eligibleOnlineStudents = rateConfig.online_bonus_ceiling 
+            ? Math.min(event.students_online, rateConfig.online_bonus_ceiling)
+            : event.students_online
+          bonusAmount = eligibleOnlineStudents * rateConfig.online_bonus_per_student
+        }
+      } else if (rateConfig.type === 'tiered') {
+        const tier = rateConfig.tiers?.find(tier => {
+          return studentCount >= tier.min && (tier.max === null || studentCount <= tier.max)
+        })
+        eventRate = tier?.rate || 0
+        if (rateConfig.online_bonus_per_student && event.students_online) {
+          const eligibleOnlineStudents = rateConfig.online_bonus_ceiling 
+            ? Math.min(event.students_online, rateConfig.online_bonus_ceiling)
+            : event.students_online
+          bonusAmount = eligibleOnlineStudents * rateConfig.online_bonus_per_student
+        }
+      }
+    }
+    
+    const eventTotal = eventRate + bonusAmount
+    totalAmount += eventTotal
+    
+    // Draw row
+    x = 20
+    doc.text(rowNumber.toString(), x, currentY)
+    x += colWidths[0]
+    
+    doc.text(eventDate, x, currentY)
+    x += colWidths[1]
+    
+    // Truncate event name if too long
+    const truncatedEventName = eventName.length > 20 ? eventName.substring(0, 17) + '...' : eventName
+    doc.text(truncatedEventName, x, currentY)
+    x += colWidths[2]
+    
+    doc.text(eventTime, x, currentY)
+    x += colWidths[3]
+    
+    doc.text(studentCount.toString(), x, currentY)
+    x += colWidths[4]
+    
+    doc.text(bonusAmount > 0 ? `${bonusAmount.toFixed(2)} €` : '-', x, currentY)
+    x += colWidths[5]
+    
+    doc.text(`${eventTotal.toFixed(2)} €`, x, currentY)
+    
+    currentY += 8
+    rowNumber++
+  })
+  
+  // Draw total line
+  currentY += 5
+  doc.line(20, currentY, 20 + colWidths.reduce((sum, width) => sum + width, 0), currentY)
+  currentY += 8
+  
+  // Add total row
+  doc.setFont(undefined, 'bold')
+  x = 20 + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] + colWidths[4] + colWidths[5]
+  doc.text(`${t.total}: ${totalAmount.toFixed(2)} €`, x, currentY)
+}
+
+/**
+ * Helper function to get event time range with timezone conversion
+ */
+function getEventTimeRange(event: any, userTimezone?: string): string {
+  if (!event.start_time) return 'N/A'
+  
+  // Convert to user's timezone if provided, otherwise use UTC
+  const timezone = userTimezone || 'UTC'
+  
+  const startTime = new Date(event.start_time)
+  const startTimeStr = startTime.toLocaleTimeString('de-DE', { 
+    hour: '2-digit', 
+    minute: '2-digit',
+    hour12: false,
+    timeZone: timezone
+  })
+  
+  if (event.end_time) {
+    const endTime = new Date(event.end_time)
+    const endTimeStr = endTime.toLocaleTimeString('de-DE', { 
+      hour: '2-digit', 
+      minute: '2-digit',
+      hour12: false,
+      timeZone: timezone
+    })
+    return `${startTimeStr} - ${endTimeStr}`
+  }
+  
+  // If no end time, assume 1 hour duration
+  const endTime = new Date(startTime.getTime() + 60 * 60 * 1000)
+  const endTimeStr = endTime.toLocaleTimeString('de-DE', { 
+    hour: '2-digit', 
+    minute: '2-digit',
+    hour12: false,
+    timeZone: timezone
+  })
+  return `${startTimeStr} - ${endTimeStr}`
 } 

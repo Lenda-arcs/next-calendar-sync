@@ -8,17 +8,30 @@ export interface InvoiceData {
   notes?: string
   created_at: string
   studio: {
-    entity_name: string
-    address?: string
+    entity_name: string                  // ✅ Studio name
+    address?: string                     // ✅ Studio address  
     billing_email?: string
+    legal_representative?: string        // Gesetzlicher Vertreter
+    recipient_info?: any                 // Additional recipient information
+    banking_info?: any                   // Banking information
   }
   events: Array<{
     id: string
-    title: string
+    title: string                        // ✅ Service description
     start_time: string
+    end_time?: string
     location?: string
     students_studio?: number
     students_online?: number
+    hourly_rate?: number                 // ✅ For German breakdown
+    duration_hours?: number              // ✅ Total hours
+    bonus_amount?: number                // ✅ Bonus payments
+    rate_breakdown?: {                   // ✅ Detailed calculation
+      base_rate: number
+      bonus_rate?: number
+      total_students: number
+      online_bonus?: number
+    }
     studio: {
       entity_name: string
       rate_config?: {
@@ -44,7 +57,24 @@ export interface InvoiceData {
     email: string
   }
   user_invoice_settings?: {
-    kleinunternehmerregelung: boolean
+    // Contractor (Rechnungssteller) information
+    full_name: string                    // ✅ Required
+    email: string                        // ✅ Required  
+    phone?: string
+    address: string                      // ✅ Required
+    tax_id?: string                      // Steuernummer
+    vat_id?: string                      // USt-IdNr
+    iban: string                         // ✅ Required
+    bic: string                          // ✅ Required
+    country: 'DE' | 'ES' | 'GB' | 'US' | 'FR' | 'IT' | 'NL' | 'AT' | 'CH'
+    
+    // Payment & Legal
+    payment_terms_days: number           // ✅ Required
+    invoice_number_prefix?: string
+    business_signature?: string
+    kleinunternehmerregelung: boolean    // ✅ Tax exemption
+    
+    // Template settings
     pdf_template_config?: PDFTemplateConfig | null
     template_theme?: PDFTemplateTheme | null
   } | null
@@ -90,6 +120,7 @@ export interface PDFTemplateConfig {
 }
 
 export interface Translations {
+  // Basic invoice fields
   invoice: string
   invoiceNumber: string
   date: string
@@ -106,6 +137,31 @@ export interface Translations {
   vatExemptGerman: string
   vatExemptEnglish: string
   untitledEvent: string
+  
+  // German compliance fields
+  contractor: string
+  recipient: string
+  serviceDescription: string
+  serviceNote: string
+  avoidEmploymentTerms: string
+  feeCalculation: string
+  hourlyRate: string
+  totalHours: string
+  netAmount: string
+  bonusPayments: string
+  subtotal: string
+  vatRate: string
+  vatAmount: string
+  grossTotal: string
+  vatExemptNote: string
+  paymentTerms: string
+  payableWithin: string
+  bankDetails: string
+  iban: string
+  bic: string
+  servicesPeriod: string
+  taxId: string
+  vatId: string
 }
 
 export interface GeneratePDFRequest {

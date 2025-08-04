@@ -711,6 +711,23 @@ export async function deleteInvoice(supabase: SupabaseClient, invoiceId: string)
   // Use the reusable type-safe RPC utility
   const deleteResult = await deleteInvoiceWithCleanup(supabase, invoiceId)
 
+  // Reset invoice number sequence to make the number available again
+  if (deleteResult.user_id) {
+    try {
+      const { error: resetError } = await supabase.rpc('reset_invoice_number_sequence', {
+        p_user_id: deleteResult.user_id
+      })
+      
+      if (resetError) {
+        console.warn("Warning: Failed to reset invoice number sequence:", resetError)
+        // Don't throw error here - the invoice was already deleted successfully
+      }
+    } catch (resetError) {
+      console.warn("Warning: Error during invoice number sequence reset:", resetError)
+      // Don't throw error here - the invoice was already deleted successfully
+    }
+  }
+
   // Handle PDF file cleanup if there was a PDF URL
   if (deleteResult.pdf_url) {
     try {
@@ -742,7 +759,6 @@ export async function deleteInvoice(supabase: SupabaseClient, invoiceId: string)
       // Don't throw error here - the invoice was already deleted successfully
     }
   }  
-  // Return empty array since the invoice was deleted
   // Return empty array since the invoice was deleted
   return []
 }

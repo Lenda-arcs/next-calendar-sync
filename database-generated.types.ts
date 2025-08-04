@@ -997,16 +997,41 @@ export type Database = {
         }
         Relationships: []
       }
+      user_invoice_sequences: {
+        Row: {
+          current_number: number | null
+          prefix: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          current_number?: number | null
+          prefix?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          current_number?: number | null
+          prefix?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_invoice_settings: {
         Row: {
           address: string | null
           bic: string | null
+          business_signature: string | null
+          country: string | null
           created_at: string | null
           custom_template_html: string | null
           email: string | null
           full_name: string
           iban: string | null
+          invoice_number_prefix: string | null
           kleinunternehmerregelung: boolean | null
+          payment_terms_days: number | null
           pdf_template_config: Json | null
           phone: string | null
           tax_id: string | null
@@ -1018,12 +1043,16 @@ export type Database = {
         Insert: {
           address?: string | null
           bic?: string | null
+          business_signature?: string | null
+          country?: string | null
           created_at?: string | null
           custom_template_html?: string | null
           email?: string | null
           full_name: string
           iban?: string | null
+          invoice_number_prefix?: string | null
           kleinunternehmerregelung?: boolean | null
+          payment_terms_days?: number | null
           pdf_template_config?: Json | null
           phone?: string | null
           tax_id?: string | null
@@ -1035,12 +1064,16 @@ export type Database = {
         Update: {
           address?: string | null
           bic?: string | null
+          business_signature?: string | null
+          country?: string | null
           created_at?: string | null
           custom_template_html?: string | null
           email?: string | null
           full_name?: string
           iban?: string | null
+          invoice_number_prefix?: string | null
           kleinunternehmerregelung?: boolean | null
+          payment_terms_days?: number | null
           pdf_template_config?: Json | null
           phone?: string | null
           tax_id?: string | null
@@ -1311,6 +1344,10 @@ export type Database = {
       delete_user_cascade: {
         Args: { target_user_id: string }
         Returns: Json
+      }
+      get_next_invoice_number: {
+        Args: { p_user_id: string; p_prefix?: string }
+        Returns: string
       }
       get_user_image_count: {
         Args: { user_id: string; folder_type?: string }

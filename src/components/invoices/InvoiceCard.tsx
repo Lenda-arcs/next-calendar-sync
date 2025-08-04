@@ -1,10 +1,10 @@
-import React, { useState } from 'react'
+import React from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Select } from '@/components/ui/select'
+
 import { InvoiceWithDetails } from '@/lib/invoice-utils'
-import { Edit3, Eye, FileText, Loader2, Download, ExternalLink, Trash2 } from 'lucide-react'
+import { Edit3, Download, ExternalLink, Trash2 } from 'lucide-react'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,20 +17,29 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { useTranslation } from '@/lib/i18n/context'
+import { cn } from '@/lib/utils'
 
 interface InvoiceCardProps {
   invoice: InvoiceWithDetails
+  selected?: boolean
+  onToggleSelect?: (invoiceId: string) => void
+  showCheckbox?: boolean
   onEdit?: (invoice: InvoiceWithDetails) => void
-  onStatusChange?: (invoiceId: string, newStatus: 'sent' | 'paid' | 'overdue') => void
-  onGeneratePDF?: (invoiceId: string, language?: 'en' | 'de' | 'es') => void
   onViewPDF?: (pdfUrl: string) => void
   onDelete?: (invoiceId: string) => void
 }
 
-export const InvoiceCard: React.FC<InvoiceCardProps> = ({ invoice, onEdit, onStatusChange, onGeneratePDF, onViewPDF, onDelete }) => {
+export const InvoiceCard: React.FC<InvoiceCardProps> = ({ 
+  invoice, 
+  selected = false,
+  onToggleSelect,
+  showCheckbox = false,
+  onEdit, 
+  onViewPDF, 
+  onDelete 
+}) => {
   const { t } = useTranslation()
-  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false)
-  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false)
+
   const getStatusBadge = (status: string) => {
     const variants = {
       draft: { variant: 'secondary' as const, text: 'Draft', color: 'bg-gray-100 text-gray-800' },
@@ -45,40 +54,6 @@ export const InvoiceCard: React.FC<InvoiceCardProps> = ({ invoice, onEdit, onSta
         {config.text}
       </Badge>
     )
-  }
-
-  const canEdit = invoice.status === 'draft'
-  const canChangeStatus = !!invoice.pdf_url && invoice.status !== 'cancelled'
-  const ButtonIcon = canEdit ? Edit3 : Eye
-  const buttonText = canEdit ? 'Edit' : 'View'
-
-  const statusOptions = [
-    { value: 'sent', label: 'Sent' },
-    { value: 'paid', label: 'Paid' },
-    { value: 'overdue', label: 'Overdue' }
-  ]
-
-  const handleStatusChange = async (newStatus: string) => {
-    if (!onStatusChange || isUpdatingStatus) return
-    
-    setIsUpdatingStatus(true)
-    try {
-      onStatusChange(invoice.id, newStatus as 'sent' | 'paid' | 'overdue')
-    } finally {
-      setIsUpdatingStatus(false)
-    }
-  }
-
-  const handleGeneratePDF = async () => {
-    if (!onGeneratePDF || isGeneratingPDF) return
-    
-    setIsGeneratingPDF(true)
-    try {
-      onGeneratePDF(invoice.id, 'en') // Default to English for now, can be made configurable
-      // Default to English for now, can be made configurable
-    } finally {
-      setIsGeneratingPDF(false)
-    }
   }
 
   const handleViewPDF = () => {
@@ -104,32 +79,41 @@ export const InvoiceCard: React.FC<InvoiceCardProps> = ({ invoice, onEdit, onSta
   }
 
   return (
-    <Card>
-      <CardContent className="p-4 sm:p-6">
-        {/* Header Section */}
-        <div className="flex flex-col space-y-3">
-          {/* Top Row - Invoice info and amount */}
-          <div className="flex justify-between items-start">
+    <Card 
+      className={cn(
+        "transition-all duration-150 hover:shadow-sm overflow-hidden",
+        selected && "border-blue-400 bg-blue-50/30 shadow-sm",
+        !selected && "border-gray-200",
+        showCheckbox && onToggleSelect && "cursor-pointer hover:bg-gray-50/50"
+      )}
+      onClick={showCheckbox && onToggleSelect ? () => onToggleSelect(invoice.id) : undefined}
+    >
+      <CardContent className="p-3">
+        <div className="flex items-start justify-between">
+          {/* Left side - Checkbox and Invoice details */}
+          <div className="flex items-center gap-3 flex-1 min-w-0">
+            {showCheckbox && onToggleSelect && (
+              <input
+                type="checkbox"
+                checked={selected}
+                onChange={() => onToggleSelect(invoice.id)}
+                onClick={(e: React.MouseEvent) => e.stopPropagation()}
+                className="h-4 w-4 text-blue-600 focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 border-gray-300 rounded flex-shrink-0"
+              />
+            )}
+            
             <div className="flex-1 min-w-0">
-              <div className="flex flex-wrap items-center gap-2 mb-2">
-                <h3 className="font-semibold text-gray-900 truncate">
+              <div className="flex items-center gap-2 mb-1">
+                <h3 className="font-semibold text-base text-gray-900 truncate">
                   {invoice.invoice_number || `Invoice ${invoice.id.slice(0, 8)}`}
                 </h3>
                 {getStatusBadge(invoice.status)}
-                {invoice.pdf_url && (
-                  <div className="flex items-center gap-1 text-xs text-gray-500">
-                    <FileText className="w-3 h-3" />
-                    <span className="hidden sm:inline">PDF</span>
-                  </div>
-                )}
               </div>
               <p className="text-sm text-gray-600 mb-1 truncate">
                 {invoice.studio?.entity_name || 'Unknown Studio'}
               </p>
-              <div className="flex items-center gap-2 text-xs text-gray-600">
-                <div className="text-xs text-gray-600">
-                  {invoice.currency || 'EUR'}
-                </div>
+              <div className="flex items-center gap-2 text-xs text-gray-500">
+                <span>Period: {new Date(invoice.period_start).toLocaleDateString()} - {new Date(invoice.period_end).toLocaleDateString()}</span>
                 {invoice.event_count && (
                   <Badge variant="outline" className="text-xs">
                     {invoice.event_count} events
@@ -137,127 +121,35 @@ export const InvoiceCard: React.FC<InvoiceCardProps> = ({ invoice, onEdit, onSta
                 )}
               </div>
             </div>
-            <div className="text-right ml-3">
-              <div className="text-lg sm:text-xl font-bold text-gray-900">
-                €{invoice.amount_total?.toFixed(2) || '0.00'}
-              </div>
-            </div>
           </div>
 
-          {/* Dates Row - Mobile friendly */}
-          <div className="text-xs text-gray-600 space-y-1">
-            <div>
-              Period: {new Date(invoice.period_start).toLocaleDateString()} - {new Date(invoice.period_end).toLocaleDateString()}
-            </div>
-            <div>
-              Created: {invoice.created_at ? new Date(invoice.created_at).toLocaleDateString() : 'Unknown'}
-            </div>
-          </div>
-
-          {/* Action Buttons Section */}
-          <div className="flex flex-col space-y-2 pt-2 border-t border-gray-100">
-            {/* PDF Controls Row */}
-            {(invoice.status === 'draft' && onGeneratePDF) || invoice.pdf_url ? (
-              <div className="flex flex-wrap gap-2">
-                {/* PDF Generation for Drafts */}
-                {invoice.status === 'draft' && onGeneratePDF && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleGeneratePDF}
-                    disabled={isGeneratingPDF}
-                    className="flex items-center gap-1 flex-1 sm:flex-none min-w-0"
-                  >
-                    {isGeneratingPDF ? (
-                      <Loader2 className="w-3 h-3 animate-spin" />
-                    ) : (
-                      <FileText className="w-3 h-3" />
-                    )}
-                    <span className="truncate">
-                      {invoice.pdf_url ? 'Regenerate PDF' : 'Generate PDF'}
-                    </span>
-                  </Button>
-                )}
-                
-                {/* PDF View/Download for existing PDFs */}
-                {invoice.pdf_url && (
-                  <>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleViewPDF}
-                      className="flex items-center gap-1 flex-1 sm:flex-none"
-                    >
-                      <ExternalLink className="w-3 h-3" />
-                      <span className="truncate">View PDF</span>
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleDownloadPDF}
-                      className="flex items-center gap-1 flex-1 sm:flex-none sm:hidden"
-                    >
-                      <Download className="w-3 h-3" />
-                      <span className="truncate">Download</span>
-                    </Button>
-                    {/* Desktop-only download button */}
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleDownloadPDF}
-                      className="hidden sm:flex items-center gap-1"
-                    >
-                      <Download className="w-3 h-3" />
-                      Download
-                    </Button>
-                  </>
-                )}
-              </div>
-            ) : null}
-
-            {/* Edit and Status Controls Row */}
-            <div className="flex flex-col sm:flex-row gap-2">
-              {/* Edit/View Button - Always first */}
+          {/* Right side - Amount and actions */}
+          <div className="text-right ml-3 flex flex-col items-end">
+            {/* Top right - Edit and Delete icons */}
+            <div className="flex items-center gap-1 mb-2">
               {onEdit && (
-                <Button 
-                  variant="outline" 
+                <Button
                   size="sm"
-                  onClick={() => onEdit(invoice)}
-                  className="flex items-center gap-1 justify-center sm:w-auto"
+                  variant="ghost"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onEdit(invoice)
+                  }}
+                  className="h-6 w-6 p-0 text-gray-500 hover:text-gray-700"
                 >
-                  <ButtonIcon className="w-3 h-3" />
-                  <span className="hidden sm:inline">{buttonText}</span>
+                  <Edit3 className="w-3 h-3" />
                 </Button>
               )}
-              
-              {/* Status Change Controls - Next to edit button on desktop */}
-              {canChangeStatus && (
-                <div className="flex items-center gap-2 flex-1 sm:flex-none sm:min-w-[140px]">
-                  <Select
-                    value={invoice.status}
-                    onChange={handleStatusChange}
-                    options={statusOptions}
-                    placeholder="Change status"
-                    className="flex-1"
-                    disabled={isUpdatingStatus}
-                  />
-                  {isUpdatingStatus && (
-                    <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
-                  )}
-                </div>
-              )}
-
-              {/* Delete Button - Only for draft invoices */}
-              {invoice.status === 'draft' && onDelete && (
+              {onDelete && (
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
-                    <Button 
-                      variant="outline" 
+                    <Button
                       size="sm"
-                      className="flex items-center gap-1 justify-center text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                      variant="ghost"
+                      onClick={(e) => e.stopPropagation()}
+                      className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
                     >
                       <Trash2 className="w-3 h-3" />
-                      <span className="hidden sm:inline">Delete</span>
                     </Button>
                   </AlertDialogTrigger>
                   <AlertDialogContent>
@@ -280,15 +172,43 @@ export const InvoiceCard: React.FC<InvoiceCardProps> = ({ invoice, onEdit, onSta
                 </AlertDialog>
               )}
             </div>
+
+            {/* Amount */}
+            <div className="text-lg font-bold text-gray-900 mb-1">
+              €{invoice.amount_total?.toFixed(2) || '0.00'}
+            </div>
+
+            {/* PDF actions under amount */}
+            {invoice.pdf_url && (
+              <div className="flex items-center gap-1">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleViewPDF()
+                  }}
+                  className="h-6 px-2 text-xs text-blue-600 hover:text-blue-700"
+                >
+                  <ExternalLink className="w-3 h-3 mr-1" />
+                  View
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleDownloadPDF()
+                  }}
+                  className="h-6 px-2 text-xs text-gray-600 hover:text-gray-700"
+                >
+                  <Download className="w-3 h-3 mr-1" />
+                  Download
+                </Button>
+              </div>
+            )}
           </div>
         </div>
-
-        {/* Notes Section */}
-        {invoice.notes && (
-          <div className="mt-4 pt-4 border-t">
-            <p className="text-sm text-gray-600 break-words">{invoice.notes}</p>
-          </div>
-        )}
       </CardContent>
     </Card>
   )

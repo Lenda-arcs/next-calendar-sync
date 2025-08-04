@@ -41,6 +41,9 @@ export function UserInvoiceSettingsForm({
     tax_id: '',
     vat_id: '',
     country: 'DE', // Default to Germany for now
+    payment_terms_days: 14,
+    invoice_number_prefix: '',
+    business_signature: '',
     small_business_tax_exemption: false
   })
 
@@ -59,7 +62,10 @@ export function UserInvoiceSettingsForm({
         bic: existingSettings.bic || '',
         tax_id: existingSettings.tax_id || '',
         vat_id: existingSettings.vat_id || '',
-        country: 'DE', // Will be extended when country field is added to DB
+        country: existingSettings.country || 'DE',
+        payment_terms_days: existingSettings.payment_terms_days || 14,
+        invoice_number_prefix: existingSettings.invoice_number_prefix || '',
+        business_signature: existingSettings.business_signature || '',
         small_business_tax_exemption: existingSettings.kleinunternehmerregelung || false
       })
     } else if (userProfile && !existingSettings) {
@@ -126,13 +132,17 @@ export function UserInvoiceSettingsForm({
       bic: formData.bic || null,
       tax_id: formData.tax_id || null,
       vat_id: formData.vat_id || null,
+      country: formData.country,
+      payment_terms_days: formData.payment_terms_days,
+      invoice_number_prefix: formData.invoice_number_prefix || null,
+      business_signature: formData.business_signature || null,
       kleinunternehmerregelung: formData.small_business_tax_exemption
     }
 
     await settingsMutation.mutateAsync(data)
   }, [formData, settingsMutation])
 
-  const handleInputChange = (field: string, value: string | boolean) => {
+  const handleInputChange = (field: string, value: string | boolean | number) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -141,8 +151,11 @@ export function UserInvoiceSettingsForm({
 
   const isFormValid = (
     formData.full_name.trim() !== '' &&
-    formData.email.trim() !== '' &&
-    formData.address.trim() !== ''
+    formData.email.trim() !== '' && 
+    formData.address.trim() !== '' &&
+    formData.iban.trim() !== '' &&         // ✅ Required for German compliance
+    formData.bic.trim() !== '' &&          // ✅ Required for German compliance
+    formData.payment_terms_days > 0        // ✅ Required
   )
 
   return (
@@ -237,6 +250,57 @@ export function UserInvoiceSettingsForm({
             placeholder={t('invoices.settingsForm.bicPlaceholder')}
             disabled={settingsMutation.isPending}
           />
+        </div>
+      </div>
+
+      {/* Payment & Invoice Settings */}
+      <div className="space-y-4">
+        <h3 className="text-lg font-medium text-gray-900">{t('invoices.settingsForm.paymentAndInvoice')}</h3>
+        
+        <div>
+          <Label htmlFor="payment_terms_days">{t('invoices.settingsForm.paymentTermsDays')}</Label>
+          <Input
+            id="payment_terms_days"
+            type="number"
+            min="1"
+            max="365"
+            value={formData.payment_terms_days}
+            onChange={(e) => handleInputChange('payment_terms_days', parseInt(e.target.value) || 14)}
+            disabled={settingsMutation.isPending}
+            required
+          />
+          <p className="text-sm text-gray-500 mt-1">
+            {t('invoices.settingsForm.paymentTermsDaysDesc')}
+          </p>
+        </div>
+
+        <div>
+          <Label htmlFor="invoice_number_prefix">{t('invoices.settingsForm.invoiceNumberPrefix')}</Label>
+          <Input
+            id="invoice_number_prefix"
+            value={formData.invoice_number_prefix}
+            onChange={(e) => handleInputChange('invoice_number_prefix', e.target.value)}
+            placeholder={t('invoices.settingsForm.invoiceNumberPrefixPlaceholder')}
+            disabled={settingsMutation.isPending}
+          />
+          <p className="text-sm text-gray-500 mt-1">
+            {t('invoices.settingsForm.invoiceNumberPrefixDesc')}
+          </p>
+        </div>
+
+        <div>
+          <Label htmlFor="business_signature">{t('invoices.settingsForm.businessSignature')}</Label>
+          <Textarea
+            id="business_signature"
+            value={formData.business_signature}
+            onChange={(e) => handleInputChange('business_signature', e.target.value)}
+            rows={3}
+            placeholder={t('invoices.settingsForm.businessSignaturePlaceholder')}
+            disabled={settingsMutation.isPending}
+          />
+          <p className="text-sm text-gray-500 mt-1">
+            {t('invoices.settingsForm.businessSignatureDesc')}
+          </p>
         </div>
       </div>
 
