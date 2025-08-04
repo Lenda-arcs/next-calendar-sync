@@ -8,9 +8,11 @@ import {
   EmptyInvoicesState,
   InvoiceCard,
   InvoiceCreationModal,
-  InvoiceSettings,
   UninvoicedEventsList
 } from '@/components'
+import { InvoiceOverviewCards } from './InvoiceOverviewCards'
+import { InvoiceQuickActions } from './InvoiceQuickActions'
+
 import {
   useDeleteInvoice,
   useGenerateInvoicePDF,
@@ -20,7 +22,7 @@ import {
 } from '@/lib/hooks/useAppQuery'
 import {EventWithStudio, InvoiceWithDetails} from '@/lib/invoice-utils'
 import {toast} from 'sonner'
-import {FileText, Loader2, Receipt, Settings} from 'lucide-react'
+import {FileText, Loader2, Receipt} from 'lucide-react'
 import {useTranslation} from '@/lib/i18n/context'
 import {useTabNavigation} from '@/lib/hooks/useTabNavigation'
 
@@ -28,9 +30,9 @@ interface InvoiceManagementProps {
   userId: string
 }
 
-type TabValue = 'uninvoiced' | 'invoices' | 'settings'
+type TabValue = 'uninvoiced' | 'invoices'
 
-const VALID_TABS = ['uninvoiced', 'invoices', 'settings'] as const
+const VALID_TABS = ['uninvoiced', 'invoices'] as const
 
 export function InvoiceManagement({ userId }: InvoiceManagementProps) {
   const { t } = useTranslation()
@@ -191,8 +193,15 @@ export function InvoiceManagement({ userId }: InvoiceManagementProps) {
 
   return (
     <div className="space-y-6">
+      {/* NEW: Overview Section */}
+      <InvoiceOverviewCards userId={userId} />
+      
+      {/* NEW: Quick Actions */}
+      <InvoiceQuickActions userId={userId} />
+      
+      {/* UPDATED: Simplified Tabs (remove settings tab) */}
       <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as TabValue)}>
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-2">
           <LoadingTabsTrigger
             value="uninvoiced"
             icon={Receipt}
@@ -209,13 +218,7 @@ export function InvoiceManagement({ userId }: InvoiceManagementProps) {
             isLoading={isTabLoading('invoices')}
             count={totalInvoices}
           />
-          <LoadingTabsTrigger
-            value="settings"
-            icon={Settings}
-            fullText={t('invoices.management.tabs.settings')}
-            shortText={t('invoices.management.tabs.settingsShort')}
-            isLoading={isTabLoading('settings')}
-          />
+
         </TabsList>
 
         <TabsContent value="uninvoiced">
@@ -272,23 +275,6 @@ export function InvoiceManagement({ userId }: InvoiceManagementProps) {
           </TabContent>
         </TabsContent>
 
-        <TabsContent value="settings">
-          <TabContent 
-            title={t('invoices.management.settingsTab.title')}
-            description={t('invoices.management.settingsTab.description')}
-          >
-            {isTabLoading('settings') ? (
-              <Card>
-                <CardContent className="py-12 text-center">
-                  <Loader2 className="w-8 h-8 mx-auto mb-4 animate-spin text-muted-foreground" />
-                  <p className="text-sm text-muted-foreground">{t('invoices.management.settingsTab.loading')}</p>
-                </CardContent>
-              </Card>
-            ) : (
-              <InvoiceSettings userId={userId} />
-            )}
-          </TabContent>
-        </TabsContent>
       </Tabs>
 
       {/* Invoice Creation/Edit Modal */}

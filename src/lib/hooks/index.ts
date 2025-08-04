@@ -22,6 +22,7 @@ export * from './useAppQuery'
 // Specialized domain hooks
 export { useBillingEntityManagement } from './useBillingEntityManagement'
 export { useInvoiceEvents } from './useInvoiceEvents'
+export { useInvoiceMetrics } from './useInvoiceMetrics'
 export { useKeywordSuggestions } from './useKeywordSuggestions'
 export { useTagOperations } from './useTagOperations'
 export { useTeacherStudioRelationships } from './useTeacherStudioRelationships'

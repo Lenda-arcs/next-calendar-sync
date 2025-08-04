@@ -452,6 +452,27 @@ const translations = {
     }
   },
   invoices: {
+    overview: {
+      uninvoicedEvents: 'Uninvoiced Events',
+      totalInvoices: 'Total Invoices',
+      pendingRevenue: 'Pending Revenue',
+      thisMonthRevenue: 'This Month',
+      unpaidInvoices: 'unpaid invoices',
+      paidInvoices: 'paid invoices',
+      swipeForMore: 'Swipe for more'
+    },
+    quickActions: {
+      invoiceSettings: 'Invoice Settings',
+      pdfThemes: 'PDF Themes',
+      billingSetup: 'Billing Setup',
+      settings: 'Settings',
+      themes: 'Themes',
+      billing: 'Billing'
+    },
+    billing: {
+      configurationTitle: 'Billing Configuration',
+      configurationDescription: 'Manage studio rates and payment settings for invoice generation'
+    },
     list: {
       title: 'Invoices',
       noInvoices: 'No invoices found',

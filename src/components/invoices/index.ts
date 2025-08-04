@@ -2,6 +2,8 @@ export { InvoiceCard } from './InvoiceCard';
 export { InvoiceCreationModal } from './InvoiceCreationModal';
 export { InvoiceManagement } from './InvoiceManagement';
 export { InvoiceSettings } from './InvoiceSettings';
+export { BillingConfigurationModal } from './BillingConfigurationModal';
+export { PDFThemeModal } from './PDFThemeModal';
 export { EventInvoiceCard } from './EventInvoiceCard';
 export { UninvoicedEventsList } from './UninvoicedEventsList';
 export { UserInvoiceSettingsForm } from './UserInvoiceSettingsForm';

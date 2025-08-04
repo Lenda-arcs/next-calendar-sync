@@ -89,7 +89,7 @@ export function BillingEntityManagement({ userId }: BillingEntityManagementProps
                 <div className="flex items-center gap-2">
                   <h4 className="font-medium text-gray-900">{t('invoices.billingEntities.studios')} ({studioEntities.length})</h4>
                 </div>
-                <div className="grid gap-4 sm:gap-6 sm:grid-cols-1 lg:grid-cols-2">
+                <div className="grid gap-4 sm:gap-6 grid-cols-1">
                   {studioEntities.map(entity => (
                     <BillingEntityCard
                       key={entity.id}
@@ -114,7 +114,7 @@ export function BillingEntityManagement({ userId }: BillingEntityManagementProps
                 <div className="flex items-center gap-2">
                   <h4 className="font-medium text-gray-900">{t('invoices.billingEntities.teachers')} ({teacherEntities.length})</h4>
                 </div>
-                <div className="grid gap-4 sm:gap-6 sm:grid-cols-1 lg:grid-cols-2">
+                <div className="grid gap-4 sm:gap-6 grid-cols-1">
                   {teacherEntities.map(entity => (
                     <BillingEntityCard
                       key={entity.id}

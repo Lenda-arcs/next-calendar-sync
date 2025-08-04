@@ -280,48 +280,6 @@ export function UninvoicedEventsList({ userId, onCreateInvoice, onCreateStudio }
   // ==================== RENDER ====================
   return (
     <div className="space-y-4">
-      {/* Data & Matching Actions */}
-      {hasConnectedFeeds && !feedsLoading && (
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-          <HistoricalSyncCTA 
-            calendarFeeds={calendarFeeds}
-            userId={userId}
-            onSyncComplete={refetchAll}
-            layout="vertical"
-          />
-          <InfoCardSection
-            title={t('invoices.uninvoiced.studioMatchingIssues')}
-            count={0}
-            description={t('invoices.uninvoiced.studioMatchingIssuesDesc')}
-            mobileDescription={t('invoices.uninvoiced.studioMatchingIssuesMobileDesc')}
-            icon={RotateCcw}
-            colorScheme={colorSchemes.purple}
-            layout="vertical"
-            actions={[
-              {
-                label: isRematchingStudios ? t('invoices.uninvoiced.updating') : t('invoices.uninvoiced.fixStudioMatching'),
-                mobileLabel: isRematchingStudios ? t('invoices.uninvoiced.updating') : t('invoices.uninvoiced.fixMatching'),
-                icon: RotateCcw,
-                onClick: handleRematchStudios,
-                disabled: isRematchingStudios,
-                loading: isRematchingStudios,
-                variant: 'outline',
-                className: 'shadow-sm'
-              }
-            ]}
-          />
-        </div>
-      )}
-
-      {/* Unmatched Events Section */}
-      <UnmatchedEventsSection
-        unmatchedEvents={unmatchedEvents || []}
-        isLoading={isUnmatchedLoading}
-        onRefresh={refetchAll}
-        onCreateStudio={onCreateStudio || (() => {})}
-        userId={userId}
-      />
-
       {/* Main Events List */}
       <DataLoader
         data={eventsByStudio}
@@ -550,6 +508,48 @@ export function UninvoicedEventsList({ userId, onCreateInvoice, onCreateStudio }
           )
         }}
       </DataLoader>
+
+      {/* Data & Matching Actions - Moved to Bottom */}
+      {hasConnectedFeeds && !feedsLoading && (
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+          <HistoricalSyncCTA 
+            calendarFeeds={calendarFeeds}
+            userId={userId}
+            onSyncComplete={refetchAll}
+            layout="vertical"
+          />
+          <InfoCardSection
+            title={t('invoices.uninvoiced.studioMatchingIssues')}
+            count={0}
+            description={t('invoices.uninvoiced.studioMatchingIssuesDesc')}
+            mobileDescription={t('invoices.uninvoiced.studioMatchingIssuesMobileDesc')}
+            icon={RotateCcw}
+            colorScheme={colorSchemes.purple}
+            layout="vertical"
+            actions={[
+              {
+                label: isRematchingStudios ? t('invoices.uninvoiced.updating') : t('invoices.uninvoiced.fixStudioMatching'),
+                mobileLabel: isRematchingStudios ? t('invoices.uninvoiced.updating') : t('invoices.uninvoiced.fixMatching'),
+                icon: RotateCcw,
+                onClick: handleRematchStudios,
+                disabled: isRematchingStudios,
+                loading: isRematchingStudios,
+                variant: 'outline',
+                className: 'shadow-sm'
+              }
+            ]}
+          />
+        </div>
+      )}
+
+      {/* Unmatched Events Section - Moved to Bottom */}
+      <UnmatchedEventsSection
+        unmatchedEvents={unmatchedEvents || []}
+        isLoading={isUnmatchedLoading}
+        onRefresh={refetchAll}
+        onCreateStudio={onCreateStudio || (() => {})}
+        userId={userId}
+      />
 
       {/* Excluded Events Section */}
       <ExcludedEventsSection

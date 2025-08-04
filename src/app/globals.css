@@ -188,6 +188,16 @@
   .animate-accordion-up {
     animation: accordion-up 0.2s ease-out;
   }
+}
 
+/* Scrollbar utilities */
+.scrollbar-hide {
+  /* For modern browsers */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
 
+.scrollbar-hide::-webkit-scrollbar {
+  /* Chrome, Safari, and Opera */
+  display: none;
 }
