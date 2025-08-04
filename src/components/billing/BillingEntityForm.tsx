@@ -37,6 +37,7 @@ interface Props {
   onFormReady?: (formInstance: { submit: () => void }) => void;
   entityType?: 'studio' | 'teacher';
   defaultLocationMatch?: string[];
+  createTeacherForStudio?: BillingEntity | null; // NEW: Studio entity to create teacher for
 }
 
 // Form data interface
@@ -58,6 +59,7 @@ interface FormData {
   online_bonus_ceiling: string;
   rate_tiers: string; // JSON string representation
   separate_online_studio_calculation: boolean;
+  substitution_billing_enabled: boolean;
   recipient_name: string;
   recipient_email: string;
   recipient_phone: string;
@@ -84,6 +86,7 @@ function extractFormDataFromEntity(entity: BillingEntity | null | undefined, def
       online_bonus_ceiling: "",
       rate_tiers: "",
       separate_online_studio_calculation: false,
+      substitution_billing_enabled: false,
             recipient_name: "",
             recipient_email: "",
             recipient_phone: "",
@@ -112,6 +115,7 @@ function extractFormDataFromEntity(entity: BillingEntity | null | undefined, def
     online_bonus_ceiling: rateConfig?.online_bonus_ceiling?.toString() || "",
     rate_tiers: rateConfig?.type === 'tiered' ? JSON.stringify(rateConfig.tiers, null, 2) : "",
     separate_online_studio_calculation: false, // Legacy field, not used in new schema
+    substitution_billing_enabled: entity.substitution_billing_enabled || false,
     recipient_name: recipientInfo?.name || "",
     recipient_email: recipientInfo?.email || "",
     recipient_phone: recipientInfo?.phone || "",
@@ -138,22 +142,24 @@ function extractRateTiersFromEntity(entity: BillingEntity | null | undefined): R
 
 // Custom hook for form logic
 const useBillingEntityForm = (props: Props) => {
-  const { user, existingStudio, onStudioCreated, onStudioUpdated, onLoadingChange, entityType = 'studio', defaultLocationMatch = [] } = props;
+  const { user, existingStudio, onStudioCreated, onStudioUpdated, onLoadingChange, entityType = 'studio', defaultLocationMatch = [], createTeacherForStudio } = props;
 
-  // Fetch teacher-studio relationships if this is a teacher entity
+  // Fetch teacher-studio relationships if this is a teacher entity (only if not creating for specific studio)
   const { data: teacherRelationships } = useTeacherStudioRelationships({
     teacherId: entityType === 'teacher' ? user.id : null,
-    enabled: entityType === 'teacher' && !existingStudio
+    enabled: entityType === 'teacher' && !existingStudio && !createTeacherForStudio
   })
 
   // Get the best studio suggestion for pre-populating the form
   const bestStudioSuggestion = getBestStudioSuggestion(teacherRelationships || [])
   const studioDefaults = extractBillingDefaultsFromStudio(bestStudioSuggestion)
 
-  // Use studio defaults if available, otherwise use the provided defaults
-  const effectiveLocationMatch = studioDefaults.defaultLocationMatch.length > 0 
-    ? studioDefaults.defaultLocationMatch 
-    : defaultLocationMatch
+  // Use createTeacherForStudio if available, otherwise use studio defaults or provided defaults
+  const effectiveLocationMatch = createTeacherForStudio 
+    ? createTeacherForStudio.location_match || []
+    : studioDefaults.defaultLocationMatch.length > 0 
+      ? studioDefaults.defaultLocationMatch 
+      : defaultLocationMatch
 
   const [formData, setFormData] = useState<FormData>(() => 
     extractFormDataFromEntity(existingStudio, effectiveLocationMatch)
@@ -364,6 +370,7 @@ const useBillingEntityForm = (props: Props) => {
       banking_info: bankingInfo,
       currency: formData.currency || "EUR",
           notes: formData.notes || null,
+          substitution_billing_enabled: entityType === 'studio' ? formData.substitution_billing_enabled : null,
         };
 
     if (isUpdate) {
@@ -482,7 +489,8 @@ const TeacherForm: React.FC<{
     suggestedStudioName: string | null;
     defaultLocationMatch: string[];
   } | null;
-}> = ({ formData, errors, userId, onInputChange, onLocationChange, currentStudioId, studioDefaults }) => (
+  createTeacherForStudio?: BillingEntity | null;
+}> = ({ formData, errors, userId, onInputChange, onLocationChange, currentStudioId, studioDefaults, createTeacherForStudio }) => (
         <div className="space-y-4">
           <h3 className="text-lg font-semibold">Basic Information</h3>
           
@@ -496,10 +504,37 @@ const TeacherForm: React.FC<{
               </p>
             </div>
           )}
+
+          {/* Studio information when creating teacher for specific studio */}
+          {formData.location_match && formData.location_match.length > 0 && !studioDefaults?.suggestedStudioName && (
+            <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+              <h4 className="text-sm font-medium text-purple-800 mb-2">Creating Teacher Profile for Studio</h4>
+              <p className="text-sm text-purple-700">
+                This teacher profile will be used for substitute teaching at studios matching: <strong>{formData.location_match.join(', ')}</strong>
+              </p>
+              <p className="text-xs text-purple-600 mt-2">
+                Rate calculations will use the studio&apos;s rates. This profile is for payment recipient information only.
+              </p>
+            </div>
+          )}
+
+          {/* Studio information when creating teacher for specific studio (from createTeacherForStudio) */}
+          {createTeacherForStudio && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <h4 className="text-sm font-medium text-blue-800 mb-2">Studio Configuration Applied</h4>
+              <p className="text-sm text-blue-700">
+                This form has been pre-populated with default settings from <strong>{createTeacherForStudio.entity_name}</strong> 
+                for substitute teaching. You can modify these settings as needed.
+              </p>
+              <p className="text-xs text-blue-600 mt-2">
+                Rate calculations will use the studio&apos;s rates. This profile is for payment recipient information only.
+              </p>
+            </div>
+          )}
           
     <div className="space-y-4">
       {/* Row 1: Teacher Name and Location Match */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className={`grid gap-6 ${createTeacherForStudio ? 'grid-cols-1' : 'grid-cols-1 lg:grid-cols-2'}`}>
             <div>
           <Label htmlFor="entity_name">Teacher Name *</Label>
               <Input
@@ -513,21 +548,23 @@ const TeacherForm: React.FC<{
                 <p className="text-sm text-red-500 mt-1">{errors.entity_name}</p>
               )}
             </div>
-            <div>
-              <PatternInput
-                label="Location Match *"
-                patterns={formData.location_match}
-                onChange={onLocationChange}
-                userId={userId}
-                currentStudioId={currentStudioId}
-                placeholder="e.g., Flow Studio, Yoga Works, Downtown"
-                required
-                error={errors.location_match}
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                Patterns to match locations where this teacher provides substitute classes
-              </p>
-        </div>
+            {!createTeacherForStudio && (
+              <div>
+                <PatternInput
+                  label="Location Match *"
+                  patterns={formData.location_match}
+                  onChange={onLocationChange}
+                  userId={userId}
+                  currentStudioId={currentStudioId}
+                  placeholder="e.g., Flow Studio, Yoga Works, Downtown"
+                  required
+                  error={errors.location_match}
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Patterns to match locations where this teacher provides substitute classes
+                </p>
+              </div>
+            )}
             </div>
 
       {/* Row 2: Display Name and Email */}
@@ -1071,6 +1108,23 @@ const StudioForm: React.FC<{
               rows={3}
             />
           </div>
+          
+          {/* Substitution Billing Toggle */}
+          <div className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              id="substitution_billing_enabled"
+              checked={formData.substitution_billing_enabled}
+              onChange={(e) => onInputChange("substitution_billing_enabled", e.target.checked.toString())}
+              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            />
+            <Label htmlFor="substitution_billing_enabled" className="text-sm font-medium">
+              Enable substitution billing
+            </Label>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            When enabled, teachers can create billing entities for substitute teaching at this studio
+          </p>
         </div>
     </div>
   );
@@ -1086,7 +1140,8 @@ const BillingEntityForm: React.FC<Props> = (props) => {
     onFormReady,
     entityType = 'studio',
     existingStudio,
-    onLoadingChange
+    onLoadingChange,
+    createTeacherForStudio
   } = props;
 
   const {
@@ -1166,6 +1221,7 @@ const BillingEntityForm: React.FC<Props> = (props) => {
           onLocationChange={handleLocationChange}
           currentStudioId={existingStudio?.id}
           studioDefaults={studioDefaults}
+          createTeacherForStudio={createTeacherForStudio}
         />
       ) : (
         <StudioForm

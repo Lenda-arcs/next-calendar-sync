@@ -13,10 +13,11 @@ interface BillingEntityCardProps {
   entity: BillingEntity
   onEdit: (entity: BillingEntity) => void
   onDelete: (entity: BillingEntity) => void
+  onCreateTeacher?: (studioEntity: BillingEntity) => void
   isDeleting?: boolean
 }
 
-export function BillingEntityCard({ entity, onEdit, onDelete, isDeleting = false }: BillingEntityCardProps) {
+export function BillingEntityCard({ entity, onEdit, onDelete, onCreateTeacher, isDeleting = false }: BillingEntityCardProps) {
   const [expanded, setExpanded] = useState(false)
   const isTeacher = entity.entity_type === 'teacher'
   const rateConfig = entity.rate_config as RateConfig | null
@@ -35,6 +36,11 @@ export function BillingEntityCard({ entity, onEdit, onDelete, isDeleting = false
               {isTeacher && (
                 <Badge variant="secondary" className="bg-purple-100 text-purple-800 text-xs flex-shrink-0 whitespace-nowrap">
                   Teacher
+                </Badge>
+              )}
+              {!isTeacher && entity.substitution_billing_enabled && (
+                <Badge variant="secondary" className="bg-green-100 text-green-800 text-xs flex-shrink-0 whitespace-nowrap">
+                  Substitution Enabled
                 </Badge>
               )}
             </div>
@@ -131,6 +137,23 @@ export function BillingEntityCard({ entity, onEdit, onDelete, isDeleting = false
           {!isTeacher && !rateConfig && (
             <div className="text-xs text-gray-500 italic bg-gray-50 p-2 rounded">
               No rate configuration set
+            </div>
+          )}
+
+          {/* Create Teacher button for studios with substitution billing enabled */}
+          {!isTeacher && entity.substitution_billing_enabled && onCreateTeacher && (
+            <div className="pt-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onCreateTeacher(entity)}
+                className="w-full text-xs bg-purple-50 border-purple-200 text-purple-700 hover:bg-purple-100 hover:border-purple-300"
+              >
+                + Create Teacher Profile
+              </Button>
+              <p className="text-xs text-gray-500 mt-1 text-center">
+                For substitute teaching at this studio
+              </p>
             </div>
           )}
         </div>

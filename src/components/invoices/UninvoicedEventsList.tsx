@@ -421,7 +421,7 @@ export function UninvoicedEventsList({ userId, onCreateInvoice, onCreateStudio }
                                     selectedCount={selectedEventIds.length}
                                     hasSelected={someEventsSelected}
                                     onCreateInvoice={() => handleCreateInvoice(studioId)}
-                                    onBatchSubstitute={isTeacher ? undefined : () => handleBatchSubstitute(studioId, setSubstituteEventIds)}
+                                    onBatchSubstitute={isTeacher ? undefined : (firstEvent?.studio?.substitution_billing_enabled ? () => handleBatchSubstitute(studioId, setSubstituteEventIds) : undefined)}
                                     onRevertToStudio={isTeacher ? () => handleRevertToStudio(studioId) : undefined}
                                     isReverting={revertingStudioId === studioId}
                                     variant="desktop"
@@ -437,7 +437,7 @@ export function UninvoicedEventsList({ userId, onCreateInvoice, onCreateStudio }
                                     selectedCount={selectedEventIds.length}
                                     hasSelected={someEventsSelected}
                                     onCreateInvoice={() => handleCreateInvoice(studioId)}
-                                    onBatchSubstitute={isTeacher ? undefined : () => handleBatchSubstitute(studioId, setSubstituteEventIds)}
+                                    onBatchSubstitute={isTeacher ? undefined : (firstEvent?.studio?.substitution_billing_enabled ? () => handleBatchSubstitute(studioId, setSubstituteEventIds) : undefined)}
                                     onRevertToStudio={isTeacher ? () => handleRevertToStudio(studioId) : undefined}
                                     isReverting={revertingStudioId === studioId}
                                     variant="mobile"
@@ -453,7 +453,7 @@ export function UninvoicedEventsList({ userId, onCreateInvoice, onCreateStudio }
                                     selectedCount={0}
                                     hasSelected={false}
                                     onCreateInvoice={() => handleCreateInvoice(studioId)}
-                                    onBatchSubstitute={isTeacher ? undefined : () => handleBatchSubstitute(studioId, setSubstituteEventIds)}
+                                    onBatchSubstitute={isTeacher ? undefined : (firstEvent?.studio?.substitution_billing_enabled ? () => handleBatchSubstitute(studioId, setSubstituteEventIds) : undefined)}
                                     onRevertToStudio={isTeacher ? () => handleRevertToStudio(studioId) : undefined}
                                     isReverting={revertingStudioId === studioId}
                                     variant="mobile"

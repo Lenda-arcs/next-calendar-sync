@@ -29,6 +29,7 @@ export type Database = {
           rate_config: Json | null
           recipient_info: Json | null
           studio_id: string | null
+          substitution_billing_enabled: boolean | null
           updated_at: string | null
           user_id: string
         }
@@ -46,6 +47,7 @@ export type Database = {
           rate_config?: Json | null
           recipient_info?: Json | null
           studio_id?: string | null
+          substitution_billing_enabled?: boolean | null
           updated_at?: string | null
           user_id: string
         }
@@ -63,6 +65,7 @@ export type Database = {
           rate_config?: Json | null
           recipient_info?: Json | null
           studio_id?: string | null
+          substitution_billing_enabled?: boolean | null
           updated_at?: string | null
           user_id?: string
         }

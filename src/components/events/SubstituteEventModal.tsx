@@ -232,6 +232,26 @@ export function SubstituteEventModal({
       footer={footer}
     >
       <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Source Studio Information */}
+        {originalStudio && (
+          <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+            <div className="flex items-center gap-2 text-gray-800 mb-2">
+              <span className="font-medium">Converting from Studio:</span>
+            </div>
+            <div className="text-sm text-gray-600">
+              <strong>{originalStudio.entity_name}</strong>
+              {originalStudio.location_match && originalStudio.location_match.length > 0 && (
+                <span className="text-gray-500 ml-2">
+                  (matches: {originalStudio.location_match.join(', ')})
+                </span>
+              )}
+            </div>
+            <p className="text-xs text-gray-500 mt-2">
+              Rate calculations will continue to use this studio&apos;s rates. The teacher profile is for payment recipient information only.
+            </p>
+          </div>
+        )}
+
         {/* Teacher Selection Mode */}
         <div className="space-y-3">
           <Label className="text-base font-medium">Choose Teacher</Label>
@@ -372,7 +392,7 @@ export function SubstituteEventModal({
         onClose={() => setShowBillingEntityFormModal(false)}
         user={{ id: userId ?? '', email: null }}
         defaultEntityType="teacher"
-        defaultLocationMatch={originalStudio?.location_match || []}
+        createTeacherForStudio={originalStudio as BillingEntity | null}
         onStudioCreated={handleNewTeacherCreated}
       />
     </UnifiedDialog>

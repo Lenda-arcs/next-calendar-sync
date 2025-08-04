@@ -3,10 +3,8 @@
 import React, { useState, useEffect } from "react";
 import { UnifiedDialog } from "../ui/unified-dialog";
 import { Button } from "../ui/button";
-import { Label } from "../ui/label";
 import BillingEntityForm from "./BillingEntityForm";
 import type { BillingEntity } from "../../lib/types";
-import { Building2, User } from "lucide-react";
 
 interface Props {
   isOpen: boolean;
@@ -18,6 +16,7 @@ interface Props {
   onStudioUpdated?: (studio: BillingEntity) => void;
   defaultEntityType?: 'studio' | 'teacher';
   defaultLocationMatch?: string[];
+  createTeacherForStudio?: BillingEntity | null; // NEW: Studio entity to create teacher for
 }
 
 type EntityType = 'studio' | 'teacher'
@@ -31,25 +30,23 @@ const BillingEntityFormModal: React.FC<Props> = ({
   onStudioCreated,
   onStudioUpdated,
   defaultEntityType,
-  defaultLocationMatch
+  defaultLocationMatch,
+  createTeacherForStudio
 }) => {
   const isEditing = !!existingStudio;
   const [isLoading, setIsLoading] = useState(false);
   const [formInstance, setFormInstance] = useState<{ submit: () => void } | null>(null);
   const [selectedEntityType, setSelectedEntityType] = useState<EntityType>(
-    defaultEntityType || (existingStudio?.entity_type as EntityType) || 'studio'
+    defaultEntityType || (existingStudio?.entity_type as EntityType) || (createTeacherForStudio ? 'teacher' : 'studio')
   );
-  const [showEntityTypeSelection, setShowEntityTypeSelection] = useState<boolean>(!isEditing && !defaultEntityType);
-
   // Reset state when modal opens or props change
   useEffect(() => {
     setSelectedEntityType(
-      defaultEntityType || (existingStudio?.entity_type as EntityType) || 'studio'
+      defaultEntityType || (existingStudio?.entity_type as EntityType) || (createTeacherForStudio ? 'teacher' : 'studio')
     );
-    setShowEntityTypeSelection(!isEditing && !defaultEntityType);
     setFormInstance(null);
     setIsLoading(false);
-  }, [isOpen, defaultEntityType, isEditing, existingStudio?.entity_type]);
+  }, [isOpen, defaultEntityType, isEditing, existingStudio?.entity_type, createTeacherForStudio]);
 
   const handleStudioCreated = (studio: BillingEntity) => {
     if (onStudioCreated) {
@@ -71,35 +68,16 @@ const BillingEntityFormModal: React.FC<Props> = ({
     }
   };
 
-  const handleEntityTypeSelection = (entityType: EntityType) => {
-    setSelectedEntityType(entityType);
-    setShowEntityTypeSelection(false);
-  };
-
-  const handleBackToSelection = () => {
-    setShowEntityTypeSelection(true);
-  };
-
   const getTitle = () => {
     if (isEditing) {
       const currentEntityType = existingStudio?.entity_type === 'teacher' ? 'Teacher' : 'Studio';
       return `Edit ${currentEntityType} Profile`;
     }
-    if (showEntityTypeSelection) return "Create Billing Entity";
     return selectedEntityType === 'studio' ? "Create Studio Profile" : "Create Teacher Profile";
   };
 
-  const footerContent = showEntityTypeSelection ? (
-    <Button variant="outline" onClick={onClose}>
-      Cancel
-    </Button>
-  ) : (
+  const footerContent = (
     <>
-      {!isEditing && (
-        <Button variant="outline" onClick={handleBackToSelection} disabled={isLoading}>
-          Back
-        </Button>
-      )}
       <Button variant="outline" onClick={onClose} disabled={isLoading}>
         Cancel
       </Button>
@@ -126,47 +104,7 @@ const BillingEntityFormModal: React.FC<Props> = ({
       size="xl"
       footer={footerContent}
     >
-      {showEntityTypeSelection ? (
-        <div className="space-y-6">
-          <div className="space-y-3">
-            <Label className="text-base font-medium">What type of billing entity would you like to create?</Label>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <button
-                type="button"
-                onClick={() => handleEntityTypeSelection('studio')}
-                className="p-6 border-2 rounded-lg text-left transition-colors border-gray-200 hover:border-blue-300 hover:bg-blue-50"
-              >
-                <div className="flex items-center gap-3 mb-3">
-                  <Building2 className="w-6 h-6 text-blue-600" />
-                  <span className="font-semibold text-lg">Studio</span>
-                </div>
-                <p className="text-sm text-gray-600">
-                  Create a studio profile for venue-based billing. Use this for regular classes at studios or fitness centers.
-                </p>
-              </button>
 
-              <button
-                type="button"
-                onClick={() => handleEntityTypeSelection('teacher')}
-                className="p-6 border-2 rounded-lg text-left transition-colors border-gray-200 hover:border-purple-300 hover:bg-purple-50"
-              >
-                <div className="flex items-center gap-3 mb-3">
-                  <User className="w-6 h-6 text-purple-600" />
-                  <span className="font-semibold text-lg">Teacher</span>
-                </div>
-                <div className="space-y-2 text-sm text-gray-600">
-                  <p>
-                    Create a teacher profile for substitute teaching and individual teacher billing.
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    <strong>Payment recipient only:</strong> Teacher entities are used only for payment recipient information. Rate calculations are always based on the original studio&apos;s rates where the substitute teaching occurs.
-                  </p>
-                </div>
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : (
         <BillingEntityForm
           user={user}
           eventLocations={eventLocations}
@@ -178,9 +116,9 @@ const BillingEntityFormModal: React.FC<Props> = ({
           onLoadingChange={setIsLoading}
           onFormReady={setFormInstance}
           entityType={selectedEntityType}
-          defaultLocationMatch={defaultLocationMatch}
+          defaultLocationMatch={createTeacherForStudio ? createTeacherForStudio.location_match || [] : defaultLocationMatch}
+          createTeacherForStudio={createTeacherForStudio}
         />
-      )}
     </UnifiedDialog>
   );
 };

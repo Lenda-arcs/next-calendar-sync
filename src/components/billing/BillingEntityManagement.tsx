@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { useState } from 'react'
 import {Button} from '@/components/ui/button'
 import DataLoader from '@/components/ui/data-loader'
 import {
@@ -17,6 +17,7 @@ import {useBillingEntityManagement} from '@/lib/hooks'
 import {BillingEntityCard} from '@/components'
 import BillingEntityFormModal from './BillingEntityFormModal'
 import {useTranslation} from '@/lib/i18n/context'
+import {BillingEntity} from '@/lib/types'
 
 interface BillingEntityManagementProps {
   userId: string
@@ -44,6 +45,20 @@ export function BillingEntityManagement({ userId }: BillingEntityManagementProps
     handleDeleteDialogClose,
     isEntityDeleting
   } = useBillingEntityManagement({ userId })
+
+  const [createTeacherForStudio, setCreateTeacherForStudio] = useState<BillingEntity | null>(null)
+
+  const handleCreateTeacher = (studioEntity: BillingEntity) => {
+    // Set the studio entity to create teacher for
+    setCreateTeacherForStudio(studioEntity)
+    // Open the modal
+    handleCreate()
+  }
+
+  const handleModalCloseWithReset = () => {
+    setCreateTeacherForStudio(null)
+    handleModalClose()
+  }
 
   return (
     <>
@@ -96,6 +111,7 @@ export function BillingEntityManagement({ userId }: BillingEntityManagementProps
                       entity={entity}
                       onEdit={handleEdit}
                       onDelete={handleDelete}
+                      onCreateTeacher={handleCreateTeacher}
                       isDeleting={isEntityDeleting(entity.id)}
                     />
                   ))}
@@ -134,13 +150,20 @@ export function BillingEntityManagement({ userId }: BillingEntityManagementProps
       {/* Billing Entity Form Modal */}
       <BillingEntityFormModal
         isOpen={isModalOpen}
-        onClose={handleModalClose}
+        onClose={handleModalCloseWithReset}
         user={{ id: userId }}
         eventLocations={eventLocations || []}
         existingStudio={editingEntity}
         defaultEntityType={editingEntity ? editingEntity.entity_type : undefined}
-        onStudioCreated={handleModalSuccess}
-        onStudioUpdated={handleModalSuccess}
+        createTeacherForStudio={createTeacherForStudio}
+        onStudioCreated={() => {
+          setCreateTeacherForStudio(null)
+          handleModalSuccess()
+        }}
+        onStudioUpdated={() => {
+          setCreateTeacherForStudio(null)
+          handleModalSuccess()
+        }}
       />
 
       {/* Delete Confirmation Dialog */}
