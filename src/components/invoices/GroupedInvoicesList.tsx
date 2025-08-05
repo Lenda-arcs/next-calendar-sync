@@ -19,6 +19,7 @@ interface GroupedInvoicesListProps {
   onStatusChange?: (invoiceId: string, newStatus: 'sent' | 'paid' | 'overdue') => void
   onViewPDF?: (pdfUrl: string) => void
   onDelete?: (invoiceId: string) => void
+  userTimezone?: string
 }
 
 interface InvoiceGroup {
@@ -34,7 +35,8 @@ export function GroupedInvoicesList({
   onEdit, 
   onStatusChange, 
   onViewPDF, 
-  onDelete 
+  onDelete,
+  userTimezone
 }: GroupedInvoicesListProps) {
   // ==================== STATE MANAGEMENT ====================
   const [selectedInvoices, setSelectedInvoices] = useState<Record<string, string[]>>({})
@@ -301,6 +303,7 @@ export function GroupedInvoicesList({
                     onEdit={onEdit}
                     onViewPDF={onViewPDF}
                     onDelete={onDelete}
+                    userTimezone={userTimezone}
                   />
                 ))}
               </div>

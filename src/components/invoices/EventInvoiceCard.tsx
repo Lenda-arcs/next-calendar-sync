@@ -8,6 +8,7 @@ import { Event, BillingEntity, RateConfig } from '@/lib/types'
 import { cn } from '@/lib/utils'
 import { Users, Edit3 } from 'lucide-react'
 import { calculateEventPayout } from '@/lib/invoice-utils'
+import { formatInvoiceDate, formatInvoiceTime } from '@/lib/date-utils'
 
 interface EventInvoiceCardProps {
   event: Event & { studio: BillingEntity | null }
@@ -17,6 +18,7 @@ interface EventInvoiceCardProps {
   variant?: 'default' | 'compact'
   onSetupSubstitute?: (eventId: string) => void
   onEditEvent?: (eventId: string) => void
+  userTimezone?: string
 }
 
 export function EventInvoiceCard({
@@ -26,20 +28,16 @@ export function EventInvoiceCard({
   showCheckbox = true,
   variant = 'default',
   onSetupSubstitute,
-  onEditEvent
+  onEditEvent,
+  userTimezone
 }: EventInvoiceCardProps) {
+  // ✅ UPDATED: Use timezone-aware formatting functions
   const formatDate = (dateString: string | null) => {
-    if (!dateString) return ""
-    return new Date(dateString).toLocaleDateString()
+    return formatInvoiceDate(dateString, userTimezone)
   }
 
   const formatTime = (dateString: string | null) => {
-    if (!dateString) return ""
-    return new Date(dateString).toLocaleTimeString("en-US", {
-      hour: "numeric",
-      minute: "2-digit",
-      hour12: true,
-    })
+    return formatInvoiceTime(dateString, userTimezone)
   }
 
   // Memoized payout calculation using enhanced algorithm

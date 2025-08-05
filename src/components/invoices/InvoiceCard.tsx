@@ -1,23 +1,15 @@
+'use client'
+
 import React from 'react'
 import { Card, CardContent } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-
-import { InvoiceWithDetails } from '@/lib/invoice-utils'
-import { Edit3, Download, ExternalLink, Trash2 } from 'lucide-react'
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
-import { useTranslation } from '@/lib/i18n/context'
+import { Badge } from '@/components/ui/badge'
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog'
+import { InvoiceWithDetails } from '@/lib/types'
 import { cn } from '@/lib/utils'
+import { Edit3, ExternalLink, Download, Trash2 } from 'lucide-react'
+import { formatInvoiceDate } from '@/lib/date-utils'
+import { useTranslation } from '@/lib/i18n/context'
 
 interface InvoiceCardProps {
   invoice: InvoiceWithDetails
@@ -27,6 +19,7 @@ interface InvoiceCardProps {
   onEdit?: (invoice: InvoiceWithDetails) => void
   onViewPDF?: (pdfUrl: string) => void
   onDelete?: (invoiceId: string) => void
+  userTimezone?: string
 }
 
 export const InvoiceCard: React.FC<InvoiceCardProps> = ({ 
@@ -36,23 +29,26 @@ export const InvoiceCard: React.FC<InvoiceCardProps> = ({
   showCheckbox = false,
   onEdit, 
   onViewPDF, 
-  onDelete 
+  onDelete,
+  userTimezone
 }) => {
   const { t } = useTranslation()
-
-  // ==================== UTILITY FUNCTIONS ====================
+  
+  // ==================== HELPER FUNCTIONS ====================
   const getStatusBadge = (status: string) => {
-    const variants = {
-      draft: { variant: 'secondary' as const, text: 'Draft', color: 'bg-gray-100 text-gray-800' },
-      sent: { variant: 'default' as const, text: 'Sent', color: 'bg-blue-100 text-blue-800' },
-      paid: { variant: 'default' as const, text: 'Paid', color: 'bg-green-100 text-green-800' },
-      overdue: { variant: 'destructive' as const, text: 'Overdue', color: 'bg-red-100 text-red-800' },
-      cancelled: { variant: 'outline' as const, text: 'Cancelled', color: 'bg-gray-100 text-gray-500' }
+    const statusConfig = {
+      draft: { label: 'Draft', variant: 'secondary' as const, className: 'bg-gray-100 text-gray-700' },
+      sent: { label: 'Sent', variant: 'default' as const, className: 'bg-blue-100 text-blue-700' },
+      paid: { label: 'Paid', variant: 'default' as const, className: 'bg-green-100 text-green-700' },
+      overdue: { label: 'Overdue', variant: 'destructive' as const, className: 'bg-red-100 text-red-700' },
+      cancelled: { label: 'Cancelled', variant: 'destructive' as const, className: 'bg-gray-100 text-gray-500' }
     }
-    const config = variants[status as keyof typeof variants] || variants.draft
+    
+    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.draft
+    
     return (
-      <Badge variant={config.variant} className={config.color}>
-        {config.text}
+      <Badge variant={config.variant} className={cn("text-xs", config.className)}>
+        {config.label}
       </Badge>
     )
   }
@@ -92,7 +88,7 @@ export const InvoiceCard: React.FC<InvoiceCardProps> = ({
         {invoice.studio?.entity_name || 'Unknown Studio'}
       </p>
       <div className="flex flex-col sm:flex-row sm:items-center gap-2 text-xs text-gray-500">
-        <span>Period: {new Date(invoice.period_start).toLocaleDateString()} - {new Date(invoice.period_end).toLocaleDateString()}</span>
+        <span>Period: {formatInvoiceDate(invoice.period_start, userTimezone)} - {formatInvoiceDate(invoice.period_end, userTimezone)}</span>
         {invoice.event_count && (
           <Badge variant="outline" className="text-xs w-fit">
             {invoice.event_count} events

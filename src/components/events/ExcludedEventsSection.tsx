@@ -1,16 +1,16 @@
 'use client'
 
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { EyeOff, RefreshCw, Eye, RotateCcw, Calendar } from 'lucide-react'
-import { useSupabaseMutation } from '@/lib/hooks/useQueryWithSupabase'
-import { UnifiedDialog } from '@/components/ui/unified-dialog'
 import { EventInvoiceCard } from '@/components/invoices/EventInvoiceCard'
+import { InfoCardSection, colorSchemes } from '@/components/events'
+import { UnifiedDialog } from '@/components/ui/unified-dialog'
 import { Event } from '@/lib/types'
+import { useSupabaseMutation } from '@/lib/hooks/useQueryWithSupabase'
 import { toggleEventExclusion } from '@/lib/invoice-utils'
-import { rematchEvents } from '@/lib/rematch-utils'
+import { useUserTimezone } from '@/lib/hooks/useUserTimezone'
+import { RefreshCw, Eye, EyeOff, Calendar, RotateCcw } from 'lucide-react'
 import { toast } from 'sonner'
-import { colorSchemes, InfoCardSection } from './InfoCardSection'
 
 interface ExcludedEventsSectionProps {
   excludedEvents: Event[]
@@ -27,54 +27,31 @@ export function ExcludedEventsSection({
 }: ExcludedEventsSectionProps) {
   const [showEventsDialog, setShowEventsDialog] = useState(false)
   const [selectedEvents, setSelectedEvents] = useState<string[]>([])
-  const [isProcessing, setIsProcessing] = useState(false)
-
+  
+  // ✅ NEW: Get user's timezone for consistent time display
+  const userTimezone = useUserTimezone(userId || '')
+  
   const batchIncludeMutation = useSupabaseMutation(
     async (supabase, eventIds: string[]) => {
       // Toggle exclusion for all selected events
       const results = await Promise.all(
         eventIds.map(eventId => toggleEventExclusion(eventId))
       )
-      return results;
+      return results
     },
     {
-      onSuccess: async (results) => {
+      onSuccess: (results) => {
         const includedCount = results.filter(r => !r.excluded).length
         
         if (includedCount > 0) {
           toast.success(`${includedCount} event${includedCount !== 1 ? 's' : ''} included in studio matching`, {
             description: 'Events are now available for studio billing and will be re-matched.',
           })
-
-          // 🚀 Use efficient rematch instead of heavy database operation
-          if (userId) {
-            setIsProcessing(true)
-            try {
-              // Use new rematch functionality for faster studio matching
-              const rematchResult = await rematchEvents({
-                user_id: userId,
-                rematch_studios: true,
-                rematch_tags: true
-              })
-              
-              toast.success('Events Re-matched!', {
-                description: `${rematchResult.updated_count} out of ${rematchResult.total_events_processed} events were matched with studios and tags.`,
-                duration: 4000,
-              })
-            } catch (error) {
-              console.error('Failed to re-match events:', error)
-              toast.error('Re-matching Failed', {
-                description: 'Unable to re-match events with studios. The events were included but may need manual matching.',
-                duration: 5000,
-              })
-            } finally {
-              setIsProcessing(false)
-            }
-          }
         }
         
         // Clear selections and refresh
         setSelectedEvents([])
+        setShowEventsDialog(false)
         onRefresh()
       },
       onError: (error) => {
@@ -82,51 +59,49 @@ export function ExcludedEventsSection({
         toast.error('Failed to update events', {
           description: 'There was an error updating the events. Please try again.',
         })
-        setIsProcessing(false)
       }
     }
   )
-
-  // Selection handlers
+  
+  const isProcessing = batchIncludeMutation.isPending
+  
+  const someEventsSelected = selectedEvents.length > 0
+  const allEventsSelected = excludedEvents.length > 0 && selectedEvents.length === excludedEvents.length
+  
   const handleToggleEvent = (eventId: string) => {
     setSelectedEvents(prev => {
-      const isSelected = prev.includes(eventId)
-      if (isSelected) {
+      if (prev.includes(eventId)) {
         return prev.filter(id => id !== eventId)
       } else {
         return [...prev, eventId]
       }
     })
   }
-
+  
   const handleSelectAll = () => {
-    const allEventIds = excludedEvents.map(event => event.id)
-    const allSelected = allEventIds.every(id => selectedEvents.includes(id))
-    
-    setSelectedEvents(allSelected ? [] : allEventIds)
+    if (allEventsSelected) {
+      setSelectedEvents([])
+    } else {
+      setSelectedEvents(excludedEvents.map(event => event.id))
+    }
   }
-
+  
   const handleBatchInclude = () => {
     if (selectedEvents.length > 0) {
       batchIncludeMutation.mutate(selectedEvents)
     }
   }
 
-  const someEventsSelected = selectedEvents.length > 0
-  const allEventsSelected = excludedEvents.length > 0 && excludedEvents.every(event => selectedEvents.includes(event.id))
-
-  if (isLoading) return null
-  if (!excludedEvents || excludedEvents.length === 0) return null
-
   return (
     <>
       <InfoCardSection
         title="Excluded Events"
         count={excludedEvents.length}
-        description="Events marked as excluded from studio matching"
-        mobileDescription="Excluded from matching"
+        description="Events excluded from studio matching and billing"
+        mobileDescription="Events excluded from studio matching"
         icon={EyeOff}
         colorScheme={colorSchemes.orange}
+        layout="vertical"
         actions={[
           {
             label: 'Refresh',
@@ -208,6 +183,7 @@ export function ExcludedEventsSection({
                 onToggleSelect={handleToggleEvent}
                 showCheckbox={true}
                 variant="compact"
+                userTimezone={userTimezone}
               />
               {event.exclude_from_studio_matching && (
                 <div className="px-4 pb-3 flex items-center gap-2 text-xs text-orange-600">

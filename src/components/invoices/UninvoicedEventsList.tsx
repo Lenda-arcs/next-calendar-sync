@@ -19,6 +19,7 @@ import { useTranslation } from '@/lib/i18n/context'
 
 import { useInvoiceEvents, useStudioActions } from '@/lib/hooks'
 import { useCalendarFeeds } from '@/lib/hooks/useCalendarFeeds'
+import { useUserTimezone } from '@/lib/hooks/useUserTimezone'
 import { RefreshCw, Building2, User, RotateCcw } from 'lucide-react'
 import { toast } from 'sonner'
 import { rematchEvents } from '@/lib/rematch-utils'
@@ -36,6 +37,9 @@ interface UninvoicedEventsListProps {
 
 export function UninvoicedEventsList({ userId, onCreateInvoice, onCreateStudio }: UninvoicedEventsListProps) {
   const { t } = useTranslation()
+  
+  // ✅ NEW: Get user's timezone for consistent time display
+  const userTimezone = useUserTimezone(userId)
   
   // ==================== STATE MANAGEMENT ====================
   const [selectedEvents, setSelectedEvents] = useState<Record<string, string[]>>({})
@@ -491,6 +495,7 @@ export function UninvoicedEventsList({ userId, onCreateInvoice, onCreateStudio }
                                         showCheckbox={true}
                                         variant="compact"
                                         onEditEvent={handleEditEvent}
+                                        userTimezone={userTimezone}
                                       />
                                     ))}
                                   </div>
