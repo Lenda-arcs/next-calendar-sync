@@ -1,14 +1,13 @@
 'use client'
 
 import React from 'react'
-import { cn } from '@/lib/utils'
-import { Card } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { ImageGallery } from './ImageGallery'
-import { EventDetails } from './EventDetails'
+import {cn} from '@/lib/utils'
+import {Card} from '@/components/ui/card'
+import {Button} from '@/components/ui/button'
+import {EventDetails, ImageGallery} from '@/components'
 import TagList from '@/components/tags/TagList'
-import { EventTag, EventDisplayVariant } from '@/lib/event-types'
-import { styleUtils } from '@/lib/design-system'
+import {EventDisplayVariant, EventTag} from '@/lib/event-types'
+import {styleUtils} from '@/lib/design-system'
 
 interface EventCardProps {
   id: string
@@ -104,27 +103,29 @@ export const EventCard = React.memo<EventCardProps>(
     // Check if we should show image based on variant and screen size
     const shouldShowImage = variant !== 'minimal'
 
-    const handleClick = () => {
-      if (onVariantChange) {
-        // Toggle between minimal and compact
-        if (variant === 'minimal') {
-          onVariantChange('compact')
-        } else if (variant === 'compact') {
-          onVariantChange('minimal')
-        } else if (onClick) {
-          onClick()
-        }
-      } else if (onClick) {
-        onClick()
-      }
-    }
 
-    const handleKeyDown = (event: React.KeyboardEvent) => {
-      if (onClick && (event.key === 'Enter' || event.key === ' ')) {
-        event.preventDefault()
-        onClick()
-      }
-    }
+    //TODO: Rethink
+    // const handleClick = () => {
+    //   if (onVariantChange) {
+    //     // Toggle between minimal and compact
+    //     if (variant === 'minimal') {
+    //       onVariantChange('compact')
+    //     } else if (variant === 'compact') {
+    //       onVariantChange('minimal')
+    //     } else if (onClick) {
+    //       onClick()
+    //     }
+    //   } else if (onClick) {
+    //     onClick()
+    //   }
+    // }
+    //
+    // const handleKeyDown = (event: React.KeyboardEvent) => {
+    //   if (onClick && (event.key === 'Enter' || event.key === ' ')) {
+    //     event.preventDefault()
+    //     onClick()
+    //   }
+    // }
 
     return (
       <Card
@@ -132,8 +133,8 @@ export const EventCard = React.memo<EventCardProps>(
         padding="none"
         interactive={!!(onClick || onVariantChange)}
         className={cn(getCardClasses(), className)}
-        onClick={handleClick}
-        onKeyDown={handleKeyDown}
+        // onClick={handleClick}
+        // onKeyDown={handleKeyDown}
         tabIndex={onClick ? 0 : undefined}
         role={onClick ? 'button' : undefined}
         aria-label={onClick ? `View details for ${title}` : undefined}
