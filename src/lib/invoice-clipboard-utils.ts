@@ -108,26 +108,4 @@ export async function copyInvoiceToClipboard(invoice: InvoiceWithDetails): Promi
   }
 }
 
-/**
- * Creates a simple text summary of the invoice for quick sharing
- */
-export function formatInvoiceSummary(invoice: InvoiceWithDetails): string {
-  const eventCount = invoice.events?.length || 0
-  const totalAmount = invoice.amount_total || 0
-  
-  let summary = `Invoice ${invoice.invoice_number} - €${totalAmount.toFixed(2)}`
-  
-  if (invoice.studio) {
-    summary += ` for ${invoice.studio.entity_name}`
-  }
-  
-  summary += ` (${eventCount} event${eventCount !== 1 ? 's' : ''})`
-  
-  if (invoice.period_start && invoice.period_end) {
-    const startDate = new Date(invoice.period_start).toLocaleDateString()
-    const endDate = new Date(invoice.period_end).toLocaleDateString()
-    summary += ` - Period: ${startDate} to ${endDate}`
-  }
-  
-  return summary
-} 
+ 
