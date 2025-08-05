@@ -31,6 +31,7 @@ export async function fetchInvoiceData(invoiceId: string): Promise<InvoiceData> 
     .from('billing_entities')
     .select(`
       id, entity_name, entity_type,
+      individual_billing_email,
       recipient_info, banking_info,
       rate_config
     `)

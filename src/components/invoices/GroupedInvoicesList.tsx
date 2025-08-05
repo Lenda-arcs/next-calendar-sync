@@ -5,6 +5,7 @@ import { Card, CardContent, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion'
 import { Select, SelectOption } from '@/components/ui/select'
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog'
 import { InvoiceCard } from './InvoiceCard'
 import { InvoiceWithDetails } from '@/lib/invoice-utils'
 import { 
@@ -12,6 +13,7 @@ import {
   Trash2,
   FileText
 } from 'lucide-react'
+import { useTranslation } from '@/lib/i18n/context'
 
 interface GroupedInvoicesListProps {
   invoices: InvoiceWithDetails[]
@@ -37,6 +39,8 @@ export function GroupedInvoicesList({
   onViewPDF, 
   onDelete
 }: GroupedInvoicesListProps) {
+  const { t } = useTranslation()
+  
   // ==================== STATE MANAGEMENT ====================
   const [selectedInvoices, setSelectedInvoices] = useState<Record<string, string[]>>({})
 
@@ -86,16 +90,14 @@ export function GroupedInvoicesList({
 
   const handleBulkDelete = useCallback((studioId: string) => {
     const selectedInvoiceIds = selectedInvoices[studioId] || []
-    if (confirm(`Are you sure you want to delete ${selectedInvoiceIds.length} invoices?`)) {
-      selectedInvoiceIds.forEach(invoiceId => {
-        onDelete?.(invoiceId)
-      })
-      // Clear selections for this studio only
-      setSelectedInvoices(prev => ({
-        ...prev,
-        [studioId]: []
-      }))
-    }
+    selectedInvoiceIds.forEach(invoiceId => {
+      onDelete?.(invoiceId)
+    })
+    // Clear selections for this studio only
+    setSelectedInvoices(prev => ({
+      ...prev,
+      [studioId]: []
+    }))
   }, [selectedInvoices, onDelete])
 
   // ==================== MEMOIZED CALCULATIONS ====================
@@ -276,15 +278,35 @@ export function GroupedInvoicesList({
                         placeholder="Change Status"
                         className="w-full sm:w-40 h-10"
                       />
-                      <Button
-                        size="default"
-                        onClick={() => handleBulkDelete(group.studioId)}
-                        variant="outline"
-                        className="w-full sm:w-auto h-10 border-red-300 text-red-700 hover:bg-red-50"
-                      >
-                        <Trash2 className="w-4 h-4 mr-2" />
-                        Delete ({selectedInvoiceIds.length})
-                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            size="default"
+                            variant="outline"
+                            className="w-full sm:w-auto h-10 border-red-300 text-red-700 hover:bg-red-50"
+                          >
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Delete ({selectedInvoiceIds.length})
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>{t('invoices.bulk.confirmDelete')}</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              {t('invoices.bulk.confirmDeleteDesc', { count: selectedInvoiceIds.length.toString() })}
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>{t('common.actions.cancel')}</AlertDialogCancel>
+                            <AlertDialogAction 
+                              onClick={() => handleBulkDelete(group.studioId)}
+                              className="bg-red-600 hover:bg-red-700 text-white"
+                            >
+                              {t('common.actions.delete')}
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </div>
                   )}
                 </div>

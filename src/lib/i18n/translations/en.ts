@@ -599,6 +599,11 @@ const translations = {
       deleteFailedDesc: 'Unable to delete the invoice. Please try again.'
     },
     
+    bulk: {
+      confirmDelete: 'Delete Selected Invoices',
+      confirmDeleteDesc: 'Are you sure you want to delete {count} invoices? This action cannot be undone and will permanently delete the invoices and remove all event links.'
+    },
+    
     settings: {
       invoiceInfoTitle: 'Your Invoice Information',
       invoiceInfoDesc: 'Set up your personal billing details for generating invoices',

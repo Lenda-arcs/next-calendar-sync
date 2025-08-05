@@ -10,7 +10,7 @@ export interface InvoiceData {
   studio: {
     entity_name: string                  // ✅ Studio name
     address?: string                     // ✅ Studio address  
-    billing_email?: string
+    individual_billing_email?: string    // ✅ Individual billing email
     legal_representative?: string        // Gesetzlicher Vertreter
     recipient_info?: any                 // Additional recipient information
     banking_info?: any                   // Banking information

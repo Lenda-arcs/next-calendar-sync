@@ -1,15 +1,17 @@
 'use client'
 
-import React from 'react'
+import React, { useState } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog'
 import { InvoiceWithDetails } from '@/lib/types'
 import { cn } from '@/lib/utils'
-import { Edit3, ExternalLink, Download, Trash2 } from 'lucide-react'
+import { Edit3, ExternalLink, Download, Trash2, FileText, Loader2 } from 'lucide-react'
 import { formatInvoiceDate } from '@/lib/date-utils'
 import { useTranslation } from '@/lib/i18n/context'
+import { generateInvoicePDF } from '@/lib/invoice-utils'
+import { toast } from 'sonner'
 
 interface InvoiceCardProps {
   invoice: InvoiceWithDetails
@@ -19,7 +21,7 @@ interface InvoiceCardProps {
   onEdit?: (invoice: InvoiceWithDetails) => void
   onViewPDF?: (pdfUrl: string) => void
   onDelete?: (invoiceId: string) => void
-
+  onPDFGenerated?: (invoiceId: string, pdfUrl: string) => void
 }
 
 export const InvoiceCard: React.FC<InvoiceCardProps> = ({ 
@@ -29,9 +31,11 @@ export const InvoiceCard: React.FC<InvoiceCardProps> = ({
   showCheckbox = false,
   onEdit, 
   onViewPDF, 
-  onDelete
+  onDelete,
+  onPDFGenerated
 }) => {
   const { t } = useTranslation()
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false)
   
   // ==================== HELPER FUNCTIONS ====================
   const getStatusBadge = (status: string) => {
@@ -71,6 +75,28 @@ export const InvoiceCard: React.FC<InvoiceCardProps> = ({
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)
+    }
+  }
+
+  const handleGeneratePDF = async () => {
+    if (isGeneratingPDF) return
+    
+    setIsGeneratingPDF(true)
+    try {
+      const result = await generateInvoicePDF(invoice.id)
+      toast.success('PDF generated successfully!')
+      
+      // Use callback if provided, otherwise reload the page
+      if (onPDFGenerated) {
+        onPDFGenerated(invoice.id, result.pdf_url)
+      } else {
+        window.location.reload()
+      }
+    } catch (error) {
+      console.error('Error generating PDF:', error)
+      toast.error('Failed to generate PDF. Please try again.')
+    } finally {
+      setIsGeneratingPDF(false)
     }
   }
 
@@ -114,7 +140,7 @@ export const InvoiceCard: React.FC<InvoiceCardProps> = ({
         </Button>
       )}
       
-      {invoice.pdf_url && (
+      {invoice.pdf_url ? (
         <>
           <Button
             size="sm"
@@ -141,6 +167,29 @@ export const InvoiceCard: React.FC<InvoiceCardProps> = ({
             <span className="sm:hidden">Download</span>
           </Button>
         </>
+      ) : (
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={(e) => {
+            e.stopPropagation()
+            handleGeneratePDF()
+          }}
+          disabled={isGeneratingPDF}
+          className="flex-1 sm:flex-none h-9 sm:h-8 text-green-600 hover:text-green-700"
+        >
+          {isGeneratingPDF ? (
+            <>
+              <Loader2 className="w-4 h-4 sm:w-3 sm:h-3 mr-1 animate-spin" />
+              <span className="sm:hidden">Generating...</span>
+            </>
+          ) : (
+            <>
+              <FileText className="w-4 h-4 sm:w-3 sm:h-3 mr-1" />
+              <span className="sm:hidden">Generate PDF</span>
+            </>
+          )}
+        </Button>
       )}
       
       {onDelete && (
@@ -228,7 +277,7 @@ export const InvoiceCard: React.FC<InvoiceCardProps> = ({
   )
 
   const renderPDFActions = () => (
-    invoice.pdf_url && (
+    invoice.pdf_url ? (
       <div className="flex items-center gap-1">
         <Button
           size="sm"
@@ -255,6 +304,29 @@ export const InvoiceCard: React.FC<InvoiceCardProps> = ({
           Download
         </Button>
       </div>
+    ) : (
+      <Button
+        size="sm"
+        variant="ghost"
+        onClick={(e) => {
+          e.stopPropagation()
+          handleGeneratePDF()
+        }}
+        disabled={isGeneratingPDF}
+        className="h-6 px-2 text-xs text-green-600 hover:text-green-700"
+      >
+        {isGeneratingPDF ? (
+          <>
+            <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+            Generating...
+          </>
+        ) : (
+          <>
+            <FileText className="w-3 h-3 mr-1" />
+            Generate PDF
+          </>
+        )}
+      </Button>
     )
   )
 

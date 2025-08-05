@@ -601,6 +601,11 @@ const translations: TranslationStructure = {
       deleteFailedDesc: 'Rechnung konnte nicht gelöscht werden. Bitte versuchen Sie es erneut.'
     },
     
+    bulk: {
+      confirmDelete: 'Ausgewählte Rechnungen löschen',
+      confirmDeleteDesc: 'Sind Sie sicher, dass Sie {count} Rechnungen löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden und die Rechnungen werden dauerhaft gelöscht und alle Event-Verknüpfungen entfernt.'
+    },
+    
     settings: {
       invoiceInfoTitle: 'Ihre Rechnungsinformationen',
       invoiceInfoDesc: 'Richten Sie Ihre persönlichen Abrechnungsdetails für die Rechnungserstellung ein',

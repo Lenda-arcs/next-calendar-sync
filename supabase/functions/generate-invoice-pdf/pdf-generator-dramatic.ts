@@ -118,12 +118,23 @@ function addRecipientSection(doc: jsPDF, t: any, data: InvoiceData, y: number): 
   doc.text(data.studio.entity_name, 20, y)
   y += 6
   
-  if (data.studio.address) {
-    // Split address by commas and display each part on a new line
-    const addressParts = data.studio.address.split(',').map(part => part.trim()).filter(part => part.length > 0)
-    addressParts.forEach(part => {
-      doc.text(part, 20, y)
-      y += 5
+  // Extract address from recipient_info
+  const address = data.studio.recipient_info?.address
+  if (address) {
+    // Split address by newlines first, then by commas for better formatting
+    const addressLines = address.split('\n').map(line => line.trim()).filter(line => line.length > 0)
+    addressLines.forEach(line => {
+      // If the line contains commas, split it further
+      if (line.includes(',')) {
+        const parts = line.split(',').map(part => part.trim()).filter(part => part.length > 0)
+        parts.forEach(part => {
+          doc.text(part, 20, y)
+          y += 5
+        })
+      } else {
+        doc.text(line, 20, y)
+        y += 5
+      }
     })
   }
   
@@ -732,11 +743,24 @@ function addDramaticBillingDetails(
   const bodyFontSize = theme === 'custom' ? (config.body_font_size || 9) : 9
   doc.setFontSize(bodyFontSize)
   
+  // Extract address from recipient_info
+  const address = invoiceData.studio.recipient_info?.address
+  
   // Add studio details with compact spacing
   const lines = [
     invoiceData.studio.entity_name,
-    ...(invoiceData.studio.address ? invoiceData.studio.address.split('\n') : []),
-    invoiceData.studio.billing_email || ''
+    ...(address ? 
+      address.split('\n')
+        .map(line => line.trim())
+        .filter(line => line.length > 0)
+        .flatMap(line => {
+          // If the line contains commas, split it further
+          if (line.includes(',')) {
+            return line.split(',').map(part => part.trim()).filter(part => part.length > 0)
+          }
+          return [line]
+        }) : []),
+    invoiceData.studio.individual_billing_email || ''
   ].filter(line => line.trim())
   
   lines.forEach((line, index) => {
@@ -1218,8 +1242,13 @@ function createSampleInvoiceData(
     created_at: currentDate.toISOString(),
     studio: {
       entity_name: 'Sample Yoga Studio',
-      address: '123 Yoga Street\n12345 Wellness City\nGermany',
-      billing_email: 'studio@example.com'
+      recipient_info: {
+        type: 'studio',
+        name: 'Sample Yoga Studio',
+        email: 'studio@example.com',
+        address: '123 Yoga Street\n12345 Wellness City\nGermany'
+      },
+      individual_billing_email: 'studio@example.com'
     },
     events: [
       {

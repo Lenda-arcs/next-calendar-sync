@@ -601,6 +601,11 @@ const translations: TranslationStructure = {
       deleteFailedDesc: 'No se pudo eliminar la factura. Por favor intente de nuevo.'
     },
     
+    bulk: {
+      confirmDelete: 'Eliminar Facturas Seleccionadas',
+      confirmDeleteDesc: '¿Está seguro de que desea eliminar {count} facturas? Esta acción no se puede deshacer y eliminará permanentemente las facturas y removerá todos los enlaces de eventos.'
+    },
+    
     settings: {
       invoiceInfoTitle: 'Su Información de Factura',
       invoiceInfoDesc: 'Configure sus detalles personales de facturación para generar facturas',
