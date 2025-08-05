@@ -35,7 +35,6 @@ export default function TeacherScheduleLayout({
       <div className="min-h-screen">
         {/* Dynamic Navbar with Integrated Hero */}
         <DynamicNavbar 
-          userEmail={user?.email || undefined}
           teacherProfile={profile}
           isCollapsed={isCollapsed}
           isAnimating={isAnimating}

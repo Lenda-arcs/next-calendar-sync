@@ -1,6 +1,5 @@
 'use client'
 
-import { LogoutButton } from '@/components/auth'
 import { LoadingNavLink, CompactLanguageSelector } from '@/components/ui'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { Home, User, X } from 'lucide-react'
@@ -10,7 +9,6 @@ import dummyLogo from '@/assets/dummy_logo.png'
 import { useTranslation } from '@/lib/i18n/context'
 
 interface DynamicNavbarProps {
-  userEmail?: string
   teacherProfile: PublicProfile
   isCollapsed: boolean
   isAnimating: boolean
@@ -23,7 +21,6 @@ interface DynamicNavbarProps {
 }
 
 export default function DynamicNavbar({ 
-  userEmail, 
   teacherProfile,
   isCollapsed,
   isAnimating,
@@ -34,7 +31,6 @@ export default function DynamicNavbar({
   currentUserId,
   teacherSlug
 }: DynamicNavbarProps) {
-  const isLoggedIn = !!userEmail
   const { t } = useTranslation()
 
   return (
@@ -54,7 +50,7 @@ export default function DynamicNavbar({
         `}>
           <div className="flex items-center space-x-4">
             <LoadingNavLink
-              href={isLoggedIn ? "/app" : "/"}
+              href={currentUserId ? "/app" : "/"}
               text={"avara."}
               avatarSrc={dummyLogo.src}
               avatarAlt="Logo"
@@ -64,20 +60,6 @@ export default function DynamicNavbar({
           </div>
           
           <div className="flex items-center space-x-4">
-            {/* Logged in user elements */}
-            {isLoggedIn && (
-              <>
-                <span className="text-xs text-foreground/60 hidden sm:block">
-                  {userEmail}
-                </span>
-                
-                <LogoutButton 
-                  className="h-10 px-3 py-2 text-sm font-medium min-w-[80px]"
-                  avatarSize="sm"
-                />
-              </>
-            )}
-
             {/* Language Selector */}
             <CompactLanguageSelector />
           </div>
