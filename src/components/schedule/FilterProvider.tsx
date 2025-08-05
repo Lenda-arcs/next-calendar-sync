@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useCallback, useMemo, useEffect } from 'react'
 import { format, addDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns'
-import { toZonedTime, fromZonedTime } from 'date-fns-tz'
+
 import { PublicEvent, Tag } from '@/lib/types'
 import { usePublicEvents, useAllTags } from '@/lib/hooks/useAppQuery'
 import { useSupabaseQuery } from '@/lib/hooks/useQueryWithSupabase'
@@ -76,7 +76,6 @@ interface FilterContextValue {
 interface FilterProviderProps {
   children: React.ReactNode
   userId: string
-  userTimezone?: string | null
 }
 
 const FilterContext = createContext<FilterContextValue | undefined>(undefined)
@@ -93,13 +92,12 @@ export function useScheduleFilters() {
 function filtersToServerOptions(
   filters: FilterState, 
   allTags: Tag[], 
-  stableDates: { today: Date; now: Date },
-  userTimezone?: string | null
+  stableDates: { today: Date; now: Date }
 ): ExtendedPublicEventsOptions {
   const options: ExtendedPublicEventsOptions = {}
 
   // Apply date filter (timezone-aware)
-  const dateRange = getDateRangeForFilter(filters.when, stableDates, userTimezone)
+  const dateRange = getDateRangeForFilter(filters.when, stableDates)
   if (dateRange) {
     options.startDate = dateRange.start.toISOString()
     options.endDate = dateRange.end.toISOString()
@@ -118,15 +116,13 @@ function filtersToServerOptions(
 // Date range calculation for time filters (timezone-aware)
 function getDateRangeForFilter(
   filter: WhenFilter, 
-  stableDates: { today: Date; now: Date }, 
-  userTimezone?: string | null
+  stableDates: { today: Date; now: Date }
 ) {
-  const timezone = userTimezone || 'UTC'
   const { today, now } = stableDates
   
-  // Convert browser times to user's timezone for accurate filtering
-  const userNow = userTimezone ? toZonedTime(now, timezone) : now
-  const userToday = userTimezone ? toZonedTime(today, timezone) : today
+  // Use browser timezone for filtering
+  const userNow = now
+  const userToday = today
   
   let start: Date, end: Date
   
@@ -167,14 +163,14 @@ function getDateRangeForFilter(
       return null
   }
   
-  // Convert back to UTC for database queries (events are stored in UTC)
+  // Return dates as-is (browser timezone)
   return {
-    start: userTimezone ? fromZonedTime(start, timezone) : start,
-    end: userTimezone ? fromZonedTime(end, timezone) : end
+    start,
+    end
   }
 }
 
-export function FilterProvider({ children, userId, userTimezone }: FilterProviderProps) {
+export function FilterProvider({ children, userId }: FilterProviderProps) {
   // State
   const [filters, setFilters] = useState<FilterState>({
     when: 'week', // Start with this week, auto-upgrade if needed
@@ -211,12 +207,12 @@ export function FilterProvider({ children, userId, userTimezone }: FilterProvide
   
   // Convert filters to server options
   const serverOptions = useMemo(() => {
-    const options = filtersToServerOptions(filters, allTags, stableDateRanges, userTimezone)
+    const options = filtersToServerOptions(filters, allTags, stableDateRanges)
     
     // Studio filtering enabled with server-side optimization
     
     return options
-  }, [filters, allTags, stableDateRanges, userTimezone])
+  }, [filters, allTags, stableDateRanges])
   
   // Fetch events with server-side filtering
   const { 

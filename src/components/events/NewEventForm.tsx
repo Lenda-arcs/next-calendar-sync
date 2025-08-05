@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Select } from '@/components/ui/select'
 import { TagLibraryItem } from '@/components/tags'
 import { Plus, Calendar, Clock, Trash2, Tag } from 'lucide-react'
+import { getBrowserTimezone } from '@/lib/utils'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -110,11 +111,11 @@ export function NewEventForm({
     description: '',
     start: {
       dateTime: '',
-      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+      timeZone: getBrowserTimezone()
     },
     end: {
       dateTime: '',
-      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+      timeZone: getBrowserTimezone()
     },
     location: '',
     custom_tags: [],
@@ -129,11 +130,11 @@ export function NewEventForm({
         description: editEvent.description || '',
         start: {
           dateTime: formatDateForInput(editEvent.start.dateTime || ''),
-          timeZone: editEvent.start.timeZone || Intl.DateTimeFormat().resolvedOptions().timeZone
+          timeZone: editEvent.start.timeZone || getBrowserTimezone()
         },
         end: {
           dateTime: formatDateForInput(editEvent.end.dateTime || ''),
-          timeZone: editEvent.end.timeZone || Intl.DateTimeFormat().resolvedOptions().timeZone
+          timeZone: editEvent.end.timeZone || getBrowserTimezone()
         },
         location: editEvent.location || '',
         custom_tags: editEvent.custom_tags || [],
@@ -146,11 +147,11 @@ export function NewEventForm({
         description: '',
         start: {
           dateTime: '',
-          timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+          timeZone: getBrowserTimezone()
         },
         end: {
           dateTime: '',
-          timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+          timeZone: getBrowserTimezone()
         },
         location: '',
         custom_tags: [],
@@ -260,11 +261,11 @@ export function NewEventForm({
           description: '',
           start: {
             dateTime: '',
-            timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+            timeZone: getBrowserTimezone()
           },
           end: {
             dateTime: '',
-            timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+            timeZone: getBrowserTimezone()
           },
           location: '',
           custom_tags: [],
@@ -393,7 +394,7 @@ export function NewEventForm({
             <Clock className="w-5 h-5" />
             Schedule
             <span className="text-sm font-normal text-muted-foreground ml-auto">
-              Timezone: {Intl.DateTimeFormat().resolvedOptions().timeZone}
+              Timezone: {getBrowserTimezone()}
             </span>
           </h3>
           

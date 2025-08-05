@@ -31,7 +31,7 @@ export default function TeacherScheduleLayout({
   } = useHeroState()
 
   return (
-    <FilterProvider userId={profile.id || ''} userTimezone={profile.timezone}>
+    <FilterProvider userId={profile.id || ''}>
       <div className="min-h-screen">
         {/* Dynamic Navbar with Integrated Hero */}
         <DynamicNavbar 

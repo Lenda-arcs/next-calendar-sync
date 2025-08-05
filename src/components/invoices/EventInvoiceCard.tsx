@@ -18,7 +18,7 @@ interface EventInvoiceCardProps {
   variant?: 'default' | 'compact'
   onSetupSubstitute?: (eventId: string) => void
   onEditEvent?: (eventId: string) => void
-  userTimezone?: string
+
 }
 
 export function EventInvoiceCard({
@@ -28,16 +28,15 @@ export function EventInvoiceCard({
   showCheckbox = true,
   variant = 'default',
   onSetupSubstitute,
-  onEditEvent,
-  userTimezone
+  onEditEvent
 }: EventInvoiceCardProps) {
   // ✅ UPDATED: Use timezone-aware formatting functions
   const formatDate = (dateString: string | null) => {
-    return formatInvoiceDate(dateString, userTimezone)
+    return formatInvoiceDate(dateString)
   }
 
   const formatTime = (dateString: string | null) => {
-    return formatInvoiceTime(dateString, userTimezone)
+    return formatInvoiceTime(dateString)
   }
 
   // Memoized payout calculation using enhanced algorithm

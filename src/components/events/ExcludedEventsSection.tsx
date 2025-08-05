@@ -8,7 +8,7 @@ import { UnifiedDialog } from '@/components/ui/unified-dialog'
 import { Event } from '@/lib/types'
 import { useSupabaseMutation } from '@/lib/hooks/useQueryWithSupabase'
 import { toggleEventExclusion } from '@/lib/invoice-utils'
-import { useUserTimezone } from '@/lib/hooks/useUserTimezone'
+
 import { RefreshCw, Eye, EyeOff, Calendar, RotateCcw } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -16,20 +16,17 @@ interface ExcludedEventsSectionProps {
   excludedEvents: Event[]
   isLoading: boolean
   onRefresh: () => void
-  userId?: string
 }
 
 export function ExcludedEventsSection({ 
   excludedEvents, 
   isLoading, 
-  onRefresh,
-  userId
+  onRefresh
 }: ExcludedEventsSectionProps) {
   const [showEventsDialog, setShowEventsDialog] = useState(false)
   const [selectedEvents, setSelectedEvents] = useState<string[]>([])
   
-  // ✅ NEW: Get user's timezone for consistent time display
-  const userTimezone = useUserTimezone(userId || '')
+
   
   const batchIncludeMutation = useSupabaseMutation(
     async (supabase, eventIds: string[]) => {
@@ -183,7 +180,7 @@ export function ExcludedEventsSection({
                 onToggleSelect={handleToggleEvent}
                 showCheckbox={true}
                 variant="compact"
-                userTimezone={userTimezone}
+
               />
               {event.exclude_from_studio_matching && (
                 <div className="px-4 pb-3 flex items-center gap-2 text-xs text-orange-600">

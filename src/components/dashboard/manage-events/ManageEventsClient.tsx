@@ -27,6 +27,7 @@ import {
   useSyncAllCalendarFeeds
 } from '@/lib/hooks/useAppQuery'
 import { Event, Tag } from '@/lib/types'
+import { getBrowserTimezone } from '@/lib/utils'
 import { convertToEventTag, EventTag } from '@/lib/event-types'
 import { convertEventToCardProps } from '@/lib/event-utils'
 import { VisibilityFilter, TimeFilter } from '@/components/events/EventsControlPanel'
@@ -197,11 +198,11 @@ export function ManageEventsClient({ userId }: ManageEventsClientProps) {
       description: event.description || '',
       start: {
         dateTime: event.start_time || '',
-        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+        timeZone: getBrowserTimezone()
       },
       end: {
         dateTime: event.end_time || '',
-        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+        timeZone: getBrowserTimezone()
       },
       location: event.location || '',
       custom_tags: event.custom_tags || [],

@@ -19,7 +19,7 @@ interface InvoiceCardProps {
   onEdit?: (invoice: InvoiceWithDetails) => void
   onViewPDF?: (pdfUrl: string) => void
   onDelete?: (invoiceId: string) => void
-  userTimezone?: string
+
 }
 
 export const InvoiceCard: React.FC<InvoiceCardProps> = ({ 
@@ -29,8 +29,7 @@ export const InvoiceCard: React.FC<InvoiceCardProps> = ({
   showCheckbox = false,
   onEdit, 
   onViewPDF, 
-  onDelete,
-  userTimezone
+  onDelete
 }) => {
   const { t } = useTranslation()
   
@@ -88,7 +87,7 @@ export const InvoiceCard: React.FC<InvoiceCardProps> = ({
         {invoice.studio?.entity_name || 'Unknown Studio'}
       </p>
       <div className="flex flex-col sm:flex-row sm:items-center gap-2 text-xs text-gray-500">
-        <span>Period: {formatInvoiceDate(invoice.period_start, userTimezone)} - {formatInvoiceDate(invoice.period_end, userTimezone)}</span>
+        <span>Period: {formatInvoiceDate(invoice.period_start)} - {formatInvoiceDate(invoice.period_end)}</span>
         {invoice.event_count && (
           <Badge variant="outline" className="text-xs w-fit">
             {invoice.event_count} events

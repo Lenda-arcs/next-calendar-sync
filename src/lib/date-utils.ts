@@ -1,4 +1,5 @@
 import { formatInTimeZone } from "date-fns-tz";
+import { getBrowserTimezone } from "./utils";
 
 /**
  * Format date and time from ISO strings to user-friendly format
@@ -14,7 +15,7 @@ export function formatDateTime(
   if (!startTimeISO) return "No date";
 
   // Use browser's timezone as fallback
-  const userTimezone = timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const userTimezone = timezone || getBrowserTimezone();
 
   try {
     const startDate = new Date(startTimeISO);
@@ -58,7 +59,7 @@ export function formatEventDateTime(
   if (!startTimeISO) return "No date";
 
   // Use browser's timezone as fallback
-  const userTimezone = timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const userTimezone = timezone || getBrowserTimezone();
 
   try {
     const startDate = new Date(startTimeISO);
@@ -115,7 +116,7 @@ export function formatInvoiceDateTime(
   }
 
   // Use browser's timezone as fallback
-  const userTimezone = timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const userTimezone = timezone || getBrowserTimezone();
 
   try {
     const startDate = new Date(startTimeISO);
@@ -179,7 +180,7 @@ export function formatInvoiceDate(
 ): string {
   if (!dateString) return "";
   
-  const userTimezone = timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const userTimezone = timezone || getBrowserTimezone();
   
   try {
     const date = new Date(dateString);
@@ -206,7 +207,7 @@ export function formatInvoiceTime(
 ): string {
   if (!dateString) return "";
   
-  const userTimezone = timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const userTimezone = timezone || getBrowserTimezone();
   
   try {
     const date = new Date(dateString);

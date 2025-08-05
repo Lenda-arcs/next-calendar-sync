@@ -5,6 +5,18 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+/**
+ * Get the browser's timezone or a fallback
+ * This is a safe way to get the user's timezone that works in all environments
+ */
+export function getBrowserTimezone(): string {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone
+  } catch {
+    return 'UTC'
+  }
+}
+
 // URL validation utilities that match database constraints
 export const urlValidation = {
   /**

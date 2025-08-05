@@ -19,7 +19,7 @@ import {
   useUpdateInvoiceStatus,
   useUserInvoices
 } from '@/lib/hooks/useAppQuery'
-import { useUserTimezone } from '@/lib/hooks/useUserTimezone'
+
 import {EventWithStudio, InvoiceWithDetails} from '@/lib/invoice-utils'
 import {toast} from 'sonner'
 import {FileText, Loader2, Receipt} from 'lucide-react'
@@ -37,8 +37,7 @@ const VALID_TABS = ['uninvoiced', 'invoices'] as const
 export function InvoiceManagement({ userId }: InvoiceManagementProps) {
   const { t } = useTranslation()
   
-  // ✅ NEW: Get user's timezone for consistent time display
-  const userTimezone = useUserTimezone(userId)
+
   
   const [invoiceModalOpen, setInvoiceModalOpen] = useState(false)
   const [selectedStudioId, setSelectedStudioId] = useState<string>('')
@@ -239,7 +238,7 @@ export function InvoiceManagement({ userId }: InvoiceManagementProps) {
                   onStatusChange={handleStatusChange}
                   onViewPDF={handleViewPDF}
                   onDelete={handleDeleteInvoice}
-                  userTimezone={userTimezone}
+
                 />
               )}
             </DataLoader>

@@ -12,6 +12,7 @@ import { Container } from '@/components/layout/container'
 import { InfoSection, InfoItem } from '@/components/ui/info-section'
 import { CheckCircle2, Calendar, ExternalLink, Loader2 } from 'lucide-react'
 import { useTranslation } from '@/lib/i18n/context'
+import { getBrowserTimezone } from '@/lib/utils'
 
 interface YogaCalendarOnboardingProps {
   success?: string
@@ -50,7 +51,7 @@ export function YogaCalendarOnboarding({ error, message, onCalendarCreated }: Yo
     try {
       // ✨ NEW: Use unified mutation for calendar creation
       const result = await createYogaCalendarMutation.mutateAsync({
-        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        timeZone: getBrowserTimezone(),
         syncApproach: 'yoga_only'
       })
 
