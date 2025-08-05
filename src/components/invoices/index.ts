@@ -1,5 +1,6 @@
 export { InvoiceCard } from './InvoiceCard';
 export { InvoiceCreationModal } from './InvoiceCreationModal';
+export { InvoiceSuccessModal } from './InvoiceSuccessModal';
 export { InvoiceManagement } from './InvoiceManagement';
 export { InvoiceSettings } from './InvoiceSettings';
 export { BillingConfigurationModal } from './BillingConfigurationModal';

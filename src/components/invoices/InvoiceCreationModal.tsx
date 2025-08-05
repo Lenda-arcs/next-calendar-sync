@@ -20,10 +20,12 @@ import {
   EventWithStudio,
   InvoiceWithDetails
 } from '@/lib/invoice-utils'
+import { copyInvoiceToClipboard } from '@/lib/invoice-clipboard-utils'
 import { InvoiceInsert } from '@/lib/types'
 import { toast } from 'sonner'
-import { Loader2, CheckCircle, FileText } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import { useTranslation } from '@/lib/i18n/context'
+import { InvoiceSuccessModal } from './InvoiceSuccessModal'
 
 interface InvoiceCreationModalProps {
   isOpen: boolean
@@ -73,15 +75,14 @@ export function InvoiceCreationModal({
     existingInvoice
   })
 
-  // State for PDF generation
-  const [createdInvoiceId, setCreatedInvoiceId] = React.useState<string | null>(null)
+  // State for PDF generation and created invoice
+  const [createdInvoice, setCreatedInvoice] = React.useState<InvoiceWithDetails | null>(null)
   const [isGeneratingPDF, setIsGeneratingPDF] = React.useState(false)
-  const [selectedLanguage, setSelectedLanguage] = React.useState<'en' | 'de' | 'es'>('en')
 
-  // Reset PDF state when modal opens/closes
+  // Reset state when modal opens/closes
   React.useEffect(() => {
     if (!isOpen) {
-      setCreatedInvoiceId(null)
+      setCreatedInvoice(null)
       setIsGeneratingPDF(false)
     }
   }, [isOpen])
@@ -152,8 +153,24 @@ export function InvoiceCreationModal({
         }
       }
       
-      // Store the invoice ID for PDF generation
-      setCreatedInvoiceId(invoice.id)
+      // Ensure we have a studio before constructing the invoice object
+      if (!studio) {
+        console.error('No studio found for invoice')
+        toast.error('Error creating invoice', {
+          description: 'No studio information found. Please try again.',
+          duration: 4000
+        })
+        return
+      }
+
+      // Construct the full invoice object with related data for the success modal
+      const fullInvoice: InvoiceWithDetails = {
+        ...invoice,
+        studio: studio,
+        events: selectedEvents,
+        event_count: selectedEvents.length
+      }
+      setCreatedInvoice(fullInvoice)
       setShowSuccess(true)
       }
     }
@@ -200,30 +217,53 @@ export function InvoiceCreationModal({
     }
   }
 
-  const handleGeneratePDF = async () => {
-    if (!createdInvoiceId) return
+  const handleGeneratePDF = async (language: 'en' | 'de' | 'es') => {
+    if (!createdInvoice) return
     
     setIsGeneratingPDF(true)
     try {
-      const { pdf_url } = await generateInvoicePDF(createdInvoiceId, selectedLanguage)
+      const { pdf_url } = await generateInvoicePDF(createdInvoice.id, language)
       
       // Auto-open PDF in new tab
       window.open(pdf_url, '_blank')
       
-      toast('PDF Generated Successfully!', {
-        description: 'Your invoice PDF has been created and opened in a new tab.',
+      toast.success(t('invoices.creation.pdfGenerated'), {
+        description: t('invoices.creation.pdfGeneratedDesc'),
         duration: 4000
       })
       
+      // Close modal and refetch data after successful PDF generation
+      onClose()
+      if (onSuccess) onSuccess()
+      
     } catch (error) {
       console.error('Failed to generate PDF:', error)
-      toast.error('PDF Generation Failed', {
-        description: 'Unable to generate PDF. Please try again.',
+      toast.error(t('invoices.creation.pdfFailed'), {
+        description: t('invoices.creation.pdfFailedDesc'),
         duration: 6000
       })
     } finally {
       setIsGeneratingPDF(false)
     }
+  }
+
+  const handleCopyToClipboard = async () => {
+    if (!createdInvoice) return
+    
+    try {
+      const success = await copyInvoiceToClipboard(createdInvoice)
+      if (!success) {
+        throw new Error('Copy failed')
+      }
+    } catch (error) {
+      console.error('Failed to copy to clipboard:', error)
+      throw error
+    }
+  }
+
+  const handleViewInvoices = () => {
+    onClose()
+    if (onSuccess) onSuccess()
   }
 
   if (!isOpen) return null
@@ -260,75 +300,16 @@ export function InvoiceCreationModal({
       size="lg"
       footer={footerContent}
     >
-        {showSuccess ? (
-          <div className="text-center py-8">
-            <div className="mb-6">
-              <div className="mx-auto flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
-                <CheckCircle className="w-8 h-8 text-green-600" />
-              </div>
-              <h3 className="text-2xl font-bold text-green-800 mb-2">
-                {mode === 'edit' ? t('invoices.creation.successUpdatedTitle') : t('invoices.creation.successTitle')}
-              </h3>
-              <p className="text-lg text-gray-700 mb-4">
-                {t('invoices.creation.successMessage', {
-                  invoiceNumber,
-                  mode: mode === 'edit' ? t('invoices.creation.editTitle').toLowerCase() : t('invoices.creation.createTitle').toLowerCase(),
-                  total: totalAmount.toFixed(2)
-                })}
-              </p>
-            </div>
-
-            <div className="space-y-4">
-              {/* Language Selection */}
-              <div className="flex justify-center">
-                <div className="flex items-center gap-2">
-                  <Label htmlFor="pdf-language" className="text-sm font-medium">
-                    PDF Language:
-                  </Label>
-                  <select
-                    id="pdf-language"
-                    value={selectedLanguage}
-                    onChange={(e) => setSelectedLanguage(e.target.value as 'en' | 'de' | 'es')}
-                    className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="en">English</option>
-                    <option value="de">Deutsch</option>
-                    <option value="es">Español</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex justify-center space-x-4">
-                <Button
-                  variant="outline"
-                  onClick={handleGeneratePDF}
-                  disabled={isGeneratingPDF || !createdInvoiceId}
-                  className="flex items-center gap-2"
-                >
-                  {isGeneratingPDF ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      {t('invoices.creation.generating')}
-                    </>
-                  ) : (
-                    <>
-                      <FileText className="w-4 h-4" />
-                      {t('invoices.creation.generatePDF')}
-                    </>
-                  )}
-                </Button>
-                <Button 
-                  onClick={() => {
-                    onClose()
-                    if (onSuccess) onSuccess()
-                  }}
-                >
-                  View All Invoices
-                </Button>
-              </div>
-            </div>
-          </div>
+        {showSuccess && createdInvoice ? (
+          <InvoiceSuccessModal
+            invoice={createdInvoice}
+            mode={mode || 'create'}
+            onGeneratePDF={handleGeneratePDF}
+            onCopyToClipboard={handleCopyToClipboard}
+            onViewInvoices={handleViewInvoices}
+            onClose={onClose}
+            isGeneratingPDF={isGeneratingPDF}
+          />
         ) : (
           <div className="space-y-6">
             <Card>
@@ -407,4 +388,4 @@ export function InvoiceCreationModal({
         )}
     </UnifiedDialog>
   )
-} 
+}  

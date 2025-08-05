@@ -571,6 +571,30 @@ const translations = {
       pdfFailedDesc: 'Unable to generate PDF. Please try again.'
     },
     
+    success: {
+      title: 'Invoice Created Successfully!',
+      updatedTitle: 'Invoice Updated Successfully!',
+      subtitle: 'Your invoice is ready for the next steps',
+      invoiceSummary: 'Invoice Summary',
+      invoiceNumber: 'Invoice Number',
+      totalAmount: 'Total Amount',
+      eventCount: 'Events',
+      studio: 'Studio',
+      nextSteps: 'Next Steps',
+      generatePDF: 'Generate PDF',
+      copyDetails: 'Copy to Clipboard',
+      viewAllInvoices: 'View All Invoices',
+      generating: 'Generating...',
+      copying: 'Copying...',
+      copyToClipboard: 'Copy to Clipboard',
+      viewInvoices: 'View Invoices',
+      close: 'Close',
+      copySuccess: 'Invoice details copied to clipboard!',
+      copySuccessDesc: 'You can now paste the data into Excel, Google Sheets, or any other application.',
+      copyError: 'Failed to copy to clipboard',
+      copyErrorDesc: 'Please try again or manually copy the invoice details.'
+    },
+    
     card: {
       unknownStudio: 'Unknown Studio',
       events: 'events',

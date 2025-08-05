@@ -573,6 +573,30 @@ const translations: TranslationStructure = {
       pdfFailedDesc: 'No se pudo generar el PDF. Por favor intente de nuevo.'
     },
     
+    success: {
+      title: '¡Factura Creada Exitosamente!',
+      updatedTitle: '¡Factura Actualizada Exitosamente!',
+      subtitle: 'Su factura está lista para los siguientes pasos',
+      invoiceSummary: 'Resumen de Factura',
+      invoiceNumber: 'Número de Factura',
+      totalAmount: 'Monto Total',
+      eventCount: 'Eventos',
+      studio: 'Estudio',
+      nextSteps: 'Próximos Pasos',
+      generatePDF: 'Generar PDF',
+      copyDetails: 'Copiar al Portapapeles',
+      viewAllInvoices: 'Ver Todas las Facturas',
+      generating: 'Generando...',
+      copying: 'Copiando...',
+      copyToClipboard: 'Copiar al Portapapeles',
+      viewInvoices: 'Ver Facturas',
+      close: 'Cerrar',
+      copySuccess: '¡Detalles de factura copiados al portapapeles!',
+      copySuccessDesc: 'Ahora puede pegar los datos en Excel, Google Sheets u otras aplicaciones.',
+      copyError: 'Error al copiar al portapapeles',
+      copyErrorDesc: 'Por favor intente de nuevo o copie manualmente los detalles de la factura.'
+    },
+    
     card: {
       unknownStudio: 'Estudio Desconocido',
       events: 'eventos',

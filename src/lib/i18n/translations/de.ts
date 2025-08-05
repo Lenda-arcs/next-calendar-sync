@@ -573,6 +573,30 @@ const translations: TranslationStructure = {
       pdfFailedDesc: 'PDF konnte nicht generiert werden. Bitte versuchen Sie es erneut.'
     },
     
+    success: {
+      title: 'Rechnung erfolgreich erstellt!',
+      updatedTitle: 'Rechnung erfolgreich aktualisiert!',
+      subtitle: 'Ihre Rechnung ist bereit für die nächsten Schritte',
+      invoiceSummary: 'Rechnungsübersicht',
+      invoiceNumber: 'Rechnungsnummer',
+      totalAmount: 'Gesamtbetrag',
+      eventCount: 'Veranstaltungen',
+      studio: 'Studio',
+      nextSteps: 'Nächste Schritte',
+      generatePDF: 'PDF generieren',
+      copyDetails: 'In Zwischenablage kopieren',
+      viewAllInvoices: 'Alle Rechnungen anzeigen',
+      generating: 'Generiere...',
+      copying: 'Kopiere...',
+      copyToClipboard: 'In Zwischenablage kopieren',
+      viewInvoices: 'Rechnungen anzeigen',
+      close: 'Schließen',
+      copySuccess: 'Rechnungsdetails in Zwischenablage kopiert!',
+      copySuccessDesc: 'Sie können die Daten jetzt in Excel, Google Sheets oder andere Anwendungen einfügen.',
+      copyError: 'Kopieren in Zwischenablage fehlgeschlagen',
+      copyErrorDesc: 'Bitte versuchen Sie es erneut oder kopieren Sie die Rechnungsdetails manuell.'
+    },
+    
     card: {
       unknownStudio: 'Unbekanntes Studio',
       events: 'Veranstaltungen',
