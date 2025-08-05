@@ -188,6 +188,15 @@ export async function syncOAuthCalendar(options: OAuthCalendarSyncOptions) {
       `${event.recurringEventId}-${startTime}` : 
       `${event.id}-${startTime}`;
     
+    // Check for existing event to preserve student counts
+    const { data: existingEvent } = await supabase
+      .from("events")
+      .select("students_studio, students_online, visibility, image_url, custom_tags")
+      .eq("user_id", userId)
+      .eq("uid", event.id)
+      .eq("recurrence_id", recurrenceId)
+      .maybeSingle();
+    
     enrichedEvents.push({
       uid: event.id,
       recurrence_id: recurrenceId,
@@ -199,14 +208,14 @@ export async function syncOAuthCalendar(options: OAuthCalendarSyncOptions) {
       feed_id: feedId,
       user_id: userId,
       updated_at: new Date().toISOString(),
-      visibility: "public",
-      image_url: null,
-      custom_tags: [],
+      visibility: existingEvent?.visibility || "public",
+      image_url: existingEvent?.image_url || null,
+      custom_tags: existingEvent?.custom_tags || [],
       tags: eventTags || [],
       status: event.status?.toLowerCase() || "confirmed",
       studio_id: studioId,
-      students_studio: studentsStudio,
-      students_online: studentsOnline
+      students_studio: existingEvent?.students_studio ?? studentsStudio,
+      students_online: existingEvent?.students_online ?? studentsOnline
     });
   }
   

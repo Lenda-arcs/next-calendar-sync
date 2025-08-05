@@ -11,4 +11,3 @@ export function extractStudentCounts(description, isHistorical = false) {
     studentsOnline: matchOnlineCount ? parseInt(matchOnlineCount[1], 10) : null
   };
 }
-// matchStudioId moved to _shared/matching.ts

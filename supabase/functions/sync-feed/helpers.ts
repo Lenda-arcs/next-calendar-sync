@@ -1,50 +1,4 @@
-// getCorsHeaders moved to _shared/cors.ts
-function generateRecurrenceInstances(entry, windowDays = 90, startFromDate) {
-  if (!entry.rrule) return [
-    {
-      ...entry
-    }
-  ];
-  const exdates = entry.exdate ? Object.values(entry.exdate).map((d)=>new Date(d)) : [];
-  const nowUTC = new Date();
-  
-  // Use provided start date or calculate based on window
-  // For historical mode, we want to look back from now
-  // For default mode, we want to start from the earlier of now or event start
-  let startUTC;
-  if (startFromDate) {
-    startUTC = new Date(startFromDate);
-  } else {
-    // Look back by the window days to catch historical instances
-    const windowStart = new Date(nowUTC.getTime() - windowDays * 24 * 60 * 60 * 1000);
-    startUTC = windowStart;
-  }
-  
-  const untilUTC = new Date(nowUTC.getTime() + windowDays * 24 * 60 * 60 * 1000);
-  return entry.rrule.between(startUTC, untilUTC, true).filter((date)=>!exdates.find((ex)=>date.getTime() === new Date(ex).getTime())).map((date)=>{
-    const duration = entry.end.getTime() - entry.start.getTime();
-    // Create new date objects and preserve timezone info
-    const newStart = new Date(date.getTime());
-    const newEnd = new Date(date.getTime() + duration);
-    // Preserve timezone information from the original event
-    if (entry.start?.tz) {
-      newStart.tz = entry.start.tz;
-    }
-    if (entry.end?.tz) {
-      newEnd.tz = entry.end.tz;
-    }
-    return {
-      ...entry,
-      start: newStart,
-      end: newEnd,
-      recurrence_id: date.toISOString()
-    };
-  });
-}
-function extractCalendarName(icsText) {
-  const match = icsText.match(/^X-WR-CALNAME:(.+)$/m);
-  return match ? match[1].trim() : null;
-}
+// Helper functions for OAuth calendar sync
 function ensureUTCString(dateInput) {
   if (!dateInput) return new Date().toISOString();
   // If it's a Date object, convert to UTC
@@ -117,4 +71,4 @@ async function deleteStaleEvents(supabase, enrichedEvents, existingEvents) {
     await supabase.from("events").delete().in("id", staleIds); // or: update visibility = 'hidden'
   }
 }
-export { generateRecurrenceInstances, extractCalendarName, ensureUTCString, fetchExistingEvents, deleteStaleEvents };
+export { ensureUTCString, fetchExistingEvents, deleteStaleEvents };
