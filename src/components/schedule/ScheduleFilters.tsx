@@ -16,6 +16,7 @@ export function ScheduleFilters() {
   const {
     filters,
     hasActiveFilters,
+    availableStudioInfo,
   } = useScheduleFilters()
 
   const { t } = useTranslation()
@@ -67,6 +68,35 @@ export function ScheduleFilters() {
     return filters.studios.length + filters.yogaStyles.length + (filters.when !== 'next3months' ? 1 : 0)
   }
 
+  const getActiveFiltersSummary = () => {
+    const activeFilters = []
+    
+    // When filter - always show if not default
+    if (filters.when !== 'next3months') {
+      const whenOption = whenOptions.find(opt => opt.key === filters.when)
+      if (whenOption) {
+        activeFilters.push(whenOption.label)
+      }
+    }
+    
+    // Studio filters
+    if (filters.studios.length > 0 && availableStudioInfo) {
+      const studioNames = filters.studios
+        .map(studioId => availableStudioInfo.find(s => s.id === studioId)?.name)
+        .filter(Boolean)
+      if (studioNames.length > 0) {
+        activeFilters.push(studioNames.join(', '))
+      }
+    }
+    
+    // Yoga style filters
+    if (filters.yogaStyles.length > 0) {
+      activeFilters.push(filters.yogaStyles.join(', '))
+    }
+    
+    return activeFilters
+  }
+
   const handleFABClick = () => {
     // Prevent auto-close when opening via FAB
     setPreventAutoClose(true)
@@ -95,14 +125,11 @@ export function ScheduleFilters() {
           <Button
             size="lg"
             onClick={handleFABClick}
-            className="h-14 px-6 rounded-full shadow-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-200 ease-in-out transform hover:scale-105"
+            className="h-14 w-14 rounded-full shadow-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-200 ease-in-out transform hover:scale-105"
           >
-            <Filter className="h-5 w-5 mr-2" />
-            <span className="text-sm font-medium">
-              {t('common.actions.filter')}
-            </span>
+            <Filter className="h-5 w-5" />
             {hasActiveFilters && (
-              <Badge variant="secondary" className="ml-2 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs">
+              <Badge variant="secondary" className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs">
                 {getActiveFiltersCount()}
               </Badge>
             )}
@@ -131,40 +158,47 @@ export function ScheduleFilters() {
           </Card>
         </div>
 
-        {/* Mobile: Collapsible accordion */}
+        {/* Mobile: Collapsible accordion with active filters preview */}
         <div className="md:hidden">
-          <Accordion 
-            type="single" 
-            collapsible 
-            value={accordionValue} 
-            onValueChange={setAccordionValue}
-          >
-            <AccordionItem value="filters">
-              <AccordionTrigger className="text-base font-medium px-1">
-                <div className="flex items-center gap-2">
-                  <Filter className="h-4 w-4" />
-                  <span>{t('common.actions.filter')}</span>
-                  {hasActiveFilters && (
-                    <Badge variant="secondary" className="h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs">
-                      {getActiveFiltersCount()}
-                    </Badge>
+          <Card className="p-3">
+            <Accordion 
+              type="single" 
+              collapsible 
+              value={accordionValue} 
+              onValueChange={setAccordionValue}
+            >
+              <AccordionItem value="filters" className="border-none">
+                <AccordionTrigger className="text-base font-medium px-3 py-0 hover:no-underline">
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                    <Filter className="h-4 w-4 flex-shrink-0" />
+                    <span className="flex-shrink-0">{t('common.actions.filter')}</span>
+                    {hasActiveFilters && (
+                      <Badge variant="secondary" className="h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs flex-shrink-0">
+                        {getActiveFiltersCount()}
+                      </Badge>
+                    )}
+                  </div>
+                  {/* Show active filters summary when collapsed */}
+                  {accordionValue !== 'filters' && hasActiveFilters && (
+                    <div className="flex-1 text-right min-w-0 ml-2">
+                      <div className="text-xs text-muted-foreground truncate">
+                        {getActiveFiltersSummary().slice(0, 2).join(' • ')}
+                        {getActiveFiltersSummary().length > 2 && '...'}
+                      </div>
+                    </div>
                   )}
-                </div>
-              </AccordionTrigger>
-              <AccordionContent>
-                <Card className="mt-4">
-                  <div className="p-4 space-y-4">
+                </AccordionTrigger>
+                <AccordionContent className="pt-3">
+                  <div className="space-y-3">
                     {/* Mobile Filters */}
                     <MobileWhenFilter options={whenOptions} />
                     <MobileStudioFilter />
                     <MobileYogaStyleFilter />
-                    
-                    {/* Clear All Button removed - now only shown outside filter container */}
                   </div>
-                </Card>
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          </Card>
         </div>
       </div>
     </>
@@ -321,9 +355,7 @@ function MobileStudioFilter() {
 
   const studioOptions = availableStudioInfo.map(studio => ({
     value: studio.id,
-    label: studio.address 
-      ? `${studio.name} • ${studio.address}` 
-      : studio.name,
+    label: studio.name, // Match desktop: show only studio name, not full location
     count: studio.eventCount
   }))
 

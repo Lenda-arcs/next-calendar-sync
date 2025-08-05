@@ -7,8 +7,27 @@ import {useScheduleFilters} from '@/components'
 import {useTranslation} from '@/lib/i18n/context'
 
 export function ScheduleHeader() {
-  const { filteredEvents, totalEvents, hasActiveFilters, clearAllFilters, isLoading } = useScheduleFilters()
+  const { filteredEvents, hasActiveFilters, clearAllFilters, isLoading, filters } = useScheduleFilters()
   const { t } = useTranslation()
+
+  // Get the current time filter label
+  const getTimeFilterLabel = () => {
+    switch (filters.when) {
+      case 'today':
+        return t('pages.publicSchedule.schedule.filters.when.options.today')
+      case 'week':
+        return t('pages.publicSchedule.schedule.filters.when.options.week')
+      case 'nextweek':
+        return 'Next Week'
+      case 'month':
+        return t('pages.publicSchedule.schedule.filters.when.options.month')
+      case 'nextmonth':
+        return 'Next Month'
+      case 'next3months':
+      default:
+        return 'Next 3 Months'
+    }
+  }
 
   return (
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -20,15 +39,9 @@ export function ScheduleHeader() {
           {isLoading ? (
             <span className="inline-block h-4 w-32 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></span>
           ) : hasActiveFilters ? (
-            t('pages.publicSchedule.schedule.header.classesCountFiltered', { 
-              filtered: filteredEvents.length.toString(), 
-              total: totalEvents.toString() 
-            })
+            `${filteredEvents.length} classes in ${getTimeFilterLabel().toLowerCase()} (filtered)`
           ) : (
-            t('pages.publicSchedule.schedule.header.classesCount', { 
-              filtered: filteredEvents.length.toString(), 
-              total: totalEvents.toString() 
-            })
+            `${filteredEvents.length} classes in ${getTimeFilterLabel().toLowerCase()}`
           )}
         </p>
       </div>
