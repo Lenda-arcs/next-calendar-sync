@@ -1,13 +1,11 @@
 import { createServerClient } from '@/lib/supabase-server'
-import { LogoutButton } from '@/components/auth'
 import { MobileNavMenu, CompactLanguageSelector } from '@/components/ui'
 import { PATHS, getLocalizedPath } from '@/lib/paths'
 import { 
   Calendar, 
   Tags, 
   Receipt,
-  Building,
-  Shield
+  Building
 } from 'lucide-react'
 import { ActiveProfileLink } from '@/components/navigation/ActiveProfileLink'
 import { ActiveNavLinks } from '@/components/navigation/ActiveNavLinks'
@@ -56,7 +54,6 @@ export default async function LocalizedAppLayout({ children, params }: AppLayout
   // Admin-only navigation items (now with localized paths)
   const adminNavigation = [
     { name: studiosLabel, href: getLocalizedPath(PATHS.APP.STUDIOS, locale), icon: Building, iconName: 'Building' },
-    { name: 'Admin Dashboard', href: getLocalizedPath(PATHS.APP.ADMIN, locale), icon: Shield, iconName: 'Shield' },
   ]
 
   // ✨ Single user profile fetch - get all needed data at once
@@ -120,17 +117,12 @@ export default async function LocalizedAppLayout({ children, params }: AppLayout
                 {/* Language Selector */}
                 <CompactLanguageSelector />
 
-
-                
                 {/* Profile Link with Avatar */}
                 <ActiveProfileLink 
                   profileImage={profileImage}
                   userProfile={userProfile}
                   user={user}
                 />
-                
-                <LogoutButton className="sm:hidden" />
-                <LogoutButton className="hidden sm:flex" showTextOnMobile={true} />
               </div>
             </div>
           </div>

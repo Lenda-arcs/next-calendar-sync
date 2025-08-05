@@ -294,12 +294,32 @@ export function ProfileForm({ user, onUpdate }: ProfileFormProps) {
   return (
     <div className="max-w-4xl mx-auto space-y-8">
               <Form onSubmit={handleSubmit} loading={loading || updateUserMutation.isPending}>
-        {/* Basic Information */}
+        {/* Account Information */}
         <Card variant="glass">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 font-serif">
               <UserIcon className="h-5 w-5" />
-              Basic Information
+              Account Information
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Email Field */}
+            <FormField
+              label="Email"
+              type="email"
+              value={user.email ?? ''}
+              disabled
+              leftIcon={<Mail className="h-4 w-4" />}
+            />
+          </CardContent>
+        </Card>
+
+        {/* Public Profile */}
+        <Card variant="glass">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 font-serif">
+              <Globe className="h-5 w-5" />
+              Public Profile
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -323,39 +343,18 @@ export function ProfileForm({ user, onUpdate }: ProfileFormProps) {
               />
             </div>
 
-            {/* Name and Email Fields */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <FormField
-                label="Full Name"
-                type="text"
-                placeholder="Your full name"
-                value={values.name as string}
-                onChange={(e) => setValue('name', e.target.value)}
-                onBlur={() => validateFieldOnBlur('name')}
-                error={errors.name}
-                required
-              />
+            {/* Name Field */}
+            <FormField
+              label="Name"
+              type="text"
+              placeholder="Your name"
+              value={values.name as string}
+              onChange={(e) => setValue('name', e.target.value)}
+              onBlur={() => validateFieldOnBlur('name')}
+              error={errors.name}
+              required
+            />
 
-              <FormField
-                label="Email"
-                type="email"
-                value={user.email ?? ''}
-                disabled
-                leftIcon={<Mail className="h-4 w-4" />}
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Public Profile */}
-        <Card variant="glass">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 font-serif">
-              <Globe className="h-5 w-5" />
-              Public Profile
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
             <TextArea
               label="Bio"
               value={values.bio as string}

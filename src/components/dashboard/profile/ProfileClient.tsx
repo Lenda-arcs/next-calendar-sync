@@ -2,6 +2,7 @@
 
 import React from 'react'
 import ProfileContent from './ProfileContent'
+import { ProfileSkeleton } from './ProfileSkeleton'
 import DataLoader from '@/components/ui/data-loader'
 import { useUserProfile } from '@/lib/hooks/useAppQuery'
 import { User } from '@/lib/types'
@@ -50,16 +51,7 @@ export default function ProfileClient({ userId }: ProfileClientProps) {
       data={user}
       loading={isLoading}
       error={errorMessage}
-      skeleton={() => (
-          /*TODO: Create separte comopoentn   skeleton.tsx*/
-        <div className="space-y-8 animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-1/3"></div>
-          <div className="space-y-4">
-            <div className="h-32 bg-gray-200 rounded"></div>
-            <div className="h-10 bg-gray-200 rounded w-1/4"></div>
-          </div>
-        </div>
-      )}
+      skeleton={() => <ProfileSkeleton />}
     >
       {(user) => <ProfileContent user={user} />}
     </DataLoader>
