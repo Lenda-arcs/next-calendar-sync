@@ -46,7 +46,7 @@ export const InteractiveEventCard = React.memo<InteractiveEventCardProps>(
       <div className={`relative group ${className || ''}`}>
         {/* Edit Button */}
         {onEdit && (
-          <div className="absolute top-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+         <div className="absolute top-3 right-3 z-10 opacity-70 group-hover:opacity-100 transition-opacity md:opacity-20">
             <Button
               size="sm"
               variant="outline"

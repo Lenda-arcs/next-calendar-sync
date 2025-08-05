@@ -118,32 +118,6 @@ const getDateHeader = (date: Date, currentDate?: Date, t?: (key: string) => stri
   }
 }
 
-// Event Card Skeleton for loading states
-const EventCardSkeleton: React.FC<{ variant: EventDisplayVariant }> = ({ variant }) => {
-  const getHeight = () => {
-    switch (variant) {
-      case 'minimal':
-        return 'h-32'
-      case 'full':
-        return 'h-80'
-      case 'compact':
-      default:
-        return 'h-64'
-    }
-  }
-
-  return (
-    <Card variant="outlined" className={cn('animate-pulse', getHeight())}>
-      <CardContent className="p-4">
-        <div className="space-y-3">
-          <div className="h-4 bg-muted rounded w-3/4"></div>
-          <div className="h-3 bg-muted rounded w-1/2"></div>
-          <div className="h-3 bg-muted rounded w-2/3"></div>
-        </div>
-      </CardContent>
-    </Card>
-  )
-}
 
 // Date Badge Component for desktop layout
 const DateBadge: React.FC<{ label: string }> = ({ label }) => (
@@ -156,11 +130,8 @@ const DateBadge: React.FC<{ label: string }> = ({ label }) => (
 
 const EventGrid: React.FC<EventGridProps> = ({
   events,
-  loading,
-  error,
   variant = 'compact',
   className = '',
-  skeletonCount = 3,
   isInteractive = false,
   availableTags = [],
   onEventEdit,
@@ -227,47 +198,6 @@ const EventGrid: React.FC<EventGridProps> = ({
       }))
     })
   }, [groupedEvents, currentDate, t])
-
-  // Loading state
-  if (loading) {
-    return (
-      <div className={cn('space-y-6', className)}>
-        {/* Mobile Layout: Single column */}
-        <div className="block md:hidden">
-          <div className="grid grid-cols-1 gap-6">
-            {Array.from({ length: skeletonCount }).map((_, index) => (
-              <div key={`mobile-skeleton-${index}`} className="flex flex-col">
-                <EventCardSkeleton variant={variant} />
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Desktop Layout: Multi-column grid */}
-        <div className="hidden md:block">
-          <div className={getGridClasses()}>
-            {Array.from({ length: skeletonCount }).map((_, index) => (
-              <div key={`desktop-skeleton-${index}`} className="flex flex-col">
-                <EventCardSkeleton variant={variant} />
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  // Error state
-  if (error) {
-    return (
-      <div className={cn('flex items-center justify-center py-12', className)}>
-        <div className="text-center">
-          <p className="text-destructive mb-2">Failed to load events</p>
-          <p className="text-sm text-muted-foreground">{error.message}</p>
-        </div>
-      </div>
-    )
-  }
 
   // No events state
   if (!events || events.length === 0) {
