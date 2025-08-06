@@ -30,8 +30,9 @@ import { Event, Tag } from '@/lib/types'
 import { getBrowserTimezone } from '@/lib/utils'
 import { convertToEventTag, EventTag } from '@/lib/event-types'
 import { convertEventToCardProps } from '@/lib/event-utils'
-import { VisibilityFilter, TimeFilter } from '@/components/events/EventsControlPanel'
+import { VisibilityFilter } from '@/components/events/EventsControlPanel'
 import { useTranslation } from '@/lib/i18n/context'
+import { useEventFilters } from '@/lib/hooks/useEventFilters'
 
 // Types for component
 interface EventStats {
@@ -47,9 +48,18 @@ interface ManageEventsClientProps {
 export function ManageEventsClient({ userId }: ManageEventsClientProps) {
   const { t } = useTranslation()
 
-  // Filtering state
+  // Use the new event filters hook
+  const {
+    filters,
+    availableStudioInfo,
+    eventFilters,
+    updateTimeFilter,
+    toggleStudioFilter,
+    clearAllFilters
+  } = useEventFilters(userId)
+
+  // Filtering state (legacy compatibility)
   const [visibilityFilter, setVisibilityFilter] = React.useState<VisibilityFilter>('all')
-  const [timeFilter, setTimeFilter] = React.useState<TimeFilter>('future')
 
   // Create tag form state
   const [isCreateTagFormOpen, setIsCreateTagFormOpen] = React.useState(false)
@@ -67,7 +77,7 @@ export function ManageEventsClient({ userId }: ManageEventsClientProps) {
     isLoading: eventsLoading,
     error: eventsError,
     refetch: refetchEvents
-  } = useUserEvents(userId, undefined, { enabled: !!userId })
+  } = useUserEvents(userId, eventFilters, { enabled: !!userId })
 
   const { 
     data: tagsData,
@@ -121,23 +131,11 @@ export function ManageEventsClient({ userId }: ManageEventsClientProps) {
 
   // Event filtering and processing
   const applyEventFilters = React.useCallback((eventList: Event[]) => {
-    const now = new Date()
-    
     return eventList.filter(event => {
-      // Time filter
-      if (timeFilter === 'future') {
-        const startTime = event.start_time ? new Date(event.start_time) : null
-        if (startTime && startTime < now) {
-          return false
-        }
-      }
-
-      // Visibility filter
+      // Only apply visibility filter client-side (time filter is server-side)
       return !(visibilityFilter !== 'all' && event.visibility !== visibilityFilter);
-
-
     })
-  }, [timeFilter, visibilityFilter])
+  }, [visibilityFilter])
 
   // Convert database events to display events for EventGrid
   const displayEvents = React.useMemo(() => {
@@ -351,46 +349,66 @@ export function ManageEventsClient({ userId }: ManageEventsClientProps) {
       title={t('pages.manageEvents.title')}
       subtitle={t('pages.manageEvents.subtitle')}
     >
-      <DataLoader
-        data={displayEvents}
-        loading={isLoading}
-        error={eventsError ? t('pages.manageEvents.loadError') : null}
-        skeleton={ManageEventsSkeleton}
-        skeletonCount={1}
-        empty={
-          <EventsEmptyState
-            totalEventsCount={events?.length || 0}
-            timeFilter={timeFilter}
-            visibilityFilter={visibilityFilter}
-            onChangeVisibilityFilter={setVisibilityFilter}
-            onChangeTimeFilter={setTimeFilter}
-          />
-        }
-      >
-        {(loadedEvents) => (
-          <div className="space-y-8">
-            {/* Create Event Button */}
-            <CreateEventFAB
-              onClick={() => setIsCreateEventFormOpen(true)}
-            />
+      <div className="space-y-8">
+        {/* Create Event Button */}
+        <CreateEventFAB
+          onClick={() => setIsCreateEventFormOpen(true)}
+        />
 
-            <EventsControlPanel
-              timeFilter={timeFilter}
+        {/* EventsControlPanel - Always visible, even during loading */}
+        <EventsControlPanel
+          timeFilter={filters.timeFilter}
+          visibilityFilter={visibilityFilter}
+          eventStats={eventStats}
+          userTags={allAvailableTags.filter((tag: Tag) => tag.user_id) || undefined}
+          globalTags={allAvailableTags.filter((tag: Tag) => !tag.user_id) || undefined}
+          isSyncing={syncCalendarFeedsMutation.isPending}
+          isLoading={isLoading}
+          userId={userId}
+          // Updated filter props - only studio filters now
+          studioFilter={filters.studioFilter}
+          availableStudioInfo={availableStudioInfo}
+          onTimeFilterChange={updateTimeFilter}
+          onVisibilityFilterChange={setVisibilityFilter}
+          onStudioFilterChange={(studioIds) => {
+            // Update the studio filter in the hook
+            studioIds.forEach(studioId => {
+              if (!filters.studioFilter.includes(studioId)) {
+                toggleStudioFilter(studioId)
+              }
+            })
+            // Remove studio IDs not in the new list
+            filters.studioFilter.forEach(studioId => {
+              if (!studioIds.includes(studioId)) {
+                toggleStudioFilter(studioId)
+              }
+            })
+          }}
+          onCreateTag={() => setIsCreateTagFormOpen(true)}
+          onCreateEvent={() => setIsCreateEventFormOpen(true)}
+          onSyncFeeds={handleSyncFeeds}
+          onRefresh={handleRefresh}
+          onClearAllFilters={clearAllFilters}
+        />
+
+        {/* EventGrid with its own loading state */}
+        <DataLoader
+          data={displayEvents}
+          loading={isLoading}
+          error={eventsError ? t('pages.manageEvents.loadError') : null}
+          skeleton={ManageEventsSkeleton}
+          skeletonCount={1}
+          empty={
+            <EventsEmptyState
+              totalEventsCount={events?.length || 0}
+              timeFilter={filters.timeFilter}
               visibilityFilter={visibilityFilter}
-              eventStats={eventStats}
-              userTags={allAvailableTags.filter((tag: Tag) => tag.user_id) || undefined}
-              globalTags={allAvailableTags.filter((tag: Tag) => !tag.user_id) || undefined}
-              isSyncing={syncCalendarFeedsMutation.isPending}
-              isLoading={false}
-              userId={userId}
-              onTimeFilterChange={setTimeFilter}
-              onVisibilityFilterChange={setVisibilityFilter}
-              onCreateTag={() => setIsCreateTagFormOpen(true)}
-              onCreateEvent={() => setIsCreateEventFormOpen(true)}
-              onSyncFeeds={handleSyncFeeds}
-              onRefresh={handleRefresh}
+              onChangeVisibilityFilter={setVisibilityFilter}
+              onChangeTimeFilter={updateTimeFilter}
             />
-
+          }
+        >
+          {(loadedEvents) => (
             <EventGrid
               events={loadedEvents}
               loading={false}
@@ -400,9 +418,9 @@ export function ManageEventsClient({ userId }: ManageEventsClientProps) {
               isInteractive={false}
               maxColumns={2}
             />
-          </div>
-        )}
-      </DataLoader>
+          )}
+        </DataLoader>
+      </div>
 
       {/* Create Event Form */}
       <NewEventForm

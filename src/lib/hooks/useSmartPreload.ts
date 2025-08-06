@@ -127,6 +127,24 @@ export function useSmartPreload() {
           queryKey: QUERY_CONFIGS.userEvents.queryKey(userId, { limit: 3, futureOnly: true }),
           queryFn: () => QUERY_CONFIGS.userEvents.queryFn(supabase, userId, { limit: 3, futureOnly: true }),
           staleTime: QUERY_CONFIGS.userEvents.staleTime,
+        }),
+
+        // Future events for studio discovery (following FilterProvider pattern)
+        queryClient.prefetchQuery({
+          queryKey: ['user-future-events', userId],
+          queryFn: async () => {
+            const now = new Date()
+            const { data, error } = await supabase
+              .from('events')
+              .select('studio_id, location')
+              .eq('user_id', userId)
+              .gte('start_time', now.toISOString())
+              .order('start_time', { ascending: true })
+            
+            if (error) throw error
+            return data || []
+          },
+          staleTime: 15 * 60 * 1000, // 15 minutes
         })
       ])
     },

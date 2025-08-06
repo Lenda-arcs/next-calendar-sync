@@ -10,9 +10,10 @@ import { Tag as TagType } from '@/lib/types'
 import { EventTag } from '@/lib/event-types'
 import { RematchTagsButton } from './RematchEventsButton'
 import { useTranslation } from '@/lib/i18n/context'
+import { StudioInfo } from '@/lib/hooks/useEventFilters'
 
 export type VisibilityFilter = 'all' | 'public' | 'private'
-export type TimeFilter = 'future' | 'all'
+export type TimeFilter = 'future' | 'all' | 'past' | 'today' | 'week' | 'month'
 
 interface EventStats {
   total: number
@@ -29,8 +30,13 @@ interface EventsControlPanelProps {
   isSyncing: boolean
   isLoading: boolean
   userId?: string
+  // Updated filter props - only studio filters now
+  studioFilter?: string[]
+  availableStudioInfo?: StudioInfo[]
   onTimeFilterChange: (filter: TimeFilter) => void
   onVisibilityFilterChange: (filter: VisibilityFilter) => void
+  onStudioFilterChange?: (studioIds: string[]) => void
+  onClearAllFilters?: () => void
   onCreateTag: () => void
   onCreateEvent: () => void
   onSyncFeeds: () => void
@@ -46,8 +52,13 @@ export default function EventsControlPanel({
   isSyncing,
   isLoading,
   userId,
+  // Updated filter props - only studio filters now
+  studioFilter = [],
+  availableStudioInfo,
   onTimeFilterChange,
   onVisibilityFilterChange,
+  onStudioFilterChange,
+  onClearAllFilters,
   onCreateTag,
   onCreateEvent,
   onSyncFeeds,
@@ -122,6 +133,27 @@ export default function EventsControlPanel({
               >
                 {t('pages.manageEvents.controlPanel.allEvents')}
               </Button>
+              <Button
+                variant={timeFilter === 'today' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => onTimeFilterChange('today')}
+              >
+                Today
+              </Button>
+              <Button
+                variant={timeFilter === 'week' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => onTimeFilterChange('week')}
+              >
+                This Week
+              </Button>
+              <Button
+                variant={timeFilter === 'month' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => onTimeFilterChange('month')}
+              >
+                This Month
+              </Button>
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -150,6 +182,63 @@ export default function EventsControlPanel({
               </Button>
             </div>
           </div>
+
+          {/* Studio Filter */}
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-sm font-medium">Studio</span>
+            <div className="flex flex-wrap gap-1">
+              {availableStudioInfo && availableStudioInfo.length > 0 ? (
+                <>
+                  {availableStudioInfo.slice(0, 3).map(studio => (
+                    <Button
+                      key={studio.id}
+                      variant={studioFilter.includes(studio.id) ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => {
+                        const newStudioIds = studioFilter.includes(studio.id)
+                          ? studioFilter.filter(s => s !== studio.id)
+                          : [...studioFilter, studio.id]
+                        onStudioFilterChange?.(newStudioIds)
+                      }}
+                    >
+                      {studio.name}
+                    </Button>
+                  ))}
+                  {availableStudioInfo.length > 3 && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        // For now, just show all studios
+                        onStudioFilterChange?.(availableStudioInfo.map(s => s.id))
+                      }}
+                    >
+                      +{availableStudioInfo.length - 3} more
+                    </Button>
+                  )}
+                </>
+              ) : isLoading ? (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <RefreshCw className="h-4 w-4 animate-spin" />
+                  Loading studios...
+                </div>
+              ) : null}
+            </div>
+          </div>
+
+          {/* Clear Filters Button */}
+          {onClearAllFilters && (studioFilter.length > 0) && (
+            <div className="flex justify-end">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onClearAllFilters}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                Clear Filters
+              </Button>
+            </div>
+          )}
         </div>
 
         {/* Management Actions */}

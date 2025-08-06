@@ -1,5 +1,6 @@
 import { createServerClient } from '@/lib/supabase-server'
 import { createBrowserClient } from '@supabase/ssr'
+import { startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns'
 import type { Database } from '../../../database-generated.types'
 import type { 
   User, UserUpdate,
@@ -170,6 +171,9 @@ export interface EventFilters {
   limit?: number
   offset?: number
   futureOnly?: boolean
+  // New filters for ManageEventsClient
+  timeFilter?: 'future' | 'all' | 'past' | 'today' | 'week' | 'month'
+  studioFilter?: string[] // Array of studio IDs to filter by
 }
 
 export async function getUserEvents(
@@ -188,9 +192,40 @@ export async function getUserEvents(
     query = query.eq('is_public', filters.isPublic)
   }
 
-  // ✨ Filter for future events only (for dashboard preview)
-  if (filters?.futureOnly) {
+  // Enhanced time filtering
+  if (filters?.timeFilter) {
+    switch (filters.timeFilter) {
+      case 'future':
+        query = query.gte('start_time', now)
+        break
+      case 'past':
+        query = query.lt('start_time', now)
+        break
+      case 'today':
+        const today = new Date()
+        const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate()).toISOString()
+        const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1).toISOString()
+        query = query.gte('start_time', startOfDay).lt('start_time', endOfDay)
+        break
+      case 'week':
+        const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 }).toISOString()
+        const weekEnd = endOfWeek(new Date(), { weekStartsOn: 1 }).toISOString()
+        query = query.gte('start_time', weekStart).lte('start_time', weekEnd)
+        break
+      case 'month':
+        const monthStart = startOfMonth(new Date()).toISOString()
+        const monthEnd = endOfMonth(new Date()).toISOString()
+        query = query.gte('start_time', monthStart).lte('start_time', monthEnd)
+        break
+    }
+  } else if (filters?.futureOnly) {
+    // Legacy support
     query = query.gte('start_time', now)
+  }
+
+  // Studio filtering (server-side)
+  if (filters?.studioFilter && filters.studioFilter.length > 0) {
+    query = query.in('studio_id', filters.studioFilter)
   }
 
   if (filters?.limit) {
