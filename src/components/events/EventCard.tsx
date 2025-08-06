@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { useRef, useCallback } from 'react'
 import {cn} from '@/lib/utils'
 import {Card} from '@/components/ui/card'
 import {Button} from '@/components/ui/button'
@@ -28,7 +28,7 @@ interface EventCardProps {
 
 export const EventCard = React.memo<EventCardProps>(
   ({
-    // id, // Removed for now, can be added back when needed
+    id,
     title,
     dateTime,
     location,
@@ -39,6 +39,8 @@ export const EventCard = React.memo<EventCardProps>(
     onClick,
     onVariantChange,
   }) => {
+    const cardRef = useRef<HTMLDivElement>(null)
+
     // Get all image URLs from tags
     const imageUrls = tags
       .filter((tag) => tag.imageUrl)
@@ -68,13 +70,65 @@ export const EventCard = React.memo<EventCardProps>(
     
     const ctaTag = tags.find((tag) => tag.cta)
 
+    // Enhanced keyboard navigation
+    const handleKeyDown = useCallback((event: React.KeyboardEvent) => {
+      if (!onClick && !onVariantChange) return
+
+      switch (event.key) {
+        case 'Enter':
+        case ' ':
+          event.preventDefault()
+          if (onClick) {
+            onClick()
+          } else if (onVariantChange) {
+            // Toggle between minimal and compact
+            if (variant === 'minimal') {
+              onVariantChange('compact')
+            } else if (variant === 'compact') {
+              onVariantChange('minimal')
+            }
+          }
+          break
+        case 'Escape':
+          // Return focus to the card if it was lost
+          cardRef.current?.focus()
+          break
+      }
+    }, [onClick, onVariantChange, variant])
+
+    // Click zone handler for variant toggling
+    const handleCardClick = useCallback((e: React.MouseEvent) => {
+      // Don't toggle if clicking on interactive elements
+      const target = e.target as HTMLElement
+      if (
+        target.closest('a') || // Links (location, CTA)
+        target.closest('button') || // Buttons (image nav, CTA)
+        target.closest('[role="tab"]') || // Image indicators
+        target.closest('[role="tablist"]') || // Image navigation
+        target.closest('[role="region"]') // Image gallery region
+      ) {
+        return // Let the interactive element handle the click
+      }
+      
+      // Toggle variant only when clicking on non-interactive areas
+      if (onVariantChange) {
+        if (variant === 'minimal') {
+          onVariantChange('compact')
+        } else if (variant === 'compact') {
+          onVariantChange('minimal')
+        }
+      } else if (onClick) {
+        onClick()
+      }
+    }, [onVariantChange, onClick, variant])
+
     // Variant-specific styling
     const getCardClasses = () => {
       const baseClasses = cn(
         'group relative overflow-hidden',
         styleUtils.transition,
-        onClick && 'cursor-pointer hover:shadow-lg',
-        onClick && styleUtils.focusRing
+        (onClick || onVariantChange) && 'cursor-pointer hover:shadow-lg',
+        (onClick || onVariantChange) && styleUtils.focusRing
       )
 
       switch (variant) {
@@ -103,50 +157,65 @@ export const EventCard = React.memo<EventCardProps>(
     // Check if we should show image based on variant and screen size
     const shouldShowImage = variant !== 'minimal'
 
+    // Generate accessible descriptions
+    const generateCardDescription = () => {
+      const parts = []
+      
+      if (classTypes.length > 0) {
+        parts.push(`Class types: ${classTypes.join(', ')}`)
+      }
+      
+      if (audienceLevels.length > 0) {
+        parts.push(`Audience: ${audienceLevels.join(', ')}`)
+      }
+      
+      if (location) {
+        parts.push(`Location: ${location}`)
+      }
+      
+      if (ctaTag?.cta) {
+        parts.push(`Call to action: ${ctaTag.cta.label}`)
+      }
+      
+      return parts.join('. ')
+    }
 
-    //TODO: Rethink
-    // const handleClick = () => {
-    //   if (onVariantChange) {
-    //     // Toggle between minimal and compact
-    //     if (variant === 'minimal') {
-    //       onVariantChange('compact')
-    //     } else if (variant === 'compact') {
-    //       onVariantChange('minimal')
-    //     } else if (onClick) {
-    //       onClick()
-    //     }
-    //   } else if (onClick) {
-    //     onClick()
-    //   }
-    // }
-    //
-    // const handleKeyDown = (event: React.KeyboardEvent) => {
-    //   if (onClick && (event.key === 'Enter' || event.key === ' ')) {
-    //     event.preventDefault()
-    //     onClick()
-    //   }
-    // }
+    const cardDescription = generateCardDescription()
+    const isInteractive = !!(onClick || onVariantChange)
+    const cardLabel = isInteractive 
+      ? `View details for ${title}. ${cardDescription}`
+      : `${title}. ${cardDescription}`
 
     return (
       <Card
+        ref={cardRef}
         variant="default"
         padding="none"
-        interactive={!!(onClick || onVariantChange)}
+        interactive={isInteractive}
         className={cn(getCardClasses(), className)}
-        // onClick={handleClick}
-        // onKeyDown={handleKeyDown}
-        tabIndex={onClick ? 0 : undefined}
-        role={onClick ? 'button' : undefined}
-        aria-label={onClick ? `View details for ${title}` : undefined}
+        onClick={handleCardClick}
+        onKeyDown={handleKeyDown}
+        tabIndex={isInteractive ? 0 : undefined}
+        role={isInteractive ? 'button' : 'article'}
+        aria-label={cardLabel}
+        aria-describedby={cardDescription ? `card-description-${id}` : undefined}
+        aria-expanded={isInteractive ? undefined : false}
       >
         {shouldShowImage && (
           <div className={getImageContainerClasses()}>
-            <ImageGallery images={allImages} title={title} />
+            <ImageGallery 
+              images={allImages} 
+              title={title}
+              cardId={id}
+            />
 
             {/* Tag Lists Overlay - Bottom Left */}
             {(variant === 'compact' || variant === 'full') &&
               (classTypes.length > 0 || audienceLevels.length > 0) && (
-                <div className="absolute bottom-10 left-3 space-y-1">
+                <div 
+                  className="absolute bottom-10 left-3 space-y-1"
+                  aria-label="Event categories"
+                >
                   {classTypes.length > 0 && (
                     <TagList
                       tags={classTypes}
@@ -154,6 +223,7 @@ export const EventCard = React.memo<EventCardProps>(
                       layout="overlay"
                       showLabel={false}
                       maxTags={2}
+                      ariaLabel="Class types"
                     />
                   )}
                   {audienceLevels.length > 0 && (
@@ -163,6 +233,7 @@ export const EventCard = React.memo<EventCardProps>(
                       layout="overlay"
                       showLabel={false}
                       maxTags={2}
+                      ariaLabel="Audience levels"
                     />
                   )}
                 </div>
@@ -181,6 +252,7 @@ export const EventCard = React.memo<EventCardProps>(
                     color: '#FFFFFF',
                   }}
                   className="shadow-lg hover:shadow-xl"
+                  aria-label={`${ctaTag.cta.label} - opens in new tab`}
                 >
                   <a
                     href={ctaTag.cta.url}
@@ -201,7 +273,19 @@ export const EventCard = React.memo<EventCardProps>(
           dateTime={dateTime}
           location={location}
           variant={variant}
+          cardId={id}
         />
+
+        {/* Hidden description for screen readers */}
+        {cardDescription && (
+          <div 
+            id={`card-description-${id}`}
+            className="sr-only"
+            aria-live="polite"
+          >
+            {cardDescription}
+          </div>
+        )}
 
         {/* CTA Button for minimal variant - Top right corner (only on hover) */}
         {variant === 'minimal' && ctaTag?.cta && (
@@ -216,6 +300,7 @@ export const EventCard = React.memo<EventCardProps>(
                 color: '#FFFFFF',
               }}
               className="shadow-sm hover:shadow-md text-xs"
+              aria-label={`${ctaTag.cta.label} - opens in new tab`}
             >
               <a
                 href={ctaTag.cta.url}

@@ -10,6 +10,7 @@ interface TagListProps {
   label?: string
   maxTags?: number
   className?: string
+  ariaLabel?: string
 }
 
 export default function TagList({
@@ -19,7 +20,8 @@ export default function TagList({
   showLabel = true,
   label,
   maxTags = 3,
-  className
+  className,
+  ariaLabel
 }: TagListProps) {
   if (!tags || tags.length === 0) return null
 
@@ -42,8 +44,24 @@ export default function TagList({
   const defaultLabel = variant === 'purple' ? 'Class Types' : 
                       variant === 'blue' ? 'Audience' : 'Tags'
 
+  // Generate accessible description
+  const generateTagDescription = () => {
+    if (displayTags.length === 0) return ''
+    
+    const tagList = displayTags.join(', ')
+    const moreInfo = hasMoreTags ? ` and ${tags.length - maxTags} more` : ''
+    return `${displayTags.length} ${ariaLabel || defaultLabel.toLowerCase()}: ${tagList}${moreInfo}`
+  }
+
+  const tagDescription = generateTagDescription()
+
   return (
-    <div className={cn(className)}>
+    <div 
+      className={cn(className)}
+      role="list"
+      aria-label={ariaLabel || defaultLabel}
+      aria-describedby={tagDescription ? `tag-description-${tags.join('-').replace(/\s+/g, '-')}` : undefined}
+    >
       {showLabel && (
         <span className={cn(
           'text-xs font-medium text-muted-foreground mb-1',
@@ -60,6 +78,7 @@ export default function TagList({
             key={`${tag}-${index}`}
             variant={variant}
             layout={layout}
+            role="listitem"
           >
             {tag}
           </TagBadge>
@@ -70,11 +89,24 @@ export default function TagList({
             variant={variant}
             layout={layout}
             className="opacity-75"
+            role="listitem"
+            aria-label={`${tags.length - maxTags} more ${ariaLabel || defaultLabel.toLowerCase()}`}
           >
             +{tags.length - maxTags}
           </TagBadge>
         )}
       </div>
+
+      {/* Hidden description for screen readers */}
+      {tagDescription && (
+        <div 
+          id={`tag-description-${tags.join('-').replace(/\s+/g, '-')}`}
+          className="sr-only"
+          aria-live="polite"
+        >
+          {tagDescription}
+        </div>
+      )}
     </div>
   )
 } 

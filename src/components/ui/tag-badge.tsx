@@ -8,6 +8,7 @@ interface TagBadgeProps {
   variant?: 'purple' | 'blue' | 'green' | 'red' | 'yellow' | 'gray' | 'dynamic' | 'safe'
   layout?: 'inline' | 'overlay' | 'stacked'
   className?: string
+  role?: string
 }
 
 // Predefined color mappings with good contrast
@@ -78,7 +79,8 @@ export function TagBadge({
   color, 
   variant = 'gray', 
   layout = 'inline',
-  className 
+  className,
+  role
 }: TagBadgeProps) {
   // Get variant-specific styles
   const getVariantClasses = () => {
@@ -163,6 +165,7 @@ export function TagBadge({
       variant={layout === 'overlay' ? 'secondary' : 'outline'}
       className={cn(getTagClasses(), className)}
       style={getDynamicStyles()}
+      role={role}
     >
       {variant === 'safe' && color && (
         <span 
