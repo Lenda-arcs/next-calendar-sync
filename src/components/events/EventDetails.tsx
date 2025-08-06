@@ -124,7 +124,7 @@ export function EventDetails({
             target="_blank"
             rel="noopener noreferrer"
             className={cn(
-              'flex items-center hover:text-primary transition-colors cursor-pointer',
+              'inline-flex items-center hover:text-primary transition-colors cursor-pointer',
               getMetaClasses()
             )}
             onClick={(e) => e.stopPropagation()} // Prevent card click when clicking location
