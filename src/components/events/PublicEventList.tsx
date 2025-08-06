@@ -32,6 +32,15 @@ interface PublicEventListProps {
   events?: (Event | PublicEvent)[] // Accept both Event and PublicEvent types for backward compatibility
   tags?: Tag[] // Accept tags as props to avoid duplicate fetching
   disableFetching?: boolean // Explicitly disable data fetching when data is provided externally
+  studioInfo?: Array<{
+    id: string
+    name: string
+    address?: string
+    eventCount?: number
+    hasEventsInFilter?: boolean
+    isVerified?: boolean
+    hasStudioProfile?: boolean
+  }> // Studio information for better location display
 }
 
 const PublicEventList: React.FC<PublicEventListProps> = ({
@@ -41,6 +50,7 @@ const PublicEventList: React.FC<PublicEventListProps> = ({
   events: propEvents,
   tags: propTags,
   disableFetching = false,
+  studioInfo = [],
 }) => {
   // Client-side date state to prevent hydration mismatches
   const [currentDate, setCurrentDate] = useState<Date | undefined>(undefined)
@@ -181,12 +191,12 @@ const PublicEventList: React.FC<PublicEventListProps> = ({
     return groupedEvents.flatMap(({ date, events: dayEvents }) => {
       const { compact } = getDateHeader(date, currentDate)
       return dayEvents.map((event, index) => ({
-        event: convertEventToCardProps(event, allAvailableTags),
+        event: convertEventToCardProps(event, allAvailableTags, studioInfo),
         dayLabel: compact,
         isFirstOfDay: index === 0,
       }))
     })
-  }, [groupedEvents, allAvailableTags, currentDate])
+  }, [groupedEvents, allAvailableTags, studioInfo, currentDate])
 
   // Loading states
   const isLoading = (propEvents ? false : eventsLoading) || (propTags ? false : tagsLoading)
@@ -261,7 +271,7 @@ const PublicEventList: React.FC<PublicEventListProps> = ({
                         return (
                           <div key={eventKey} className="flex flex-col transition-all duration-300 ease-in-out">
                             <EventCard
-                              {...convertEventToCardProps(event, allAvailableTags)}
+                              {...convertEventToCardProps(event, allAvailableTags, studioInfo)}
                               variant={currentVariant}
                               onVariantChange={(newVariant) => handleVariantChange(eventKey, newVariant)}
                             />

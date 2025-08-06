@@ -117,7 +117,16 @@ export function getEventImageUrl(
  */
 export function convertEventToCardProps(
   event: Event | PublicEvent,
-  availableTags: Tag[]
+  availableTags: Tag[],
+  studioInfo?: Array<{
+    id: string
+    name: string
+    address?: string
+    eventCount?: number
+    hasEventsInFilter?: boolean
+    isVerified?: boolean
+    hasStudioProfile?: boolean
+  }>
 ): {
   id: string
   title: string
@@ -126,6 +135,16 @@ export function convertEventToCardProps(
   imageQuery: string
   tags: EventTag[]
   isPublic: boolean
+  studioInfo: Array<{
+    id: string
+    name: string
+    address?: string
+    eventCount?: number
+    hasEventsInFilter?: boolean
+    isVerified?: boolean
+    hasStudioProfile?: boolean
+  }>
+  studioId: string | null
 } {
   // Process tags - check if event has custom_tags field (Event type) or just tags (PublicEvent type)
   let matchedTags: EventTag[]
@@ -158,6 +177,8 @@ export function convertEventToCardProps(
     imageQuery: imageUrl, // This will be empty string if no image, triggering placeholder
     tags: matchedTags,
     isPublic,
+    studioInfo: studioInfo || [],
+    studioId: event.studio_id || null,
   }
 
   return safeEvent

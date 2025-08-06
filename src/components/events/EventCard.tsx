@@ -9,6 +9,17 @@ import TagList from '@/components/tags/TagList'
 import {EventDisplayVariant, EventTag} from '@/lib/event-types'
 import {styleUtils} from '@/lib/design-system'
 
+// Studio information interface (matching FilterProvider)
+interface StudioInfo {
+  id: string
+  name: string
+  address?: string
+  eventCount?: number
+  hasEventsInFilter?: boolean
+  isVerified?: boolean
+  hasStudioProfile?: boolean
+}
+
 interface EventCardProps {
   id: string
   title: string
@@ -24,6 +35,9 @@ interface EventCardProps {
   isPublic?: boolean
   autoTags?: EventTag[]
   customTags?: EventTag[]
+  // Studio information for better location display
+  studioInfo?: StudioInfo[]
+  studioId?: string | null // Add studio ID for reliable matching
 }
 
 export const EventCard = React.memo<EventCardProps>(
@@ -38,6 +52,8 @@ export const EventCard = React.memo<EventCardProps>(
     className,
     onClick,
     onVariantChange,
+    studioInfo = [],
+    studioId,
   }) => {
     const cardRef = useRef<HTMLDivElement>(null)
 
@@ -274,6 +290,8 @@ export const EventCard = React.memo<EventCardProps>(
           location={location}
           variant={variant}
           cardId={id}
+          studioInfo={studioInfo}
+          studioId={studioId}
         />
 
         {/* Hidden description for screen readers */}

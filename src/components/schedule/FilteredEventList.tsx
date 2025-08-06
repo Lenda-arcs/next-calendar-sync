@@ -21,7 +21,8 @@ export function FilteredEventList({ userId, variant = 'compact', className }: Fi
     filteredEvents, 
     hasActiveFilters, 
     clearAllFilters,
-    isLoading: eventsLoading
+    isLoading: eventsLoading,
+    availableStudioInfo
   } = useScheduleFilters()
 
   // For compatibility, we still need allTags for the PublicEventList component
@@ -70,6 +71,7 @@ export function FilteredEventList({ userId, variant = 'compact', className }: Fi
       variant={variant}
       events={filteredEvents}
       tags={allTags}
+      studioInfo={availableStudioInfo}
       disableFetching={true}
       className={className}
     />

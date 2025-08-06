@@ -3,6 +3,17 @@ import { cn } from '@/lib/utils'
 import { Calendar, MapPin } from 'lucide-react'
 import { EventDisplayVariant } from '@/lib/event-types'
 
+// Studio information interface (matching FilterProvider)
+interface StudioInfo {
+  id: string
+  name: string
+  address?: string
+  eventCount?: number
+  hasEventsInFilter?: boolean
+  isVerified?: boolean
+  hasStudioProfile?: boolean
+}
+
 interface EventDetailsProps {
   title: string
   dateTime: string
@@ -10,6 +21,8 @@ interface EventDetailsProps {
   variant?: EventDisplayVariant
   className?: string
   cardId?: string
+  studioInfo?: StudioInfo[]
+  studioId?: string | null // Add studio ID for reliable matching
 }
 
 export function EventDetails({
@@ -18,7 +31,9 @@ export function EventDetails({
   location,
   variant = 'compact',
   className,
-  cardId
+  cardId,
+  studioInfo = [],
+  studioId
 }: EventDetailsProps) {
   // The dateTime is already formatted by the parent component
   // No need to reformat it here
@@ -53,6 +68,33 @@ export function EventDetails({
   const dateTimeId = cardId ? `event-datetime-${cardId}` : undefined
   const locationId = cardId ? `event-location-${cardId}` : undefined
 
+  // Determine display location - use studio name if available, fallback to full location
+  const getDisplayLocation = () => {
+    if (!location) return null
+
+    // Use studio ID for reliable matching (same approach as FilterProvider)
+    if (studioId && studioInfo.length > 0) {
+      const matchingStudio = studioInfo.find(studio => studio.id === studioId)
+      
+      if (matchingStudio) {
+        return {
+          displayText: matchingStudio.name,
+          fullAddress: location, // Keep full address for Google Maps link
+          isStudio: true
+        }
+      }
+    }
+
+    // Fallback to full location text
+    return {
+      displayText: location,
+      fullAddress: location,
+      isStudio: false
+    }
+  }
+
+  const displayLocation = getDisplayLocation()
+
   return (
     <div className={cn('flex-1', className)}>
       <h3 
@@ -76,9 +118,9 @@ export function EventDetails({
         </div>
 
         {/* Location */}
-        {location && (
+        {displayLocation && (
           <a
-            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`}
+            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(displayLocation.fullAddress)}`}
             target="_blank"
             rel="noopener noreferrer"
             className={cn(
@@ -87,10 +129,10 @@ export function EventDetails({
             )}
             onClick={(e) => e.stopPropagation()} // Prevent card click when clicking location
             id={locationId}
-            aria-label={`Event location: ${location}. Opens Google Maps in new tab.`}
+            aria-label={`Event location: ${displayLocation.displayText}${displayLocation.isStudio ? ` (${displayLocation.fullAddress})` : ''}. Opens Google Maps in new tab.`}
           >
             <MapPin className="h-3 w-3 mr-1 flex-shrink-0" aria-hidden="true" />
-            <span className="truncate">{location}</span>
+            <span className="truncate">{displayLocation.displayText}</span>
           </a>
         )}
       </div>
