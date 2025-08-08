@@ -49,19 +49,22 @@ function UnifiedDialog({
           )}
         />
         
-        {/* Dialog Content with glassmorphism styling */}
+        {/* Dialog Content with responsive bottom-sheet behavior on mobile */}
         <DialogPrimitive.Content
           className={cn(
-            "fixed top-1/2 left-1/2 z-50 w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2",
-            "flex flex-col max-h-[85vh]",
+            // Positioning: bottom sheet on mobile, centered modal on larger screens
+            "fixed inset-x-0 bottom-0 z-50 w-full sm:top-1/2 sm:left-1/2 sm:w-full sm:max-w-[calc(100%-2rem)] sm:-translate-x-1/2 sm:-translate-y-1/2",
+            // Layout and height: up to 85% screen on mobile, original limit on larger screens
+            "flex flex-col max-h-[95vh] sm:max-h-[95vh]",
             // Glassmorphism styling aligned with app theme
             "backdrop-blur-xl bg-white/80 border border-white/50 shadow-2xl",
-            "rounded-2xl overflow-hidden",
-            // Enhanced animations
+            // Rounded corners: sheet-style on mobile, full rounded on larger screens
+            "rounded-t-2xl sm:rounded-2xl overflow-hidden",
+            // Enhanced animations: slide from bottom on mobile, original from top on larger screens
             "data-[state=open]:animate-in data-[state=closed]:animate-out",
             "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
-            "data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
-            "data-[state=closed]:slide-out-to-top-[2%] data-[state=open]:slide-in-from-top-[2%]",
+            "data-[state=closed]:slide-out-to-bottom-[2%] data-[state=open]:slide-in-from-bottom-[2%]",
+            "sm:data-[state=closed]:slide-out-to-top-[2%] sm:data-[state=open]:slide-in-from-top-[2%]",
             "duration-300 ease-in-out",
             sizeClasses[size],
             className

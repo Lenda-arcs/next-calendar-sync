@@ -169,24 +169,25 @@ export function EventDetailsEditModal({
   if (!event) return null
 
   const footer = (
-    <>
-      <div className="flex-1">
+    <div className="flex w-full items-center justify-between gap-2">
+      <div className="shrink-0">
         <AlertDialog open={showExcludeDialog} onOpenChange={setShowExcludeDialog}>
           <AlertDialogTrigger asChild>
             <Button
               variant="destructive"
+              size="sm"
               disabled={updateMutation.isPending || excludeMutation.isPending}
               className="gap-2"
             >
               <X className="w-4 h-4" />
-              {excludeMutation.isPending ? 'Excluding...' : 'Exclude from Invoice'}
+              {excludeMutation.isPending ? 'Excluding...' : 'Exclude'}
             </Button>
           </AlertDialogTrigger>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Exclude Event from Invoice</AlertDialogTitle>
+              <AlertDialogTitle>Exclude from invoicing?</AlertDialogTitle>
               <AlertDialogDescription>
-                Are you sure you want to exclude this event from invoicing? This action will remove it from your invoice calculations and it won&apos;t be billed.
+                This event will be removed from invoice calculations.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -198,28 +199,20 @@ export function EventDetailsEditModal({
                 disabled={excludeMutation.isPending}
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
-                {excludeMutation.isPending ? 'Excluding...' : 'Exclude Event'}
+                {excludeMutation.isPending ? 'Excluding...' : 'Exclude'}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
       </div>
-      <div className="flex gap-2">
-        <Button
-          variant="outline"
-          onClick={onClose}
-          disabled={updateMutation.isPending || excludeMutation.isPending}
-        >
-          Cancel
-        </Button>
-        <Button
-          onClick={handleSubmit}
-          disabled={updateMutation.isPending || excludeMutation.isPending}
-        >
-          {updateMutation.isPending ? 'Saving...' : 'Save Changes'}
-        </Button>
-      </div>
-    </>
+      <Button
+        size="sm"
+        onClick={handleSubmit}
+        disabled={updateMutation.isPending || excludeMutation.isPending}
+      >
+        {updateMutation.isPending ? 'Saving...' : 'Save'}
+      </Button>
+    </div>
   )
 
   return (
@@ -227,93 +220,12 @@ export function EventDetailsEditModal({
       open={isOpen}
       onOpenChange={(open) => !open && onClose()}
       title="Edit Event Details"
-      description="Update student attendance and calculate payout"
+      description="Edit attendance & payout"
       size="lg"
       footer={footer}
     >
       <div className="space-y-6">
-        {/* Event Information Card */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Calendar className="w-5 h-5" />
-              Event Information
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <h3 className="font-semibold text-lg text-gray-900 mb-2">
-                {event.title || 'Untitled Event'}
-              </h3>
-              
-              <div className="space-y-2 text-sm text-gray-600">
-                <div className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4" />
-                  <span>{formatDate(event.start_time)}</span>
-                </div>
-                
-                <div className="flex items-center gap-2">
-                  <Clock className="w-4 h-4" />
-                  <span>{formatTime(event.start_time, event.end_time)}</span>
-                </div>
-                
-                {event.location && (
-                  <div className="flex items-center gap-2">
-                    <MapPin className="w-4 h-4" />
-                    <span>{event.location}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Studio Information */}
-            {event.studio && (
-              <div className="bg-blue-50 p-3 rounded-lg">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="font-medium text-blue-900">{event.studio.entity_name}</div>
-                    <div className="text-sm text-blue-700">
-                      {(() => {
-                        const rateConfig = event.studio.rate_config as RateConfig | null
-                        if (!rateConfig) return 'No rate configuration'
-                        
-                        switch (rateConfig.type) {
-                          case 'flat':
-                            return `Base Rate: €${rateConfig.base_rate?.toFixed(2) || '0.00'}`
-                          case 'per_student':
-                            return `Rate: €${rateConfig.rate_per_student?.toFixed(2) || '0.00'} per student`
-                          case 'tiered':
-                            return 'Tiered rate structure'
-                          default:
-                            return 'Custom rate structure'
-                        }
-                      })()}
-                    </div>
-                  </div>
-                  <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-200">
-                    {(() => {
-                      const rateConfig = event.studio.rate_config as RateConfig | null
-                      if (!rateConfig) return 'No Config'
-                      
-                      switch (rateConfig.type) {
-                        case 'flat':
-                          return 'Flat Rate'
-                        case 'per_student':
-                          return 'Per Student'
-                        case 'tiered':
-                          return 'Tiered'
-                        default:
-                          return 'Custom'
-                      }
-                    })()}
-                  </Badge>
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Student Count Form */}
+        {/* Student Count Form (moved to top for mobile) */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -347,8 +259,8 @@ export function EventDetailsEditModal({
                   {errors.studentsStudio && (
                     <p className="text-sm text-red-500 mt-1">{errors.studentsStudio}</p>
                   )}
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Number of students attending in-person
+                  <p className="text-xs text-muted-foreground mt-1 hidden sm:block">
+                    In-person attendees
                   </p>
                 </div>
 
@@ -375,8 +287,8 @@ export function EventDetailsEditModal({
                   {errors.studentsOnline && (
                     <p className="text-sm text-red-500 mt-1">{errors.studentsOnline}</p>
                   )}
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Number of students attending online
+                  <p className="text-xs text-muted-foreground mt-1 hidden sm:block">
+                    Online attendees
                   </p>
                 </div>
               </div>
@@ -414,7 +326,7 @@ export function EventDetailsEditModal({
 
             {/* Rate structure explanation */}
             {event.studio && (
-              <div className="mt-4 text-xs text-gray-600 space-y-1">
+              <div className="mt-4 text-xs text-gray-600 space-y-1 hidden md:block">
                 <div>Rate calculation based on studio settings:</div>
                 {(() => {
                   const rateConfig = event.studio.rate_config as RateConfig | null
@@ -466,6 +378,80 @@ export function EventDetailsEditModal({
                       return <div className="ml-2 text-gray-500">Custom rate structure</div>
                   }
                 })()}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Event Information Card (moved below to reduce initial info density) */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Calendar className="w-5 h-5" />
+              Event Information
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <h3 className="font-semibold text-lg text-gray-900 mb-2">
+                {event.title || 'Untitled Event'}
+              </h3>
+              <div className="space-y-2 text-sm text-gray-600">
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-4 h-4" />
+                  <span>{formatDate(event.start_time)}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Clock className="w-4 h-4" />
+                  <span>{formatTime(event.start_time, event.end_time)}</span>
+                </div>
+                {event.location && (
+                  <div className="flex items-center gap-2">
+                    <MapPin className="w-4 h-4" />
+                    <span>{event.location}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+            {event.studio && (
+              <div className="bg-blue-50 p-3 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="font-medium text-blue-900">{event.studio.entity_name}</div>
+                    <div className="text-sm text-blue-700">
+                      {(() => {
+                        const rateConfig = event.studio.rate_config as RateConfig | null
+                        if (!rateConfig) return 'No rate configuration'
+                        switch (rateConfig.type) {
+                          case 'flat':
+                            return `Base Rate: €${rateConfig.base_rate?.toFixed(2) || '0.00'}`
+                          case 'per_student':
+                            return `Rate: €${rateConfig.rate_per_student?.toFixed(2) || '0.00'} per student`
+                          case 'tiered':
+                            return 'Tiered rate structure'
+                          default:
+                            return 'Custom rate structure'
+                        }
+                      })()}
+                    </div>
+                  </div>
+                  <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-200">
+                    {(() => {
+                      const rateConfig = event.studio.rate_config as RateConfig | null
+                      if (!rateConfig) return 'No Config'
+                      switch (rateConfig.type) {
+                        case 'flat':
+                          return 'Flat Rate'
+                        case 'per_student':
+                          return 'Per Student'
+                        case 'tiered':
+                          return 'Tiered'
+                        default:
+                          return 'Custom'
+                      }
+                    })()}
+                  </Badge>
+                </div>
               </div>
             )}
           </CardContent>
