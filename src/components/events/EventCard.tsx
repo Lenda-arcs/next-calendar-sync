@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useRef, useCallback } from 'react'
+import React, { useRef, useCallback, useMemo, useState } from 'react'
 import {cn} from '@/lib/utils'
 import {Card} from '@/components/ui/card'
 import {Button} from '@/components/ui/button'
@@ -57,14 +57,21 @@ export const EventCard = React.memo<EventCardProps>(
   }) => {
     const cardRef = useRef<HTMLDivElement>(null)
 
-    // Get all image URLs from tags
-    const imageUrls = tags
-      .filter((tag) => tag.imageUrl)
-      .map((tag) => tag.imageUrl!)
-      .filter(Boolean)
+    // Build image items preserving which tag each image came from
+    const imageItems = useMemo(() => {
+      const items: Array<{ url: string; tag: EventTag | null }> = tags
+        .filter((tag) => tag.imageUrl)
+        .map((tag) => ({ url: tag.imageUrl as string, tag }))
+        .filter((item) => Boolean(item.url))
 
-    // Add the default imageQuery if no tag images are available
-    const allImages = imageUrls.length > 0 ? imageUrls : [imageQuery]
+      if (items.length === 0) {
+        items.push({ url: imageQuery, tag: null })
+      }
+
+      return items
+    }, [tags, imageQuery])
+
+    const allImages = useMemo(() => imageItems.map((it) => it.url), [imageItems])
 
     // Get unique class types and audience levels from tags
     const classTypes = [
@@ -84,7 +91,33 @@ export const EventCard = React.memo<EventCardProps>(
       ),
     ]
     
-    const ctaTag = tags.find((tag) => tag.cta)
+    // Primary CTA selection when current image doesn't have one
+    const selectPrimaryCtaTag = useCallback((allTags: EventTag[]) => {
+      const withCta = allTags.filter((t) => t.cta)
+      if (withCta.length === 0) return null
+
+      // Sort by priority (1 highest). Null/undefined treated as lowest priority.
+      withCta.sort((a, b) => {
+        const ap = a.priority ?? Number.POSITIVE_INFINITY
+        const bp = b.priority ?? Number.POSITIVE_INFINITY
+        if (ap !== bp) return ap - bp
+        // Tie-breaker: more specific (longer) label first
+        const al = a.cta?.label.length ?? 0
+        const bl = b.cta?.label.length ?? 0
+        return bl - al
+      })
+
+      return withCta[0] || null
+    }, [])
+
+    // Track current image index for dynamic CTA
+    const [currentImageIndex, setCurrentImageIndex] = useState(0)
+
+    const activeCtaTag = useMemo(() => {
+      const currentItem = imageItems[currentImageIndex]
+      if (currentItem?.tag && currentItem.tag.cta) return currentItem.tag
+      return selectPrimaryCtaTag(tags)
+    }, [currentImageIndex, imageItems, selectPrimaryCtaTag, tags])
 
     // Enhanced keyboard navigation
     const handleKeyDown = useCallback((event: React.KeyboardEvent) => {
@@ -189,8 +222,8 @@ export const EventCard = React.memo<EventCardProps>(
         parts.push(`Location: ${location}`)
       }
       
-      if (ctaTag?.cta) {
-        parts.push(`Call to action: ${ctaTag.cta.label}`)
+      if (activeCtaTag?.cta) {
+        parts.push(`Call to action: ${activeCtaTag.cta.label}`)
       }
       
       return parts.join('. ')
@@ -223,6 +256,7 @@ export const EventCard = React.memo<EventCardProps>(
               images={allImages} 
               title={title}
               cardId={id}
+              onSlideChange={(index) => setCurrentImageIndex(index)}
             />
 
             {/* Tag Lists Overlay - Bottom Left */}
@@ -256,27 +290,27 @@ export const EventCard = React.memo<EventCardProps>(
               )}
 
             {/* CTA Button - Bottom Right (for compact/full variants) */}
-            {ctaTag?.cta && (
+            {activeCtaTag?.cta && (
               <div className="absolute bottom-4 right-3">
                 <Button
                   size="sm"
                   variant="default"
                   asChild
                   style={{
-                    backgroundColor: ctaTag.chip.color,
-                    borderColor: ctaTag.chip.color,
+                    backgroundColor: activeCtaTag.chip.color,
+                    borderColor: activeCtaTag.chip.color,
                     color: '#FFFFFF',
                   }}
                   className="shadow-lg hover:shadow-xl"
-                  aria-label={`${ctaTag.cta.label} - opens in new tab`}
+                  aria-label={`${activeCtaTag.cta.label} - opens in new tab`}
                 >
                   <a
-                    href={ctaTag.cta.url}
+                    href={activeCtaTag.cta.url}
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={(e) => e.stopPropagation()} // Prevent card click when clicking CTA
                   >
-                    {ctaTag.cta.label}
+                    {activeCtaTag.cta.label}
                   </a>
                 </Button>
               </div>
@@ -306,27 +340,27 @@ export const EventCard = React.memo<EventCardProps>(
         )}
 
         {/* CTA Button for minimal variant - Top right corner (only on hover) */}
-        {variant === 'minimal' && ctaTag?.cta && (
+        {variant === 'minimal' && activeCtaTag?.cta && (
           <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
             <Button
               size="sm"
               variant="default"
               asChild
               style={{
-                backgroundColor: ctaTag.chip.color,
-                borderColor: ctaTag.chip.color,
+                backgroundColor: activeCtaTag.chip.color,
+                borderColor: activeCtaTag.chip.color,
                 color: '#FFFFFF',
               }}
               className="shadow-sm hover:shadow-md text-xs"
-              aria-label={`${ctaTag.cta.label} - opens in new tab`}
+              aria-label={`${activeCtaTag.cta.label} - opens in new tab`}
             >
               <a
-                href={ctaTag.cta.url}
+                href={activeCtaTag.cta.url}
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={(e) => e.stopPropagation()} // Prevent card click when clicking CTA
               >
-                {ctaTag.cta.label}
+                {activeCtaTag.cta.label}
               </a>
             </Button>
           </div>

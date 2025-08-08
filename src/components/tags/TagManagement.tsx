@@ -6,6 +6,8 @@ import { TagBadge } from '@/components/ui/tag-badge'
 import { cn } from '@/lib/utils'
 import { MultiSelect } from '@/components/ui/multi-select'
 import { useTranslation } from '@/lib/i18n/context'
+import { Link as LinkIcon, Star } from 'lucide-react'
+import { PRIORITY_LABELS } from '@/lib/constants/tag-constants'
 
 interface TagManagementProps {
   currentTags: EventTag[]
@@ -25,11 +27,13 @@ export const TagManagement: React.FC<TagManagementProps> = ({
   const { t } = useTranslation()
   const MAX_TAGS = 3
 
-  // Convert EventTag[] to Option[] format for FormMultiSelect with color support
+  // Convert EventTag[] to Option[] format for FormMultiSelect with color + meta
   const tagOptions = availableTags.map(tag => ({
     value: tag.id,
     label: tag.name || t('tags.management.unnamedTag'),
-    color: tag.color
+    color: tag.color,
+    priority: tag.priority ?? null,
+    hasCta: !!tag.cta,
   }))
 
   // Get currently selected tag IDs
@@ -48,7 +52,7 @@ export const TagManagement: React.FC<TagManagementProps> = ({
   }
 
   // Custom option renderer using TagBadge
-  const renderOption = (option: { value: string; label: string; color?: string | null }, isSelected: boolean, isDisabled: boolean) => (
+  const renderOption = (option: { value: string; label: string; color?: string | null; priority?: number | null; hasCta?: boolean }, isSelected: boolean, isDisabled: boolean) => (
     <div className="flex items-center w-full">
       <input
         type="checkbox"
@@ -68,6 +72,20 @@ export const TagManagement: React.FC<TagManagementProps> = ({
         >
           {option.label}
         </TagBadge>
+        <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
+          {typeof option.priority === 'number' && (
+            <span className="inline-flex items-center gap-1">
+              <Star className="h-3 w-3" />
+              {PRIORITY_LABELS[option.priority as keyof typeof PRIORITY_LABELS] || t('common.unknown')}
+            </span>
+          )}
+          {option.hasCta && (
+            <span className="inline-flex items-center gap-1">
+              <LinkIcon className="h-3 w-3" />
+              {t('tags.management.hasCta')}
+            </span>
+          )}
+        </div>
       </div>
       {isDisabled && (
         <span className="ml-2 text-xs text-muted-foreground">
@@ -78,14 +96,28 @@ export const TagManagement: React.FC<TagManagementProps> = ({
   )
 
   // Custom selected badge renderer using TagBadge
-  const renderSelectedBadge = (option: { value: string; label: string; color?: string | null }, onRemove: (e: React.MouseEvent) => void) => (
+  const renderSelectedBadge = (option: { value: string; label: string; color?: string | null; priority?: number | null; hasCta?: boolean }, onRemove: (e: React.MouseEvent) => void) => (
     <div key={option.value} className="flex items-center">
       <TagBadge
         variant="safe"
         color={option.color}
-        className="text-sm pr-6 relative"
+        className="text-sm pr-7 relative"
       >
         {option.label}
+        <span className="ml-2 inline-flex items-center gap-1 text-[10px] text-foreground/70">
+          {typeof option.priority === 'number' && (
+            <>
+              <Star className="h-3 w-3" />
+              {PRIORITY_LABELS[option.priority as keyof typeof PRIORITY_LABELS] || t('common.unknown')}
+            </>
+          )}
+          {option.hasCta && (
+            <>
+              <LinkIcon className="h-3 w-3" />
+              {t('tags.management.cta')}
+            </>
+          )}
+        </span>
         <button
           type="button"
           className="absolute right-1 top-1/2 -translate-y-1/2 hover:bg-black/10 rounded-full w-4 h-4 flex items-center justify-center text-xs"
@@ -122,6 +154,11 @@ export const TagManagement: React.FC<TagManagementProps> = ({
           renderOption={renderOption}
           renderSelectedBadge={renderSelectedBadge}
         />
+        <p className="text-xs text-muted-foreground">
+          {t('tags.management.priorityHelper', {
+            defaultValue: 'Priority affects which tag action (CTA) is preferred when multiple tags apply. Higher priority tags (High > Medium > Low) take precedence for CTAs and prominence.'
+          })}
+        </p>
         {currentTags.length >= MAX_TAGS && (
           <p className="text-xs text-muted-foreground">
             {t('tags.management.maxTagsAllowed', { count: MAX_TAGS.toString() })}

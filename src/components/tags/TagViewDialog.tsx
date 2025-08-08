@@ -94,7 +94,7 @@ export const TagViewDialog: React.FC<Props> = ({
       open={isOpen}
       onOpenChange={onClose}
       title={titleContent}
-      description="View detailed information about this tag and see how it appears on events."
+      description="View details and preview how this tag appears on event cards."
       size="xl"
       footer={footerContent}
     >
@@ -198,23 +198,26 @@ export const TagViewDialog: React.FC<Props> = ({
             {/* Image & CTA */}
             {(tag.imageUrl || (tag.cta && tag.cta.label && tag.cta.url)) && (
               <TagInfoSection title="Media & Actions" icon={ExternalLink}>
-                {tag.imageUrl && (
-                  <InfoRow label="Image URL">
-                    <p className="text-sm font-mono bg-gray-100 px-2 py-1 rounded text-xs line-clamp-2">
-                      {tag.imageUrl}
-                    </p>
-                  </InfoRow>
-                )}
+                 {tag.imageUrl && (
+                   <InfoRow label="Image URL">
+                     <p className="text-xs font-mono bg-gray-100 px-2 py-1 rounded line-clamp-2">
+                       {tag.imageUrl}
+                     </p>
+                   </InfoRow>
+                 )}
                 {tag.cta && tag.cta.label && tag.cta.url && (
                   <>
                     <InfoRow label="Button Label">
                       <p className="text-sm">{tag.cta.label}</p>
                     </InfoRow>
-                    <InfoRow label="Button URL">
-                      <p className="text-sm font-mono bg-gray-100 px-2 py-1 rounded text-xs line-clamp-2">
-                        {tag.cta.url}
-                      </p>
-                    </InfoRow>
+                     <InfoRow label="Button URL">
+                       <p className="text-xs font-mono bg-gray-100 px-2 py-1 rounded line-clamp-2">
+                         {tag.cta.url}
+                       </p>
+                     </InfoRow>
+                    <div className="text-xs text-muted-foreground">
+                      Higher priority tags are preferred when multiple tags define CTAs. On cards with multiple tag images, the CTA can change with the active image.
+                    </div>
                   </>
                 )}
               </TagInfoSection>

@@ -1,16 +1,11 @@
+// Subtle app-aligned color set for CTA emphasis
 export const TAG_COLORS = [
-  '#8B5CF6', // Violet (Primary yoga color)
-  '#EC4899', // Pink (Restorative/gentle)
-  '#10B981', // Emerald (All levels/balance)
-  '#F59E0B', // Amber (Energy/morning)
-  '#06B6D4', // Cyan (Calm/beginner)
-  '#EF4444', // Red (Power/advanced)
-  '#F97316', // Orange (Strength/intermediate)
-  '#6B7280', // Gray (Neutral/general)
-  '#84CC16', // Lime (Fresh/renewal)
-  '#14B8A6', // Teal (Meditation/mindfulness)
-  '#A855F7', // Purple (Spiritual/deep practice)
-  '#EAB308', // Yellow (Joy/sunshine)
+  '#6366F1', // Indigo (primary)
+  '#8B5CF6', // Violet
+  '#10B981', // Emerald
+  '#06B6D4', // Cyan
+  '#F59E0B', // Amber
+  '#6B7280', // Neutral Gray
 ] as const
 
 export const AUDIENCE_OPTIONS = [

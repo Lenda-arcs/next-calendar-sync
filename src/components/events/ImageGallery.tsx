@@ -11,6 +11,7 @@ interface ImageGalleryProps {
   title: string
   className?: string
   cardId?: string
+  onSlideChange?: (index: number) => void
 }
 
 interface TouchState {
@@ -21,7 +22,7 @@ interface TouchState {
   isSwiping: boolean
 }
 
-export function ImageGallery({ images, title, className, cardId }: ImageGalleryProps) {
+export function ImageGallery({ images, title, className, cardId, onSlideChange }: ImageGalleryProps) {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [imageErrors, setImageErrors] = useState<Set<number>>(new Set())
   const [touchState, setTouchState] = useState<TouchState>({
@@ -47,18 +48,22 @@ export function ImageGallery({ images, title, className, cardId }: ImageGalleryP
   const nextImage = useCallback(() => {
     if (hasMultipleImages && !isTransitioning) {
       setIsTransitioning(true)
-      setCurrentIndex((prev) => (prev + 1) % validImages.length)
+      const nextIndex = (currentIndex + 1) % validImages.length
+      setCurrentIndex(nextIndex)
+      if (onSlideChange) onSlideChange(nextIndex)
       setTimeout(() => setIsTransitioning(false), 300) // Match transition duration
     }
-  }, [hasMultipleImages, isTransitioning, validImages.length])
+  }, [hasMultipleImages, isTransitioning, validImages.length, currentIndex, onSlideChange])
 
   const prevImage = useCallback(() => {
     if (hasMultipleImages && !isTransitioning) {
       setIsTransitioning(true)
-      setCurrentIndex((prev) => (prev - 1 + validImages.length) % validImages.length)
+      const nextIndex = (currentIndex - 1 + validImages.length) % validImages.length
+      setCurrentIndex(nextIndex)
+      if (onSlideChange) onSlideChange(nextIndex)
       setTimeout(() => setIsTransitioning(false), 300) // Match transition duration
     }
-  }, [hasMultipleImages, isTransitioning, validImages.length])
+  }, [hasMultipleImages, isTransitioning, validImages.length, currentIndex, onSlideChange])
 
   // Touch event handlers for swipe functionality
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
@@ -142,13 +147,15 @@ export function ImageGallery({ images, title, className, cardId }: ImageGalleryP
       case 'Home':
         event.preventDefault()
         setCurrentIndex(0)
+        if (onSlideChange) onSlideChange(0)
         break
       case 'End':
         event.preventDefault()
         setCurrentIndex(validImages.length - 1)
+        if (onSlideChange) onSlideChange(validImages.length - 1)
         break
     }
-  }, [hasMultipleImages, prevImage, nextImage, validImages.length])
+  }, [hasMultipleImages, prevImage, nextImage, validImages.length, onSlideChange])
 
   // Use placeholder image when no valid images are available
   const displayImage = validImages.length > 0 ? validImages[currentIndex] : (typeof placeholderImage === 'string' ? placeholderImage : placeholderImage.src)
@@ -238,7 +245,7 @@ export function ImageGallery({ images, title, className, cardId }: ImageGalleryP
           {validImages.map((_, index) => (
             <button
               key={index}
-              onClick={() => setCurrentIndex(index)}
+              onClick={() => { setCurrentIndex(index); if (onSlideChange) onSlideChange(index) }}
               className={cn(
                 "w-2 h-2 rounded-full transition-all",
                 index === currentIndex

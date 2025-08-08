@@ -75,15 +75,7 @@ export function useTagForm({ initialTag, isEditing, userId }: UseTagFormProps) {
     }))
   }
 
-  const updateClassType = (value: string) => {
-    if (!value.trim()) {
-      setFormData(prev => ({ ...prev, classType: [] }))
-      return
-    }
-    
-    const types = value.split(',').map(s => s.trim()).filter(Boolean)
-    setFormData(prev => ({ ...prev, classType: types }))
-  }
+  // classType is now set directly via updateField from a MultiSelect in the UI
 
   const buildEventTag = (): EventTag => {
     const slug = formData.name.toLowerCase()
@@ -113,7 +105,6 @@ export function useTagForm({ initialTag, isEditing, userId }: UseTagFormProps) {
     formData,
     updateField,
     updateCta,
-    updateClassType,
     buildEventTag,
     isValid,
   }

@@ -14,8 +14,8 @@ const inputVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-white/50 border border-white/40 shadow-md",
-        filled: "bg-white/30 border border-white/30 shadow-lg",
+        default: "bg-background border border-input",
+        filled: "bg-background border border-input",
         ghost: "border-0 bg-transparent backdrop-blur-none",
         // glass: "bg-white/20 border border-white/30 shadow-xl",
       },

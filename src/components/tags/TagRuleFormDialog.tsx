@@ -158,6 +158,7 @@ export const TagRuleFormDialog: React.FC<Props> = ({
           userId={userId}
           mode="keywords"
           maxPatterns={5}
+          excludeRuleId={isEditing ? (editingRule?.id || undefined) : undefined}
           suggestions={keywordSuggestions.filter(s => s.type === 'title').map(s => ({ 
             value: s.keyword, 
             label: s.keyword,
@@ -178,6 +179,7 @@ export const TagRuleFormDialog: React.FC<Props> = ({
           userId={userId}
           mode="location"
           maxPatterns={15}
+          excludeRuleId={isEditing ? (editingRule?.id || undefined) : undefined}
           suggestions={keywordSuggestions.filter(s => s.type === 'location').map(s => ({ 
             value: s.keyword, 
             label: s.keyword,

@@ -35,6 +35,8 @@ interface PatternInputProps {
   mode?: PatternInputMode // Removed location-keywords
   maxPatterns?: number
   suggestions?: Array<{ value: string; label: string; count?: number }>
+  // When editing an existing tag rule, exclude that rule from conflict checks
+  excludeRuleId?: string
 }
 
 export function PatternInput({
@@ -49,7 +51,8 @@ export function PatternInput({
   className,
   mode = 'location',
   maxPatterns = 10,
-  suggestions = []
+  suggestions = [],
+  excludeRuleId
 }: PatternInputProps) {
   const [inputValue, setInputValue] = useState('')
   const [conflicts, setConflicts] = useState<PatternConflict[]>([])
@@ -179,6 +182,8 @@ export function PatternInput({
           const lowerPattern = pattern.toLowerCase()
 
           for (const rule of existingRules || []) {
+            // Skip the rule currently being edited to avoid self-conflicts
+            if (excludeRuleId && rule.id === excludeRuleId) continue
             const ruleKeywords = mode === 'keywords' 
               ? (rule.keywords || [])
               : (rule.location_keywords || [])
@@ -208,7 +213,7 @@ export function PatternInput({
     } finally {
       setIsCheckingConflicts(false)
     }
-  }, [userId, currentStudioId, supabase, mode])
+  }, [userId, currentStudioId, supabase, mode, excludeRuleId])
 
   // Preview which locations/events would match
   const previewMatches = useCallback(async (patternsToCheck: string[]) => {
