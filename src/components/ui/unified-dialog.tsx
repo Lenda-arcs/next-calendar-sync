@@ -55,7 +55,7 @@ function UnifiedDialog({
             // Positioning: bottom sheet on mobile, centered modal on larger screens
             "fixed inset-x-0 bottom-0 z-50 w-full sm:top-1/2 sm:left-1/2 sm:w-full sm:max-w-[calc(100%-2rem)] sm:-translate-x-1/2 sm:-translate-y-1/2",
             // Layout and height: up to 85% screen on mobile, original limit on larger screens
-            "flex flex-col max-h-[95vh] sm:max-h-[95vh]",
+            "flex flex-col max-h-[85vh] sm:max-h-[85vh]",
             // Glassmorphism styling aligned with app theme
             "backdrop-blur-xl bg-white/80 border border-white/50 shadow-2xl",
             // Rounded corners: sheet-style on mobile, full rounded on larger screens
