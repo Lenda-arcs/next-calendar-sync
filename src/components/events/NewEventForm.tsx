@@ -2,6 +2,9 @@
 
 import React, { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
+// import { Label } from '@/components/ui/label'
+// import { Input } from '@/components/ui/input'
+import EventScheduleDialog from './EventScheduleDialog'
 import { FormField } from '@/components/ui/form-field'
 import { UnifiedDialog } from '@/components/ui/unified-dialog'
 import { Textarea } from '@/components/ui/textarea'
@@ -104,6 +107,7 @@ export function NewEventForm({
   
   // State for deletion confirmation dialog
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [isScheduleDialogOpen, setIsScheduleDialogOpen] = useState(false)
 
   // Initialize form data and reset on editEvent change
   const [formData, setFormData] = useState<CreateEventData>({
@@ -398,71 +402,33 @@ export function NewEventForm({
             </span>
           </h3>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <FormField
-                label="Start Date & Time"
-                required
-                type="datetime-local"
-                value={formData.start.dateTime}
-                onChange={(e) => handleFieldChange('start.dateTime', e.target.value)}
-                disabled={isSubmitting}
-                className="font-mono"
-              />
-              <p className="text-xs text-muted-foreground">
-                When does your class begin?
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <FormField
-                label="End Date & Time"
-                required
-                type="datetime-local"
-                value={formData.end.dateTime}
-                onChange={(e) => handleFieldChange('end.dateTime', e.target.value)}
-                disabled={isSubmitting}
-                className="font-mono"
-              />
-              <p className="text-xs text-muted-foreground">
-                When does your class end?
-              </p>
-            </div>
-          </div>
-
-          {/* Quick duration buttons */}
-          {formData.start.dateTime && (
-            <div className="space-y-3">
-              <p className="text-sm font-medium text-muted-foreground">Quick duration:</p>
-              <div className="flex flex-wrap gap-2">
-                {[
-                  { label: '60 min', minutes: 60 },
-                  { label: '75 min', minutes: 75 },
-                  { label: '90 min', minutes: 90 },
-                  { label: '2 hours', minutes: 120 }
-                ].map(({ label, minutes }) => (
-                  <Button
-                    key={minutes}
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={isSubmitting}
-                    onClick={() => {
-                      if (formData.start.dateTime) {
-                        const startDate = new Date(formData.start.dateTime)
-                        const endDate = new Date(startDate.getTime() + minutes * 60000)
-                        const endDateTimeLocal = formatDateForInput(endDate.toISOString())
-                        handleFieldChange('end.dateTime', endDateTimeLocal)
-                      }
-                    }}
-                    className="text-xs"
-                  >
-                    {label}
-                  </Button>
-                ))}
+          {/* Read-only summary + Edit schedule action */}
+          <div className="space-y-4">
+            <div className="text-sm text-muted-foreground space-y-1">
+              <div>
+                <span className="font-medium text-foreground">Start:</span>
+                <span className="ml-2">
+                  {formData.start.dateTime ? new Date(formData.start.dateTime).toLocaleString() : 'Not set'}
+                </span>
+              </div>
+              <div>
+                <span className="font-medium text-foreground">End:</span>
+                <span className="ml-2">
+                  {formData.end.dateTime ? new Date(formData.end.dateTime).toLocaleString() : 'Not set'}
+                </span>
               </div>
             </div>
-          )}
+            <div>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={isSubmitting}
+                onClick={() => setIsScheduleDialogOpen(true)}
+              >
+                Edit schedule
+              </Button>
+            </div>
+          </div>
           
           {/* Date validation error */}
           {getDateValidationError() && (
@@ -567,6 +533,19 @@ export function NewEventForm({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      {/* Focused Schedule Dialog */}
+      <EventScheduleDialog
+        isOpen={isScheduleDialogOpen}
+        onClose={() => setIsScheduleDialogOpen(false)}
+        startDateTimeLocal={formData.start.dateTime || ''}
+        endDateTimeLocal={formData.end.dateTime || ''}
+        onApply={(updatedStartLocal, updatedEndLocal) => {
+          handleFieldChange('start.dateTime', updatedStartLocal)
+          handleFieldChange('end.dateTime', updatedEndLocal)
+          setIsScheduleDialogOpen(false)
+        }}
+        isSubmitting={isSubmitting}
+      />
     </UnifiedDialog>
   )
 } 

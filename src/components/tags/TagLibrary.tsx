@@ -22,6 +22,7 @@ interface Props {
   globalTags: Tag[] // Required - passed from parent
   customTags: Tag[] // Required - passed from parent
   tagOperations?: TagOperations // Accept tag operations as props
+  createCtaRef?: React.RefObject<HTMLDivElement | null>
 }
 
 export const TagLibrary: React.FC<Props> = ({ 
@@ -29,7 +30,8 @@ export const TagLibrary: React.FC<Props> = ({
   userRole = 'user', 
   globalTags,
   customTags,
-  tagOperations
+  tagOperations,
+  createCtaRef
 }) => {
   // Convert database tags to EventTags
   const globalEventTags = useMemo(() => {
@@ -65,6 +67,7 @@ export const TagLibrary: React.FC<Props> = ({
       onCreateNew={operations.onCreateNew}
       userId={userId}
       userRole={userRole}
+      createCtaRef={createCtaRef}
     />
   )
 } 

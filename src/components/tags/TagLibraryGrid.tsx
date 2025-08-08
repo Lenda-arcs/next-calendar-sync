@@ -17,6 +17,7 @@ interface Props {
   onCreateNew: () => void
   userId: string
   userRole?: UserRole // User role for determining edit permissions
+  createCtaRef?: React.RefObject<HTMLDivElement | null>
 }
 
 interface TagLibraryItemProps {
@@ -146,6 +147,7 @@ export const TagLibraryGrid: React.FC<Props> = ({
   onCreateNew,
   userId,
   userRole = 'user',
+  createCtaRef,
 }) => {
   const { t } = useTranslation()
   
@@ -154,14 +156,16 @@ export const TagLibraryGrid: React.FC<Props> = ({
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="text-foreground">{t('pages.manageTags.tagLibrary')}</CardTitle>
-          <Button
-            onClick={onCreateNew}
-            variant="secondary"
-            size="sm"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            {t('pages.manageTags.createTag')}
-          </Button>
+          <div ref={createCtaRef}>
+            <Button
+              onClick={onCreateNew}
+              variant="secondary"
+              size="sm"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              {t('pages.manageTags.createTag')}
+            </Button>
+          </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-8">

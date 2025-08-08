@@ -5,10 +5,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { TagLibraryItem } from '@/components/tags'
 import { TagViewDialog } from '@/components/tags/TagViewDialog'
-import { Settings, Plus, ArrowLeftRight, RefreshCw, Zap, Tag } from 'lucide-react'
+import { Settings, Plus, ArrowLeftRight, Zap, Tag, RefreshCw } from 'lucide-react'
 import { Tag as TagType } from '@/lib/types'
 import { EventTag } from '@/lib/event-types'
-import { RematchTagsButton } from './RematchEventsButton'
+// Removed fix/rematch actions from control panel
 import { useTranslation } from '@/lib/i18n/context'
 import { StudioInfo } from '@/lib/hooks/useEventFilters'
 
@@ -40,7 +40,7 @@ interface EventsControlPanelProps {
   onCreateTag: () => void
   onCreateEvent: () => void
   onSyncFeeds: () => void
-  onRefresh: () => void
+  createEventCtaRef?: React.RefObject<HTMLDivElement | null>
 }
 
 export default function EventsControlPanel({
@@ -62,7 +62,7 @@ export default function EventsControlPanel({
   onCreateTag,
   onCreateEvent,
   onSyncFeeds,
-  onRefresh
+  createEventCtaRef
 }: EventsControlPanelProps) {
   const { t } = useTranslation()
   
@@ -132,13 +132,6 @@ export default function EventsControlPanel({
                 onClick={() => onTimeFilterChange('all')}
               >
                 {t('pages.manageEvents.controlPanel.allEvents')}
-              </Button>
-              <Button
-                variant={timeFilter === 'today' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => onTimeFilterChange('today')}
-              >
-                Today
               </Button>
               <Button
                 variant={timeFilter === 'week' ? 'default' : 'outline'}
@@ -251,15 +244,17 @@ export default function EventsControlPanel({
               {t('pages.manageEvents.controlPanel.createAndManage')}
             </h4>
             <div className="flex flex-wrap gap-2">
-              <Button 
-                variant="default" 
-                size="sm"
-                onClick={onCreateEvent}
-                className="bg-green-600 hover:bg-green-700"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                {t('pages.manageEvents.controlPanel.newEvent')}
-              </Button>
+              <div ref={createEventCtaRef}>
+                <Button 
+                  variant="default" 
+                  size="sm"
+                  onClick={onCreateEvent}
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  {t('pages.manageEvents.controlPanel.newEvent')}
+                </Button>
+              </div>
               <Button 
                 variant="outline" 
                 size="sm"
@@ -267,15 +262,6 @@ export default function EventsControlPanel({
               >
                 <Tag className="h-4 w-4 mr-2" />
                 {t('pages.manageEvents.controlPanel.newTag')}
-              </Button>
-              <Button 
-                onClick={onRefresh}
-                disabled={isLoading}
-                variant="outline"
-                size="sm"
-              >
-                <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-                {t('pages.manageEvents.controlPanel.refresh')}
               </Button>
             </div>
           </div>
@@ -288,11 +274,6 @@ export default function EventsControlPanel({
                 {t('pages.manageEvents.controlPanel.systemTools')}
               </h4>
               <div className="flex flex-wrap gap-2">
-                <RematchTagsButton 
-                  userId={userId}
-                  variant="outline" 
-                  size="sm"
-                />
                 <Button 
                   onClick={onSyncFeeds}
                   disabled={isLoading || isSyncing}

@@ -33,6 +33,7 @@ import { convertEventToCardProps } from '@/lib/event-utils'
 import { VisibilityFilter } from '@/components/events/EventsControlPanel'
 import { useTranslation } from '@/lib/i18n/context'
 import { useEventFilters } from '@/lib/hooks/useEventFilters'
+import { useScrollIntoView } from '@/lib/hooks/useScrollIntoView'
 
 // Types for component
 interface EventStats {
@@ -66,6 +67,7 @@ export function ManageEventsClient({ userId }: ManageEventsClientProps) {
 
   // Create event form state
   const [isCreateEventFormOpen, setIsCreateEventFormOpen] = React.useState(false)
+  const { elementRef: createEventCtaRef, isInView: isCreateCtaInView } = useScrollIntoView({ threshold: 0.1 })
 
   // Edit event form state
   const [isEditEventFormOpen, setIsEditEventFormOpen] = React.useState(false)
@@ -149,9 +151,7 @@ export function ManageEventsClient({ userId }: ManageEventsClientProps) {
   }, [events, allAvailableTags, applyEventFilters])
 
   // Event handlers
-  const handleRefresh = React.useCallback(async () => {
-    await refetchEvents()
-  }, [refetchEvents])
+  // Removed explicit refresh button; rely on data layer
 
   const syncCalendarFeedsMutation = useSyncAllCalendarFeeds()
   
@@ -335,7 +335,7 @@ export function ManageEventsClient({ userId }: ManageEventsClientProps) {
         <div className="text-center py-12">
           <p className="text-lg font-medium text-destructive mb-2">{t('pages.manageEvents.loadError')}</p>
           <p className="text-sm text-muted-foreground mb-4">{eventsError.message}</p>
-          <Button onClick={handleRefresh} variant="outline">
+          <Button onClick={() => refetchEvents()} variant="outline">
             <RefreshCw className="h-4 w-4 mr-2" />
             {t('pages.manageEvents.tryAgain')}
           </Button>
@@ -350,10 +350,12 @@ export function ManageEventsClient({ userId }: ManageEventsClientProps) {
       subtitle={t('pages.manageEvents.subtitle')}
     >
       <div className="space-y-8">
-        {/* Create Event Button */}
-        <CreateEventFAB
-          onClick={() => setIsCreateEventFormOpen(true)}
-        />
+        {/* Create Event FAB - only visible when primary CTA is off-screen */}
+        {!isCreateCtaInView && (
+          <CreateEventFAB
+            onClick={() => setIsCreateEventFormOpen(true)}
+          />
+        )}
 
         {/* EventsControlPanel - Always visible, even during loading */}
         <EventsControlPanel
@@ -387,7 +389,7 @@ export function ManageEventsClient({ userId }: ManageEventsClientProps) {
           onCreateTag={() => setIsCreateTagFormOpen(true)}
           onCreateEvent={() => setIsCreateEventFormOpen(true)}
           onSyncFeeds={handleSyncFeeds}
-          onRefresh={handleRefresh}
+          createEventCtaRef={createEventCtaRef}
           onClearAllFilters={clearAllFilters}
         />
 

@@ -11,6 +11,7 @@ import { NewTagForm } from '@/components/tags'
 import { Button } from '@/components/ui/button'
 import { Plus } from 'lucide-react'
 import type { UserRole } from '@/lib/types'
+import { useScrollIntoView } from '@/lib/hooks/useScrollIntoView'
 
 interface Props {
   userId: string
@@ -70,6 +71,9 @@ export function ManageTagsClient({ userId }: Props) {
   React.useEffect(() => {
     clearTagMapCache()
   }, [allTags])
+  // Track visibility of the inline "Create Tag" CTA to toggle FAB
+  const { elementRef: createTagCtaRef, isInView: isCreateTagCtaInView } = useScrollIntoView({ threshold: 0.1 })
+
 
   const resolvedUserRole = (userRole || 'user') as UserRole
   
@@ -124,6 +128,7 @@ export function ManageTagsClient({ userId }: Props) {
                 updating,
                 deleting,
               }}
+              createCtaRef={createTagCtaRef}
             />
             
             {/* Tag View Dialog */}
@@ -144,6 +149,19 @@ export function ManageTagsClient({ userId }: Props) {
           </div>
         )}
       </DataLoader>
+      {/* Floating Create FAB, only when the inline CTA is not visible */}
+      {!isCreateTagCtaInView && (
+        <div className="fixed bottom-6 right-6 z-50">
+          <Button
+            onClick={handleCreateNew}
+            size="lg"
+            className="h-14 w-14 rounded-full shadow-lg transition-all duration-200 hover:scale-110 active:scale-95"
+            title="Create Tag"
+          >
+            <Plus className="h-6 w-6" />
+          </Button>
+        </div>
+      )}
       
       {/* New/Edit Tag Form */}
       <NewTagForm
