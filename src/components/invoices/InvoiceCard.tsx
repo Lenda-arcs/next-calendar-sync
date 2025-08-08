@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog'
 import { InvoiceWithDetails } from '@/lib/types'
 import { cn } from '@/lib/utils'
-import { Edit3, ExternalLink, Download, Trash2, FileText, Loader2 } from 'lucide-react'
+import { ExternalLink, Download, Trash2, FileText, Loader2 } from 'lucide-react'
 import { formatInvoiceDate } from '@/lib/date-utils'
 import { useTranslation } from '@/lib/i18n/context'
 import { generateInvoicePDF } from '@/lib/invoice-utils'
@@ -29,7 +29,7 @@ export const InvoiceCard: React.FC<InvoiceCardProps> = ({
   selected = false,
   onToggleSelect,
   showCheckbox = false,
-  onEdit, 
+  // onEdit disabled for now
   onViewPDF, 
   onDelete,
   onPDFGenerated
@@ -125,20 +125,7 @@ export const InvoiceCard: React.FC<InvoiceCardProps> = ({
 
   const renderActionButtons = () => (
     <div className="flex items-center gap-2 w-full sm:w-auto">
-      {onEdit && (
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={(e) => {
-            e.stopPropagation()
-            onEdit(invoice)
-          }}
-          className="flex-1 sm:flex-none h-9 sm:h-8 text-gray-700 hover:text-gray-900"
-        >
-          <Edit3 className="w-4 h-4 sm:w-3 sm:h-3 mr-1" />
-          <span className="sm:hidden">Edit</span>
-        </Button>
-      )}
+      {/* Edit temporarily disabled */}
       
       {invoice.pdf_url ? (
         <>
@@ -229,19 +216,7 @@ export const InvoiceCard: React.FC<InvoiceCardProps> = ({
 
   const renderDesktopActions = () => (
     <div className="flex items-center gap-1 mb-2">
-      {onEdit && (
-        <Button
-          size="sm"
-          variant="ghost"
-          onClick={(e) => {
-            e.stopPropagation()
-            onEdit(invoice)
-          }}
-          className="h-6 w-6 p-0 text-gray-500 hover:text-gray-700"
-        >
-          <Edit3 className="w-3 h-3" />
-        </Button>
-      )}
+      {/* Edit temporarily disabled */}
       {onDelete && (
         <AlertDialog>
           <AlertDialogTrigger asChild>

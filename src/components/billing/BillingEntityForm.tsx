@@ -14,7 +14,7 @@ import { useSupabaseMutation } from "../../lib/hooks/useQueryWithSupabase";
 import { useTeacherStudioRelationships, getBestStudioSuggestion, extractBillingDefaultsFromStudio } from "../../lib/hooks/useTeacherStudioRelationships";
 import { createStudio, updateStudio } from "../../lib/invoice-utils";
 import { rematchUserStudios } from "../../lib/rematch-utils";
-import type { BillingEntity, BillingEntityInsert, BillingEntityUpdate, RateConfig, RecipientInfo, BankingInfo } from "../../lib/types";
+import type { BillingEntity, BillingEntityInsert, BillingEntityUpdate, RateConfig, RateConfigTiered, RecipientInfo, BankingInfo } from "../../lib/types";
 import { Plus, Trash2 } from "lucide-react";
 
 // Types for tiered rate management
@@ -58,6 +58,7 @@ interface FormData {
   online_bonus_per_student: string;
   online_bonus_ceiling: string;
   rate_tiers: string; // JSON string representation
+    tier_count_includes_online: boolean; // NEW: whether online students count toward tier thresholds
   separate_online_studio_calculation: boolean;
   substitution_billing_enabled: boolean;
   recipient_name: string;
@@ -85,6 +86,7 @@ function extractFormDataFromEntity(entity: BillingEntity | null | undefined, def
             online_bonus_per_student: "",
       online_bonus_ceiling: "",
       rate_tiers: "",
+      tier_count_includes_online: true,
       separate_online_studio_calculation: false,
       substitution_billing_enabled: false,
             recipient_name: "",
@@ -114,6 +116,7 @@ function extractFormDataFromEntity(entity: BillingEntity | null | undefined, def
     online_bonus_per_student: rateConfig?.online_bonus_per_student?.toString() || "",
     online_bonus_ceiling: rateConfig?.online_bonus_ceiling?.toString() || "",
     rate_tiers: rateConfig?.type === 'tiered' ? JSON.stringify(rateConfig.tiers, null, 2) : "",
+    tier_count_includes_online: rateConfig?.type === 'tiered' ? (rateConfig as RateConfigTiered).tier_count_includes_online !== false : true,
     separate_online_studio_calculation: false, // Legacy field, not used in new schema
     substitution_billing_enabled: entity.substitution_billing_enabled || false,
     recipient_name: recipientInfo?.name || "",
@@ -220,7 +223,12 @@ const useBillingEntityForm = (props: Props) => {
   const handleInputChange = (field: string, value: string) => {
     // Handle boolean conversions for specific fields
     let processedValue: string | boolean = value;
-    if (field === 'use_tiered_rates' || field === 'separate_online_studio_calculation') {
+    if (
+      field === 'use_tiered_rates' ||
+      field === 'separate_online_studio_calculation' ||
+      field === 'substitution_billing_enabled' ||
+      field === 'tier_count_includes_online'
+    ) {
       processedValue = value === 'true';
     }
     
@@ -336,6 +344,7 @@ const useBillingEntityForm = (props: Props) => {
             tiers: tiers,
             online_bonus_per_student: formData.online_bonus_per_student ? Number(formData.online_bonus_per_student) : undefined,
             online_bonus_ceiling: formData.online_bonus_ceiling ? Number(formData.online_bonus_ceiling) : undefined,
+            tier_count_includes_online: formData.tier_count_includes_online,
           };
         } catch (error) {
           console.error('Invalid rate tiers JSON:', error);
@@ -916,6 +925,22 @@ const StudioForm: React.FC<{
         {formData.rate_type === 'tiered' && (
           <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
             <h4 className="text-sm font-medium text-gray-800">Tiered Rate Configuration</h4>
+            {/* Toggle: Include online students in tier thresholds */}
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id="tier_count_includes_online"
+                checked={formData.tier_count_includes_online}
+                onChange={(e) => onInputChange('tier_count_includes_online', e.target.checked.toString())}
+                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              <Label htmlFor="tier_count_includes_online" className="text-sm font-medium">
+                Include online students in tier thresholds
+              </Label>
+            </div>
+            <p className="text-xs text-muted-foreground -mt-2">
+              When enabled, the tier level is chosen based on studio + online students. When disabled, only in-studio students count; online students may still receive separate online bonuses.
+            </p>
             <div>
               <Label htmlFor="rate_tiers">Rate Tiers (JSON)</Label>
               <div className="space-y-3">

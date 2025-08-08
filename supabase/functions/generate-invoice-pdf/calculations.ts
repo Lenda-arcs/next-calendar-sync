@@ -28,6 +28,8 @@ type RateConfigTiered = {
   }>
   online_bonus_per_student?: number
   online_bonus_ceiling?: number
+  // If true (default), tier thresholds use (studio + online) students; if false, only in-studio students count for tier selection
+  tier_count_includes_online?: boolean
 }
 
 type RateConfig = RateConfigFlat | RateConfigPerStudent | RateConfigTiered
@@ -66,7 +68,8 @@ export function calculateEventRate(event: InvoiceData['events'][0]): number {
  * Calculate payout using tiered rate system
  */
 function calculateTieredRatePayout(studioStudents: number, onlineStudents: number, rateConfig: RateConfigTiered): number {
-  const totalStudents = studioStudents + onlineStudents
+  const includeOnlineInTier = rateConfig.tier_count_includes_online !== false // default true
+  const totalStudents = includeOnlineInTier ? (studioStudents + onlineStudents) : studioStudents
   
   // Find the appropriate tier for the student count
   const tier = rateConfig.tiers?.find((tier) => {

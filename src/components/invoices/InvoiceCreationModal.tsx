@@ -64,6 +64,8 @@ export function InvoiceCreationModal({
     selectedEvents,
     totalAmount,
     handleEventUpdate,
+    removeEvent,
+    computeItemRate,
     isReady,
     hasChanges
   } = useInvoiceCreationState({
@@ -366,6 +368,11 @@ export function InvoiceCreationModal({
                           studentsStudio={item.studentsStudio}
                           studentsOnline={item.studentsOnline}
                           onUpdate={handleEventUpdate}
+                          onRemove={(id) => {
+                            // Remove visually now; persistence happens on submit via link/unlink logic
+                            removeEvent(id)
+                          }}
+                          computedRate={computeItemRate(item)}
                           disabled={invoiceMutation.isPending}
                         />
                       ))}

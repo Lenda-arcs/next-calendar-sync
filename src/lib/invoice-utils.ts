@@ -112,7 +112,8 @@ export function calculateEventPayout(event: Event, billingEntity: BillingEntity)
  * Calculate payout using tiered rate system
  */
 function calculateTieredRatePayout(studioStudents: number, onlineStudents: number, rateConfig: RateConfigTiered): number {
-  const totalStudents = studioStudents + onlineStudents
+  const includeOnlineInTier = rateConfig.tier_count_includes_online !== false // default true
+  const totalStudents = includeOnlineInTier ? (studioStudents + onlineStudents) : studioStudents
   
   // Find the appropriate tier for the student count
   const tier = rateConfig.tiers.find(tier => {

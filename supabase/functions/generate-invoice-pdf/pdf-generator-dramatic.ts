@@ -244,7 +244,10 @@ function addGermanFeeCalculation(doc: jsPDF, t: any, data: InvoiceData, y: numbe
             eventRate += eligibleOnlineStudents * rateConfig.online_bonus_per_student
           }
         } else if (rateConfig.type === 'tiered') {
-          const totalStudents = (event.students_studio || 0) + (event.students_online || 0)
+          const includeOnlineInTier = (rateConfig as any).tier_count_includes_online !== false
+          const totalStudents = includeOnlineInTier 
+            ? (event.students_studio || 0) + (event.students_online || 0)
+            : (event.students_studio || 0)
           const tier = rateConfig.tiers?.find(tier => {
             return totalStudents >= tier.min && (tier.max === null || totalStudents <= tier.max)
           })

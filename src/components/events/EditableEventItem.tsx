@@ -4,7 +4,7 @@ import React, { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Edit3, Check, X } from 'lucide-react'
+import { Edit3, Check, X, Trash2 } from 'lucide-react'
 
 interface EditableEventItemProps {
   id: string
@@ -15,6 +15,9 @@ interface EditableEventItemProps {
   studentsOnline?: number
   onUpdate: (id: string, title: string, rate: number, studentsStudio?: number, studentsOnline?: number) => void
   disabled?: boolean
+  onRemove?: (id: string) => void
+  // Optional computed display rate when the rate should be derived from counts
+  computedRate?: number
 }
 
 export function EditableEventItem({
@@ -26,6 +29,8 @@ export function EditableEventItem({
   studentsOnline = 0,
   onUpdate,
   disabled = false
+  , onRemove,
+  computedRate
 }: EditableEventItemProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [editingTitle, setEditingTitle] = useState(title)
@@ -152,6 +157,17 @@ export function EditableEventItem({
               >
                 <Edit3 className="w-4 h-4" />
               </Button>
+              {onRemove && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => onRemove(id)}
+                  disabled={disabled}
+                  className="p-1 h-8 w-8 text-red-500 hover:text-red-700"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              )}
             </div>
             <div className="text-sm text-gray-600 space-y-1">
               <div>Date: {date}</div>
@@ -160,7 +176,7 @@ export function EditableEventItem({
           </div>
           <div className="text-right flex-shrink-0 ml-4">
             <div className="text-lg font-bold">
-              €{rate.toFixed(2)}
+              €{(computedRate ?? rate).toFixed(2)}
             </div>
           </div>
         </div>

@@ -49,6 +49,8 @@ export interface InvoiceData {
           max: number | null
           rate: number
         }>
+        // If true (default), tier thresholds use (studio + online) students; if false, only in-studio students count for tier selection
+        tier_count_includes_online?: boolean
       } | null
     } | null
   }>

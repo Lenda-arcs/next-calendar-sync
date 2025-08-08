@@ -145,6 +145,8 @@ export interface RateConfigTiered {
   }>
   online_bonus_per_student?: number
   online_bonus_ceiling?: number
+  // If true (default), tier thresholds use (studio + online) students; if false, only in-studio students count for tier selection
+  tier_count_includes_online?: boolean
 }
 
 export type RateConfig = RateConfigFlat | RateConfigPerStudent | RateConfigTiered

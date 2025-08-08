@@ -34,7 +34,6 @@ interface InvoiceGroup {
 
 export function GroupedInvoicesList({ 
   invoices, 
-  onEdit, 
   onStatusChange, 
   onViewPDF, 
   onDelete
@@ -321,7 +320,7 @@ export function GroupedInvoicesList({
                     selected={selectedInvoiceIds.includes(invoice.id)}
                     onToggleSelect={(invoiceId) => handleToggleInvoice(group.studioId, invoiceId)}
                     showCheckbox={true}
-                    onEdit={onEdit}
+                    onEdit={undefined}
                     onViewPDF={onViewPDF}
                     onDelete={onDelete}
 

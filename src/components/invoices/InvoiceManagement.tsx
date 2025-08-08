@@ -81,14 +81,9 @@ export function InvoiceManagement({ userId }: InvoiceManagementProps) {
     setInvoiceModalOpen(true)
   }
 
-  const handleEditInvoice = (invoice: InvoiceWithDetails) => {
-    setModalMode('edit')
-    setEditingInvoice(invoice)
-    setSelectedStudioId(invoice.studio_id)
-    setSelectedEventIds(invoice.events.map(e => e.id))
-    setSelectedEvents(invoice.events.map(event => ({ ...event, studio: invoice.studio })))
-    setInvoiceModalOpen(true)
-  }
+  // Edit disabled temporarily; handler retained for future use but not referenced
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const handleEditInvoice = (_invoice: InvoiceWithDetails) => { /* edit disabled */ }
 
   // ✨ NEW: Use unified mutation hooks
   const updateInvoiceStatusMutation = useUpdateInvoiceStatus()
@@ -234,7 +229,7 @@ export function InvoiceManagement({ userId }: InvoiceManagementProps) {
               {(invoices) => (
                 <GroupedInvoicesList
                   invoices={invoices}
-                  onEdit={handleEditInvoice}
+                  onEdit={undefined}
                   onStatusChange={handleStatusChange}
                   onViewPDF={handleViewPDF}
                   onDelete={handleDeleteInvoice}

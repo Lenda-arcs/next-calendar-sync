@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { 
   generateInvoiceNumber, 
   generateGermanCompliantInvoiceNumber,
@@ -17,6 +17,8 @@ interface EditableEventData {
   date: string
   studentsStudio: number
   studentsOnline: number
+  // If user overrides the calculated rate, store it here
+  overrideRate?: number | null
 }
 
 interface UseInvoiceCreationStateProps {
@@ -47,10 +49,37 @@ export function useInvoiceCreationState({
     return events.filter(event => eventIds.includes(event.id))
   }, [events, eventIds])
 
-  // Calculate total amount
+  // Quick lookup by id
+  const selectedEventById = useMemo(() => {
+    const map = new Map<string, EventWithStudio>()
+    selectedEvents.forEach(e => map.set(e.id, e))
+    return map
+  }, [selectedEvents])
+
+  // Helper to compute current rate for an item based on counts and studio config,
+  // unless the user provided an overrideRate.
+  const computeItemRate = useCallback((item: EditableEventData): number => {
+    if (item.overrideRate != null) return item.overrideRate
+    const baseEvent = selectedEventById.get(item.id)
+    const rateSource = existingInvoice?.studio || baseEvent?.studio
+    if (!rateSource) return 0
+    // Build a minimal event object with only the properties used by the calculator
+    // Build a compatible object using the original event as base to satisfy typing
+    const base = selectedEventById.get(item.id)
+    const mergedEvent = base
+      ? ({
+          ...base,
+          students_studio: item.studentsStudio,
+          students_online: item.studentsOnline,
+        } as EventWithStudio)
+      : ({ students_studio: item.studentsStudio, students_online: item.studentsOnline } as unknown as EventWithStudio)
+    return calculateEventPayout(mergedEvent as EventWithStudio, rateSource)
+  }, [existingInvoice?.studio, selectedEventById])
+
+  // Calculate total amount using computed rates
   const totalAmount = useMemo(() => {
-    return editableEvents.reduce((sum, item) => sum + item.rate, 0)
-  }, [editableEvents])
+    return editableEvents.reduce((sum, item) => sum + computeItemRate(item), 0)
+  }, [editableEvents, computeItemRate])
 
   // Detect if there are any changes (for edit mode)
   const hasChanges = useMemo(() => {
@@ -88,33 +117,34 @@ export function useInvoiceCreationState({
   // Initialize editable events when modal opens with events
   useEffect(() => {
     if (isOpen && selectedEvents.length > 0 && editableEvents.length === 0) {
-      let items: EditableEventData[]
-      
-      if (mode === 'edit' && existingInvoice) {
-        // In edit mode, use existing invoice data and calculate rates using the invoice's studio
-        items = existingInvoice.events.map(event => ({
+      // For both create and edit, derive from selectedEvents (in edit, caller injects studio on events)
+      // Prefer invoice.studio as the authoritative rate source when available
+      const items: EditableEventData[] = selectedEvents.map(event => {
+        const rateSource = existingInvoice?.studio || event.studio
+        const initialRate = rateSource
+          ? calculateEventPayout(
+              ({
+                ...event,
+                students_studio: event.students_studio || 0,
+                students_online: event.students_online || 0,
+              } as unknown as EventWithStudio),
+              rateSource
+            )
+          : 0
+        return {
           id: event.id,
           title: event.title || 'Untitled Event',
-          rate: existingInvoice.studio ? calculateEventPayout(event, existingInvoice.studio) : 0,
+          rate: initialRate,
           date: event.start_time ? new Date(event.start_time).toLocaleDateString() : 'No date',
           studentsStudio: event.students_studio || 0,
-          studentsOnline: event.students_online || 0
-        }))
-      } else {
-        // In create mode, calculate from selected events
-        items = selectedEvents.map(event => ({
-          id: event.id,
-          title: event.title || 'Untitled Event',
-          rate: event.studio ? calculateEventPayout(event, event.studio) : 0,
-          date: event.start_time ? new Date(event.start_time).toLocaleDateString() : 'No date',
-          studentsStudio: event.students_studio || 0,
-          studentsOnline: event.students_online || 0
-        }))
-      }
-      
+          studentsOnline: event.students_online || 0,
+          overrideRate: null,
+        }
+      })
+
       setEditableEvents(items)
     }
-  }, [isOpen, selectedEvents, editableEvents.length, mode, existingInvoice])
+  }, [isOpen, selectedEvents, editableEvents.length, existingInvoice?.studio])
 
   // Generate invoice number when modal opens
   useEffect(() => {
@@ -176,13 +206,20 @@ export function useInvoiceCreationState({
           ? { 
               ...item, 
               title: newTitle, 
+              // store manual override while also keeping local display rate
               rate: newRate,
+              overrideRate: newRate,
               studentsStudio: newStudentsStudio ?? item.studentsStudio,
               studentsOnline: newStudentsOnline ?? item.studentsOnline
             }
           : item
       )
     )
+  }
+
+  // Remove an event from the invoice being edited/created
+  const removeEvent = (eventId: string) => {
+    setEditableEvents(prev => prev.filter(item => item.id !== eventId))
   }
 
   return {
@@ -199,6 +236,8 @@ export function useInvoiceCreationState({
     
     // Handlers
     handleEventUpdate,
+    computeItemRate,
+    removeEvent,
     
     // Status
     isReady: isOpen && editableEvents.length > 0,
