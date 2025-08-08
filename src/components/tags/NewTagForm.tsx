@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { EventTag } from '@/lib/event-types'
+import { EventTag, EventDisplayVariant } from '@/lib/event-types'
 import { UnifiedDialog } from '@/components/ui/unified-dialog'
 import { Button } from '@/components/ui/button'
 import { FormField } from '@/components/ui/form-field'
@@ -14,6 +14,9 @@ import { useSupabaseQuery } from '@/lib/hooks/useQueryWithSupabase'
 import { AUDIENCE_OPTIONS, PRIORITY_OPTIONS } from '@/lib/constants/tag-constants'
 import ImageUpload from '@/components/ui/image-upload'
 import { useKeywordSuggestions } from '@/lib/hooks/useKeywordSuggestions'
+import { EventCard } from '@/components/events/EventCard'
+import { EventCardVariantTabs } from '@/components/events/EventCardVariantTabs'
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion'
 
 interface Props {
   isOpen: boolean
@@ -131,6 +134,27 @@ export const NewTagForm: React.FC<Props> = ({
     onSave(tagData)
   }
 
+  // Live preview state for event card variant
+  const [variant, setVariant] = React.useState<EventDisplayVariant>('compact')
+
+  // Build a preview tag from current form data without mutating store
+  const previewTag: EventTag = React.useMemo(() => ({
+    id: formData.id || 'preview',
+    slug: formData.name
+      .toLowerCase()
+      .replace(/\s+/g, '-')
+      .replace(/[^a-z0-9-]/g, ''),
+    name: formData.name || 'New Tag',
+    color: formData.color,
+    imageUrl: formData.imageUrl || undefined,
+    classType: formData.classType,
+    audience: formData.audience || undefined,
+    cta: formData.cta?.label && formData.cta?.url ? formData.cta : null,
+    priority: formData.priority,
+    userId: undefined,
+    chip: { color: formData.color },
+  }), [formData])
+
   if (!isOpen) return null
 
   const footerContent = (
@@ -160,7 +184,9 @@ export const NewTagForm: React.FC<Props> = ({
       size="xl"
       footer={footerContent}
     >
-      <div className="space-y-4">
+      <div className="grid grid-cols-1 gap-4">
+        {/* Left: Form */}
+        <div className="space-y-4" aria-label="Tag settings">
           {/* Tag Name */}
           <FormField
             id="tagName"
@@ -170,9 +196,10 @@ export const NewTagForm: React.FC<Props> = ({
             onChange={(e) => updateField('name', e.target.value)}
             placeholder="e.g. Vinyasa Flow"
             required
+            aria-describedby="tag-name-help"
           />
           {availableNameSuggestions.length > 0 && (
-            <div className="space-y-1 -mt-2">
+            <div className="space-y-1 -mt-2" id="tag-name-help">
               <p className="text-xs text-muted-foreground">Suggestions:</p>
               <div className="flex flex-wrap gap-1">
                 {availableNameSuggestions.map((s) => (
@@ -183,6 +210,7 @@ export const NewTagForm: React.FC<Props> = ({
                     variant="outline"
                     className="h-6 px-2 text-xs"
                     onClick={() => updateField('name', s)}
+                    aria-label={`Use suggestion ${s}`}
                   >
                     {s}
                   </Button>
@@ -191,11 +219,9 @@ export const NewTagForm: React.FC<Props> = ({
             </div>
           )}
 
-          {/* Color moved to CTA section */}
-
           {/* Style (Class Type) - based on public.users.yoga_styles */}
           <div className="space-y-1">
-            <label className="text-sm font-medium text-foreground">
+            <label className="text-sm font-medium text-foreground" htmlFor="classType">
               Style (Class Type)
             </label>
             <MultiSelect
@@ -212,12 +238,12 @@ export const NewTagForm: React.FC<Props> = ({
                   : 'No styles found yet. Add styles in your profile.'
               }
               maxSelections={5}
+              aria-describedby="class-type-desc"
             />
-            <p className="text-xs text-muted-foreground">
-              Used for event categorization and badges on cards. Sourced from yoga styles teachers use in profiles.
+            <p id="class-type-desc" className="text-xs text-muted-foreground">
+              Shown as badges on event cards.
             </p>
           </div>
-          {/* (CTA label suggestions live in the CTA section only) */}
 
           {/* Audience */}
           <Select
@@ -236,35 +262,14 @@ export const NewTagForm: React.FC<Props> = ({
           </p>
 
           {/* Actions, Color & Media (compact grouped section) */}
-          
-          <Card variant="embedded" className="border-muted/40 p-0">
-            <CardHeader className="py-2">
+          <Card variant="embedded" className="p-0">
+            <CardHeader className="py-3">
               <div className="flex items-center justify-between gap-3">
                 <CardTitle className="text-base">Actions, Color & Media</CardTitle>
-                {/* CTA Preview (does not affect content layout) */}
-                <div className="flex items-center gap-2" aria-live="polite">
-                  <span className="text-xs text-muted-foreground">CTA preview</span>
-                  <Button
-                    size="sm"
-                    variant="default"
-                    style={{
-                      backgroundColor: formData.color,
-                      borderColor: formData.color,
-                      color: '#FFFFFF',
-                    }}
-                    aria-label="CTA preview button"
-                    title="This is a preview of how the CTA will look on event cards"
-                  >
-                    {formData.cta?.label?.trim() || 'Preview'}
-                  </Button>
-                </div>
               </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                Configure the call-to-action button, its color, and tag priority. These settings work together on event cards.
-              </p>
             </CardHeader>
-            <CardContent className="space-y-2 py-3">
-              {/* Tag Image at the top for quicker access */}
+            <CardContent className="space-y-3 py-3">
+              {/* Tag Image */}
               <div className="space-y-1">
                 <label className="text-xs text-muted-foreground">Tag Image (Optional)</label>
                 <div className="flex justify-center">
@@ -284,18 +289,17 @@ export const NewTagForm: React.FC<Props> = ({
                 </div>
               </div>
 
-             
               {/* Row: Color (CTA) + Priority */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <label className="block text-sm font-medium mb-2 text-foreground">Color (CTA)</label>
+                  <label className="block text-sm font-medium mb-2 text-foreground" htmlFor="tag-color">Color (CTA)</label>
                   <ColorPicker
                     selectedColor={formData.color}
                     onColorChange={(color) => updateField('color', color)}
                     variant="input"
                   />
-                  <p className="text-xs text-muted-foreground -mt-1">
-                    Styles the CTA button for this tag. Choose a subtle, theme-aligned color.
+                  <p id="tag-color" className="text-xs text-muted-foreground -mt-1">
+                    Styles the CTA button for this tag.
                   </p>
                 </div>
                 <div className="space-y-1">
@@ -311,7 +315,7 @@ export const NewTagForm: React.FC<Props> = ({
                     placeholder="Select priority..."
                   />
                   <p className="text-xs text-muted-foreground -mt-1">
-                    Higher priority tags are preferred when multiple tags define CTAs.
+                    Higher priority wins when multiple tags define CTAs.
                   </p>
                 </div>
               </div>
@@ -337,8 +341,6 @@ export const NewTagForm: React.FC<Props> = ({
                 />
               </div>
 
-              {/* (Preview moved to header to avoid pushing suggested labels) */}
-
               {/* Quick CTA label suggestions */}
               <div className="-mt-1">
                 <div className="flex flex-wrap gap-1">
@@ -350,6 +352,7 @@ export const NewTagForm: React.FC<Props> = ({
                       variant="outline"
                       className="h-6 px-2 text-xs"
                       onClick={() => updateCta('label', label)}
+                      aria-label={`Use CTA label ${label}`}
                     >
                       {label}
                     </Button>
@@ -359,6 +362,47 @@ export const NewTagForm: React.FC<Props> = ({
             </CardContent>
           </Card>
         </div>
+
+        {/* Right: Live Preview (collapsed card header visible) */}
+        <aside aria-label="Live preview" className="space-y-3">
+          <Accordion type="single" collapsible>
+            <AccordionItem value="preview">
+              <Card variant="default" className="p-0">
+                <CardHeader className="py-2">
+                  <AccordionTrigger className="w-full px-1 text-left no-underline">
+                    <div className="flex items-center justify-between w-full">
+                      <span className="text-base font-medium">Live Preview</span>
+                      <span className="text-xs text-muted-foreground mr-2">Click to expand</span>
+                    </div>
+                  </AccordionTrigger>
+                </CardHeader>
+                <AccordionContent>
+                  <CardContent className="pb-4">
+                    <div className="flex items-center justify-between pb-2">
+                      <CardTitle className="text-base">Preview</CardTitle>
+                      <EventCardVariantTabs value={variant} onValueChange={setVariant} size="sm" />
+                    </div>
+                    <div className="flex justify-center">
+                      <div className="w-full max-w-md">
+                        <EventCard
+                          id="preview-event"
+                          title={formData.name || 'Sample Yoga Class'}
+                          dateTime="2024-12-20T09:00:00Z"
+                          location="Studio A"
+                          imageQuery="yoga class studio"
+                          tags={[previewTag]}
+                          variant={variant}
+                        />
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-2">The preview uses a sample event.</p>
+                  </CardContent>
+                </AccordionContent>
+              </Card>
+            </AccordionItem>
+          </Accordion>
+        </aside>
+      </div>
     </UnifiedDialog>
   )
 } 

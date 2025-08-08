@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { EventCard } from '@/components/events/EventCard'
 import { EventCardVariantTabs } from '@/components/events/EventCardVariantTabs'
 import { Edit, Globe, ExternalLink, Palette, Users, Star } from 'lucide-react'
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion'
 import { PRIORITY_LABELS } from '@/lib/constants/tag-constants'
 
 interface Props {
@@ -99,50 +100,52 @@ export const TagViewDialog: React.FC<Props> = ({
       footer={footerContent}
     >
       <div className="space-y-4">
-          {/* Tag Preview */}
-          <Card variant="embedded" className="bg-gradient-to-r from-gray-50/80 to-blue-50/30">
-            <CardHeader>
-              <CardTitle className="text-lg">Tag Preview</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {/* EventCard Preview */}
-                <div className="flex justify-center">
-                  <div className="w-full max-w-md">
-                    <EventCard
-                      id="preview-event"
-                      title="Sample Yoga Class"
-                      dateTime="2024-12-20T09:00:00Z"
-                      location="Studio A"
-                      imageQuery="yoga class studio"
-                      tags={[tag]}
-                      variant={selectedVariant}
-                    />
-                  </div>
-                </div>
-                
-                {/* Variant Toggle Group */}
-                <div className="flex justify-center">
-                  <EventCardVariantTabs
-                    value={selectedVariant}
-                    onValueChange={setSelectedVariant}
-                    size="sm"
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          {/* Tag Preview (collapsible card – header always visible) */}
+          <Accordion type="single" collapsible>
+            <AccordionItem value="preview">
+              <Card variant="default" className="p-0">
+                <CardHeader className="py-2">
+                  <AccordionTrigger className="w-full px-1 text-left no-underline">
+                    <div className="flex items-center justify-between w-full">
+                      <span className="text-base font-medium">Live Preview</span>
+                      <span className="text-xs text-muted-foreground mr-2">Click to expand</span>
+                    </div>
+                  </AccordionTrigger>
+                </CardHeader>
+                <AccordionContent>
+                  <CardContent>
+                    <div className="flex items-center justify-between pb-2">
+                      <CardTitle className="text-base">Preview</CardTitle>
+                      <EventCardVariantTabs
+                        value={selectedVariant}
+                        onValueChange={setSelectedVariant}
+                        size="sm"
+                      />
+                    </div>
+                    <div className="flex justify-center">
+                      <div className="w-full max-w-md">
+                        <EventCard
+                          id="preview-event"
+                          title="Sample Yoga Class"
+                          dateTime="2024-12-20T09:00:00Z"
+                          location="Studio A"
+                          imageQuery="yoga class studio"
+                          tags={[tag]}
+                          variant={selectedVariant}
+                        />
+                      </div>
+                    </div>
+                  </CardContent>
+                </AccordionContent>
+              </Card>
+            </AccordionItem>
+          </Accordion>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             {/* Basic Info */}
             <TagInfoSection title="Basic Info" icon={Palette}>
               <InfoRow label="Name">
                 <p className="text-sm">{tag.name || 'N/A'}</p>
-              </InfoRow>
-              <InfoRow label="Slug">
-                <p className="text-xs font-mono bg-gray-100 px-2 py-1 rounded">
-                  {tag.slug || 'N/A'}
-                </p>
               </InfoRow>
               <InfoRow label="Color">
                 <div className="flex items-center gap-2">
@@ -198,23 +201,49 @@ export const TagViewDialog: React.FC<Props> = ({
             {/* Image & CTA */}
             {(tag.imageUrl || (tag.cta && tag.cta.label && tag.cta.url)) && (
               <TagInfoSection title="Media & Actions" icon={ExternalLink}>
-                 {tag.imageUrl && (
-                   <InfoRow label="Image URL">
-                     <p className="text-xs font-mono bg-gray-100 px-2 py-1 rounded line-clamp-2">
-                       {tag.imageUrl}
-                     </p>
-                   </InfoRow>
-                 )}
+                {tag.imageUrl && (
+                  <InfoRow label="Image">
+                    <div className="mt-1">
+                      {/* Thumbnail preview instead of raw URL */}
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={tag.imageUrl}
+                        alt={`${tag.name || 'Tag'} image`}
+                        className="h-16 w-28 object-cover rounded-md border"
+                      />
+                    </div>
+                  </InfoRow>
+                )}
                 {tag.cta && tag.cta.label && tag.cta.url && (
                   <>
-                    <InfoRow label="Button Label">
-                      <p className="text-sm">{tag.cta.label}</p>
+                    <InfoRow label="Button">
+                      <div className="flex flex-col gap-1">
+                        <Button
+                          size="sm"
+                          variant="default"
+                          asChild
+                          style={{
+                            backgroundColor: tag.color || '#6B7280',
+                            borderColor: tag.color || '#6B7280',
+                            color: '#FFFFFF',
+                          }}
+                          className="shadow-sm h-7 text-xs px-2 rounded-xl w-fit"
+                          aria-label={`${tag.cta.label} — opens in new tab`}
+                        >
+                          <a href={tag.cta.url} target="_blank" rel="noopener noreferrer">
+                            {tag.cta.label}
+                          </a>
+                        </Button>
+                        <a
+                          href={tag.cta.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-muted-foreground underline break-all"
+                        >
+                          {tag.cta.url}
+                        </a>
+                      </div>
                     </InfoRow>
-                     <InfoRow label="Button URL">
-                       <p className="text-xs font-mono bg-gray-100 px-2 py-1 rounded line-clamp-2">
-                         {tag.cta.url}
-                       </p>
-                     </InfoRow>
                     <div className="text-xs text-muted-foreground">
                       Higher priority tags are preferred when multiple tags define CTAs. On cards with multiple tag images, the CTA can change with the active image.
                     </div>
