@@ -7,6 +7,8 @@ const translations: TranslationStructure = {
       dashboard: 'Panel',
       manageEvents: 'Gestionar Eventos',
       manageTags: 'Gestionar Etiquetas',
+      events: 'Eventos',
+      tags: 'Etiquetas',
       invoices: 'Facturas',
       studios: 'Studios',
       profile: 'Perfil',

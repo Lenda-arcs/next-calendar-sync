@@ -31,7 +31,8 @@ export function HomeLinkClient({ appName, userId }: HomeLinkClientProps) {
         icon={Home}
         avatarSrc={dummyLogo.src}
         avatarAlt="Logo"
-        className="group"
+        activeClassName="bg-white/90 text-foreground shadow-md border border-white/80"
+        className="group border border-white/30 backdrop-blur-sm hover:bg-white/40 hover:border-white/50 lg:bg-transparent lg:border-0 lg:shadow-none"
       />
     </div>
   )

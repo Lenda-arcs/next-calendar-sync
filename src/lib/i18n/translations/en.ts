@@ -5,6 +5,8 @@ const translations = {
       dashboard: 'Dashboard',
       manageEvents: 'Manage Events',
       manageTags: 'Manage Tags',
+      events: 'Events',
+      tags: 'Tags',
       invoices: 'Invoices',
       studios: 'Studios',
       profile: 'Profile',

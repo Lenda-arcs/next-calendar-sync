@@ -1,8 +1,9 @@
 'use client'
 
 import { LoadingNavLink } from '@/components/ui'
-import { Calendar, Home, User, Tags, Receipt, Building, LucideIcon } from 'lucide-react'
-import { useSmartPreload } from '@/lib/hooks/useSmartPreload'
+import { LucideIcon } from 'lucide-react'
+import { useNavPreloadMap } from '@/lib/hooks/useNavPreloadMap'
+import { navIconMap } from './navIcons'
 
 interface NavigationItem {
   name: string
@@ -15,50 +16,12 @@ interface ActiveNavLinksProps {
   userId?: string // ✨ Added for smart preloading
 }
 
-// Icon mapping to resolve serialization issue
-const iconMap: Record<string, LucideIcon> = {
-  Home,
-  Calendar,
-  Tags,
-  Receipt,
-  User,
-  Building
-}
+// Shared icon map
+const iconMap: Record<string, LucideIcon> = navIconMap as Record<string, LucideIcon>
 
 export function ActiveNavLinks({ navigation, userId }: ActiveNavLinksProps) {
   // ✨ Smart preloading for instant navigation
-  const {
-    preloadUserEvents,
-    preloadInvoices,
-    preloadUserTags,
-    preloadDashboard,
-    preloadProfile
-  } = useSmartPreload()
-
-  // Map navigation paths to preload functions
-  const getPreloadFunction = (href: string) => {
-    if (!userId) return undefined
-    
-    if (href.includes('manage-events')) {
-      return () => preloadUserEvents(userId)
-    }
-    if (href.includes('manage-tags')) {
-      return () => preloadUserTags(userId)
-    }
-    if (href.includes('manage-invoices')) {
-      return () => preloadInvoices(userId)
-    }
-    if (href.includes('/app') && !href.includes('manage-') && !href.includes('admin') && !href.includes('profile') && !href.includes('studios')) {
-      // Dashboard home page (/app)
-      return () => preloadDashboard(userId)
-    }
-    if (href.includes('profile')) {
-      return () => preloadProfile(userId)
-    }
-    // Note: No preload for admin - it's not in useSmartPreload
-    // Note: Studios page doesn't need preloading for now
-    return undefined
-  }
+  const { getPreloadFunction } = useNavPreloadMap(userId)
 
   return (
     <nav className="hidden lg:flex space-x-2">

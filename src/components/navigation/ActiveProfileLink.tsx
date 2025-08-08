@@ -28,6 +28,8 @@ export function ActiveProfileLink({ profileImage, userProfile, user }: ActivePro
         icon={User}
         avatarSrc={profileImage || undefined}
         avatarAlt={userProfile?.name || user.email}
+        activeClassName="bg-white/90 text-foreground shadow-md border border-white/80"
+        className="group border border-white/30 backdrop-blur-sm hover:bg-white/40 hover:border-white/50 lg:bg-transparent lg:border-0 lg:shadow-none"
       />
     </div>
   )

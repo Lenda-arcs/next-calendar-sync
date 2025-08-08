@@ -1,5 +1,6 @@
 import { createServerClient } from '@/lib/supabase-server'
-import { MobileNavMenu, CompactLanguageSelector } from '@/components/ui'
+import { CompactLanguageSelector } from '@/components/ui'
+import { BottomNav } from '@/components/navigation'
 import { PATHS, getLocalizedPath } from '@/lib/paths'
 import { 
   Calendar, 
@@ -39,8 +40,8 @@ export default async function LocalizedAppLayout({ children, params }: AppLayout
   // Use the centralized getLocalizedPath function
 
   // Get translated navigation labels
-  const manageEventsLabel = t('common.nav.manageEvents')
-  const manageTagsLabel = t('common.nav.manageTags')
+  const manageEventsLabel = t('common.nav.events')
+  const manageTagsLabel = t('common.nav.tags')
   const invoicesLabel = t('common.nav.invoices')
   const studiosLabel = t('common.nav.studios')
 
@@ -97,8 +98,8 @@ export default async function LocalizedAppLayout({ children, params }: AppLayout
       )}
       <ThemeProvider defaultVariant={themeVariant}>
       <div className="min-h-screen">
-        {/* Navigation Header with Glassmorphism */}
-        <header className="backdrop-blur-md bg-gradient-to-r from-white/70 via-white/50 to-transparent border-b border-white/40 shadow-xl sticky top-0 z-50">
+        {/* Desktop top navigation only (hide bar on mobile) */}
+        <header className="hidden lg:block backdrop-blur-md bg-gradient-to-r from-white/70 via-white/50 to-transparent border-b border-white/40 shadow-xl sticky top-0 z-50">
           <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center h-16">
               {/* Logo */}
@@ -111,9 +112,6 @@ export default async function LocalizedAppLayout({ children, params }: AppLayout
 
               {/* User Menu */}
               <div className="flex items-center space-x-4">
-                {/* Mobile Navigation Menu */}
-                <MobileNavMenu navigation={mobileNavigation} />
-
                 {/* Language Selector */}
                 <CompactLanguageSelector />
 
@@ -128,10 +126,30 @@ export default async function LocalizedAppLayout({ children, params }: AppLayout
           </div>
         </header>
 
+        {/* Mobile top utilities: Home, Language, Profile (no full bar) */}
+        <div className="lg:hidden fixed top-3 left-4 right-4 z-50 flex items-center justify-between gap-2">
+          <div className="pointer-events-auto">
+            <ActiveHomeLink userId={user.id} />
+          </div>
+          {/* Hide language selector on mobile */}
+          <div className="hidden">
+            <CompactLanguageSelector />
+          </div>
+          <div className="pointer-events-auto">
+            <ActiveProfileLink 
+              profileImage={profileImage}
+              userProfile={userProfile}
+              user={user}
+            />
+          </div>
+        </div>
+
         {/* Main Content */}
-        <main className="flex-1 pt-8 pb-16">
+        <main className="flex-1 pt-16 lg:pt-8 pb-20 lg:pb-16">
                 {children}
       </main>
+      {/* Bottom Navigation for mobile */}
+      <BottomNav navigation={mobileNavigation} userId={user.id} />
     </div>
     </ThemeProvider>
     </>
