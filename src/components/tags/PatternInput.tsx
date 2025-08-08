@@ -35,6 +35,8 @@ interface PatternInputProps {
   mode?: PatternInputMode // Removed location-keywords
   maxPatterns?: number
   suggestions?: Array<{ value: string; label: string; count?: number }>
+  // Optional domain override for conflict checking
+  conflictDomain?: 'studios' | 'tag-rules'
   // When editing an existing tag rule, exclude that rule from conflict checks
   excludeRuleId?: string
 }
@@ -52,6 +54,7 @@ export function PatternInput({
   mode = 'location',
   maxPatterns = 10,
   suggestions = [],
+  conflictDomain,
   excludeRuleId
 }: PatternInputProps) {
   const [inputValue, setInputValue] = useState('')
@@ -119,7 +122,8 @@ export function PatternInput({
 
     setIsCheckingConflicts(true)
     try {
-      if (mode === 'location') {
+      const domain = conflictDomain || (mode === 'location' ? 'studios' : 'tag-rules')
+      if (domain === 'studios') {
         // Original studio pattern conflict checking
         let query = supabase
           .from('billing_entities')
@@ -136,6 +140,21 @@ export function PatternInput({
 
         const newConflicts: PatternConflict[] = []
 
+        // Helpers for meaningful overlap (Option 1 refined)
+        const isLetter = (ch: string) => /\p{L}/u.test(ch)
+        const hasStandaloneInclusion = (shorter: string, longer: string) => {
+          const minLen = 3
+          if (shorter.length < minLen) return false
+          if (shorter === longer) return true
+          const idx = longer.indexOf(shorter)
+          if (idx < 0) return false
+          const prev = idx > 0 ? longer.charAt(idx - 1) : ''
+          const next = idx + shorter.length < longer.length ? longer.charAt(idx + shorter.length) : ''
+          // If shorter is embedded within a larger word (letters on either side), do NOT treat as conflict
+          if ((prev && isLetter(prev)) || (next && isLetter(next))) return false
+          return true
+        }
+
         for (const pattern of patternsToCheck) {
           const conflictingStudios = []
           const lowerPattern = pattern.toLowerCase()
@@ -146,7 +165,10 @@ export function PatternInput({
             for (const existingPattern of studioPatterns) {
               const lowerExisting = existingPattern.toLowerCase()
               
-              if (lowerPattern.includes(lowerExisting) || lowerExisting.includes(lowerPattern)) {
+              if (
+                hasStandaloneInclusion(lowerPattern, lowerExisting) ||
+                hasStandaloneInclusion(lowerExisting, lowerPattern)
+              ) {
                 conflictingStudios.push({
                   id: studio.id,
                   name: studio.entity_name,
@@ -213,7 +235,7 @@ export function PatternInput({
     } finally {
       setIsCheckingConflicts(false)
     }
-  }, [userId, currentStudioId, supabase, mode, excludeRuleId])
+  }, [userId, currentStudioId, supabase, mode, excludeRuleId, conflictDomain])
 
   // Preview which locations/events would match
   const previewMatches = useCallback(async (patternsToCheck: string[]) => {

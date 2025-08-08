@@ -105,10 +105,8 @@ export const TagRuleManager: React.FC<Props> = ({
           dialogOpen: false,
         }))
         
-        // Refetch data to update UI
-        if (!propTagRules) {
-          refetchTagRules()
-        }
+        // Invalidate/refetch cached rules to update UI promptly
+        await refetchTagRules()
         
         // Clear tag cache since rules changed
         clearTagMapCache()
@@ -171,10 +169,7 @@ export const TagRuleManager: React.FC<Props> = ({
           dialogOpen: false,
         }))
         
-        // Refetch data to update UI
-        if (!propTagRules) {
-          refetchTagRules()
-        }
+        await refetchTagRules()
         
         // Clear tag cache since rules changed
         clearTagMapCache()
@@ -220,9 +215,7 @@ export const TagRuleManager: React.FC<Props> = ({
     {
       onSuccess: async () => {
         // Refetch data to update UI
-        if (!propTagRules) {
-          refetchTagRules()
-        }
+        await refetchTagRules()
         
         // Clear tag cache since rules changed
         clearTagMapCache()

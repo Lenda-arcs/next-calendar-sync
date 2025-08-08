@@ -48,12 +48,29 @@ export const NewTagForm: React.FC<Props> = ({
         .select('yoga_styles')
 
       if (error) throw error
-      const set = new Set<string>()
+      // Normalize, trim and deduplicate case-insensitively; present as Title Case
+      const normalizedToPretty = new Map<string, string>()
+      const toTitleCase = (str: string) =>
+        str
+          .split(/\s+/)
+          .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+          .join(' ')
+
       ;(data || []).forEach((row: { yoga_styles: string[] | null }) => {
         const styles = row.yoga_styles
-        if (Array.isArray(styles)) styles.forEach(s => s && set.add(s))
+        if (Array.isArray(styles)) {
+          styles.forEach((s) => {
+            if (!s) return
+            const trimmed = s.trim()
+            if (!trimmed) return
+            const normalized = trimmed.toLowerCase()
+            if (!normalizedToPretty.has(normalized)) {
+              normalizedToPretty.set(normalized, toTitleCase(normalized))
+            }
+          })
+        }
       })
-      return Array.from(set).sort()
+      return Array.from(normalizedToPretty.values()).sort((a, b) => a.localeCompare(b))
     },
     { staleTime: 10 * 60 * 1000 }
   )
@@ -67,6 +84,45 @@ export const NewTagForm: React.FC<Props> = ({
     .filter((k) => k && k.length >= 3 && !genericWords.has(k.toLowerCase()))
     .slice(0, 8)
   const styleChips = (yogaStyles || []).slice(0, 8)
+
+  // Fetch existing tag slugs to avoid suggesting blocked names
+  const { data: existingTagSlugs } = useSupabaseQuery<string[]>(
+    ['existing-tag-slugs', userId],
+    async (supabase) => {
+      const { data, error } = await supabase
+        .from('tags')
+        .select('slug')
+      if (error) throw error
+      const set = new Set<string>()
+      ;(data || []).forEach((row: { slug: string | null }) => {
+        if (row.slug) set.add(row.slug.toLowerCase())
+      })
+      return Array.from(set)
+    },
+    { staleTime: 5 * 60 * 1000 }
+  )
+
+  const slugify = (name: string) =>
+    name
+      .toLowerCase()
+      .replace(/\s+/g, '-')
+      .replace(/[^a-z0-9-]/g, '')
+
+  // Merge style/name chips, dedupe by slug, exclude used slugs
+  const availableNameSuggestions = React.useMemo(() => {
+    const seen = new Set<string>()
+    const result: string[] = []
+    const candidates = [...styleChips, ...nameChips]
+    candidates.forEach((label) => {
+      const slug = slugify(label)
+      if (!slug) return
+      if (seen.has(slug)) return
+      if (existingTagSlugs && existingTagSlugs.includes(slug)) return
+      seen.add(slug)
+      result.push(label)
+    })
+    return result
+  }, [styleChips, nameChips, existingTagSlugs])
 
 
   const handleSubmit = () => {
@@ -115,11 +171,11 @@ export const NewTagForm: React.FC<Props> = ({
             placeholder="e.g. Vinyasa Flow"
             required
           />
-          {(nameChips.length > 0 || styleChips.length > 0) && (
+          {availableNameSuggestions.length > 0 && (
             <div className="space-y-1 -mt-2">
               <p className="text-xs text-muted-foreground">Suggestions:</p>
               <div className="flex flex-wrap gap-1">
-                {styleChips.map((s) => (
+                {availableNameSuggestions.map((s) => (
                   <Button
                     key={`style-${s}`}
                     type="button"
@@ -129,18 +185,6 @@ export const NewTagForm: React.FC<Props> = ({
                     onClick={() => updateField('name', s)}
                   >
                     {s}
-                  </Button>
-                ))}
-                {nameChips.map((k) => (
-                  <Button
-                    key={`kw-${k}`}
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    className="h-6 px-2 text-xs"
-                    onClick={() => updateField('name', k.charAt(0).toUpperCase() + k.slice(1))}
-                  >
-                    {k}
                   </Button>
                 ))}
               </div>
@@ -173,23 +217,7 @@ export const NewTagForm: React.FC<Props> = ({
               Used for event categorization and badges on cards. Sourced from yoga styles teachers use in profiles.
             </p>
           </div>
-          {/* Quick CTA label suggestions */}
-          <div className="-mt-1">
-            <div className="flex flex-wrap gap-1">
-              {['Book Now','Register','Learn More','Reserve Spot'].map((label) => (
-                <Button
-                  key={label}
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  className="h-6 px-2 text-xs"
-                  onClick={() => updateCta('label', label)}
-                >
-                  {label}
-                </Button>
-              ))}
-            </div>
-          </div>
+          {/* (CTA label suggestions live in the CTA section only) */}
 
           {/* Audience */}
           <Select
