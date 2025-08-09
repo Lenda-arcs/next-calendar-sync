@@ -70,7 +70,7 @@ const TagLibraryItem: React.FC<TagLibraryItemProps> = ({
             style={{ backgroundColor: tag.color || '#6B7280' }}
           />
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2 mb-1">
+            <div className="flex items-center gap-2">
               <span className={`font-medium text-foreground truncate ${isCompact ? 'text-xs' : 'text-sm'}`}>
                 {tag.name || t('pages.manageTags.tagLibraryComponent.unnamedTag')}
               </span>

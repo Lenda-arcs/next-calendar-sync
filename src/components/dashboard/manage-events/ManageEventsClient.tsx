@@ -8,8 +8,7 @@ import {
   EventsEmptyState,
   NewEventForm,
   CreateEventData,
-  EditEventData,
-  CreateEventFAB
+  EditEventData
 } from '@/components/events'
 import EventGrid from '@/components/events/EventGrid'
 import { NewTagForm } from '@/components/tags'
@@ -33,7 +32,7 @@ import { convertEventToCardProps } from '@/lib/event-utils'
 import { VisibilityFilter } from '@/components/events/EventsControlPanel'
 import { useTranslation } from '@/lib/i18n/context'
 import { useEventFilters } from '@/lib/hooks/useEventFilters'
-import { useScrollIntoView } from '@/lib/hooks/useScrollIntoView'
+
 
 // Types for component
 interface EventStats {
@@ -67,7 +66,6 @@ export function ManageEventsClient({ userId }: ManageEventsClientProps) {
 
   // Create event form state
   const [isCreateEventFormOpen, setIsCreateEventFormOpen] = React.useState(false)
-  const { elementRef: createEventCtaRef, isInView: isCreateCtaInView } = useScrollIntoView({ threshold: 0.1 })
 
   // Edit event form state
   const [isEditEventFormOpen, setIsEditEventFormOpen] = React.useState(false)
@@ -350,13 +348,6 @@ export function ManageEventsClient({ userId }: ManageEventsClientProps) {
       subtitle={t('pages.manageEvents.subtitle')}
     >
       <div className="space-y-8">
-        {/* Create Event FAB - only visible when primary CTA is off-screen */}
-        {!isCreateCtaInView && (
-          <CreateEventFAB
-            onClick={() => setIsCreateEventFormOpen(true)}
-          />
-        )}
-
         {/* EventsControlPanel - Always visible, even during loading */}
         <EventsControlPanel
           timeFilter={filters.timeFilter}
@@ -389,7 +380,7 @@ export function ManageEventsClient({ userId }: ManageEventsClientProps) {
           onCreateTag={() => setIsCreateTagFormOpen(true)}
           onCreateEvent={() => setIsCreateEventFormOpen(true)}
           onSyncFeeds={handleSyncFeeds}
-          createEventCtaRef={createEventCtaRef}
+
           onClearAllFilters={clearAllFilters}
         />
 

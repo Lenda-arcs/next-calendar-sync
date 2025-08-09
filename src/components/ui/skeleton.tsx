@@ -96,45 +96,10 @@ const InteractiveEventCardSkeleton: React.FC<{ variant?: 'compact' | 'full' | 'm
   )
 }
 
-// Manage Events Layout Skeleton - matches the complete layout structure
+// Manage Events Layout Skeleton - matches the new accordion control panel structure
 const ManageEventsSkeleton: React.FC = () => {
   return (
     <div className="space-y-8">
-      {/* Control Panel Skeleton */}
-      <Card className="p-6">
-        <div className="space-y-4">
-          {/* Stats Cards Row */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Card className="p-4">
-              <div className="space-y-2">
-                <Skeleton className="h-4 w-16" />
-                <Skeleton className="h-8 w-12" />
-              </div>
-            </Card>
-            <Card className="p-4">
-              <div className="space-y-2">
-                <Skeleton className="h-4 w-16" />
-                <Skeleton className="h-8 w-12" />
-              </div>
-            </Card>
-            <Card className="p-4">
-              <div className="space-y-2">
-                <Skeleton className="h-4 w-16" />
-                <Skeleton className="h-8 w-12" />
-              </div>
-            </Card>
-          </div>
-          
-          {/* Filter Controls */}
-          <div className="flex flex-wrap gap-4">
-            <Skeleton className="h-10 w-32" />
-            <Skeleton className="h-10 w-32" />
-            <Skeleton className="h-10 w-24" />
-            <Skeleton className="h-10 w-24" />
-          </div>
-        </div>
-      </Card>
-
       {/* Events Grid Skeleton - Mobile Layout */}
       <div className="block md:hidden space-y-8">
         {Array.from({ length: 2 }).map((_, dayIndex) => (
